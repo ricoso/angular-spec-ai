@@ -83,10 +83,6 @@ docs/requirements/     # Requirement Specs + Quality Reports
 .claude/skills/        # Architektur-Skills + Setup-Wizard
 ```
 
-## Github Page
-
-https://ricoso.github.io/angular-spec-ai/#/app
-
 ## Dokumentation
 
 - **CLAUDE.md** — Projekt-Regeln und Workflow fuer Claude Code
