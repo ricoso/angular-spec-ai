@@ -41,7 +41,11 @@ describe('LocationSelectionContainerComponent', () => {
           useValue: {
             getBranches: jest.fn().mockResolvedValue([TEST_BRANCH, TEST_BRANCH_2]),
             getBrands: jest.fn().mockResolvedValue([]),
-            getAllLocations: jest.fn().mockResolvedValue([])
+            getBrandsByBranch: jest.fn().mockResolvedValue([]),
+            getLocations: jest.fn().mockResolvedValue([]),
+            getBranchById: jest.fn().mockResolvedValue(null),
+            getBrandLogoPath: jest.fn().mockReturnValue('assets/brands/default.svg'),
+            getServices: jest.fn().mockResolvedValue([])
           }
         },
         { provide: Router, useValue: router }
@@ -77,15 +81,9 @@ describe('LocationSelectionContainerComponent', () => {
       expect(store.selectedLocation()).toEqual({
         id: TEST_BRANCH.branchId,
         name: TEST_BRANCH.name,
-        city: TEST_BRANCH.address.city
+        city: TEST_BRANCH.address.street || TEST_BRANCH.name,
+        formattedAddress: TEST_BRANCH.address.street || TEST_BRANCH.name
       });
-    });
-
-    it('should navigate to brand route on continue', () => {
-      const exposed = component as unknown as { onContinue: () => void };
-      exposed.onContinue();
-
-      expect(router.navigate).toHaveBeenCalledWith(['/home/brand']);
     });
 
     it('should cascade-reset downstream state when branch changes', () => {
@@ -98,6 +96,25 @@ describe('LocationSelectionContainerComponent', () => {
       exposed.onBranchSelect(TEST_BRANCH_2);
       expect(store.selectedBranch()).toEqual(TEST_BRANCH_2);
       expect(store.selectedBrand()).toBeNull();
+    });
+  });
+
+  describe('Loading and Error States', () => {
+    it('should expose isLoading signal from store', () => {
+      const exposed = component as unknown as { isLoading: () => boolean };
+      expect(exposed.isLoading()).toBe(false);
+    });
+
+    it('should expose error signal from store', () => {
+      const exposed = component as unknown as { error: () => string | null };
+      expect(exposed.error()).toBeNull();
+    });
+
+    it('should call store.loadBranches on retry', () => {
+      const loadBranchesSpy = jest.spyOn(store, 'loadBranches');
+      const exposed = component as unknown as { onRetry: () => void };
+      exposed.onRetry();
+      expect(loadBranchesSpy).toHaveBeenCalled();
     });
   });
 });

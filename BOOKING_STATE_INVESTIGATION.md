@@ -245,7 +245,7 @@ const LOCATIONS_BY_BRAND: Record<Brand, LocationDisplay[]> = {
   volkswagen: [ /* 5 locations */ ]
 };
 ```
-✓ **STATIC DATA:** Click-Dummy locations per brand
+✓ **STATIC DATA:** Static fallback locations per brand
 
 ### 3.5 SERVICE MODEL (`service.model.ts` - 64 lines)
 ```typescript

@@ -65,6 +65,12 @@ export class AccessibilityService {
     html.setAttribute('data-font-size', state.fontSize);
     html.setAttribute('data-high-contrast', String(state.highContrast));
 
+    if (state.highContrast) {
+      document.body.classList.add('high-contrast');
+    } else {
+      document.body.classList.remove('high-contrast');
+    }
+
     if (state.reducedMotion) {
       html.classList.add('reduce-motion');
     } else {

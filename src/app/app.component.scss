@@ -19,23 +19,6 @@
   }
 }
 
-.app-footer {
-  background: var(--color-background-surface);
-  padding: var(--spacing-md);
-  text-align: center;
-  border-top: 0.0625em solid var(--color-border);
-
-  @include tablet {
-    padding: var(--spacing-lg);
-  }
-
-  p {
-    margin: 0;
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-xs);
-  }
-}
-
 // Skip Link (Accessibility)
 .skip-link {
   position: absolute;

@@ -24,7 +24,8 @@ const MOCK_APPOINTMENT: AppointmentSlot = {
 const MOCK_LOCATION: LocationDisplay = {
   id: 'loc-1',
   name: 'Autohaus München',
-  city: 'München'
+  city: 'München',
+  formattedAddress: 'München'
 };
 
 const MOCK_CUSTOMER_INFO: CustomerInfo = {
@@ -40,8 +41,7 @@ const MOCK_CUSTOMER_INFO: CustomerInfo = {
 
 const MOCK_VEHICLE_INFO: VehicleInfo = {
   licensePlate: 'M-AB 1234',
-  mileage: 45000,
-  vin: 'WVWZZZ1KZAW123456'
+  mileage: 45000
 };
 
 describe('BookingOverviewContainerComponent', () => {
@@ -66,7 +66,9 @@ describe('BookingOverviewContainerComponent', () => {
         {
           provide: AppointmentApiService,
           useValue: {
-            getAppointments: jest.fn().mockResolvedValue([])
+            getAppointments: jest.fn().mockResolvedValue([]),
+            createAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' }),
+            getAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' })
           }
         },
         {
@@ -144,11 +146,6 @@ describe('BookingOverviewContainerComponent', () => {
     expect(typeof labels.tuv).toBe('string');
   });
 
-  it('should compute static total price', () => {
-    const exposed = component as unknown as { staticTotalPrice: () => string };
-    expect(typeof exposed.staticTotalPrice()).toBe('string');
-  });
-
   it('should navigate back to carinformation on onBack()', () => {
     const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
 
@@ -160,22 +157,11 @@ describe('BookingOverviewContainerComponent', () => {
 
   it('should call submitBooking on onSubmit()', () => {
     const submitSpy = jest.spyOn(store, 'submitBooking');
-    jest.spyOn(router, 'navigate').mockResolvedValue(true);
 
     const exposed = component as unknown as { onSubmit: () => void };
     exposed.onSubmit();
 
     expect(submitSpy).toHaveBeenCalled();
-    expect(store.hasBookingSubmitted()).toBe(true);
-  });
-
-  it('should navigate after onSubmit()', () => {
-    const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
-
-    const exposed = component as unknown as { onSubmit: () => void };
-    exposed.onSubmit();
-
-    expect(navigateSpy).toHaveBeenCalledWith(['/home/booking-overview']);
   });
 
   it('should handle unknown brand gracefully', () => {

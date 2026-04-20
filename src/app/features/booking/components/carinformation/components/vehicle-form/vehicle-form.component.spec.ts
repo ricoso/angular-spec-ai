@@ -115,43 +115,5 @@ describe('VehicleFormComponent', () => {
       ctrl?.markAsTouched();
       expect(exposed.mileageErrors()).toBeNull();
     });
-
-    it('should return null vinErrors when not touched', () => {
-      const exposed = component as unknown as { vinErrors: () => string | null };
-      expect(exposed.vinErrors()).toBeNull();
-    });
-
-    it('should return vin error key when length is wrong', () => {
-      const exposed = component as unknown as {
-        vinErrors: () => string | null;
-        form: () => ReturnType<FormBuilder['group']>;
-      };
-      const ctrl = exposed.form().get('vin');
-      ctrl?.setValue('TOOSHORT');
-      ctrl?.markAsTouched();
-      expect(exposed.vinErrors()).toBe('booking.carinformation.form.vin.error.invalidLength');
-    });
-
-    it('should return null vinErrors when exactly 17 chars', () => {
-      const exposed = component as unknown as {
-        vinErrors: () => string | null;
-        form: () => ReturnType<FormBuilder['group']>;
-      };
-      const ctrl = exposed.form().get('vin');
-      ctrl?.setValue('WVWZZZ3BZWE689725');
-      ctrl?.markAsTouched();
-      expect(exposed.vinErrors()).toBeNull();
-    });
-
-    it('should return null vinErrors when vin is empty', () => {
-      const exposed = component as unknown as {
-        vinErrors: () => string | null;
-        form: () => ReturnType<FormBuilder['group']>;
-      };
-      const ctrl = exposed.form().get('vin');
-      ctrl?.setValue('');
-      ctrl?.markAsTouched();
-      expect(exposed.vinErrors()).toBeNull();
-    });
   });
 });

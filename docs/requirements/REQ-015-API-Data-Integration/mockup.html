@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REQ-015 – API-Datenintegration Mockup</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+  <style>
+    /* ================================================================
+       CSS Custom Properties – aus _variables.scss
+       ================================================================ */
+    :root {
+      --color-primary: #667eea;
+      --color-primary-hover: #5a67d8;
+      --color-secondary: #764ba2;
+      --color-accent: #ed8936;
+
+      --color-text-primary: #1a1a1a;
+      --color-text-secondary: #595959;
+      --color-text-muted: #767676;
+      --color-text-on-primary: #ffffff;
+
+      --color-background-page: #f8f9fa;
+      --color-background-surface: #ffffff;
+      --color-background-hover: #f5f5f5;
+
+      --color-border: #e0e0e0;
+      --color-divider: #eeeeee;
+
+      --color-error: #c62828;
+      --color-success: #2e7d32;
+      --color-warning: #e65100;
+      --color-info: #1565c0;
+
+      --color-focus-ring: #005fcc;
+
+      --shadow-small: 0 0.0625em 0.125em rgba(0, 0, 0, 0.1);
+      --shadow-medium: 0 0.25em 0.5em rgba(0, 0, 0, 0.1);
+      --shadow-large: 0 0.5em 1em rgba(0, 0, 0, 0.15);
+
+      --font-size-xs: 0.875em;
+      --font-size-sm: 1em;
+      --font-size-md: 1.125em;
+      --font-size-lg: 1.25em;
+      --font-size-xl: 1.5em;
+      --font-size-2xl: 2em;
+
+      --spacing-xs: 0.25em;
+      --spacing-sm: 0.5em;
+      --spacing-md: 1em;
+      --spacing-lg: 1.5em;
+      --spacing-xl: 2em;
+
+      --radius-sm: 0.25em;
+      --radius-md: 0.5em;
+      --radius-lg: 0.75em;
+      --radius-xl: 1em;
+      --radius-full: 50%;
+
+      --touch-target-min: 2.75em;
+    }
+
+    /* ================================================================
+       Reset & Base
+       ================================================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 100%;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 1em;
+      line-height: 1.5;
+      color: var(--color-text-primary);
+      background-color: var(--color-background-page);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ================================================================
+       Skip Link (Accessibility)
+       ================================================================ */
+    .skip-link {
+      position: absolute;
+      top: -10em;
+      left: var(--spacing-md);
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      font-weight: 600;
+      z-index: 9999;
+      transition: top 0.2s ease;
+    }
+
+    .skip-link:focus {
+      top: var(--spacing-md);
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    /* ================================================================
+       Material Icons baseline
+       ================================================================ */
+    .material-icons {
+      font-size: 1.5em;
+      line-height: 1;
+      vertical-align: middle;
+    }
+
+    /* ================================================================
+       Icon Framed
+       ================================================================ */
+    .icon-framed {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5em;
+      height: 2.5em;
+      background: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-small);
+    }
+
+    .icon-framed--sm {
+      width: 2em;
+      height: 2em;
+    }
+
+    .icon-framed--primary {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .icon-framed--round {
+      border-radius: var(--radius-full);
+    }
+
+    /* ================================================================
+       View Tab Switcher (CSS-only, radio-based)
+       ================================================================ */
+    .view-tabs__radio {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .view-tabs__bar {
+      display: flex;
+      gap: var(--spacing-xs);
+      justify-content: center;
+      padding: var(--spacing-md) var(--spacing-md) 0;
+      background-color: var(--color-background-surface);
+      border-bottom: 0.0625em solid var(--color-divider);
+    }
+
+    .view-tabs__label {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-xs);
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      border-bottom: 0.1875em solid transparent;
+      transition: color 0.2s ease, border-color 0.2s ease;
+      min-height: var(--touch-target-min);
+    }
+
+    .view-tabs__label:hover {
+      color: var(--color-primary);
+    }
+
+    .view-tabs__radio:focus-visible + .view-tabs__label {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    }
+
+    .view-tabs__radio:checked + .view-tabs__label {
+      color: var(--color-primary);
+      font-weight: 600;
+      border-bottom-color: var(--color-primary);
+    }
+
+    /* Hide all panels, show checked */
+    .view-panel { display: none; }
+
+    #tab-location:checked ~ .view-panels .view-panel--location,
+    #tab-brand:checked ~ .view-panels .view-panel--brand,
+    #tab-loading:checked ~ .view-panels .view-panel--loading,
+    #tab-error:checked ~ .view-panels .view-panel--error {
+      display: block;
+    }
+
+    /* ================================================================
+       Wizard Breadcrumb (matches wizard-breadcrumb.component)
+       ================================================================ */
+    .wizard {
+      background-color: var(--color-background-surface);
+      border-bottom: 0.0625em solid var(--color-divider);
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .wizard__steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      max-width: 60em;
+      margin: 0 auto;
+      list-style: none;
+      padding: 0;
+      height: 2.5rem;
+    }
+
+    .wizard__step {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: 0 var(--spacing-sm);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+      white-space: nowrap;
+      height: 100%;
+    }
+
+    .wizard__step--active {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    .wizard__step--done {
+      color: var(--color-success);
+      font-weight: 500;
+    }
+
+    .wizard__step-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5rem;
+      height: 1.5rem;
+      min-width: 1.5rem;
+      min-height: 1.5rem;
+      max-width: 1.5rem;
+      max-height: 1.5rem;
+      border-radius: var(--radius-full);
+      flex-shrink: 0;
+    }
+
+    .wizard__step-icon .material-icons {
+      font-size: 0.875rem;
+      width: 0.875rem;
+      height: 0.875rem;
+      line-height: 1;
+      overflow: hidden;
+    }
+
+    .wizard__step--active .wizard__step-icon {
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+    }
+
+    .wizard__step--done .wizard__step-icon {
+      background-color: var(--color-success);
+      color: var(--color-text-on-primary);
+    }
+
+    .wizard__step--future .wizard__step-icon {
+      background-color: var(--color-border);
+      color: var(--color-text-muted);
+    }
+
+    .wizard__step-label {
+      display: none;
+      line-height: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    a.wizard__step-label:hover {
+      text-decoration: underline;
+    }
+
+    a.wizard__step-label:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+      border-radius: var(--radius-sm);
+    }
+
+    .wizard__separator {
+      width: 1.5em;
+      height: 0.0625em;
+      background-color: var(--color-border);
+      flex-shrink: 0;
+      align-self: center;
+      list-style: none;
+    }
+
+    .wizard__separator--done {
+      background-color: var(--color-success);
+    }
+
+    /* ================================================================
+       Page Section Layout
+       ================================================================ */
+    .page-section {
+      max-width: 70em;
+      margin: 0 auto;
+      padding: var(--spacing-xl) var(--spacing-md);
+      text-align: center;
+    }
+
+    .page-section__title {
+      font-size: var(--font-size-2xl);
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--color-text-primary);
+      margin: 0 0 var(--spacing-sm);
+    }
+
+    .page-section__subtitle {
+      font-size: var(--font-size-md);
+      line-height: 1.5;
+      color: var(--color-text-secondary);
+      margin: 0 0 var(--spacing-xl);
+    }
+
+    .page-section__nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) 0;
+    }
+
+    /* ================================================================
+       Location Grid + Card (matches location-cards.component)
+       ================================================================ */
+    .location-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-xl);
+      text-align: left;
+    }
+
+    .location-grid__item {
+      display: contents;
+    }
+
+    .location-grid__radio {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .location-card {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-lg);
+      background-color: var(--color-background-surface);
+      border: 0.125em solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-small);
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+      min-height: var(--touch-target-min);
+      position: relative;
+    }
+
+    .location-card:hover {
+      box-shadow: var(--shadow-medium);
+      border-color: var(--color-primary);
+    }
+
+    .location-grid__radio:focus-visible + .location-card {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .location-grid__radio:checked + .location-card {
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-medium);
+    }
+
+    .location-card__check {
+      display: none;
+      position: absolute;
+      top: var(--spacing-sm);
+      right: var(--spacing-sm);
+      width: 1.75em;
+      height: 1.75em;
+      background-color: var(--color-primary);
+      border-radius: var(--radius-full);
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-small);
+    }
+
+    .location-card__check .material-icons {
+      font-size: 1.125em;
+      width: 1.125em;
+      height: 1.125em;
+      color: var(--color-text-on-primary);
+    }
+
+    .location-grid__radio:checked + .location-card .location-card__check {
+      display: flex;
+    }
+
+    .location-card__name {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      line-height: 1.25;
+      padding-right: 2em;
+    }
+
+    .location-card__address {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    .location-card__address .material-icons {
+      font-size: 1em;
+      width: 1em;
+      height: 1em;
+      color: var(--color-text-muted);
+    }
+
+    .location-card__brands {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-xs);
+    }
+
+    .location-card__brand-logo {
+      height: 1.5em;
+      width: auto;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+
+    .location-card:hover .location-card__brand-logo {
+      opacity: 1;
+    }
+
+    .location-grid__radio:checked + .location-card .location-card__brand-logo {
+      opacity: 1;
+    }
+
+    .location-card__brand-logo--placeholder {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 1.5em;
+      padding: 0 var(--spacing-sm);
+      background-color: var(--color-background-hover);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+
+    .location-card:hover .location-card__brand-logo--placeholder {
+      opacity: 1;
+    }
+
+    .location-grid__radio:checked + .location-card .location-card__brand-logo--placeholder {
+      opacity: 1;
+    }
+
+    /* ================================================================
+       Brand Grid + Card (matches brand-cards.component)
+       ================================================================ */
+    .brand-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-xl);
+      max-width: 40em;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .brand-grid__item {
+      display: contents;
+    }
+
+    .brand-grid__radio {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .brand-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-xl) var(--spacing-lg);
+      background-color: var(--color-background-surface);
+      border: 0.125em solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-small);
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+      min-height: 10em;
+      position: relative;
+    }
+
+    .brand-card:hover {
+      box-shadow: var(--shadow-medium);
+      border-color: var(--color-primary);
+    }
+
+    .brand-grid__radio:focus-visible + .brand-card {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .brand-grid__radio:checked + .brand-card {
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-medium);
+    }
+
+    .brand-card__check {
+      display: none;
+      position: absolute;
+      top: var(--spacing-sm);
+      right: var(--spacing-sm);
+      width: 1.75em;
+      height: 1.75em;
+      background-color: var(--color-primary);
+      border-radius: var(--radius-full);
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-small);
+    }
+
+    .brand-card__check .material-icons {
+      font-size: 1.125em;
+      width: 1.125em;
+      height: 1.125em;
+      color: var(--color-text-on-primary);
+    }
+
+    .brand-grid__radio:checked + .brand-card .brand-card__check {
+      display: flex;
+    }
+
+    .brand-card__logo {
+      height: 4.5em;
+      width: auto;
+      max-width: 80%;
+      object-fit: contain;
+    }
+
+    .brand-card__logo-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 4.5em;
+      width: 4.5em;
+      background-color: var(--color-background-hover);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-2xl);
+      font-weight: 700;
+      color: var(--color-text-muted);
+    }
+
+    .brand-card__name {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    /* ================================================================
+       Info Banner (brand selection)
+       ================================================================ */
+    .info-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md) var(--spacing-lg);
+      background-color: #e3f2fd;
+      border: 0.0625em solid #90caf9;
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-xl);
+      text-align: left;
+    }
+
+    .info-banner__icon {
+      flex-shrink: 0;
+      color: var(--color-info);
+    }
+
+    .info-banner__icon .material-icons {
+      font-size: 1.5em;
+      width: 1.5em;
+      height: 1.5em;
+    }
+
+    .info-banner__text {
+      font-size: var(--font-size-sm);
+      color: var(--color-info);
+      font-weight: 500;
+    }
+
+    .info-banner__text strong {
+      font-weight: 700;
+    }
+
+    /* ================================================================
+       Buttons (always filled / mat-flat-button style)
+       ================================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      font-family: inherit;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      line-height: 1.5;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      min-height: var(--touch-target-min);
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .btn--primary {
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+    }
+
+    .btn--primary:hover {
+      background-color: var(--color-primary-hover);
+    }
+
+    .btn--back {
+      background-color: transparent;
+      color: var(--color-text-secondary);
+      border: 0.0625em solid var(--color-border);
+    }
+
+    .btn--back:hover {
+      background-color: var(--color-background-hover);
+      color: var(--color-text-primary);
+    }
+
+    .btn .material-icons {
+      font-size: 1.25em;
+      width: 1.25em;
+      height: 1.25em;
+    }
+
+    /* ================================================================
+       Loading Spinner (pure CSS)
+       ================================================================ */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-lg);
+      padding: var(--spacing-xl) 0;
+      min-height: 20em;
+    }
+
+    .loading-state__spinner {
+      width: 3em;
+      height: 3em;
+      border: 0.25em solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: var(--radius-full);
+      animation: spin 1s linear infinite;
+    }
+
+    .loading-state__text {
+      font-size: var(--font-size-md);
+      color: var(--color-text-secondary);
+    }
+
+    /* ================================================================
+       Error State
+       ================================================================ */
+    .error-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-xl);
+      background-color: var(--color-background-surface);
+      border: 0.125em solid var(--color-error);
+      border-radius: var(--radius-lg);
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .error-card__icon-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 3.5em;
+      height: 3.5em;
+      background-color: #ffebee;
+      border-radius: var(--radius-full);
+    }
+
+    .error-card__icon-wrapper .material-icons {
+      font-size: 2em;
+      color: var(--color-error);
+    }
+
+    .error-card__title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--color-error);
+    }
+
+    .error-card__message {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      max-width: 30em;
+    }
+
+    .location-grid--muted {
+      opacity: 0.5;
+      pointer-events: none;
+      position: relative;
+    }
+
+    .fallback-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      color: var(--color-warning);
+      background-color: #fff3e0;
+      border: 0.0625em solid var(--color-warning);
+      border-radius: var(--radius-sm);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .fallback-badge .material-icons {
+      font-size: 1em;
+    }
+
+    /* ================================================================
+       Floating Action Overlay
+       ================================================================ */
+    .fab-overlay {
+      position: fixed;
+      bottom: 1em;
+      right: 0.75em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+      z-index: 1000;
+    }
+
+    @media (min-width: 48em) {
+      .fab-overlay {
+        bottom: 1.5em;
+        right: 1.5em;
+        gap: 0.75em;
+      }
+    }
+
+    .fab-overlay__button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 3em;
+      height: 3em;
+      min-width: 3em;
+      min-height: 3em;
+      background: var(--color-background-surface);
+      border: none;
+      border-radius: var(--radius-full);
+      box-shadow: 0 0.125em 0.5em rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      color: var(--color-text-primary);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .fab-overlay__button:hover {
+      box-shadow: 0 0.25em 0.75em rgba(0, 0, 0, 0.25);
+      transform: translateY(-0.0625em);
+    }
+
+    .fab-overlay__button:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .fab-overlay__button .material-icons {
+      font-size: 1.5em;
+    }
+
+    /* Cart toggle (hidden checkbox) */
+    .fab-overlay__toggle {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Expanded panel - hidden by default */
+    .fab-overlay__panel {
+      display: none;
+      background: var(--color-background-surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-large);
+      padding: var(--spacing-lg);
+      min-width: 16em;
+      max-width: 20em;
+    }
+
+    .fab-overlay__panel-title {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 0.0625em solid var(--color-divider);
+    }
+
+    .fab-overlay__panel-title .material-icons {
+      font-size: 1.25em;
+      color: var(--color-primary);
+    }
+
+    .fab-overlay__panel-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-xs) 0;
+    }
+
+    .fab-overlay__panel-label {
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      min-width: 5.5em;
+    }
+
+    .fab-overlay__panel-value {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-primary);
+    }
+
+    .fab-overlay__panel-chip {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.75em;
+      padding: 0.25em 0.75em;
+      background: var(--color-background-page);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-md);
+      color: var(--color-text-primary);
+    }
+
+    /* Badge on cart button */
+    .fab-overlay__badge {
+      position: absolute;
+      top: -0.25em;
+      right: -0.25em;
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+      font-size: 0.625em;
+      font-weight: 700;
+      width: 1.75em;
+      height: 1.75em;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .fab-overlay__button--cart {
+      position: relative;
+    }
+
+    /* Toggle icons: show open, hide close by default */
+    .fab-overlay__icon-close { display: none; }
+    .fab-overlay__icon-open { display: inline; }
+
+    /* When cart toggle is checked: show panel, swap icons */
+    .fab-overlay__toggle:checked ~ .fab-overlay .fab-overlay__panel {
+      display: block;
+    }
+    .fab-overlay__toggle:checked ~ .fab-overlay .fab-overlay__icon-open {
+      display: none;
+    }
+    .fab-overlay__toggle:checked ~ .fab-overlay .fab-overlay__icon-close {
+      display: inline;
+    }
+    .fab-overlay__toggle:checked ~ .fab-overlay .fab-overlay__badge {
+      display: none;
+    }
+
+    /* ================================================================
+       Responsive: Tablet (>=48em)
+       ================================================================ */
+    @media (min-width: 48em) {
+      .wizard__step-label {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .wizard__separator {
+        width: 2em;
+      }
+
+      .location-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .brand-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .view-tabs__label {
+        font-size: var(--font-size-sm);
+        padding: var(--spacing-sm) var(--spacing-lg);
+      }
+    }
+
+    /* ================================================================
+       Responsive: Desktop (>=64em)
+       ================================================================ */
+    @media (min-width: 64em) {
+      .location-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .brand-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* ================================================================
+       Responsive: Mobile (<48em)
+       ================================================================ */
+    @media (max-width: 47.9375em) {
+      .page-section {
+        padding: var(--spacing-lg) var(--spacing-sm);
+      }
+
+      .page-section__title {
+        font-size: var(--font-size-xl);
+      }
+
+      .brand-card__logo,
+      .brand-card__logo-placeholder {
+        height: 3.5em;
+        width: 3.5em;
+      }
+    }
+
+    /* ================================================================
+       Reduced motion
+       ================================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      .location-card,
+      .location-card__brand-logo,
+      .brand-card,
+      .fab-overlay__button,
+      .loading-state__spinner {
+        transition: none;
+      }
+
+      .loading-state__spinner {
+        animation-duration: 3s;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Skip Link -->
+  <a href="#main-content" class="skip-link">Zum Hauptinhalt springen</a>
+
+  <!-- ================================================================
+       Tab Switcher (CSS radio-based, no JavaScript)
+       ================================================================ -->
+  <input type="radio" name="view-tab" id="tab-location" class="view-tabs__radio" checked />
+  <input type="radio" name="view-tab" id="tab-brand" class="view-tabs__radio" />
+  <input type="radio" name="view-tab" id="tab-loading" class="view-tabs__radio" />
+  <input type="radio" name="view-tab" id="tab-error" class="view-tabs__radio" />
+
+
+
+  <!-- ================================================================
+       Tab Panels
+       ================================================================ -->
+  <main id="main-content" class="view-panels">
+
+    <!-- ============================================================
+         TAB 1: Standortwahl (Location Selection)
+         ============================================================ -->
+    <section class="view-panel view-panel--location" aria-label="Standortwahl">
+
+      <!-- Wizard Breadcrumb: Standort = active -->
+      <nav class="wizard" aria-label="Buchungsfortschritt">
+        <ol class="wizard__steps">
+          <li class="wizard__step wizard__step--active" aria-current="step">
+            <span class="wizard__step-icon"><span class="material-icons">location_on</span></span>
+            <span class="wizard__step-label">Standort</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">directions_car</span></span>
+            <span class="wizard__step-label">Marke</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">build</span></span>
+            <span class="wizard__step-label">Leistungen</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">info</span></span>
+            <span class="wizard__step-label">Hinweise</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">event</span></span>
+            <span class="wizard__step-label">Termin</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">drive_eta</span></span>
+            <span class="wizard__step-label">Fahrzeugdaten</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">check_circle</span></span>
+            <span class="wizard__step-label">Übersicht</span>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Page Content -->
+      <section class="page-section">
+        <h1 class="page-section__title">Standort auswählen</h1>
+        <p class="page-section__subtitle">Wählen Sie Ihren bevorzugten Standort</p>
+
+        <div class="location-grid" role="radiogroup" aria-label="Verfügbare Standorte">
+
+          <!-- Location 1 (selected) -->
+          <div class="location-grid__item">
+            <input type="radio" name="location" id="loc-essen-1" class="location-grid__radio" value="essen-1" checked aria-label="Autohaus Essen, Musterstraße 1, 00000 Musterhausen" />
+            <label for="loc-essen-1" class="location-card">
+              <span class="location-card__check" aria-hidden="true"><span class="material-icons">check</span></span>
+              <span class="location-card__name">Autohaus Essen</span>
+              <span class="location-card__address">
+                <span class="material-icons" aria-hidden="true">location_on</span>
+                Musterstraße 1, 00000 Musterhausen
+              </span>
+              <span class="location-card__brands">
+                <span class="location-card__brand-logo--placeholder">VW</span>
+                <span class="location-card__brand-logo--placeholder">Audi</span>
+                <span class="location-card__brand-logo--placeholder">Škoda</span>
+              </span>
+            </label>
+          </div>
+
+          <!-- Location 2 -->
+          <div class="location-grid__item">
+            <input type="radio" name="location" id="loc-dortmund-1" class="location-grid__radio" value="dortmund-1" aria-label="Autohaus Dortmund, Musterstraße 2, 00000 Musterhausen" />
+            <label for="loc-dortmund-1" class="location-card">
+              <span class="location-card__check" aria-hidden="true"><span class="material-icons">check</span></span>
+              <span class="location-card__name">Autohaus Dortmund</span>
+              <span class="location-card__address">
+                <span class="material-icons" aria-hidden="true">location_on</span>
+                Musterstraße 2, 00000 Musterhausen
+              </span>
+              <span class="location-card__brands">
+                <span class="location-card__brand-logo--placeholder">VW</span>
+                <span class="location-card__brand-logo--placeholder">Porsche</span>
+              </span>
+            </label>
+          </div>
+
+          <!-- Location 3 -->
+          <div class="location-grid__item">
+            <input type="radio" name="location" id="loc-duesseldorf-1" class="location-grid__radio" value="duesseldorf-1" aria-label="Autohaus Düsseldorf, Musterstraße 3, 00000 Musterhausen" />
+            <label for="loc-duesseldorf-1" class="location-card">
+              <span class="location-card__check" aria-hidden="true"><span class="material-icons">check</span></span>
+              <span class="location-card__name">Autohaus Düsseldorf</span>
+              <span class="location-card__address">
+                <span class="material-icons" aria-hidden="true">location_on</span>
+                Musterstraße 3, 00000 Musterhausen
+              </span>
+              <span class="location-card__brands">
+                <span class="location-card__brand-logo--placeholder">Hyundai</span>
+                <span class="location-card__brand-logo--placeholder">VW</span>
+              </span>
+            </label>
+          </div>
+
+          <!-- Location 4 -->
+          <div class="location-grid__item">
+            <input type="radio" name="location" id="loc-bochum-1" class="location-grid__radio" value="bochum-1" aria-label="Autohaus Bochum, Musterstraße 4, 00000 Musterhausen" />
+            <label for="loc-bochum-1" class="location-card">
+              <span class="location-card__check" aria-hidden="true"><span class="material-icons">check</span></span>
+              <span class="location-card__name">Autohaus Bochum</span>
+              <span class="location-card__address">
+                <span class="material-icons" aria-hidden="true">location_on</span>
+                Musterstraße 4, 00000 Musterhausen
+              </span>
+              <span class="location-card__brands">
+                <span class="location-card__brand-logo--placeholder">Audi</span>
+                <span class="location-card__brand-logo--placeholder">Škoda</span>
+                <span class="location-card__brand-logo--placeholder">Seat</span>
+              </span>
+            </label>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Floating Action Overlay (expanded state) -->
+      <input type="checkbox" id="cart-toggle" class="fab-overlay__toggle" />
+      <div class="fab-overlay" aria-label="Schnellzugriff">
+        <!-- Expanded Cart Panel -->
+        <div class="fab-overlay__panel">
+          <h3 class="fab-overlay__panel-title">
+            <span class="material-icons" aria-hidden="true">shopping_cart</span>
+            Ihre Auswahl
+          </h3>
+          <div class="fab-overlay__panel-row">
+            <span class="fab-overlay__panel-label">Standort:</span>
+            <span class="fab-overlay__panel-value">Autohaus Essen</span>
+          </div>
+          <div class="fab-overlay__panel-row">
+            <span class="fab-overlay__panel-label">Marke:</span>
+            <span class="fab-overlay__panel-value">Volkswagen</span>
+          </div>
+          <div class="fab-overlay__panel-row">
+            <span class="fab-overlay__panel-label">Leistungen:</span>
+            <span class="fab-overlay__panel-chip">Inspektion</span>
+            <span class="fab-overlay__panel-chip">Ölwechsel</span>
+          </div>
+          <div class="fab-overlay__panel-row">
+            <span class="fab-overlay__panel-label">Termin:</span>
+            <span class="fab-overlay__panel-value">—</span>
+          </div>
+        </div>
+
+        <label for="cart-toggle" class="fab-overlay__button fab-overlay__button--cart" role="button" aria-label="Warenkorb öffnen/schließen">
+          <span class="material-icons fab-overlay__icon-open" aria-hidden="true">shopping_cart</span>
+          <span class="material-icons fab-overlay__icon-close" aria-hidden="true">close</span>
+          <span class="fab-overlay__badge">3</span>
+        </label>
+        <button type="button" class="fab-overlay__button" aria-label="Barrierefreiheit">
+          <span class="material-icons" aria-hidden="true">accessibility_new</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         TAB 2: Markenauswahl (Brand Selection)
+         ============================================================ -->
+    <section class="view-panel view-panel--brand" aria-label="Markenauswahl">
+
+      <!-- Wizard Breadcrumb: Standort = done, Marke = active -->
+      <nav class="wizard" aria-label="Buchungsfortschritt">
+        <ol class="wizard__steps">
+          <li class="wizard__step wizard__step--done">
+            <span class="wizard__step-icon"><span class="material-icons">check</span></span>
+            <a href="#" class="wizard__step-label" aria-label="Standort (abgeschlossen)">Standort</a>
+          </li>
+          <li class="wizard__separator wizard__separator--done" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--active" aria-current="step">
+            <span class="wizard__step-icon"><span class="material-icons">directions_car</span></span>
+            <span class="wizard__step-label">Marke</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">build</span></span>
+            <span class="wizard__step-label">Leistungen</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">info</span></span>
+            <span class="wizard__step-label">Hinweise</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">event</span></span>
+            <span class="wizard__step-label">Termin</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">drive_eta</span></span>
+            <span class="wizard__step-label">Fahrzeugdaten</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">check_circle</span></span>
+            <span class="wizard__step-label">Übersicht</span>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Page Content -->
+      <section class="page-section">
+
+        <!-- Info Banner -->
+        <div class="info-banner" role="status" aria-live="polite">
+          <span class="info-banner__icon"><span class="material-icons" aria-hidden="true">location_on</span></span>
+          <span class="info-banner__text">Ihr Standort: <strong>Autohaus Essen</strong> — Musterstraße 1, 00000 Musterhausen</span>
+        </div>
+
+        <h1 class="page-section__title">Marke auswählen</h1>
+        <p class="page-section__subtitle">Wählen Sie die gewünschte Fahrzeugmarke</p>
+
+        <div class="brand-grid" role="radiogroup" aria-label="Verfügbare Marken">
+
+          <!-- Brand 1 (selected) -->
+          <div class="brand-grid__item">
+            <input type="radio" name="brand" id="brand-vw" class="brand-grid__radio" value="vw" checked aria-label="Volkswagen" />
+            <label for="brand-vw" class="brand-card">
+              <span class="brand-card__check" aria-hidden="true"><span class="material-icons">check</span></span>
+              <span class="brand-card__logo-placeholder" aria-hidden="true">VW</span>
+              <span class="brand-card__name">Volkswagen</span>
+            </label>
+          </div>
+
+          <!-- Brand 2 -->
+          <div class="brand-grid__item">
+            <input type="radio" name="brand" id="brand-audi" class="brand-grid__radio" value="audi" aria-label="Audi" />
+            <label for="brand-audi" class="brand-card">
+              <span class="brand-card__check" aria-hidden="true"><span class="material-icons">check</span></span>
+              <span class="brand-card__logo-placeholder" aria-hidden="true">A</span>
+              <span class="brand-card__name">Audi</span>
+            </label>
+          </div>
+
+          <!-- Brand 3 -->
+          <div class="brand-grid__item">
+            <input type="radio" name="brand" id="brand-skoda" class="brand-grid__radio" value="skoda" aria-label="Škoda" />
+            <label for="brand-skoda" class="brand-card">
+              <span class="brand-card__check" aria-hidden="true"><span class="material-icons">check</span></span>
+              <span class="brand-card__logo-placeholder" aria-hidden="true">Š</span>
+              <span class="brand-card__name">Škoda</span>
+            </label>
+          </div>
+
+          <!-- Brand 4 -->
+          <div class="brand-grid__item">
+            <input type="radio" name="brand" id="brand-porsche" class="brand-grid__radio" value="porsche" aria-label="Porsche" />
+            <label for="brand-porsche" class="brand-card">
+              <span class="brand-card__check" aria-hidden="true"><span class="material-icons">check</span></span>
+              <span class="brand-card__logo-placeholder" aria-hidden="true">P</span>
+              <span class="brand-card__name">Porsche</span>
+            </label>
+          </div>
+
+          <!-- Brand 5 -->
+          <div class="brand-grid__item">
+            <input type="radio" name="brand" id="brand-hyundai" class="brand-grid__radio" value="hyundai" aria-label="Hyundai" />
+            <label for="brand-hyundai" class="brand-card">
+              <span class="brand-card__check" aria-hidden="true"><span class="material-icons">check</span></span>
+              <span class="brand-card__logo-placeholder" aria-hidden="true">H</span>
+              <span class="brand-card__name">Hyundai</span>
+            </label>
+          </div>
+
+          <!-- Brand 6 -->
+          <div class="brand-grid__item">
+            <input type="radio" name="brand" id="brand-seat" class="brand-grid__radio" value="seat" aria-label="Seat" />
+            <label for="brand-seat" class="brand-card">
+              <span class="brand-card__check" aria-hidden="true"><span class="material-icons">check</span></span>
+              <span class="brand-card__logo-placeholder" aria-hidden="true">S</span>
+              <span class="brand-card__name">Seat</span>
+            </label>
+          </div>
+
+        </div>
+
+        <!-- Navigation -->
+        <nav class="page-section__nav" aria-label="Seitennavigation">
+          <button type="button" class="btn btn--back">
+            <span class="material-icons" aria-hidden="true">arrow_back</span>
+            Zurück
+          </button>
+        </nav>
+      </section>
+
+      <!-- Floating Action Overlay -->
+      <div class="fab-overlay" aria-label="Schnellzugriff">
+        <button type="button" class="fab-overlay__button" aria-label="Warenkorb">
+          <span class="material-icons" aria-hidden="true">shopping_cart</span>
+        </button>
+        <button type="button" class="fab-overlay__button" aria-label="Barrierefreiheit">
+          <span class="material-icons" aria-hidden="true">accessibility_new</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         TAB 3: Ladezustand (Loading State)
+         ============================================================ -->
+    <section class="view-panel view-panel--loading" aria-label="Ladezustand">
+
+      <!-- Wizard Breadcrumb: Standort = active -->
+      <nav class="wizard" aria-label="Buchungsfortschritt">
+        <ol class="wizard__steps">
+          <li class="wizard__step wizard__step--active" aria-current="step">
+            <span class="wizard__step-icon"><span class="material-icons">location_on</span></span>
+            <span class="wizard__step-label">Standort</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">directions_car</span></span>
+            <span class="wizard__step-label">Marke</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">build</span></span>
+            <span class="wizard__step-label">Leistungen</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">info</span></span>
+            <span class="wizard__step-label">Hinweise</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">event</span></span>
+            <span class="wizard__step-label">Termin</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">drive_eta</span></span>
+            <span class="wizard__step-label">Fahrzeugdaten</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">check_circle</span></span>
+            <span class="wizard__step-label">Übersicht</span>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Page Content -->
+      <section class="page-section">
+        <h1 class="page-section__title">Standort auswählen</h1>
+        <p class="page-section__subtitle">Wählen Sie Ihren bevorzugten Standort</p>
+
+        <div class="loading-state" role="status" aria-live="polite" aria-label="Daten werden geladen">
+          <div class="loading-state__spinner" aria-hidden="true"></div>
+          <p class="loading-state__text">Standorte werden geladen…</p>
+        </div>
+      </section>
+
+      <!-- Floating Action Overlay -->
+      <div class="fab-overlay" aria-label="Schnellzugriff">
+        <button type="button" class="fab-overlay__button" aria-label="Warenkorb">
+          <span class="material-icons" aria-hidden="true">shopping_cart</span>
+        </button>
+        <button type="button" class="fab-overlay__button" aria-label="Barrierefreiheit">
+          <span class="material-icons" aria-hidden="true">accessibility_new</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         TAB 4: Fehlerzustand (Error State)
+         ============================================================ -->
+    <section class="view-panel view-panel--error" aria-label="Fehlerzustand">
+
+      <!-- Wizard Breadcrumb: Standort = active -->
+      <nav class="wizard" aria-label="Buchungsfortschritt">
+        <ol class="wizard__steps">
+          <li class="wizard__step wizard__step--active" aria-current="step">
+            <span class="wizard__step-icon"><span class="material-icons">location_on</span></span>
+            <span class="wizard__step-label">Standort</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">directions_car</span></span>
+            <span class="wizard__step-label">Marke</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">build</span></span>
+            <span class="wizard__step-label">Leistungen</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">info</span></span>
+            <span class="wizard__step-label">Hinweise</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">event</span></span>
+            <span class="wizard__step-label">Termin</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">drive_eta</span></span>
+            <span class="wizard__step-label">Fahrzeugdaten</span>
+          </li>
+          <li class="wizard__separator" aria-hidden="true"></li>
+          <li class="wizard__step wizard__step--future">
+            <span class="wizard__step-icon"><span class="material-icons">check_circle</span></span>
+            <span class="wizard__step-label">Übersicht</span>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Page Content -->
+      <section class="page-section">
+        <h1 class="page-section__title">Standort auswählen</h1>
+        <p class="page-section__subtitle">Wählen Sie Ihren bevorzugten Standort</p>
+
+        <!-- Error Card -->
+        <div class="error-card" role="alert">
+          <div class="error-card__icon-wrapper">
+            <span class="material-icons" aria-hidden="true">cloud_off</span>
+          </div>
+          <p class="error-card__title">Verbindungsfehler</p>
+          <p class="error-card__message">Die Standortdaten konnten nicht geladen werden. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.</p>
+          <button type="button" class="btn btn--primary">
+            <span class="material-icons" aria-hidden="true">refresh</span>
+            Erneut versuchen
+          </button>
+        </div>
+
+        <!-- Fallback: Muted offline cards -->
+        <div class="fallback-badge" aria-label="Offline-Daten werden angezeigt">
+          <span class="material-icons" aria-hidden="true">cloud_off</span>
+          Offline-Daten
+        </div>
+
+        <div class="location-grid location-grid--muted" role="radiogroup" aria-label="Offline-Standorte (eingeschränkt)">
+
+          <div class="location-grid__item">
+            <input type="radio" name="location-offline" id="loc-offline-1" class="location-grid__radio" value="offline-1" disabled aria-label="Autohaus Essen (offline)" />
+            <label for="loc-offline-1" class="location-card">
+              <span class="location-card__name">Autohaus Essen</span>
+              <span class="location-card__address">
+                <span class="material-icons" aria-hidden="true">location_on</span>
+                Musterstraße 1, 00000 Musterhausen
+              </span>
+              <span class="location-card__brands">
+                <span class="location-card__brand-logo--placeholder">VW</span>
+                <span class="location-card__brand-logo--placeholder">Audi</span>
+              </span>
+            </label>
+          </div>
+
+          <div class="location-grid__item">
+            <input type="radio" name="location-offline" id="loc-offline-2" class="location-grid__radio" value="offline-2" disabled aria-label="Autohaus Dortmund (offline)" />
+            <label for="loc-offline-2" class="location-card">
+              <span class="location-card__name">Autohaus Dortmund</span>
+              <span class="location-card__address">
+                <span class="material-icons" aria-hidden="true">location_on</span>
+                Musterstraße 2, 00000 Musterhausen
+              </span>
+              <span class="location-card__brands">
+                <span class="location-card__brand-logo--placeholder">VW</span>
+              </span>
+            </label>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Floating Action Overlay -->
+      <div class="fab-overlay" aria-label="Schnellzugriff">
+        <button type="button" class="fab-overlay__button" aria-label="Warenkorb">
+          <span class="material-icons" aria-hidden="true">shopping_cart</span>
+        </button>
+        <button type="button" class="fab-overlay__button" aria-label="Barrierefreiheit">
+          <span class="material-icons" aria-hidden="true">accessibility_new</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>

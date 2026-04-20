@@ -195,7 +195,7 @@ test.describe('REQ-006: Appointment Selection (Terminauswahl)', () => {
       // Click continue
       await clickAppointmentContinue(page);
 
-      // Currently the click-dummy navigates back to /home/appointment (no next step implemented)
+      // Currently the placeholder navigates back to /home/appointment (no next step implemented)
       // Verify the button was clickable and no error occurred
       const route = await getCurrentRoute(page);
       expect(route).toBeTruthy();

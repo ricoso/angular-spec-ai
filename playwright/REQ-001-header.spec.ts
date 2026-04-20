@@ -32,23 +32,23 @@ test.describe('REQ-001: Header', () => {
       await expect(header).toBeVisible();
     });
 
-    test('AC-1b: should display company name "Gottfried Schultz"', async ({ page }) => {
+    test('AC-1b: should display company name', async ({ page }) => {
       const companyName = page.locator('.header__company-name');
       await expect(companyName).toBeVisible();
-      await expect(companyName).toContainText('Gottfried Schultz');
+      await expect(companyName).toContainText('Autohaus GmbH');
     });
 
     test('AC-1c: should display company subtitle', async ({ page }) => {
       const subtitle = page.locator('.header__company-subtitle');
       await expect(subtitle).toBeVisible();
-      await expect(subtitle).toContainText('Automobilhandels SE');
+      await expect(subtitle).toContainText('Fahrzeugauswahl');
     });
 
     test('AC-1d: logo link should have href attribute', async ({ page }) => {
       const logoLink = page.locator('.header__logo-link');
       await expect(logoLink).toBeVisible();
       const href = await logoLink.getAttribute('href');
-      // HashLocation: href may be '#/' or '/'
+      // SSR: href should be '/' or '/home/brand'
       expect(href).toBeTruthy();
     });
 
@@ -159,7 +159,7 @@ test.describe('REQ-001: Header', () => {
 
     test('should show company name (language-independent)', async ({ page }) => {
       const companyName = page.locator('.header__company-name');
-      await expect(companyName).toContainText('Gottfried Schultz');
+      await expect(companyName).toContainText('Autohaus GmbH');
     });
 
     test('should show EN cart title', async ({ page }) => {

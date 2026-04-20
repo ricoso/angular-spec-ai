@@ -49,7 +49,9 @@ describe('HeaderContainerComponent', () => {
         {
           provide: AppointmentApiService,
           useValue: {
-            getAppointments: jest.fn().mockResolvedValue([])
+            getAppointments: jest.fn().mockResolvedValue([]),
+            createAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' }),
+            getAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' })
           }
         }
       ]

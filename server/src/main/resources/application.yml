@@ -1,0 +1,33 @@
+server:
+  port: ${PORT:3000}
+
+app:
+  session:
+    secret: ${SESSION_SECRET:default-dev-secret-must-be-32-chars!}
+    ttl-minutes: ${SESSION_TTL_MINUTES:20}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:3000}
+
+softnet:
+  base-url: ${SOFTNET_BASE_URL:}
+  auth-url: ${SOFTNET_AUTH_URL:}
+  fingerprint-path: ${SOFTNET_FINGERPRINT_PATH:}
+  timeout: ${SOFTNET_TIMEOUT:10000}
+  group-id: ${GROUP_ID:}
+  branch-id: ${BRANCH_ID:}
+
+logging:
+  level:
+    root: INFO
+    com.autohaus.backend: DEBUG
+    org.springframework.boot.autoconfigure.security: OFF
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
+
+spring:
+  jackson:
+    default-property-inclusion: non_null
+  devtools:
+    restart:
+      enabled: true
+      additional-exclude: "static/**,dist/**"

@@ -24,27 +24,37 @@ export class WizardBreadcrumbComponent {
   public readonly steps = input.required<WizardStep[]>();
   public readonly activeIndex = input.required<number>();
 
+  protected readonly isDeepLinked = this.store.isDeepLinked;
+
   protected readonly stepsWithStatus = computed(() => {
     const active = this.activeIndex();
-    return this.steps().map((step, i) => {
-      let status: WizardStepStatus;
-      if (i < active) {
-        status = 'done';
-      } else if (i === active) {
-        status = 'active';
-      } else {
-        status = 'future';
-      }
-      return { ...step, status, isLast: i === this.steps().length - 1 };
-    });
+    const deepLinked = this.isDeepLinked();
+    return this.steps()
+      .filter((_, i) => !(deepLinked && i === 0))
+      .map((step, i, arr) => {
+        const originalIndex = deepLinked ? i + 1 : i;
+        const adjustedActive = deepLinked ? active - 1 : active;
+        let status: WizardStepStatus;
+        if (i < adjustedActive) {
+          status = 'done';
+        } else if (i === adjustedActive) {
+          status = 'active';
+        } else {
+          status = 'future';
+        }
+        return { ...step, status, isLast: i === arr.length - 1, originalIndex };
+      });
   });
 
-  protected onStepClick(event: Event, targetIndex: number): void {
+  protected onStepClick(event: Event, originalIndex: number): void {
     event.preventDefault();
-    const step = this.stepsWithStatus()[targetIndex];
-    if (step.status !== 'done') { return; }
+    const allSteps = this.steps();
+    const active = this.activeIndex();
+    if (originalIndex >= active || originalIndex >= allSteps.length) { return; }
 
-    this.store.resetFromStep(targetIndex);
-    void this.router.navigate([step.route]);
+    if (this.isDeepLinked() && originalIndex === 0) { return; }
+
+    this.store.resetFromStep(originalIndex);
+    void this.router.navigate([allSteps[originalIndex].route]);
   }
 }

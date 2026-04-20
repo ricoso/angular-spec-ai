@@ -13,7 +13,7 @@ export interface BrandDisplay {
 }
 
 /**
- * Static brand data (Click-Dummy)
+ * Available brand definitions
  * Order matches mockup layout
  */
 export const AVAILABLE_BRANDS: BrandDisplay[] = [

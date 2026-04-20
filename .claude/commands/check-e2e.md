@@ -24,7 +24,21 @@ Example: `booking`
    ```bash
    npx playwright install chromium
    ```
-3. **Dev Server** wird automatisch via `playwright.config.ts` gestartet
+3. **Spring Boot Backend** muss laufen — E2E-Tests laufen IMMER mit Backend!
+   ```bash
+   # Backend bauen + starten (falls nicht bereits laufend)
+   cd server && ./gradlew bootRun &
+   ```
+4. **Angular-App** muss gebaut sein (fuer Backend-Serving):
+   ```bash
+   npm run build
+   ```
+5. **Playwright-Config**: `playwright-backend.config.ts` (Port 3000, Backend serviert Angular)
+
+> **WICHTIG:** Kein Click-Dummy-Modus mehr! Frontend macht echte HTTP-Calls zum Backend.
+> Spring Boot Backend verbindet sich mit SoftNet Integration-API (Dev) oder Production-API (Prod).
+> - **Lokal/GitHub Actions:** `application.yml` / `.env`-Datei mit Dev-Werten (SoftNet Integration)
+> - **Prod (K8s Pod):** Environment Variables aus GitLab Secrets Store (SoftNet Production)
 
 ---
 

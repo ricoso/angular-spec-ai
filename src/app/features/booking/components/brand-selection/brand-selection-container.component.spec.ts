@@ -26,9 +26,9 @@ describe('BrandSelectionContainerComponent', () => {
           provide: BookingApiService,
           useValue: {
             getBrands: jest.fn().mockResolvedValue(AVAILABLE_BRANDS),
-            getBrandsByLocation: jest.fn().mockResolvedValue([]),
             getBrandsByBranch: jest.fn().mockResolvedValue([]),
-            getAllLocations: jest.fn().mockResolvedValue([]),
+            getBranchById: jest.fn().mockResolvedValue(null),
+            getBrandLogoPath: jest.fn().mockReturnValue('assets/brands/default.svg'),
             getBranches: jest.fn().mockResolvedValue([]),
             getServices: jest.fn().mockResolvedValue([])
           }
@@ -72,13 +72,6 @@ describe('BrandSelectionContainerComponent', () => {
   });
 
   describe('Navigation', () => {
-    it('should navigate to /home/services on continue', () => {
-      const exposed = component as unknown as { onContinue: () => void };
-      exposed.onContinue();
-
-      expect(router.navigate).toHaveBeenCalledWith(['/home/services']);
-    });
-
     it('should clear brand and navigate to /home/location on back', () => {
       const exposed = component as unknown as { onBrandSelect: (b: string) => void; onBack: () => void };
       exposed.onBrandSelect('audi');
@@ -103,7 +96,50 @@ describe('BrandSelectionContainerComponent', () => {
         brands: ['audi']
       });
       const exposed = component as unknown as { formattedBranchAddress: () => string };
-      expect(exposed.formattedBranchAddress()).toBe('Musterstr. 1, 12345 Berlin');
+      expect(exposed.formattedBranchAddress()).toBe('Musterstr. 1');
+    });
+
+    it('should fall back to branch name when street is empty', () => {
+      store.selectBranch({
+        branchId: 'b2',
+        name: 'Fallback Name',
+        address: { street: '', zip: '00000', city: 'Nowhere' },
+        brands: ['bmw']
+      });
+      const exposed = component as unknown as { formattedBranchAddress: () => string };
+      expect(exposed.formattedBranchAddress()).toBe('Fallback Name');
+    });
+  });
+
+  describe('Loading and Error States', () => {
+    it('should expose isLoading signal from store', () => {
+      const exposed = component as unknown as { isLoading: () => boolean };
+      expect(exposed.isLoading()).toBe(false);
+    });
+
+    it('should expose error signal from store', () => {
+      const exposed = component as unknown as { error: () => string | null };
+      expect(exposed.error()).toBeNull();
+    });
+
+    it('should call store.loadBrands on retry when branch is selected', () => {
+      store.selectBranch({
+        branchId: 'b1',
+        name: 'Test',
+        address: { street: 'Test', zip: '12345', city: 'Berlin' },
+        brands: ['audi']
+      });
+      const loadBrandsSpy = jest.spyOn(store, 'loadBrands');
+      const exposed = component as unknown as { onRetry: () => void };
+      exposed.onRetry();
+      expect(loadBrandsSpy).toHaveBeenCalledWith('b1');
+    });
+
+    it('should not call store.loadBrands on retry when no branch is selected', () => {
+      const loadBrandsSpy = jest.spyOn(store, 'loadBrands');
+      const exposed = component as unknown as { onRetry: () => void };
+      exposed.onRetry();
+      expect(loadBrandsSpy).not.toHaveBeenCalled();
     });
   });
 });

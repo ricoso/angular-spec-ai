@@ -10,7 +10,9 @@ describe('appointmentsResolver', () => {
   let store: InstanceType<typeof BookingStore>;
 
   const mockAppointmentApiService = {
-    getAppointments: jest.fn().mockResolvedValue([])
+    getAppointments: jest.fn().mockResolvedValue([]),
+    createAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' }),
+    getAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' })
   };
 
   beforeEach(() => {

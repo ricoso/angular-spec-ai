@@ -1,0 +1,83 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.1.0-SNAPSHOT'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
+}
+
+group = 'com.autohaus'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven { url = 'https://repo.spring.io/snapshot' }
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'com.nimbusds:nimbus-jose-jwt:10.3'
+	implementation 'com.bucket4j:bucket4j_jdk17-core:8.14.0'
+	implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}
+
+// --- Angular Frontend Build ---
+
+def angularDir = file("${rootProject.projectDir}/..")
+def angularDist = file("${angularDir}/dist/angular-21-project/browser")
+
+tasks.register('npmInstall', Exec) {
+	description = 'Install Angular dependencies (only if node_modules missing)'
+	workingDir = angularDir
+	commandLine 'npm', 'install', '--legacy-peer-deps'
+	inputs.file("${angularDir}/package-lock.json")
+	outputs.dir("${angularDir}/node_modules")
+	onlyIf { !file("${angularDir}/node_modules").exists() }
+}
+
+tasks.register('buildAngular', Exec) {
+	description = 'Build Angular frontend'
+	dependsOn 'npmInstall'
+	workingDir = angularDir
+	commandLine 'npm', 'run', 'build'
+	inputs.dir("${angularDir}/src")
+	inputs.file("${angularDir}/angular.json")
+	inputs.file("${angularDir}/tsconfig.json")
+	inputs.file("${angularDir}/tsconfig.app.json")
+	outputs.dir(angularDist)
+}
+
+tasks.named('bootRun') {
+	dependsOn 'buildAngular'
+}
+
+tasks.named('bootJar') {
+	dependsOn 'buildAngular'
+}

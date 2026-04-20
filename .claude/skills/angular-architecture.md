@@ -1,9 +1,9 @@
 # Angular Architecture (COMPACT)
 
 ## Projekt-Vorgabe
-- Typ: Click-Dummy (kein Backend, kein SSR)
-- API Services: Mock-Daten / lokale JSON
-- Auth: Keine (oder simuliert)
+- Typ: Production (Spring Boot Backend + SoftNet API)
+- API Services: HTTP calls to Spring Boot Backend (:3000, /api/v1/*)
+- Auth: Session Token (HMAC-SHA256)
 
 **VORHER LESEN:** code-language.md, performance.md
 

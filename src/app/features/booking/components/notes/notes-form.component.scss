@@ -9,7 +9,8 @@
     font-size: var(--font-size-sm);
 
     &:focus-visible {
-      outline: none;
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
     }
   }
 

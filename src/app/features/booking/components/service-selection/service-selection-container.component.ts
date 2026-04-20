@@ -61,6 +61,7 @@ export class ServiceSelectionContainerComponent {
   }
 
   protected onBack(): void {
+    this.store.clearSelectedServices();
     void this.router.navigate(['/home/brand']);
   }
 }

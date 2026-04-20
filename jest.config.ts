@@ -22,6 +22,8 @@ const config: Config = {
     },
   },
   moduleNameMapper: {
+    '^@angular/common/http/testing$': '<rootDir>/node_modules/@angular/common/fesm2022/http-testing.mjs',
+    '^@angular/common/http$': '<rootDir>/node_modules/@angular/common/fesm2022/http.mjs',
     '^@angular/platform-browser/animations/async$': '<rootDir>/node_modules/@angular/platform-browser/fesm2022/animations-async.mjs',
     '^@angular/platform-browser/animations$': '<rootDir>/node_modules/@angular/platform-browser/fesm2022/animations.mjs',
     '^@angular/material/(.+)$': '<rootDir>/node_modules/@angular/material/fesm2022/$1.mjs',

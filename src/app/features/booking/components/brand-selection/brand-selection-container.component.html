@@ -15,7 +15,26 @@
   <h1 class="brand-selection__title">{{ booking.brand.title | translate }}</h1>
   <p class="brand-selection__subtitle">{{ booking.brand.subtitle | translate }}</p>
 
-  @if (brands().length > 0) {
+  @if (isLoading()) {
+    <div class="brand-selection__loading" role="status" aria-live="polite">
+      <mat-spinner diameter="48" />
+      <p class="brand-selection__loading-text">{{ booking.api.loading | translate }}</p>
+    </div>
+  } @else if (error()) {
+    <div class="brand-selection__error" role="alert" aria-live="assertive">
+      <mat-icon class="brand-selection__error-icon" aria-hidden="true">error_outline</mat-icon>
+      <h2 class="brand-selection__error-title">{{ booking.api.errorTitle | translate }}</h2>
+      <p class="brand-selection__error-message">{{ booking.api.errorUnknown | translate }}</p>
+      <button
+        mat-flat-button
+        color="primary"
+        class="brand-selection__retry-button"
+        (click)="onRetry()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        {{ booking.api.retryButton | translate }}
+      </button>
+    </div>
+  } @else if (brands().length > 0) {
     <app-brand-cards
       [brands]="brands()"
       [selectedBrand]="selectedBrand()"

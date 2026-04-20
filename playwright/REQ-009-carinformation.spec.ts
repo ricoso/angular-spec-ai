@@ -460,14 +460,14 @@ test.describe('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () => {
 
   test.describe('Alternative Flows', () => {
 
-    test('5.1: returning customer button click does not crash (click-dummy)', async ({ page }) => {
+    test('5.1: returning customer button click does not crash (placeholder)', async ({ page }) => {
       await setLanguage(page, 'de');
       await navigateToCarinformation(page);
 
       const returningButton = page.locator('.carinformation__returning-button');
       await expect(returningButton).toBeVisible();
 
-      // Click the button (click-dummy - no action expected)
+      // Click the button (placeholder - no action expected)
       await returningButton.click();
       await waitForAngular(page);
 
@@ -476,14 +476,14 @@ test.describe('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () => {
       expect(route).toBe('/home/carinformation');
     });
 
-    test('5.3: VIN explanation link click-dummy does not navigate away', async ({ page }) => {
+    test('5.3: VIN explanation link placeholder does not navigate away', async ({ page }) => {
       await setLanguage(page, 'de');
       await navigateToCarinformation(page);
 
       const vinLink = page.locator('.vehicle-form__vin-link');
       await expect(vinLink).toBeVisible();
 
-      // Click the link (href="#", click-dummy)
+      // Click the link (href="#", placeholder)
       await vinLink.click();
       await waitForAngular(page);
 

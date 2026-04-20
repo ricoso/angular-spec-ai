@@ -2,15 +2,12 @@ import type { Page } from '@playwright/test';
 
 /**
  * Shared helpers for E2E tests
- * Provides navigation and language utilities for the Click-Dummy app
+ * Provides navigation and language utilities for the Angular SSR app
  */
 
-/** Base URL with hash routing */
-const BASE = '/#';
-
-/** Navigate to a route in the Angular app (HashLocation) */
+/** Navigate to a route in the Angular app */
 export async function navigateTo(page: Page, route: string): Promise<void> {
-  await page.goto(`${BASE}${route}`);
+  await page.goto(route);
   await page.waitForLoadState('networkidle');
 }
 
@@ -19,7 +16,7 @@ export async function setLanguage(page: Page, lang: 'de' | 'en'): Promise<void> 
   // Ensure we're on a real page (not about:blank) before accessing localStorage
   const url = page.url();
   if (!url || url === 'about:blank') {
-    await page.goto(`${BASE}/home/brand`);
+    await page.goto('/home/brand');
     await page.waitForLoadState('networkidle');
   }
   await page.evaluate((l) => localStorage.setItem('app-language', l), lang);
@@ -36,14 +33,14 @@ export async function ensureGermanLanguage(page: Page): Promise<void> {
   await page.evaluate(() => localStorage.setItem('app-language', 'de'));
 }
 
-/** Get current URL hash route */
+/** Get current URL path route */
 export async function getCurrentRoute(page: Page): Promise<string> {
   const url = page.url();
-  const hash = new URL(url).hash;
-  return hash.replace('#', '') || '/';
+  const pathname = new URL(url).pathname;
+  return pathname || '/';
 }
 
-/** Wait for Angular to stabilize (simplified for Click-Dummy) */
+/** Wait for Angular to stabilize */
 export async function waitForAngular(page: Page): Promise<void> {
   await page.waitForLoadState('networkidle');
   // Small extra wait for Angular change detection

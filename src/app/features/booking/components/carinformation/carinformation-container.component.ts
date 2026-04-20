@@ -123,9 +123,4 @@ export class CarinformationContainerComponent {
     // TODO: REQ-010+ — retrieve existing customer data
     console.debug('[CarinformationContainer] Returning customer button clicked');
   }
-
-  protected onVinLinkClick(event: Event): void {
-    event.preventDefault();
-    console.debug('[CarinformationContainer] VIN explanation link clicked');
-  }
 }

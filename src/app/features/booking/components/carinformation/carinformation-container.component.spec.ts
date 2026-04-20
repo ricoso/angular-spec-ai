@@ -35,7 +35,7 @@ describe('CarinformationContainerComponent', () => {
         },
         {
           provide: AppointmentApiService,
-          useValue: { getAppointments: jest.fn().mockResolvedValue([]) }
+          useValue: { getAppointments: jest.fn().mockResolvedValue([]), createAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' }), getAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' }) }
         },
         {
           provide: WorkshopCalendarApiService,
@@ -125,8 +125,7 @@ describe('CarinformationContainerComponent', () => {
 
       exposed.vehicleForm.setValue({
         licensePlate: 'B-AB 1234',
-        mileage: 50000,
-        vin: ''
+        mileage: 50000
       });
 
       exposed.privacyControl.setValue(true);

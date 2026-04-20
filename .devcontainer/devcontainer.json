@@ -6,10 +6,14 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
-  "forwardPorts": [4200, 3200],
+  "forwardPorts": [4200, 3000, 3200],
   "portsAttributes": {
     "4200": {
       "label": "Angular Dev Server",
+      "onAutoForward": "notify"
+    },
+    "3000": {
+      "label": "Spring Boot Backend",
       "onAutoForward": "notify"
     },
     "3200": {
@@ -22,8 +26,8 @@
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,consistency=cached"
   ],
 
-  "postCreateCommand": "npm install && npx playwright install --with-deps chromium && cd tools/requirements-board && npm install",
-  "postStartCommand": "npm run board:start:prod &",
+  "postCreateCommand": "npx playwright install --with-deps chromium && cd tools/requirements-board && curl -fsSL https://claude.ai/install.sh | bash && curl -sL https://download.java.net/java/early_access/jdk25/26/GPL/openjdk-25-ea+26_linux-x64_bin.tar.gz | sudo tar -xz -C /usr/local && sudo ln -sf /usr/local/jdk-25/bin/* /usr/local/bin/",
+  "postStartCommand": "",
 
   "customizations": {
     "vscode": {

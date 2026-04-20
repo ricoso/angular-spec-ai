@@ -16,18 +16,19 @@ describe('BookingStore', () => {
   beforeEach(() => {
     apiSpy = {
       getBrands: jest.fn().mockResolvedValue(AVAILABLE_BRANDS),
-      getBrandsByLocation: jest.fn().mockResolvedValue(AVAILABLE_BRANDS),
-      getLocations: jest.fn().mockResolvedValue(LOCATIONS_BY_BRAND.audi),
-      getAllLocations: jest.fn().mockResolvedValue(ALL_LOCATIONS),
+      getBrandsByBranch: jest.fn().mockResolvedValue(AVAILABLE_BRANDS),
+      getLocations: jest.fn().mockResolvedValue(ALL_LOCATIONS),
+      getBranchById: jest.fn().mockResolvedValue(null),
       getBranches: jest.fn().mockResolvedValue([]),
-      getServices: jest.fn().mockResolvedValue(AVAILABLE_SERVICES)
+      getServices: jest.fn().mockResolvedValue(AVAILABLE_SERVICES),
+      getBrandLogoPath: jest.fn().mockReturnValue('assets/brands/default.svg')
     } as unknown as jest.Mocked<BookingApiService>;
 
     TestBed.configureTestingModule({
       providers: [
         BookingStore,
         { provide: BookingApiService, useValue: apiSpy },
-        { provide: AppointmentApiService, useValue: { getAppointments: jest.fn().mockResolvedValue([]) } }
+        { provide: AppointmentApiService, useValue: { getAppointments: jest.fn().mockResolvedValue([]), createAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' }), getAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' }) } }
       ]
     });
 
@@ -65,16 +66,8 @@ describe('BookingStore', () => {
       expect(store.hasBrandSelected()).toBe(false);
     });
 
-    it('should compute brandCount as 0 initially', () => {
-      expect(store.brandCount()).toBe(0);
-    });
-
     it('should compute hasLocationSelected as false initially', () => {
       expect(store.hasLocationSelected()).toBe(false);
-    });
-
-    it('should compute locationCount as 0 initially', () => {
-      expect(store.locationCount()).toBe(0);
     });
   });
 
@@ -116,12 +109,6 @@ describe('BookingStore', () => {
       expect(store.isLoading()).toBe(false);
     });
 
-    it('should update brandCount after load', async () => {
-      store.loadBrands();
-      await new Promise(resolve => setTimeout(resolve, 0));
-      expect(store.brandCount()).toBe(5);
-    });
-
     it('should handle API error with Error instance', async () => {
       apiSpy.getBrands.mockRejectedValueOnce(new Error('Network error'));
       store.loadBrands();
@@ -140,10 +127,10 @@ describe('BookingStore', () => {
   });
 
   describe('loadLocations', () => {
-    it('should call getAllLocations API', async () => {
+    it('should call getLocations API', async () => {
       store.loadLocations();
       await new Promise(resolve => setTimeout(resolve, 0));
-      expect(apiSpy.getAllLocations).toHaveBeenCalled();
+      expect(apiSpy.getLocations).toHaveBeenCalled();
     });
 
     it('should load locations from API', async () => {
@@ -153,14 +140,8 @@ describe('BookingStore', () => {
       expect(store.isLoading()).toBe(false);
     });
 
-    it('should update locationCount after load', async () => {
-      store.loadLocations();
-      await new Promise(resolve => setTimeout(resolve, 0));
-      expect(store.locationCount()).toBe(ALL_LOCATIONS.length);
-    });
-
     it('should handle API error with Error instance', async () => {
-      apiSpy.getAllLocations.mockRejectedValueOnce(new Error('Location error'));
+      apiSpy.getLocations.mockRejectedValueOnce(new Error('Location error'));
       store.loadLocations();
       await new Promise(resolve => setTimeout(resolve, 0));
       expect(store.error()).toBe('Location error');
@@ -168,7 +149,7 @@ describe('BookingStore', () => {
     });
 
     it('should handle API error with non-Error value', async () => {
-      apiSpy.getAllLocations.mockRejectedValueOnce(42);
+      apiSpy.getLocations.mockRejectedValueOnce(42);
       store.loadLocations();
       await new Promise(resolve => setTimeout(resolve, 0));
       expect(store.error()).toBe('Unknown error');
@@ -262,50 +243,6 @@ describe('BookingStore', () => {
     });
   });
 
-  describe('clearSelectedLocation', () => {
-    it('should clear selected location', () => {
-      store.setLocation(LOCATIONS_BY_BRAND.audi[0]);
-      expect(store.selectedLocation()).not.toBeNull();
-      store.clearSelectedLocation();
-      expect(store.selectedLocation()).toBeNull();
-    });
-
-    it('should update hasLocationSelected to false', () => {
-      store.setLocation(LOCATIONS_BY_BRAND.audi[0]);
-      expect(store.hasLocationSelected()).toBe(true);
-      store.clearSelectedLocation();
-      expect(store.hasLocationSelected()).toBe(false);
-    });
-
-    it('should be idempotent when already null', () => {
-      expect(store.selectedLocation()).toBeNull();
-      store.clearSelectedLocation();
-      expect(store.selectedLocation()).toBeNull();
-    });
-  });
-
-  describe('clearBookingNote', () => {
-    it('should clear booking note', () => {
-      store.setBookingNote('Test note');
-      expect(store.bookingNote()).toBe('Test note');
-      store.clearBookingNote();
-      expect(store.bookingNote()).toBeNull();
-    });
-
-    it('should update hasBookingNote to false', () => {
-      store.setBookingNote('Test note');
-      expect(store.hasBookingNote()).toBe(true);
-      store.clearBookingNote();
-      expect(store.hasBookingNote()).toBe(false);
-    });
-
-    it('should be idempotent when already null', () => {
-      expect(store.bookingNote()).toBeNull();
-      store.clearBookingNote();
-      expect(store.bookingNote()).toBeNull();
-    });
-  });
-
   describe('clearSelectedAppointment', () => {
     const mockAppointment: AppointmentSlot = {
       id: '2026-02-25-09-00',
@@ -357,7 +294,7 @@ describe('BookingStore', () => {
   describe('setVehicleInfo', () => {
     it('should set vehicleInfo', () => {
       expect(store.vehicleInfo()).toBeNull();
-      store.setVehicleInfo({ licensePlate: 'B-AB 1234', mileage: 50000, vin: 'WVWZZZ3BZWE689725' });
+      store.setVehicleInfo({ licensePlate: 'B-AB 1234', mileage: 50000 });
       expect(store.vehicleInfo()?.licensePlate).toBe('B-AB 1234');
     });
   });
@@ -372,29 +309,6 @@ describe('BookingStore', () => {
     it('should set privacyConsent back to false', () => {
       store.setPrivacyConsent(true);
       store.setPrivacyConsent(false);
-      expect(store.privacyConsent()).toBe(false);
-    });
-  });
-
-  describe('clearCarInformation', () => {
-    it('should clear all car information fields', () => {
-      store.setCustomerInfo({
-        email: 'test@example.com',
-        salutation: 'ms',
-        firstName: 'Erika',
-        lastName: 'Musterfrau',
-        street: 'Musterstraße 2',
-        postalCode: '12345',
-        city: 'Musterstadt',
-        mobilePhone: '+49151000000'
-      });
-      store.setVehicleInfo({ licensePlate: 'M-XY 5678', mileage: 10000, vin: '' });
-      store.setPrivacyConsent(true);
-
-      store.clearCarInformation();
-
-      expect(store.customerInfo()).toBeNull();
-      expect(store.vehicleInfo()).toBeNull();
       expect(store.privacyConsent()).toBe(false);
     });
   });

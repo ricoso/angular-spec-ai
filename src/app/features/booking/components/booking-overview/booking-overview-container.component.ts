@@ -88,10 +88,12 @@ export class BookingOverviewContainerComponent {
   });
 
 
+  protected readonly isSubmitting = this.store.isBookingSubmitting;
+  protected readonly hasSubmitted = this.store.hasBookingSubmitted;
+
   protected onSubmit(): void {
     this.store.submitBooking();
-    console.debug('[BookingOverviewContainer] Booking submitted, navigating to confirmation');
-    void this.router.navigate(['/home/booking-overview']);
+    console.debug('[BookingOverviewContainer] Booking submission initiated');
   }
 
   protected onBack(): void {

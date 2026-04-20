@@ -2,6 +2,8 @@
 
 # Compiled output
 /dist
+/backend/dist
+/backend/coverage
 /tmp
 /out-tsc
 /bazel-out
@@ -109,7 +111,15 @@ tools/requirements-board/webview/.angular/
 .claude/history/
 .claude/logs/
 .claude/cache/
+.claude/settings.local.json
 /private/tmp/claude-*
 node_modules
 3rd-party_Authentication-Authorization.html
 cognigy.net_fingerprint-e6ced285a2bfce274426c261cca6edcd.json
+soft-netOpenAPI.html
+
+# Spring Boot / Gradle
+server/build/
+server/.gradle/
+server/.DS_Store
+server/Autohaus-Terminbuchung.zip

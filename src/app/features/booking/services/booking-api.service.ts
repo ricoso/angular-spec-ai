@@ -1,61 +1,128 @@
-import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
 
-import type { BranchConfig, BranchConfigFile } from '../models/branch-config.model';
+import { environment } from '@environments/environment';
+import { firstValueFrom } from 'rxjs';
+
+import type { BranchConfig } from '../models/branch-config.model';
+import { FALLBACK_ADDRESS, getBrandLogoPath } from '../models/branch-config.model';
 import type { Brand, BrandDisplay } from '../models/brand.model';
-import { AVAILABLE_BRANDS, BRANDS_BY_LOCATION } from '../models/brand.model';
 import type { LocationDisplay } from '../models/location.model';
-import { ALL_LOCATIONS, LOCATIONS_BY_BRAND } from '../models/location.model';
 import type { ServiceDisplay } from '../models/service.model';
 import { AVAILABLE_SERVICES } from '../models/service.model';
 
-/**
- * API Service for booking data
- * Click-Dummy: Returns static data, no real backend
- */
+interface ApiResponse<T> {
+  data: T;
+}
+
+interface BranchDto {
+  id: string;
+  name: string;
+  description: string | null;
+  brands: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class BookingApiService {
-  public getBrands(): Promise<BrandDisplay[]> {
-    console.debug('[BookingApiService] getBrands() called');
-    return Promise.resolve(AVAILABLE_BRANDS);
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = environment.apiUrl;
+
+  /** Load all unique brands from all branches */
+  public async getBrands(): Promise<BrandDisplay[]> {
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<BranchDto[]>>(`${this.apiUrl}/branches`)
+    );
+
+    const brandNames = new Set<string>();
+    for (const branch of response.data) {
+      for (const name of branch.brands) {
+        brandNames.add(name);
+      }
+    }
+
+    return Array.from(brandNames).map(name => ({
+      id: name.toLowerCase().replace(/\s+/g, '-') as Brand,
+      name,
+    }));
   }
 
-  /** REQ-013: Load brands filtered by location */
-  public getBrandsByLocation(locationId: string): Promise<BrandDisplay[]> {
-    console.debug('[BookingApiService] getBrandsByLocation() called for location:', locationId);
-    return Promise.resolve(BRANDS_BY_LOCATION[locationId] ?? []);
-  }
-
-  /** REQ-013: Load brands available at a specific branch */
+  /** Load brands available at a specific branch (from API data) */
   public getBrandsByBranch(brandNames: string[]): Promise<BrandDisplay[]> {
     console.debug('[BookingApiService] getBrandsByBranch() called for brands:', brandNames);
     const brands: BrandDisplay[] = brandNames.map(name => ({
-      id: name.toLowerCase().replace(/\s+/g, '-').replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue') as Brand,
+      id: name.toLowerCase().replace(/\s+/g, '-') as Brand,
       name
     }));
     return Promise.resolve(brands);
   }
 
-  public getLocations(brand: Brand): Promise<LocationDisplay[]> {
-    console.debug('[BookingApiService] getLocations() called for brand:', brand);
-    return Promise.resolve(LOCATIONS_BY_BRAND[brand]);
+  /** Load locations from API, optionally filtered by brand */
+  public async getLocations(brand?: Brand): Promise<LocationDisplay[]> {
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<BranchDto[]>>(`${this.apiUrl}/branches`)
+    );
+
+    const branches = brand
+      ? response.data.filter(b => b.brands.some(name => name.toLowerCase().replace(/\s+/g, '-') === brand))
+      : response.data;
+
+    return branches.map(b => this.mapBranchToLocation(b));
   }
 
-  /** REQ-013: Load ALL locations without brand filter */
-  public getAllLocations(): Promise<LocationDisplay[]> {
-    console.debug('[BookingApiService] getAllLocations() called');
-    return Promise.resolve(ALL_LOCATIONS);
+  /** Fetch a single branch by ID (for deep-link validation) */
+  public async getBranchById(branchId: string): Promise<BranchConfig | null> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<ApiResponse<BranchDto>>(`${this.apiUrl}/branches/${branchId}`)
+      );
+      return this.mapBranchToBranchConfig(response.data);
+    } catch {
+      return null;
+    }
   }
 
-  /** REQ-013: Load branch configs from JSON */
+  /** Load branches from API as BranchConfig[] */
   async getBranches(): Promise<BranchConfig[]> {
     console.debug('[BookingApiService] getBranches() called');
-    const response = await fetch('assets/branch-config.json');
-    const data = await response.json() as BranchConfigFile;
-    return data.branches;
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<BranchDto[]>>(`${this.apiUrl}/branches`)
+    );
+    return response.data.map(b => this.mapBranchToBranchConfig(b));
   }
 
-  public getServices(): Promise<ServiceDisplay[]> {
+  public async getServices(): Promise<ServiceDisplay[]> {
     console.debug('[BookingApiService] getServices() called');
     return Promise.resolve(AVAILABLE_SERVICES);
+  }
+
+  /** Get brand logo path with default.svg fallback */
+  public getBrandLogoPath(brandName: string): string {
+    return getBrandLogoPath(brandName);
+  }
+
+  private mapBranchToLocation(dto: BranchDto): LocationDisplay {
+    const trimmed = dto.description?.trim();
+    const address = trimmed && trimmed.length > 0 ? trimmed : FALLBACK_ADDRESS;
+    return {
+      id: dto.id,
+      name: dto.name,
+      city: address,
+      formattedAddress: address,
+    };
+  }
+
+  private mapBranchToBranchConfig(dto: BranchDto): BranchConfig {
+    const trimmed = dto.description?.trim();
+    const address = trimmed && trimmed.length > 0 ? trimmed : FALLBACK_ADDRESS;
+    return {
+      branchId: dto.id,
+      name: dto.name,
+      address: {
+        street: address,
+        zip: '',
+        city: '',
+      },
+      brands: dto.brands,
+    };
   }
 }

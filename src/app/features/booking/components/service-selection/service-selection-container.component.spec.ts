@@ -26,9 +26,9 @@ describe('ServiceSelectionContainerComponent', () => {
           provide: BookingApiService,
           useValue: {
             getBrands: jest.fn().mockResolvedValue(AVAILABLE_BRANDS),
-            getBrandsByLocation: jest.fn().mockResolvedValue([]),
             getBrandsByBranch: jest.fn().mockResolvedValue([]),
-            getAllLocations: jest.fn().mockResolvedValue([]),
+            getBranchById: jest.fn().mockResolvedValue(null),
+            getBrandLogoPath: jest.fn().mockReturnValue('assets/brands/default.svg'),
             getBranches: jest.fn().mockResolvedValue([]),
             getServices: jest.fn().mockResolvedValue(AVAILABLE_SERVICES)
           }

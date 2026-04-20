@@ -33,7 +33,7 @@ export interface SelectedService {
 }
 
 /**
- * Static service data (Click-Dummy)
+ * Available service definitions
  */
 export const AVAILABLE_SERVICES: ServiceDisplay[] = [
   {

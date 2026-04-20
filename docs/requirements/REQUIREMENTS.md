@@ -33,6 +33,15 @@
 | REQ-008 | Werkstattkalender | ✔️ Implemented | High | REQ-006 | Werkstattkalender mit DatePicker und Uhrzeitslot-Auswahl (Wizard-Schritt 5b) |
 | REQ-009 | carinformation | ✔️ Implemented | High | REQ-008 | Fahrzeugdaten und Kundendaten erfassen (Wizard-Schritt 6) |
 | REQ-010 | Buchungsübersicht | ✔️ Implemented | High | REQ-009 | Letzte Seite des Buchungs-Wizards. Zeigt Übersicht aller Eingaben (Termin, Service, persönliche Daten, Preis inkl. MwSt.). Enthält "Jetzt anfragen"-Button statt Weiter-Button. |
+| REQ-011 | Serviceauswahl-Erweitert | ✔️ Implemented | High | REQ-004 | Erweiterte Serviceauswahl mit zusätzlichen Optionen |
+| REQ-012 | Hinweisseite-Erweitert | ✔️ Implemented | High | REQ-005 | Erweiterte Hinweisseite |
+| REQ-013 | Branch-Marke-Tausch | ✔️ Implemented | High | REQ-002, REQ-003 | Marke/Standort-Tausch und UI-Verbesserungen |
+| REQ-014 | NestJS-Backend | 📝 Draft | Critical | REQ-001–REQ-010 | NestJS Backend als Middleware/Proxy zur SoftNet API |
+| REQ-015 | API-Data-Integration | 🚧 In Progress | High | REQ-014 | Integration der echten API-Daten ins Frontend |
+| REQ-016 | User-Lookup | 📝 Draft | High | REQ-009, REQ-014 | User-Abfrage per Email/Kennzeichen mit Formular-Prefill |
+| REQ-017 | Loading-Spinner | 📝 Draft | High | REQ-002, REQ-003 | Globale Loading-Spinner-Nachrüstung für alle Wizard-Seiten mit API-Calls |
+| REQ-018 | Spring-Boot-Migration | 📝 Draft | Critical | REQ-014 | NestJS Backend durch Spring Boot (Gradle + Spring Security) ersetzen — API 1:1 kompatibel |
+| REQ-019 | Deployment | 📝 Draft | High | REQ-018 | Production Deployment mit Docker/Kubernetes |
 
 ---
 
@@ -56,6 +65,17 @@ REQ-001-Header
                                                       └──► REQ-009-carinformation
                                                                 │
                                                                 └──► REQ-010-Buchungsübersicht
+                                                                │
+                                                                └──► REQ-016-User-Lookup (erweitert REQ-009)
+
+REQ-011-Serviceauswahl-Erweitert (erweitert REQ-004)
+REQ-012-Hinweisseite-Erweitert (erweitert REQ-005)
+REQ-013-Branch-Marke-Tausch (erweitert REQ-002/REQ-003)
+
+REQ-017-Loading-Spinner (Cross-Cutting, Referenz: REQ-002/REQ-003)
+
+REQ-014-NestJS-Backend ──► REQ-015-API-Data-Integration
+                    ──► REQ-018-Spring-Boot-Migration ──► REQ-019-Deployment
 ```
 
 ---
@@ -73,7 +93,16 @@ REQ-001-Header
 | REQ-007 | [REQ-007-WizardStateSync](./REQ-007-WizardStateSync/requirement.md)     |
 | REQ-008 | [REQ-008-Werkstattkalender](./REQ-008-Werkstattkalender/requirement.md) |
 | REQ-009 | [REQ-009-carinformation](./REQ-009-carinformation/requirement.md)       |
-| REQ-010 | [REQ-010-Buchungsübersicht](./REQ-010-Buchungsübersicht/requirement.md) | ✔️ Implemented 
+| REQ-010 | [REQ-010-Buchungsübersicht](./REQ-010-Buchungsübersicht/requirement.md) |
+| REQ-011 | [REQ-011-Serviceauswahl-Erweitert](./REQ-011-Serviceauswahl-Erweitert/requirement.md) |
+| REQ-012 | [REQ-012-Hinweisseite-Erweitert](./REQ-012-Hinweisseite-Erweitert/requirement.md) |
+| REQ-013 | [REQ-013-Branch-Marke-Tausch](./REQ-013-Branch-Marke-Tausch/requirement.md) |
+| REQ-014 | [REQ-014-NestJS-Backend](./REQ-014-NestJS-Backend/requirement.md) |
+| REQ-015 | [REQ-015-API-Data-Integration](./REQ-015-API-Data-Integration/requirement.md) |
+| REQ-016 | [REQ-016-User-Lookup](./REQ-016-User-Lookup/requirement.md) |
+| REQ-017 | [REQ-017-Loading-Spinner](./REQ-017-Loading-Spinner/requirement.md) |
+| REQ-018 | [REQ-018-Spring-Boot-Migration](./REQ-018-Spring-Boot-Migration/requirement.md) |
+| REQ-019 | [REQ-019-Deployment](./REQ-019-Deployment/requirement.md) |
 
 ---
 
@@ -81,12 +110,12 @@ REQ-001-Header
 
 | Status         | Count  |
 | -------------- | ------ |
-| 📝 Draft | 1 |
+| 📝 Draft | 5 |
 | 🔍 In Review | 1 |
 | ✅ Approved | 1 |
 | 🚧 In Progress | 1 |
 | ✔️ Implemented | 12 |
-| **Total** | **16** |
+| **Total** | **19** |
 
 
 ---

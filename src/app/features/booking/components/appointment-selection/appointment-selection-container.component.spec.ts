@@ -34,7 +34,9 @@ describe('AppointmentSelectionContainerComponent', () => {
   let router: Router;
 
   const mockAppointmentApiService = {
-    getAppointments: jest.fn().mockResolvedValue(MOCK_APPOINTMENTS)
+    getAppointments: jest.fn().mockResolvedValue(MOCK_APPOINTMENTS),
+    createAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' }),
+    getAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' })
   };
 
   beforeEach(async () => {

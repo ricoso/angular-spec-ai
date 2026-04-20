@@ -4,11 +4,30 @@
   <h1 class="location-selection__title">{{ booking.location.title | translate }}</h1>
   <p class="location-selection__subtitle">{{ booking.location.subtitle | translate }}</p>
 
-  <app-location-cards
-    [branches]="branches()"
-    [selectedBranch]="selectedBranch()"
-    (branchSelected)="onBranchSelect($event)"
-  />
-
-  <!-- Auto-Navigation: Klick auf Standort-Card navigiert direkt weiter -->
+  @if (isLoading()) {
+    <div class="location-selection__loading" role="status" aria-live="polite">
+      <mat-spinner diameter="48" />
+      <p class="location-selection__loading-text">{{ booking.api.loading | translate }}</p>
+    </div>
+  } @else if (error()) {
+    <div class="location-selection__error" role="alert" aria-live="assertive">
+      <mat-icon class="location-selection__error-icon" aria-hidden="true">error_outline</mat-icon>
+      <h2 class="location-selection__error-title">{{ booking.api.errorTitle | translate }}</h2>
+      <p class="location-selection__error-message">{{ booking.api.errorUnknown | translate }}</p>
+      <button
+        mat-flat-button
+        color="primary"
+        class="location-selection__retry-button"
+        (click)="onRetry()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        {{ booking.api.retryButton | translate }}
+      </button>
+    </div>
+  } @else {
+    <app-location-cards
+      [branches]="branches()"
+      [selectedBranch]="selectedBranch()"
+      (branchSelected)="onBranchSelect($event)"
+    />
+  }
 </section>

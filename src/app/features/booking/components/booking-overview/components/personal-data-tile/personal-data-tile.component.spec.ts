@@ -31,8 +31,7 @@ describe('PersonalDataTileComponent', () => {
     });
     fixture.componentRef.setInput('vehicleInfo', {
       licensePlate: 'M-AB 1234',
-      mileage: 45000,
-      vin: 'WVWZZZ1KZAW123456'
+      mileage: 45000
     });
     fixture.componentRef.setInput('brandName', 'Audi');
 

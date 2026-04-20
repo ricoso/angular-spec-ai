@@ -3,6 +3,7 @@ import type { Routes } from '@angular/router';
 import { bookingOverviewGuard } from './guards/booking-overview.guard';
 import { brandSelectedGuard } from './guards/brand-selected.guard';
 import { carInformationGuard } from './guards/car-information.guard';
+import { deepLinkGuard } from './guards/deep-link.guard';
 import { locationSelectedGuard } from './guards/location-selected.guard';
 import { servicesSelectedGuard } from './guards/services-selected.guard';
 import { appointmentsResolver } from './resolvers/appointments.resolver';
@@ -20,6 +21,7 @@ export const bookingRoutes: Routes = [
     path: 'location',
     loadComponent: () => import('./components/location-selection/location-selection-container.component')
       .then(m => m.LocationSelectionContainerComponent),
+    canActivate: [deepLinkGuard],
     resolve: { _: locationsResolver }
   },
   {

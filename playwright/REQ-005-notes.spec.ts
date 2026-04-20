@@ -108,7 +108,7 @@ test.describe('REQ-005: Notes Page (Hinweisfenster)', () => {
       await enterNote(page, 'Bitte Öl prüfen.');
       await clickNotesContinue(page);
 
-      // Click-dummy: Continue stays on /home/notes
+      // placeholder: Continue stays on /home/notes
       const route = await getCurrentRoute(page);
       expect(route).toBe('/home/notes');
     });
@@ -195,7 +195,7 @@ test.describe('REQ-005: Notes Page (Hinweisfenster)', () => {
       // Click continue
       await clickNotesContinue(page);
 
-      // Click-dummy: stays on notes, but no error
+      // placeholder: stays on notes, but no error
       const route = await getCurrentRoute(page);
       expect(route).toBe('/home/notes');
     });
@@ -210,7 +210,7 @@ test.describe('REQ-005: Notes Page (Hinweisfenster)', () => {
 
       await clickNotesContinue(page);
 
-      // Click-dummy: stays on notes
+      // placeholder: stays on notes
       const route = await getCurrentRoute(page);
       expect(route).toBe('/home/notes');
     });

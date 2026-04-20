@@ -1,16 +1,16 @@
 # Requirements Board System Specification
 
-NestJS MVC Backend + Angular Frontend + Dev Container Development
+Spring Boot MVC Backend + Angular Frontend + Dev Container Development
 
 ---
 
 ## 1. Overview
 
-This project defines a **local-first Requirements Management System** running as a **NestJS web application** with an **Angular frontend**.
+This project defines a **local-first Requirements Management System** running as a **Spring Boot web application** with an **Angular frontend**.
 
 It provides a **Kanban board UI for managing project requirements**, implemented as:
 
-- NestJS Backend (MVC, REST API)
+- Spring Boot Backend (MVC, REST API)
 - Angular Frontend (served as static files)
 - Dev Container development environment
 - Local filesystem storage
@@ -60,7 +60,7 @@ Typical workflow:
 
 ## 4. Architecture
 
-### NestJS Backend (MVC)
+### Spring Boot Backend (MVC)
 
 Responsibilities:
 
@@ -144,7 +144,7 @@ Toolbar includes a **+ Button** (`mat-flat-button`).
 ### Creation Process
 
 1. Angular sends POST `/api/requirements`
-2. NestJS generates next REQ-ID
+2. Backend generates next REQ-ID
 3. Adds entry to REQUIREMENTS.md
 4. Returns new requirement
 5. Board updates optimistically
@@ -172,7 +172,7 @@ The Angular frontend polls `GET /api/requirements` every **60 seconds** to detec
 
 ## 9. Workflow Integration
 
-Workflow commands execute through the **NestJS backend** via REST API.
+Workflow commands execute through the **Spring Boot backend** via REST API.
 
 ```
 POST /api/workflow/create/:reqId
@@ -270,7 +270,7 @@ BoardStore {
 }
 ```
 
-Communicates with NestJS via `BoardApiService` (HttpClient).
+Communicates with Spring Boot backend via `BoardApiService` (HttpClient).
 
 ---
 
@@ -282,7 +282,7 @@ Container includes:
 
 - Node.js
 - Angular CLI
-- NestJS CLI
+- Spring Boot CLI
 - GitHub CLI
 
 Port forwarding:
@@ -296,22 +296,21 @@ Port forwarding:
 
 ```
 tools/requirements-board/
-  package.json              # NestJS dependencies
-  tsconfig.json             # Server TypeScript config
-  nest-cli.json             # NestJS CLI config
-
+  build.gradle              # Spring Boot dependencies
+  settings.gradle           # Gradle settings
   src/
-    shared/models/          # Shared types
-      requirement.model.ts
-    server/                 # NestJS Backend
-      main.ts
-      app.module.ts
-      board/
-        board.controller.ts
-        board.service.ts
-      workflow/
-        workflow.controller.ts
-        workflow.service.ts
+    main/
+      java/                 # Spring Boot Backend
+        Application.java
+        board/
+          BoardController.java
+          BoardService.java
+        workflow/
+          WorkflowController.java
+          WorkflowService.java
+      resources/
+        application.yml     # Spring Boot config
+    test/                   # Backend tests
 
   client/                   # Angular Frontend
     angular.json
@@ -358,7 +357,7 @@ npm run board:start:prod   # Build + start production
 - `.env`, `.env.local`, `.env.production`
 - API keys, tokens, credentials
 
-Workflow execution happens only on the NestJS server layer.
+Workflow execution happens only on the Spring Boot server layer.
 
 ---
 
@@ -366,7 +365,7 @@ Workflow execution happens only on the NestJS server layer.
 
 The system must remain:
 
-- **Simple** -- NestJS MVC + Angular, keine ueberkomplexe Architektur
+- **Simple** -- Spring Boot MVC + Angular, keine ueberkomplexe Architektur
 - **Local-first** -- kein Cloud-Dienst
 - **Secure** -- keine Secrets im Frontend
 - **Readable** -- klarer, wartbarer Code
@@ -376,7 +375,7 @@ The system must remain:
 
 ## 21. Deliverables
 
-- [x] NestJS Backend with REST API
+- [x] Spring Boot Backend with REST API
 - [x] Angular Frontend with Kanban Board
 - [x] CDK Drag & Drop
 - [x] NgRx Signal Store

@@ -8,6 +8,8 @@
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "paths": {
+      "@angular/common/http/testing": ["node_modules/@angular/common/types/http-testing.d.ts"],
+      "@angular/common/http": ["node_modules/@angular/common/types/http.d.ts"],
       "@angular/material/*": ["node_modules/@angular/material/types/*"],
       "@app/*": ["src/app/*"],
       "@core/*": ["src/app/core/*"],

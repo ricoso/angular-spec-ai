@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -15,7 +16,7 @@ import { BrandCardsComponent } from './brand-cards.component';
 @Component({
   selector: 'app-brand-selection-container',
   standalone: true,
-  imports: [BrandCardsComponent, WizardBreadcrumbComponent, MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [BrandCardsComponent, WizardBreadcrumbComponent, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './brand-selection-container.component.html',
   styleUrl: './brand-selection-container.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -30,11 +31,13 @@ export class BrandSelectionContainerComponent {
   protected readonly brands = this.store.brands;
   protected readonly selectedBrand = this.store.selectedBrand;
   protected readonly selectedBranch = this.store.selectedBranch;
+  protected readonly isLoading = this.store.isLoading;
+  protected readonly error = this.store.error;
 
   protected readonly formattedBranchAddress = computed(() => {
     const branch = this.selectedBranch();
     if (!branch) return '';
-    return `${branch.address.street}, ${branch.address.zip} ${branch.address.city}`;
+    return branch.address.street || branch.name;
   });
 
   protected onBrandSelect(brand: Brand): void {
@@ -43,6 +46,14 @@ export class BrandSelectionContainerComponent {
   }
 
   protected onBack(): void {
+    this.store.clearSelectedBrand();
     void this.router.navigate(['/home/location']);
+  }
+
+  protected onRetry(): void {
+    const branch = this.selectedBranch();
+    if (branch) {
+      this.store.loadBrands(branch.branchId);
+    }
   }
 }

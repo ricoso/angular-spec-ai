@@ -19,7 +19,10 @@ describe('PriceTileComponent', () => {
     fixture = TestBed.createComponent(PriceTileComponent);
     component = fixture.componentInstance;
 
-    fixture.componentRef.setInput('totalPriceGross', '129,00 €');
+    fixture.componentRef.setInput('mobilityOption', 'none');
+    fixture.componentRef.setInput('appointmentPreference', 'anytime');
+    fixture.componentRef.setInput('callbackOption', 'none');
+    fixture.componentRef.setInput('bookingNote', '');
 
     fixture.detectChanges();
   });
@@ -28,8 +31,8 @@ describe('PriceTileComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should have total price gross input', () => {
-    expect(component.totalPriceGross()).toBe('129,00 €');
+  it('should have mobility option input', () => {
+    expect(component.mobilityOption()).toBe('none');
   });
 
   it('should expose i18n keys', () => {

@@ -10,7 +10,7 @@ const TEST_BRANCHES: BranchConfig[] = [
     branchId: 'branch-1',
     name: 'Test Branch 1',
     address: { street: 'Str. 1', zip: '45127', city: 'Essen' },
-    brands: ['VW', 'Audi']
+    brands: ['VW', 'Audi', 'UnknownBrand']
   },
   {
     branchId: 'branch-2',
@@ -91,22 +91,22 @@ describe('LocationCardsComponent', () => {
   describe('Computed signals', () => {
     it('should compute enriched branches with formatted address', () => {
       const exposed = component as unknown as { enrichedBranches: () => unknown[] };
-      const enriched = exposed.enrichedBranches() as Array<{ formattedAddress: string }>;
-      expect(enriched[0].formattedAddress).toBe('Str. 1, 45127 Essen');
+      const enriched = exposed.enrichedBranches() as { formattedAddress: string }[];
+      expect(enriched[0].formattedAddress).toBe('Str. 1');
     });
 
     it('should compute enriched branches with brand logos for known brands', () => {
       const exposed = component as unknown as { enrichedBranches: () => unknown[] };
-      const enriched = exposed.enrichedBranches() as Array<{ brandLogos: { name: string; path: string }[] }>;
+      const enriched = exposed.enrichedBranches() as { brandLogos: { name: string; path: string }[] }[];
       const audiLogo = enriched[0].brandLogos.find(b => b.name === 'Audi');
       expect(audiLogo?.path).toBe('assets/brands/audi.svg');
     });
 
-    it('should filter out unknown brands from brand logos', () => {
+    it('should use default.svg for unknown brands', () => {
       const exposed = component as unknown as { enrichedBranches: () => unknown[] };
-      const enriched = exposed.enrichedBranches() as Array<{ brandLogos: { name: string; path: string }[] }>;
+      const enriched = exposed.enrichedBranches() as { brandLogos: { name: string; path: string }[] }[];
       const unknownLogo = enriched[0].brandLogos.find(b => b.name === 'UnknownBrand');
-      expect(unknownLogo).toBeUndefined();
+      expect(unknownLogo?.path).toBe('assets/brands/default.svg');
     });
   });
 });

@@ -54,11 +54,19 @@
       color="primary"
       class="booking-overview__submit-button"
       type="button"
+      [disabled]="isSubmitting() || hasSubmitted()"
       [attr.aria-label]="bookingOverview.navigation.submit | translate"
       (click)="onSubmit()"
     >
-      {{ bookingOverview.navigation.submit | translate }}
-      <mat-icon aria-hidden="true">send</mat-icon>
+      @if (isSubmitting()) {
+        {{ bookingOverview.navigation.submitting | translate }}
+      } @else if (hasSubmitted()) {
+        <mat-icon aria-hidden="true">check</mat-icon>
+        {{ bookingOverview.navigation.submitted | translate }}
+      } @else {
+        {{ bookingOverview.navigation.submit | translate }}
+        <mat-icon aria-hidden="true">send</mat-icon>
+      }
     </button>
   </nav>
 </section>

@@ -242,7 +242,7 @@ export const translations = {
             error: { required: 'Bitte geben Sie Ihr Kfz-Kennzeichen ein.', invalidFormat: 'Bitte geben Sie ein gültiges Kennzeichen ein (z.B. B-MS1234).' } },
           mileage: { label: 'Kilometerstand', placeholder: '5000',
             error: { required: 'Bitte geben Sie den Kilometerstand ein.', digitsOnly: 'Kilometerstand darf nur Zahlen enthalten.' } },
-          vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der FIN',
+vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der FIN',
             error: { required: 'Bitte geben Sie die Fahrzeugidentifikationsnummer ein.', invalidLength: 'Die FIN muss genau 17 Zeichen enthalten.', invalidFormat: 'Die FIN darf nur Buchstaben und Zahlen enthalten.' } },
           privacy: { consent: 'Ich willige in die Verarbeitung meiner personenbezogenen Daten zum Zwecke der Online-Terminvereinbarung ein. Näheres finden Sie in unserer',
             privacyLink: 'Datenschutzerklärung',
@@ -289,8 +289,31 @@ export const translations = {
         },
         navigation: {
           back: 'Zurück',
-          submit: 'Jetzt anfragen'
+          submit: 'Jetzt anfragen',
+          submitting: 'Wird gesendet...',
+          submitted: 'Anfrage gesendet'
         }
+      },
+      api: {
+        loading: 'Daten werden geladen...',
+        errorTitle: 'Fehler beim Laden',
+        errorServerError: 'Der Server ist momentan nicht erreichbar. Bitte versuchen Sie es später erneut.',
+        errorTimeout: 'Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut.',
+        errorTokenFailed: 'Die Sitzung konnte nicht hergestellt werden. Bitte laden Sie die Seite neu.',
+        errorUnknown: 'Ein unbekannter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
+        retryButton: 'Erneut versuchen',
+        fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
+      },
+      overlay: {
+        cartLabel: 'Warenkorb',
+        accessibilityLabel: 'Barrierefreiheit',
+        cartBadgeLabel: '{count} Artikel im Warenkorb',
+        selectionTitle: 'Ihre Auswahl',
+        locationLabel: 'Standort',
+        brandLabel: 'Marke',
+        servicesLabel: 'Leistungen',
+        appointmentLabel: 'Termin',
+        emptySelection: 'Noch keine Auswahl getroffen.'
       }
     }
   },
@@ -530,7 +553,7 @@ export const translations = {
             error: { required: 'Please enter your license plate.', invalidFormat: 'Please enter a valid license plate (e.g. B-MS1234).' } },
           mileage: { label: 'Mileage', placeholder: '5000',
             error: { required: 'Please enter the current mileage.', digitsOnly: 'Mileage may only contain digits.' } },
-          vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of VIN',
+vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of VIN',
             error: { required: 'Please enter the vehicle identification number.', invalidLength: 'The VIN must be exactly 17 characters.', invalidFormat: 'The VIN may only contain letters and digits.' } },
           privacy: { consent: 'I consent to the processing of my personal data for the purpose of online appointment booking. More information can be found in our',
             privacyLink: 'Privacy Policy',
@@ -577,8 +600,31 @@ export const translations = {
         },
         navigation: {
           back: 'Back',
-          submit: 'Request Now'
+          submit: 'Request Now',
+          submitting: 'Sending...',
+          submitted: 'Request Sent'
         }
+      },
+      api: {
+        loading: 'Loading data...',
+        errorTitle: 'Loading Error',
+        errorServerError: 'The server is currently unavailable. Please try again later.',
+        errorTimeout: 'The request took too long. Please try again.',
+        errorTokenFailed: 'The session could not be established. Please reload the page.',
+        errorUnknown: 'An unknown error occurred. Please try again.',
+        retryButton: 'Retry',
+        fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
+      },
+      overlay: {
+        cartLabel: 'Shopping cart',
+        accessibilityLabel: 'Accessibility',
+        cartBadgeLabel: '{count} items in cart',
+        selectionTitle: 'Your selection',
+        locationLabel: 'Location',
+        brandLabel: 'Brand',
+        servicesLabel: 'Services',
+        appointmentLabel: 'Appointment',
+        emptySelection: 'No selections made yet.'
       }
     }
   },
@@ -818,7 +864,7 @@ export const translations = {
             error: { required: 'Будь ласка, введіть номерний знак.', invalidFormat: 'Будь ласка, введіть дійсний номерний знак (напр. B-MS1234).' } },
           mileage: { label: 'Пробіг', placeholder: '5000',
             error: { required: 'Будь ласка, введіть пробіг.', digitsOnly: 'Пробіг може містити лише цифри.' } },
-          vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснення VIN',
+vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснення VIN',
             error: { required: 'Будь ласка, введіть ідентифікаційний номер автомобіля.', invalidLength: 'VIN має складатися рівно з 17 символів.', invalidFormat: 'VIN може містити лише літери та цифри.' } },
           privacy: { consent: 'Я погоджуюся на обробку моїх персональних даних з метою онлайн-запису на технічне обслуговування. Детальніше в нашій',
             privacyLink: 'Політиці конфіденційності',
@@ -863,8 +909,31 @@ export const translations = {
         },
         navigation: {
           back: 'Назад',
-          submit: 'Запросити зараз'
+          submit: 'Запросити зараз',
+          submitting: 'Надсилається...',
+          submitted: 'Запит надіслано'
         }
+      },
+      api: {
+        loading: 'Завантаження даних...',
+        errorTitle: 'Помилка завантаження',
+        errorServerError: 'Сервер наразі недоступний. Будь ласка, спробуйте пізніше.',
+        errorTimeout: 'Запит тривав занадто довго. Будь ласка, спробуйте знову.',
+        errorTokenFailed: 'Не вдалося встановити сеанс. Будь ласка, перезавантажте сторінку.',
+        errorUnknown: 'Сталася невідома помилка. Будь ласка, спробуйте знову.',
+        retryButton: 'Повторити',
+        fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
+      },
+      overlay: {
+        cartLabel: 'Кошик',
+        accessibilityLabel: 'Доступність',
+        cartBadgeLabel: '{count} товарів у кошику',
+        selectionTitle: 'Ваш вибір',
+        locationLabel: 'Місцезнаходження',
+        brandLabel: 'Марка',
+        servicesLabel: 'Послуги',
+        appointmentLabel: 'Запис',
+        emptySelection: 'Ще нічого не обрано.'
       }
     }
   },
@@ -1104,7 +1173,7 @@ export const translations = {
             error: { required: 'Veuillez saisir votre plaque d\'immatriculation.', invalidFormat: 'Veuillez saisir une plaque valide (ex. B-MS1234).' } },
           mileage: { label: 'Kilométrage', placeholder: '5000',
             error: { required: 'Veuillez saisir le kilométrage.', digitsOnly: 'Le kilométrage ne peut contenir que des chiffres.' } },
-          vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du NIV',
+vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du NIV',
             error: { required: 'Veuillez saisir le numéro d\'identification du véhicule.', invalidLength: 'Le NIV doit comporter exactement 17 caractères.', invalidFormat: 'Le NIV ne peut contenir que des lettres et des chiffres.' } },
           privacy: { consent: 'Je consens au traitement de mes données personnelles aux fins de la prise de rendez-vous en ligne. Pour en savoir plus, consultez notre',
             privacyLink: 'Politique de confidentialité',
@@ -1149,8 +1218,31 @@ export const translations = {
         },
         navigation: {
           back: 'Retour',
-          submit: 'Demander maintenant'
+          submit: 'Demander maintenant',
+          submitting: 'Envoi en cours...',
+          submitted: 'Demande envoyée'
         }
+      },
+      api: {
+        loading: 'Chargement des données...',
+        errorTitle: 'Erreur de chargement',
+        errorServerError: 'Le serveur est actuellement indisponible. Veuillez réessayer plus tard.',
+        errorTimeout: 'La requête a pris trop de temps. Veuillez réessayer.',
+        errorTokenFailed: 'La session n\'a pas pu être établie. Veuillez recharger la page.',
+        errorUnknown: 'Une erreur inconnue s\'est produite. Veuillez réessayer.',
+        retryButton: 'Réessayer',
+        fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
+      },
+      overlay: {
+        cartLabel: 'Panier',
+        accessibilityLabel: 'Accessibilité',
+        cartBadgeLabel: '{count} articles dans le panier',
+        selectionTitle: 'Votre sélection',
+        locationLabel: 'Emplacement',
+        brandLabel: 'Marque',
+        servicesLabel: 'Services',
+        appointmentLabel: 'Rendez-vous',
+        emptySelection: 'Aucune sélection effectuée.'
       }
     }
   },
@@ -1390,7 +1482,7 @@ export const translations = {
             error: { required: 'يرجى إدخال لوحة الترخيص.', invalidFormat: 'يرجى إدخال لوحة ترخيص صحيحة (مثال: B-MS1234).' } },
           mileage: { label: 'عداد المسافات', placeholder: '5000',
             error: { required: 'يرجى إدخال قراءة عداد المسافات.', digitsOnly: 'عداد المسافات يجب أن يحتوي على أرقام فقط.' } },
-          vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم VIN',
+vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم VIN',
             error: { required: 'يرجى إدخال رقم تعريف السيارة.', invalidLength: 'يجب أن يتكون رقم VIN من 17 حرفاً بالضبط.', invalidFormat: 'رقم VIN يجب أن يحتوي على أحرف وأرقام فقط.' } },
           privacy: { consent: 'أوافق على معالجة بياناتي الشخصية لغرض حجز موعد عبر الإنترنت. لمزيد من المعلومات راجع',
             privacyLink: 'سياسة الخصوصية',
@@ -1435,8 +1527,31 @@ export const translations = {
         },
         navigation: {
           back: 'رجوع',
-          submit: 'اطلب الآن'
+          submit: 'اطلب الآن',
+          submitting: 'جارٍ الإرسال...',
+          submitted: 'تم إرسال الطلب'
         }
+      },
+      api: {
+        loading: 'جارٍ تحميل البيانات...',
+        errorTitle: 'خطأ في التحميل',
+        errorServerError: 'الخادم غير متاح حالياً. يرجى المحاولة مرة أخرى لاحقاً.',
+        errorTimeout: 'استغرق الطلب وقتاً طويلاً. يرجى المحاولة مرة أخرى.',
+        errorTokenFailed: 'تعذر إنشاء الجلسة. يرجى إعادة تحميل الصفحة.',
+        errorUnknown: 'حدث خطأ غير معروف. يرجى المحاولة مرة أخرى.',
+        retryButton: 'إعادة المحاولة',
+        fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
+      },
+      overlay: {
+        cartLabel: 'سلة التسوق',
+        accessibilityLabel: 'إمكانية الوصول',
+        cartBadgeLabel: '{count} عناصر في السلة',
+        selectionTitle: 'اختيارك',
+        locationLabel: 'الموقع',
+        brandLabel: 'العلامة التجارية',
+        servicesLabel: 'الخدمات',
+        appointmentLabel: 'الموعد',
+        emptySelection: 'لم يتم الاختيار بعد.'
       }
     }
   }

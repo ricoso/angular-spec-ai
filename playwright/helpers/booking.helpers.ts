@@ -17,11 +17,32 @@ export async function goToLocationSelection(page: Page): Promise<void> {
   await navigateTo(page, '/home/location');
 }
 
+/** Select the first available brand dynamically */
+export async function selectFirstBrand(page: Page): Promise<string> {
+  await goToBrandSelection(page);
+  const button = page.locator('.brand-grid__button, [class*="brand"] button').first();
+  await expect(button).toBeVisible({ timeout: 15000 });
+  const brandName = (await button.textContent() ?? '').trim();
+  await button.click();
+  await waitForAngular(page);
+  return brandName;
+}
+
+/** Select the first available location dynamically */
+export async function selectFirstLocation(page: Page): Promise<string> {
+  const button = page.locator('.location-grid__button').first();
+  await expect(button).toBeVisible({ timeout: 15000 });
+  const locationName = (await button.textContent() ?? '').trim();
+  await button.click();
+  await waitForAngular(page);
+  return locationName;
+}
+
 /** Select a brand by clicking on the brand button */
 export async function selectBrand(page: Page, brandName: string): Promise<void> {
   await goToBrandSelection(page);
   const button = page.locator('button', { hasText: brandName });
-  await expect(button).toBeVisible();
+  await expect(button).toBeVisible({ timeout: 15000 });
   await button.click();
   await waitForAngular(page);
 }
@@ -76,15 +97,23 @@ export async function completeBrandToLocationFlow(
  */
 export async function goToServiceSelection(
   page: Page,
-  brandName = 'Audi',
-  locationName = 'München'
+  brandName?: string,
+  locationName?: string
 ): Promise<void> {
-  await selectBrand(page, brandName);
+  if (brandName) {
+    await selectBrand(page, brandName);
+  } else {
+    await selectFirstBrand(page);
+  }
   // Wait for location page to render with buttons
-  await page.locator('.location-grid__button').first().waitFor({ state: 'visible', timeout: 10000 });
-  await selectLocation(page, locationName);
+  await page.locator('.location-grid__button').first().waitFor({ state: 'visible', timeout: 15000 });
+  if (locationName) {
+    await selectLocation(page, locationName);
+  } else {
+    await selectFirstLocation(page);
+  }
   // Wait for service cards to appear (confirms we reached the services page)
-  await page.locator('.service-card').first().waitFor({ state: 'visible', timeout: 10000 });
+  await page.locator('.service-card').first().waitFor({ state: 'visible', timeout: 15000 });
   await waitForAngular(page);
 }
 
@@ -227,11 +256,19 @@ export async function deselectTireChange(page: Page): Promise<void> {
  */
 export async function completeBrandToServiceFlow(
   page: Page,
-  brandName = 'Audi',
-  locationName = 'München'
+  brandName?: string,
+  locationName?: string
 ): Promise<void> {
-  await selectBrand(page, brandName);
-  await selectLocation(page, locationName);
+  if (brandName) {
+    await selectBrand(page, brandName);
+  } else {
+    await selectFirstBrand(page);
+  }
+  if (locationName) {
+    await selectLocation(page, locationName);
+  } else {
+    await selectFirstLocation(page);
+  }
   await waitForAngular(page);
 }
 
@@ -277,8 +314,8 @@ export async function goToNotesPage(
     serviceNames?: string[];
   }
 ): Promise<void> {
-  const brandName = options?.brandName ?? 'Audi';
-  const locationName = options?.locationName ?? 'München';
+  const brandName = options?.brandName;
+  const locationName = options?.locationName;
   const defaultServiceNames = options?.serviceNames;
 
   await goToServiceSelection(page, brandName, locationName);
@@ -664,17 +701,14 @@ export async function fillVehicleForm(
   data?: {
     licensePlate?: string;
     mileage?: string;
-    vin?: string;
   }
 ): Promise<void> {
   const d = {
     licensePlate: data?.licensePlate ?? 'B-MS1234',
     mileage: data?.mileage ?? '5000',
-    vin: data?.vin ?? 'WDB8XXXXXXA123456',
   };
   await page.locator('input[formcontrolname="licensePlate"]').fill(d.licensePlate);
   await page.locator('input[formcontrolname="mileage"]').fill(d.mileage);
-  await page.locator('input[formcontrolname="vin"]').fill(d.vin);
   await waitForAngular(page);
 }
 

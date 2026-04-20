@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-04-09T09:20:00.000Z" agent="Copilot" version="24.0.0" type="device">
+  <diagram id="integration-architecture" name="Integration Autohaus Gottfried Schultz">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ===== TITLE ===== -->
+        <mxCell id="title" value="&lt;b&gt;Integrationsarchitektur — Autohaus Gottfried Schultz&lt;/b&gt;&lt;br&gt;Buchungssystem: ALT (jQuery/TYPO3) → NEU (Angular/NestJS auf OpenShift)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="800" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== ENDBENUTZER ===== -->
+        <mxCell id="user" value="&lt;b&gt;Endbenutzer&lt;/b&gt;&lt;br&gt;(Browser / Mobil)" style="shape=actor;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="660" y="90" width="80" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== GOTTFRIED SCHULTZ WEBSITE ===== -->
+        <mxCell id="gs-website-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;fontSize=12;verticalAlign=top;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="400" y="210" width="600" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="gs-website-label" value="&lt;b&gt;Gottfried Schultz Webseite&lt;/b&gt;&lt;br&gt;(TYPO3 CMS / Plattform-Team)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="415" y="215" width="300" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="gs-page" value="&lt;b&gt;Werkstatt-Termin Seite&lt;/b&gt;&lt;br&gt;(HTML Page im CMS)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="430" y="270" width="180" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="iframe-container" value="&lt;b&gt;&amp;lt;iframe&amp;gt;&lt;/b&gt;&lt;br&gt;src=&quot;booking.gottfried-schultz.de&quot;&lt;br&gt;&lt;font color=&quot;#999999&quot;&gt;(oder /buchung/ als Reverse Proxy)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="680" y="260" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: User → Website -->
+        <mxCell id="arrow-user-website" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="user" target="gs-website-group">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-user-website-label" value="HTTPS" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#666666;" vertex="1" connectable="0" parent="arrow-user-website">
+          <mxGeometry x="-0.2" relative="1" as="geometry">
+            <mxPoint as="offset"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Arrow: Page → iframe -->
+        <mxCell id="arrow-page-iframe" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" parent="1" source="gs-page" target="iframe-container">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-page-iframe-label" value="eingebettet" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;" vertex="1" connectable="0" parent="arrow-page-iframe">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <mxPoint as="offset"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ===== OPENSHIFT CLUSTER ===== -->
+        <mxCell id="openshift-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0E0;strokeColor=#CC0000;dashed=0;fontSize=12;verticalAlign=top;arcSize=6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="460" width="800" height="320" as="geometry"/>
+        </mxCell>
+        <mxCell id="openshift-label" value="&lt;b&gt;☸ OpenShift Cluster&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#666666&quot;&gt;Container-Plattform (Gottfried Schultz Infra)&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#CC0000;" vertex="1" parent="1">
+          <mxGeometry x="315" y="465" width="350" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- OpenShift Route -->
+        <mxCell id="os-route" value="&lt;b&gt;Route&lt;/b&gt;&lt;br&gt;booking.gottfried-schultz.de&lt;br&gt;&lt;font color=&quot;#999999&quot;&gt;TLS Edge Termination&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="580" y="510" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Container / Pod -->
+        <mxCell id="pod-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CC0000;dashed=1;fontSize=12;verticalAlign=top;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="380" y="600" width="640" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="pod-label" value="&lt;b&gt;Pod&lt;/b&gt; (autohaus-booking)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#CC0000;" vertex="1" parent="1">
+          <mxGeometry x="390" y="605" width="200" height="25" as="geometry"/>
+        </mxCell>
+
+        <!-- NestJS Backend -->
+        <mxCell id="nestjs" value="&lt;b&gt;NestJS Backend&lt;/b&gt;&lt;br&gt;(API Proxy + Middleware)&lt;br&gt;&lt;font color=&quot;#999999&quot;&gt;Port 3000&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="400" y="640" width="200" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Angular App -->
+        <mxCell id="angular" value="&lt;b&gt;Angular 21 App&lt;/b&gt;&lt;br&gt;(Statische Dateien)&lt;br&gt;&lt;font color=&quot;#999999&quot;&gt;Served by NestJS&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="650" y="640" width="200" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: NestJS → Angular -->
+        <mxCell id="arrow-nest-angular" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" parent="1" source="nestjs" target="angular">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-nest-angular-label" value="ServeStatic" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;" vertex="1" connectable="0" parent="arrow-nest-angular">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <mxPoint as="offset"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Arrow: Route → Pod/NestJS -->
+        <mxCell id="arrow-route-nestjs" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" parent="1" source="os-route" target="nestjs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-route-nestjs-label" value="HTTP :3000" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;" vertex="1" connectable="0" parent="arrow-route-nestjs">
+          <mxGeometry x="-0.2" relative="1" as="geometry">
+            <mxPoint as="offset"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Arrow: iframe → Route -->
+        <mxCell id="arrow-iframe-route" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#9673a6;" edge="1" parent="1" source="iframe-container" target="os-route">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-iframe-route-label" value="HTTPS&lt;br&gt;(Angular App + API)" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#9673a6;" vertex="1" connectable="0" parent="arrow-iframe-route">
+          <mxGeometry x="-0.2" relative="1" as="geometry">
+            <mxPoint as="offset"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ===== SOFTNET API ===== -->
+        <mxCell id="softnet-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;dashed=0;fontSize=12;verticalAlign=top;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="550" width="220" height="190" as="geometry"/>
+        </mxCell>
+        <mxCell id="softnet-label" value="&lt;b&gt;SoftNet API&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#666666&quot;&gt;(Externer Service — soft-nrg.com)&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#E65100;" vertex="1" parent="1">
+          <mxGeometry x="110" y="555" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="softnet-api" value="&lt;b&gt;REST API&lt;/b&gt;&lt;br&gt;api.soft-nrg.com&lt;br&gt;&lt;font color=&quot;#999999&quot;&gt;Branches, Brands,&lt;br&gt;JobTypes, Snaps,&lt;br&gt;Appointments, Cars&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="130" y="610" width="160" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: NestJS → SoftNet -->
+        <mxCell id="arrow-nestjs-softnet" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#E65100;strokeWidth=2;" edge="1" parent="1" source="nestjs" target="softnet-api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arrow-nestjs-softnet-label" value="&lt;b&gt;REST API Proxy&lt;/b&gt;&lt;br&gt;(Bearer Token, serverseitig)" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#E65100;" vertex="1" connectable="0" parent="arrow-nestjs-softnet">
+          <mxGeometry x="-0.2" relative="1" as="geometry">
+            <mxPoint as="offset"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ===== GITLAB ===== -->
+        <mxCell id="gitlab-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#3F51B5;dashed=0;fontSize=12;verticalAlign=top;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="90" width="300" height="280" as="geometry"/>
+        </mxCell>
+        <mxCell id="gitlab-label" value="&lt;b&gt;🦊 GitLab (Self-Managed)&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#666666&quot;&gt;CI/CD + Container Registry&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#3F51B5;" vertex="1" parent="1">
+          <mxGeometry x="55" y="95" width="250" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="gitlab-repo" value="&lt;b&gt;Git Repository&lt;/b&gt;&lt;br&gt;angular-ai-test" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C5CAE9;strokeColor=#3F51B5;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="65" y="145" width="140" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="gitlab-ci-pipeline" value="&lt;b&gt;CI/CD Pipeline&lt;/b&gt;&lt;br&gt;.gitlab-ci.yml" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C5CAE9;strokeColor=#3F51B5;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="65" y="210" width="250" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="gitlab-stages" value="&lt;font size=&quot;1&quot;&gt;&lt;b&gt;lint&lt;/b&gt; → &lt;b&gt;test&lt;/b&gt; → &lt;b&gt;build&lt;/b&gt; → &lt;b&gt;deploy-dev&lt;/b&gt; → &lt;b&gt;deploy-staging&lt;/b&gt; → &lt;b&gt;deploy-prod&lt;/b&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#3F51B5;" vertex="1" parent="1">
+          <mxGeometry x="65" y="265" width="250" height="25" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="gitlab-registry" value="&lt;b&gt;Container Registry&lt;/b&gt;&lt;br&gt;Docker Images" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C5CAE9;strokeColor=#3F51B5;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="65" y="300" width="140" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: Repo → Pipeline -->
+        <mxCell id="arrow-repo-pipeline" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#3F51B5;" edge="1" parent="1" source="gitlab-repo" target="gitlab-ci-pipeline">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: Pipeline → Registry -->
+        <mxCell id="arrow-pipeline-registry" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#3F51B5;" edge="1" parent="1" source="gitlab-ci-pipeline" target="gitlab-registry">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: Registry → OpenShift -->
+        <mxCell id="arrow-registry-openshift" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#CC0000;strokeWidth=2;dashed=1;" edge="1" parent="1" source="gitlab-registry" target="openshift-group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="135" y="420"/>
+              <mxPoint x="700" y="420"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow-registry-openshift-label" value="&lt;b&gt;Image Pull&lt;/b&gt;&lt;br&gt;oc apply / kubectl" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#CC0000;" vertex="1" connectable="0" parent="arrow-registry-openshift">
+          <mxGeometry x="-0.2" relative="1" as="geometry">
+            <mxPoint as="offset"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ===== LEGENDE ===== -->
+        <mxCell id="legend-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAFAFA;strokeColor=#CCCCCC;dashed=1;fontSize=12;verticalAlign=top;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="460" width="240" height="320" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-title" value="&lt;b&gt;Legende&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="465" width="100" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-1" value="&lt;font color=&quot;#3F51B5&quot;&gt;■&lt;/font&gt; GitLab CI/CD" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="500" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-2" value="&lt;font color=&quot;#CC0000&quot;&gt;■&lt;/font&gt; OpenShift Cluster" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="530" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-3" value="&lt;font color=&quot;#82b366&quot;&gt;■&lt;/font&gt; NestJS Backend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="560" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-4" value="&lt;font color=&quot;#6c8ebf&quot;&gt;■&lt;/font&gt; Angular Frontend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="590" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-5" value="&lt;font color=&quot;#E65100&quot;&gt;■&lt;/font&gt; SoftNet API (extern)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="620" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-6" value="&lt;font color=&quot;#d6b656&quot;&gt;■&lt;/font&gt; Gottfried Schultz CMS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="650" width="200" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-sep" value="" style="line;strokeWidth=1;strokeColor=#CCCCCC;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="685" width="210" height="10" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend-note1" value="&lt;font color=&quot;#666666&quot;&gt;Alte Integration: jQuery-Widget&lt;br&gt;auf clients.mobilapp.io (TYPO3 Ext)&lt;br&gt;&lt;br&gt;Neue Integration: Angular App&lt;br&gt;auf OpenShift, eingebettet per&lt;br&gt;&amp;lt;iframe&amp;gt; in GS-Website&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="700" width="210" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== POSTMESSAGE COMMUNICATION ===== -->
+        <mxCell id="postmessage-note" value="&lt;b&gt;postMessage API&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#999999&quot;&gt;• setIframeHeight&lt;br&gt;• scrollTop&lt;br&gt;• closeIframe&lt;br&gt;• analytics Events&lt;/font&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#FFF9C4;strokeColor=#F9A825;fontSize=10;size=14;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="260" width="160" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- Arrow: iframe ↔ postMessage -->
+        <mxCell id="arrow-iframe-postmessage" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#F9A825;dashed=1;" edge="1" parent="1" source="iframe-container" target="postmessage-note">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- ===== CONFIG/SECRETS NOTE ===== -->
+        <mxCell id="config-note" value="&lt;b&gt;Konfiguration (Secrets)&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#999999&quot;&gt;• SOFTNET_BASE_URL&lt;br&gt;• SOFTNET_FINGERPRINT&lt;br&gt;• SESSION_SECRET&lt;br&gt;• BRANCH_ID / GROUP_ID&lt;br&gt;• CORS_ALLOWED_ORIGINS&lt;br&gt;&lt;br&gt;→ OpenShift Secrets +&lt;br&gt;   ConfigMaps&lt;/font&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#E8F5E9;strokeColor=#4CAF50;fontSize=10;size=14;" vertex="1" parent="1">
+          <mxGeometry x="880" y="640" width="180" height="140" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

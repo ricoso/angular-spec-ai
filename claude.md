@@ -10,7 +10,15 @@
 - **Code-Sprache**: Englisch (FIXIERT)
 - **UI-Sprachen**: DE, EN
 - **Doc-Sprachen**: DE, EN
-- **Deployment**: Click-Dummy (GitHub Pages, HashLocation)
+- **Deployment**: Production (Spring Boot Backend + SoftNet API)
+- **SoftNet API-Doku**: `test-booking-flow copy.mjs` — Feature Discovery (Zeitfilter, Ersatzwagen, Wiederkehr-Kunde); `soft-netOpenAPI.html` — Offizielle OpenAPI Spec
+- **SoftNet API-Erkenntnisse** (getestet + bewiesen, INT-System, `scope.api.planning.service`):
+  - `checkInTimePreference: "AM"|"PM"` → verschiebt Snap-Verteilung (VM/NM)
+  - `replacementPreference: true` → Ersatzwagen (Branch-abhaengig, Muenchen hat keine)
+  - `wishlist.note` → Freitext max 2000 chars, wird gespeichert
+  - **Wiederkehr-Kunde**: Email reicht — SoftNet erkennt Bestandskunden per Email, liefert: `firstName`, `lastName`, `email`, `brand`, `model`, `license`. Keine eigene DB noetig!
+  - **Appointment-Response liefert NICHT**: `address`, `zipCode`, `city`, `phone`, `mobile`, `country` — dafuer braucht man `GET /users/{id}` (401 mit aktuellem Scope). → Mit Prod-System + erweitertem Scope (`scope.api.planning.user`) erneut testen!
+  - `vaultitems` Endpoint → 401 (Scope reicht nicht) → mit Prod-System testen
 
 ---
 
@@ -134,12 +142,20 @@
 ## Commands
 
 ```bash
-npm start              # Dev Server
+# Frontend
+npm start              # Angular Dev Server (:4200, braucht Backend auf :3000)
 npm test               # Jest Watch
 npm run test:coverage  # Coverage Report
 npm run lint:fix       # ESLint Auto-fix
 npm run type-check     # TypeScript Check
-npm run e2e            # Playwright E2E (3 Viewports)
+
+# Backend (Spring Boot)
+cd server && ./gradlew bootRun          # Spring Boot Server (:3000)
+cd server && ./gradlew test             # Backend JUnit Tests
+cd server && ./gradlew jacocoTestReport # Backend Coverage
+
+# E2E (IMMER mit Backend!)
+npm run e2e:backend    # Build + Backend + Playwright (3 Viewports)
 ```
 
 ---
@@ -175,6 +191,24 @@ src/app/
 │       ├── store/         # NgRx Signal Store
 │       └── models/        # Interfaces
 └── app.routes.ts
+
+server/                    # Spring Boot Backend (Java 21)
+├── build.gradle
+├── src/main/java/com/autohaus/backend/
+│   ├── config/            # SecurityConfig, WebConfig, Properties
+│   ├── softnet/           # SoftNet API Client + Auth
+│   ├── session/           # Session Token (HMAC-SHA256)
+│   ├── health/            # Health Check
+│   ├── branches/          # Branches Controller/Service
+│   ├── brands/            # Brands Controller/Service
+│   ├── jobtypes/          # JobTypes Controller/Service
+│   ├── snaps/             # Snaps + Cache + OperationIdMapper
+│   ├── appointments/      # Appointments + SnapPatcher
+│   ├── customers/         # Customers Controller/Service
+│   ├── cars/              # Cars Controller/Service
+│   ├── mobility/          # Mobility Controller/Service
+│   └── common/            # Filters, Exception Handler, DTOs
+└── src/main/resources/application.yml
 
 docs/requirements/
 ├── REQUIREMENTS.md

@@ -1,0 +1,105 @@
+<div class="floating-overlay" aria-label="Schnellzugriff">
+  <!-- Cart Panel (expanded) -->
+  @if (isExpanded()) {
+    <div class="floating-overlay__panel" role="dialog" [attr.aria-label]="overlay.selectionTitle | translate">
+      <div class="floating-overlay__panel-header">
+        <span class="floating-overlay__panel-title">{{ overlay.selectionTitle | translate }}</span>
+        <button
+          mat-icon-button
+          class="floating-overlay__close-button"
+          (click)="onCloseCart()"
+          [attr.aria-label]="overlay.cartLabel | translate">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="floating-overlay__panel-body">
+        @if (selectedLocationName()) {
+          <div class="floating-overlay__item">
+            <mat-icon aria-hidden="true">location_on</mat-icon>
+            <span class="floating-overlay__item-label">{{ overlay.locationLabel | translate }}:</span>
+            <span class="floating-overlay__item-value">{{ selectedLocationName() }}</span>
+          </div>
+        }
+        @if (selectedBrandName()) {
+          <div class="floating-overlay__item">
+            <mat-icon aria-hidden="true">directions_car</mat-icon>
+            <span class="floating-overlay__item-label">{{ overlay.brandLabel | translate }}:</span>
+            <span class="floating-overlay__item-value">{{ selectedBrandName() }}</span>
+          </div>
+        }
+        @if (selectedServiceCount() > 0) {
+          <div class="floating-overlay__item">
+            <mat-icon aria-hidden="true">build</mat-icon>
+            <span class="floating-overlay__item-label">{{ overlay.servicesLabel | translate }}:</span>
+            <span class="floating-overlay__item-value">{{ selectedServiceCount() }}</span>
+          </div>
+        }
+        @if (!selectedLocationName() && !selectedBrandName() && selectedServiceCount() === 0) {
+          <p class="floating-overlay__empty">{{ overlay.emptySelection | translate }}</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Accessibility Panel -->
+  @if (isA11yOpen()) {
+    <div class="floating-overlay__panel" role="dialog" [attr.aria-label]="overlay.accessibilityLabel | translate">
+      <div class="floating-overlay__panel-header">
+        <span class="floating-overlay__panel-title">{{ overlay.accessibilityLabel | translate }}</span>
+        <button
+          mat-icon-button
+          class="floating-overlay__close-button"
+          (click)="onCloseAccessibility()"
+          aria-label="Close">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="floating-overlay__panel-body">
+        <app-accessibility-menu
+          [fontSize]="fontSize()"
+          [highContrast]="highContrast()"
+          [reducedMotion]="reducedMotion()"
+          [currentLanguage]="currentLanguage()"
+          (fontSizeChanged)="onFontSizeChange($event)"
+          (highContrastChanged)="onHighContrastChange($event)"
+          (reducedMotionChanged)="onReducedMotionChange($event)"
+          (languageChanged)="onLanguageChange($event)"
+        />
+      </div>
+    </div>
+  }
+
+  <!-- FAB Buttons -->
+  <div class="floating-overlay__buttons">
+    <button
+      mat-icon-button
+      class="floating-overlay__fab"
+      (click)="onToggleCart()"
+      [attr.aria-label]="overlay.cartLabel | translate">
+      <span class="icon-framed icon-framed--sm">
+        @if (isExpanded()) {
+          <mat-icon>close</mat-icon>
+        } @else {
+          <mat-icon
+            [matBadge]="badgeText()"
+            [matBadgeHidden]="!hasItems()"
+            matBadgeColor="accent"
+            matBadgeSize="small">shopping_cart</mat-icon>
+        }
+      </span>
+    </button>
+    <button
+      mat-icon-button
+      class="floating-overlay__fab"
+      (click)="onToggleAccessibility()"
+      [attr.aria-label]="overlay.accessibilityLabel | translate">
+      <span class="icon-framed icon-framed--sm">
+        @if (isA11yOpen()) {
+          <mat-icon>close</mat-icon>
+        } @else {
+          <mat-icon>accessibility_new</mat-icon>
+        }
+      </span>
+    </button>
+  </div>
+</div>

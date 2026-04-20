@@ -184,29 +184,31 @@ npm run test:coverage
 
 ### Step 6: Technische Prüfung (PFLICHT! BLOCKER! PARALLEL AGENTS!)
 
-> **ALLE 3 Prüfungen MUESSEN ausgeführt werden!**
-> **ALLE 3 als parallele Agents starten** (3 Tool-Aufrufe in EINER Nachricht)!
-> **Bei Fehler: Fixen und erneut ALLE 3 parallel als Agents ausführen bis GRUEN!**
+> **ALLE 4 Prüfungen MUESSEN ausgeführt werden!**
+> **ALLE 4 als parallele Agents starten** (4 Tool-Aufrufe in EINER Nachricht)!
+> **Bei Fehler: Fixen und erneut ALLE 4 parallel als Agents ausführen bis GRUEN!**
 
-**3 parallele Agents starten (EINE Nachricht, 3 Tool-Aufrufe):**
+**4 parallele Agents starten (EINE Nachricht, 4 Tool-Aufrufe):**
 
 | # | Agent Description | Command | Prüft |
 |---|-------------------|---------|-------|
 | 1 | `"Run lint:fix"` | `npm run lint:fix` | ESLint Regeln + Auto-Fix |
 | 2 | `"Run type-check"` | `npm run type-check` | TypeScript Typen |
 | 3 | `"Run test:coverage"` | `npm run test:coverage` | Jest Tests + Coverage >80% |
+| 4 | `"Run backend tests"` | `cd server && ./gradlew test` | Spring Boot Backend Tests |
 
-> **WICHTIG:** Die 3 Agents sind voneinander UNABHÄNGIG und MUESSEN parallel gestartet werden!
+> **WICHTIG:** Die 4 Agents sind voneinander UNABHÄNGIG und MUESSEN parallel gestartet werden!
 
-**Ergebnis dokumentieren (erst wenn ALLE 3 Agents fertig):**
+**Ergebnis dokumentieren (erst wenn ALLE 4 Agents fertig):**
 ```
-TECHNISCHE PRÜFUNG (3 parallele Agents):
-- lint:fix     → [PASS / FAIL + Fehler]
-- type-check   → [PASS / FAIL + Fehler]
-- test:coverage → [PASS (XX%) / FAIL + fehlgeschlagene Tests]
+TECHNISCHE PRÜFUNG (4 parallele Agents):
+- lint:fix       → [PASS / FAIL + Fehler]
+- type-check     → [PASS / FAIL + Fehler]
+- test:coverage  → [PASS (XX%) / FAIL + fehlgeschlagene Tests]
+- backend:test   → [PASS (XX%) / FAIL + fehlgeschlagene Tests]
 ```
 
-> **STOP bei FAIL!** Erst fixen, dann erneut ALLE 3 parallel als Agents prüfen.
+> **STOP bei FAIL!** Erst fixen, dann erneut ALLE 4 parallel als Agents prüfen.
 > **Step 7 darf NICHT starten wenn Step 6 nicht GRUEN ist!**
 
 **GATE 6:** lint + type-check + tests
@@ -287,11 +289,68 @@ Nächste Schritte (manuell):
 - [ ] **Step 6: `npm run lint:fix`**
 - [ ] **Step 6: `npm run type-check`**
 - [ ] **Step 6: `npm run test:coverage`**
+- [ ] **Step 6: `cd server && ./gradlew test` (Backend-Tests)**
 - [ ] **Step 7: `/check-all` ausgeführt (Score >= 90/100)**
 - [ ] **Step 7: `qualitaets.md` generiert**
 - [ ] **Step 7: E2E Tests bestanden (check-e2e)**
 - [ ] **Step 7: Feature-Dokumentation in DE + EN generiert (check-documentation)**
 - [ ] Step 8: Fertigmeldung ausgegeben (Änderungen LOKAL, kein Commit/Push)
+
+---
+
+## Backend-Architektur & Deployment
+
+### Architektur
+
+```
+Browser → Angular App → Spring Boot Backend (:3000) → SoftNet API
+```
+
+- **Spring Boot Backend** (`server/`): Middleware/Proxy zwischen Angular und SoftNet API
+- **Frontend API-Services**: Machen HTTP-Calls an `/api/v1/...` (KEINE statischen Mock-Daten!)
+- **Backend**: Ruft echte SoftNet API auf, transformiert Responses fuer das Frontend
+- **Store bleibt unveraendert**: Ruft weiterhin die API-Services auf
+
+### Deployment-Modi (gleicher Code, andere Env-Werte)
+
+| Modus | SoftNet-Instanz | Env-Quelle | Wo |
+|-------|----------------|-----------|-----|
+| **Dev** | Integration (`int-api.soft-nrg.com`) | `application.yml` / `.env`-Datei (lokal) | Lokal + GitHub Actions |
+| **Prod** | Production (`api.soft-nrg.com`) | GitLab Secrets Store → K8s Env Vars | Kubernetes Pod |
+
+> **Prod-Deployment:** Die Env-Werte werden NICHT als Datei deployed.
+> Stattdessen injiziert GitLab CI/CD die Secrets als Environment Variables
+> in den Kubernetes Pod (via `CI/CD > Settings > Variables`).
+> Spring Boot liest sowohl `application.yml` als auch `System.getenv()`.
+
+### E2E-Tests
+
+| Command | Beschreibung | Wann |
+|---------|-------------|------|
+| `npm run e2e:backend` | Angular Build + Spring Boot Backend + Playwright | GitHub Actions (Dev-Werte) |
+| `npm run e2e:backend` | Gleicher Command | Im Pod (Prod-Werte) |
+
+> **PFLICHT:** E2E-Tests laufen IMMER mit Backend — kein Click-Dummy-Modus mehr!
+> Frontend-Services machen IMMER echte HTTP-Calls zum Backend.
+
+### Commands
+
+```bash
+# Frontend
+npm start              # Angular Dev Server (:4200, braucht Backend auf :3000)
+npm test               # Jest Watch
+npm run test:coverage  # Coverage Report
+npm run lint:fix       # ESLint Auto-fix
+npm run type-check     # TypeScript Check
+
+# Backend
+cd server && ./gradlew bootRun   # Spring Boot Server (:3000)
+cd server && ./gradlew test      # Backend Tests
+cd server && ./gradlew test jacocoTestReport  # Backend Coverage
+
+# E2E (IMMER mit Backend!)
+npm run e2e:backend    # Build + Spring Boot Backend + Playwright (3 Viewports)
+```
 
 ---
 
@@ -301,3 +360,4 @@ Nächste Schritte (manuell):
 - Skills: `.claude/skills/*.md` (ALLE 5 lesen!)
 - Styling: `src/styles/_variables.scss`
 - Quality Template: `docs/requirements/QUALITAETS-TEMPLATE.md`
+- Backend: `server/` (Spring Boot, `application.yml` fuer Konfiguration)

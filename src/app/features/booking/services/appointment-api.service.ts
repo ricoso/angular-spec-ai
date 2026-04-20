@@ -1,61 +1,124 @@
-import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+
+import { environment } from '@environments/environment';
+import { firstValueFrom } from 'rxjs';
 
 import type { AppointmentSlot, DayAbbreviation } from '../models/appointment.model';
 
-const DAY_ABBREVIATIONS = new Map<number, DayAbbreviation>([
-  [1, 'Mo'],
-  [2, 'Di'],
-  [3, 'Mi'],
-  [4, 'Do'],
-  [5, 'Fr'],
-  [6, 'Sa']
-]);
+interface ApiResponse<T> {
+  data: T;
+}
 
-const MIN_HOUR = 7;
-const MAX_HOUR = 18;
-const SLOT_COUNT = 4;
+interface SnapSlotDto {
+  id: string;
+  time: string;
+  displayTime: string;
+  available: boolean;
+}
+
+interface SnapDayDto {
+  date: string;
+  displayDate: string;
+  dayAbbreviation: string;
+  slots: SnapSlotDto[];
+}
+
+export interface AppointmentCustomer {
+  email: string;
+  firstName: string;
+  lastName: string;
+  mobile: string;
+  phone?: string;
+  address: string;
+  zipCode: string;
+  city: string;
+  country?: string;
+  language?: string;
+  salutation?: string;
+}
+
+export interface AppointmentVehicle {
+  licensePlate: string;
+  mileage: number;
+  vin?: string;
+  model?: string;
+  firstRegMonth?: string;
+  firstRegYear?: string;
+}
+
+export interface CreateAppointmentRequest {
+  snapId: string;
+  customer: AppointmentCustomer;
+  vehicle: AppointmentVehicle;
+  note?: string;
+  mobilityOption?: string;
+}
+
+export interface AppointmentResponse {
+  id: string;
+  status: string;
+  date: string;
+  time: string;
+  branchName: string;
+  services: string[];
+  customerName: string;
+  licensePlate: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentApiService {
-  public async getAppointments(): Promise<AppointmentSlot[]> {
-    return await Promise.resolve(this.generateSlots());
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = environment.apiUrl;
+
+  public async getAppointments(branchId: string, serviceIds: string[], brandName?: string): Promise<AppointmentSlot[]> {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const fromDate = this.formatIsoDate(tomorrow);
+
+    const toDate = new Date(tomorrow);
+    toDate.setDate(toDate.getDate() + 14);
+
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<SnapDayDto[]>>(`${this.apiUrl}/snaps`, {
+        branchId,
+        jobTypeIds: serviceIds,
+        fromDate,
+        toDate: this.formatIsoDate(toDate),
+        mode: 'next-available',
+        brandName: brandName ?? '',
+      })
+    );
+
+    // Take first available slot from each day
+    return response.data
+      .filter(day => day.slots.some(s => s.available))
+      .slice(0, 4)
+      .map(day => {
+        const slot = day.slots.find(s => s.available)!;
+        return {
+          id: slot.id,
+          date: day.date,
+          displayDate: day.displayDate,
+          dayAbbreviation: day.dayAbbreviation as DayAbbreviation,
+          time: slot.time,
+          displayTime: slot.displayTime,
+        };
+      });
   }
 
-  private generateSlots(): AppointmentSlot[] {
-    const slots: AppointmentSlot[] = [];
-    const today = new Date();
-    let candidate = new Date(today);
-    candidate.setDate(candidate.getDate() + 1);
-
-    while (slots.length < SLOT_COUNT) {
-      const dayOfWeek = candidate.getDay();
-
-      if (dayOfWeek !== 0) {
-        const abbreviation = DAY_ABBREVIATIONS.get(dayOfWeek)!;
-        const hour = this.generateRandomHour();
-        const timeString = `${String(hour).padStart(2, '0')}:00`;
-        const isoDate = this.formatIsoDate(candidate);
-        const displayDate = this.formatDisplayDate(candidate);
-
-        slots.push({
-          id: `${isoDate}-${timeString.replace(':', '-')}`,
-          date: isoDate,
-          displayDate,
-          dayAbbreviation: abbreviation,
-          time: timeString,
-          displayTime: `${timeString} Uhr`
-        });
-      }
-
-      candidate = new Date(candidate);
-      candidate.setDate(candidate.getDate() + 1);
-    }
-
-    return slots;
+  public async createAppointment(request: CreateAppointmentRequest): Promise<AppointmentResponse> {
+    const response = await firstValueFrom(
+      this.http.post<ApiResponse<AppointmentResponse>>(`${this.apiUrl}/appointments`, request)
+    );
+    return response.data;
   }
 
-  private generateRandomHour(): number {
-    return MIN_HOUR + Math.floor(Math.random() * (MAX_HOUR - MIN_HOUR + 1));
+  public async getAppointment(appointmentId: string): Promise<AppointmentResponse> {
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<AppointmentResponse>>(`${this.apiUrl}/appointments/${appointmentId}`)
+    );
+    return response.data;
   }
 
   private formatIsoDate(date: Date): string {
@@ -63,12 +126,5 @@ export class AppointmentApiService {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
-  }
-
-  private formatDisplayDate(date: Date): string {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}.${month}.${year}`;
   }
 }

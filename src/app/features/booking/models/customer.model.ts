@@ -9,9 +9,16 @@ export interface CustomerInfo {
   postalCode: string;
   city: string;
   mobilePhone: string;
+  phone?: string;
+  country?: string;
+  language?: string;
 }
 
 export interface VehicleInfo {
   licensePlate: string;
   mileage: number;
+  vin?: string;
+  model?: string;
+  firstRegMonth?: string;
+  firstRegYear?: string;
 }

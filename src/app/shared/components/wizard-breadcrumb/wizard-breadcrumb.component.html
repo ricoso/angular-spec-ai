@@ -20,7 +20,7 @@
             class="wizard__step-label"
             href="#"
             [attr.aria-label]="step.label | translate"
-            (click)="onStepClick($event, $index)"
+            (click)="onStepClick($event, step.originalIndex)"
           >{{ step.label | translate }}</a>
         } @else {
           <span class="wizard__step-label">{{ step.label | translate }}</span>

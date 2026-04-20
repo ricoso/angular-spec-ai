@@ -47,7 +47,7 @@ Claude lernt die Architektur-Patterns und kann Requirements selbststaendig imple
 |-------------|------|
 | Code-Sprache | Englisch (fixiert) |
 | UI-Sprachen | Deutsch + Englisch |
-| Deployment | Click-Dummy (GitHub Pages, HashLocation) |
+| Deployment | Production (Spring Boot Backend + SoftNet API) |
 | State Management | NgRx Signal Store |
 | UI Framework | Angular Material 21 |
 | Unit Tests | Jest 30 (>80% Coverage) |

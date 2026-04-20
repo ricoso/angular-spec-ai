@@ -70,11 +70,6 @@ async function selectBrandByName(page: import('@playwright/test').Page, brandNam
   await waitForAngular(page);
 }
 
-async function getBranchCardNames(page: import('@playwright/test').Page): Promise<string[]> {
-  const names = page.locator('.location-card__name');
-  return names.allTextContents().then(texts => texts.map(t => t.trim()));
-}
-
 async function getBrandCardNames(page: import('@playwright/test').Page): Promise<string[]> {
   const names = page.locator('.brand-card__name');
   return names.allTextContents().then(texts => texts.map(t => t.trim()));
