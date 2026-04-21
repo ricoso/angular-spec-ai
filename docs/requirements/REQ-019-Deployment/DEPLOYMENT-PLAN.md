@@ -1217,14 +1217,19 @@ Or via `~/.gradle/init.gradle` injected in CI (so we don't hard-code Artifactory
 - [ ] Submit EMMA ticket for SonarQube project (then add `SONAR_TOKEN` CI variable + enable `sonarqube scan` job)
 - [ ] Submit EMMA ticket for JFrog project-specific repo + Xray watcher (if needed beyond shared repo)
 
-### Phase 1: Dockerfile
+### Phase 1: Dockerfile ✅ COMPLETE (2026-04-21)
 
 - [x] ~~Decide Java version~~ → Keep Java 25 (`jdk-25-runner` available)
-- [ ] Write multi-stage Dockerfile (build + runtime)
-- [ ] Verify Gradle `bootJar` task bundles Angular assets into JAR
-- [ ] Test Docker build locally (or via `buildah`)
-- [ ] Verify container runs as non-root with random UID
-- [ ] Verify `/api/v1/health` responds from container
+- [x] Write multi-stage Dockerfile (build + runtime) — see [`Dockerfile`](../../../Dockerfile)
+- [x] ~~Verify Gradle `bootJar` task bundles Angular assets into JAR~~ → **Adjusted**: Angular `dist/` is copied alongside the JAR in the runtime stage (WebConfig serves from filesystem, not classpath). `bootJar` is invoked with `-x buildAngular` since the dist is pre-built in the frontend stage.
+- [x] Test Docker build locally (or via `buildah`) — verified with `podman build --platform linux/arm64 -t autohaus-termin:phase1 .`
+- [x] Verify container runs as non-root with random UID — verified with `podman run --user 1000260000`: `id` returns `uid=1000260000 gid=0(root) groups=0(root),1000260000`. App boots successfully, fingerprint Secret mount readable.
+- [x] Verify `/api/v1/health` responds from container — `HTTP 200`, SoftNet dependency healthy.
+
+**Phase 1 notes:**
+- Dockerfile uses `USER 1001` as default (non-root for plain podman/docker runs); OpenShift `restricted-v2` SCC will override this with a random high UID. Both modes verified to work.
+- Total image size: ~488 MB runtime base + jar + dist. Larger than the REQ-019 target of `<200 MB compressed` — ubi9/openjdk-25 alone is 488 MB. To shrink, consider switching the runtime stage to `ubi9-minimal/openjdk-25-runtime` (JRE only, ~140 MB) once available, or use jlink to build a custom JRE.
+- Local validation uses `.env.local` (gitignored) with INT-system SoftNet credentials and the existing fingerprint JSON in `server/`.
 
 ### Phase 2: Application CI/CD
 
