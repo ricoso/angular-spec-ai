@@ -101,13 +101,14 @@ variables:
 # ─────────────────────────────────────────────────────────────────────
 # .pre — JFrog Xray vulnerability scan
 # ─────────────────────────────────────────────────────────────────────
-vulnerability scan:
+# Disabled until JFrog Xray watcher is provisioned (deferred ticket D2).
+# Remove the leading dot to enable.
+.vulnerability scan:
   stage: .pre
   image: image-registry.openshift-image-registry.svc:5000/openshift/jdk-25-runner:latest
   extends: .artifactory-config
   script:
-    # TODO: replace <WATCHER_NAME> once the JFrog Xray watcher is provisioned (deferred ticket D2)
-    - jf audit --watches=<WATCHER_NAME> || true
+    - jf audit --watches=WATCHER_NAME_TODO
   allow_failure: true
   rules: *rules_main_or_feature
 
