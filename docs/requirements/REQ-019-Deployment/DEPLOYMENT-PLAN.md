@@ -1231,15 +1231,20 @@ Or via `~/.gradle/init.gradle` injected in CI (so we don't hard-code Artifactory
 - Total image size: ~488 MB runtime base + jar + dist. Larger than the REQ-019 target of `<200 MB compressed` — ubi9/openjdk-25 alone is 488 MB. To shrink, consider switching the runtime stage to `ubi9-minimal/openjdk-25-runtime` (JRE only, ~140 MB) once available, or use jlink to build a custom JRE.
 - Local validation uses `.env.local` (gitignored) with INT-system SoftNet credentials and the existing fingerprint JSON in `server/`.
 
-### Phase 2: Application CI/CD
+### Phase 2: Application CI/CD ⏳ DRAFTED LOCALLY (2026-04-21)
 
-- [ ] Create `.gitlab-ci.yml` in app repo (without `sonarqube_scan` stage)
-- [ ] Create `release.config.cjs` for semantic-release
-- [ ] Create `version.txt` (initial `0.1.0`)
-- [ ] Set up CI/CD variables: `ACCESS_TOKEN`, `JF_USER`, `JF_PASSWORD` (`SONAR_TOKEN` deferred)
-- [ ] Test pipeline on feature branch (test + build stages)
-- [ ] Test image build via buildah → push to OCP registry
-- [ ] Test rollout stage (env repo MR creation)
+- [x] Create `.gitlab-ci.yml` in app repo (without `sonarqube_scan` stage) — see [`.gitlab-ci.yml`](../../../.gitlab-ci.yml). YAML validated with `js-yaml`. SonarQube job present but disabled (`.sonarqube scan:` — leading dot).
+- [x] Create `release.config.cjs` for semantic-release — see [`release.config.cjs`](../../../release.config.cjs). Writes `version.txt` (semver) + `version_full.txt` (semver + branch + sha).
+- [x] Create `version.txt` (initial `0.1.0`) — see [`version.txt`](../../../version.txt).
+- [ ] Set up CI/CD variables: `ACCESS_TOKEN`, `JF_USER`, `JF_PASSWORD` (`SONAR_TOKEN` deferred) — **blocked on GitLab project creation**
+- [ ] Test pipeline on feature branch (test + build stages) — **blocked on runner access**
+- [ ] Test image build via buildah → push to OCP registry — **blocked on namespace + runner**
+- [ ] Test rollout stage (env repo MR creation) — **blocked on env repo (Phase 3)**
+
+**Phase 2 notes:**
+- The `gradle build` stage installs Node.js into the JDK runner via `microdnf`/`dnf` because the LDP JDK runner image has no Node.js pre-installed (verified — see Section 5 "Split Build Required"). If `microdnf install nodejs npm` is blocked by Kyverno or fails on the LDP, the alternative is to split the stage into separate `frontend build` (nodejs-22-runner) and `backend build` (jdk-25-runner) jobs that share the `dist/` artifact — same pattern the local Dockerfile uses.
+- `ENV_REPO_PATH` is set to `atapp/autohausterminbuchung.environment` as a placeholder; final value depends on open question #10 (GitLab group path).
+- All five stages use `tags: [atapp, ocp03]` to bind to the assigned group runner `#581`.
 
 ### Phase 3: Environment Repository
 
