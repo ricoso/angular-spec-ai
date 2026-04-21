@@ -42,14 +42,14 @@ describe('circuitBreakerInterceptor', () => {
   });
 
   it('should record failure on 500 errors', () => {
-    http.get('/api/v1/branches').subscribe({ error: () => {} });
+    http.get('/api/v1/branches').subscribe({ error: () => { /* expected */ } });
     const req = httpTesting.expectOne('/api/v1/branches');
     req.flush('error', { status: 500, statusText: 'Internal Server Error' });
     expect(circuitBreaker.getStatus().failureCount).toBe(1);
   });
 
   it('should NOT record failure on 4xx errors', () => {
-    http.get('/api/v1/branches').subscribe({ error: () => {} });
+    http.get('/api/v1/branches').subscribe({ error: () => { /* expected */ } });
     const req = httpTesting.expectOne('/api/v1/branches');
     req.flush('not found', { status: 404, statusText: 'Not Found' });
     expect(circuitBreaker.getStatus().failureCount).toBe(0);

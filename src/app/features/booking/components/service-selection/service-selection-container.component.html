@@ -9,7 +9,7 @@
       <app-service-card
         [service]="service"
         [isSelected]="selectedServiceIds().includes(service.id)"
-        [selectedOptionIds]="$any(selectedOptionsMap()[service.id]) || []"
+        [selectedOptionIds]="(selectedOptionsMap()[service.id]) ?? []"
         (serviceClicked)="onServiceClick($event)"
         (serviceConfirmed)="onServiceConfirm($event)"
         (serviceDeselected)="onServiceDeselect($event)"
