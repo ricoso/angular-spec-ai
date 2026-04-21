@@ -28,12 +28,13 @@ export const sessionTokenInterceptor: HttpInterceptorFn = (
     switchMap((token) => {
       trace.log('Interceptor', `Token acquired, sending ${req.method} ${req.url}`, { correlationId });
       const authReq = req.clone({
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+        /* eslint-disable @typescript-eslint/naming-convention */
         setHeaders: {
           'X-Session-Token': token,
           'X-Correlation-Id': correlationId,
           'X-Session-Id': trace.sessionId,
         },
+        /* eslint-enable @typescript-eslint/naming-convention */
       });
       return next(authReq).pipe(
         tap({

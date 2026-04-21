@@ -24,13 +24,14 @@ export class PriceTileComponent {
   private readonly notes = i18nKeys.booking.notes;
 
   protected readonly mobilityOptionLabel = computed(() => {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    /* eslint-disable @typescript-eslint/naming-convention */
     const map = {
       'none': this.notes.mobilityOptions.none,
       'compact-car': this.notes.mobilityOptions.compactCar,
       'mid-range': this.notes.mobilityOptions.midRange,
       'luxury': this.notes.mobilityOptions.luxury
     } as const;
+    /* eslint-enable @typescript-eslint/naming-convention */
     return this.translateService.instant(map[this.mobilityOption()]);
   });
 
