@@ -122,4 +122,5 @@ soft-netOpenAPI.html
 server/build/
 server/.gradle/
 server/.DS_Store
+server/bin/
 server/Autohaus-Terminbuchung.zip

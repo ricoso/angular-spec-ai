@@ -3,7 +3,12 @@
   "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
 
   "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "installGradle": "false",
+      "installMaven": "false"
+    }
   },
 
   "forwardPorts": [4200, 3000, 3200],
@@ -26,7 +31,7 @@
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,consistency=cached"
   ],
 
-  "postCreateCommand": "npx playwright install --with-deps chromium && cd tools/requirements-board && curl -fsSL https://claude.ai/install.sh | bash && curl -sL https://download.java.net/java/early_access/jdk25/26/GPL/openjdk-25-ea+26_linux-x64_bin.tar.gz | sudo tar -xz -C /usr/local && sudo ln -sf /usr/local/jdk-25/bin/* /usr/local/bin/",
+  "postCreateCommand": "npx playwright install --with-deps chromium && curl -fsSL https://claude.ai/install.sh | bash",
   "postStartCommand": "",
 
   "customizations": {
