@@ -22,7 +22,7 @@ stages:
 default:
   tags:
     - atapp
-    - ocp03
+    - openshift
   interruptible: true
 
 # ─────────────────────────────────────────────────────────────────────
