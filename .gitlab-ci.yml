@@ -37,6 +37,7 @@ default:
       - package-lock.json
       - angular.json
       - Dockerfile
+      - .gitlab-ci.yml
     when: on_success
 
 .rules_main_or_feature: &rules_main_or_feature
@@ -48,6 +49,7 @@ default:
       - package-lock.json
       - angular.json
       - Dockerfile
+      - .gitlab-ci.yml
     when: on_success
   - if: '$CI_COMMIT_REF_NAME =~ /^(feature|hotfix|req)\/.+$/ && $CI_PIPELINE_SOURCE == "merge_request_event"'
     changes:
@@ -57,6 +59,7 @@ default:
       - package-lock.json
       - angular.json
       - Dockerfile
+      - .gitlab-ci.yml
     when: on_success
 
 .rules_feature_only: &rules_feature_only
@@ -68,6 +71,7 @@ default:
       - package-lock.json
       - angular.json
       - Dockerfile
+      - .gitlab-ci.yml
     when: on_success
 
 # ─────────────────────────────────────────────────────────────────────
