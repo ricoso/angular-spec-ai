@@ -92,7 +92,7 @@ variables:
   NAMESPACE_DEV: "atapp-dev"
   NAMESPACE_PROD: "atapp-prod"
   # Env repo path — fill in once group path is confirmed (open question #10)
-  ENV_REPO_PATH: "atapp/autohausterminbuchung.environment"
+  ENV_REPO_PATH: "indautomotive/atapp/autohausterminbuchung.environment"
 
 # ─────────────────────────────────────────────────────────────────────
 # .pre — JFrog Xray vulnerability scan
@@ -113,7 +113,6 @@ vulnerability scan:
 gradle tests:
   stage: test
   image: image-registry.openshift-image-registry.svc:5000/openshift/jdk-25-runner:latest
-  extends: .artifactory-base
   cache:
     key:
       files:
@@ -202,7 +201,6 @@ semantic versioning:
 gradle build:
   stage: build
   image: image-registry.openshift-image-registry.svc:5000/openshift/jdk-25-runner:latest
-  extends: .artifactory-base
   cache:
     key:
       files:
