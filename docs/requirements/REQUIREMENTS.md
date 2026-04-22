@@ -42,6 +42,7 @@
 | REQ-017 | Loading-Spinner | 📝 Draft | High | REQ-002, REQ-003 | Globale Loading-Spinner-Nachrüstung für alle Wizard-Seiten mit API-Calls |
 | REQ-018 | Spring-Boot-Migration | 📝 Draft | Critical | REQ-014 | NestJS Backend durch Spring Boot (Gradle + Spring Security) ersetzen — API 1:1 kompatibel |
 | REQ-019 | Deployment | 📝 Draft | High | REQ-018 | Production Deployment mit Docker/Kubernetes |
+| REQ-020 | Vorläufiges Deployment | 📝 Draft | Critical | REQ-018 | POC-Testinstanz auf Azure Container Apps (temporär, bis OpenShift-Zugang steht) |
 
 ---
 
@@ -76,6 +77,7 @@ REQ-017-Loading-Spinner (Cross-Cutting, Referenz: REQ-002/REQ-003)
 
 REQ-014-NestJS-Backend ──► REQ-015-API-Data-Integration
                     ──► REQ-018-Spring-Boot-Migration ──► REQ-019-Deployment
+                                                     ──► REQ-020-Vorläufiges-Deployment (Azure POC)
 ```
 
 ---
@@ -98,6 +100,7 @@ REQ-014-NestJS-Backend ──► REQ-015-API-Data-Integration
 | REQ-012 | [REQ-012-Hinweisseite-Erweitert](./REQ-012-Hinweisseite-Erweitert/requirement.md) |
 | REQ-013 | [REQ-013-Branch-Marke-Tausch](./REQ-013-Branch-Marke-Tausch/requirement.md) |
 | REQ-014 | [REQ-014-NestJS-Backend](./REQ-014-NestJS-Backend/requirement.md) |
+| REQ-020 | [REQ-020-Vorläufiges Deployment](./REQ-020-VorlaeufigDeployment/requirement.md) |
 | REQ-015 | [REQ-015-API-Data-Integration](./REQ-015-API-Data-Integration/requirement.md) |
 | REQ-016 | [REQ-016-User-Lookup](./REQ-016-User-Lookup/requirement.md) |
 | REQ-017 | [REQ-017-Loading-Spinner](./REQ-017-Loading-Spinner/requirement.md) |
