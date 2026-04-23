@@ -1,0 +1,348 @@
+# REQ-019 Phase 2 — Application Repository CI/CD for LHIND DevOps Platform.
+#
+# Pipeline:
+#   .pre (vulnerability scan)
+#   → test (gradle + frontend)
+#   → versioning (semantic-release)
+#   → build (gradle bootJar)
+#   → image (buildah → OCP registry; promote on main)
+#   → rollout (MR into autohausterminbuchung.environment)
+#
+# SonarQube stage is intentionally disabled until the project is provisioned
+# (rename `.sonarqube scan:` to `sonarqube scan:` to enable).
+
+stages:
+  - test
+  - versioning
+  # - sonarqube_scan      # Deferred — enable when SonarQube project + SONAR_TOKEN exist
+  - build
+  - image
+  - rollout
+
+default:
+  tags:
+    - atapp
+    - openshift
+  interruptible: true
+
+# ─────────────────────────────────────────────────────────────────────
+# Rule anchors
+# ─────────────────────────────────────────────────────────────────────
+.rules_main_only: &rules_main_only
+  - if: '$CI_COMMIT_BRANCH == "main"'
+    changes:
+      - src/**/*
+      - server/**/*
+      - package.json
+      - package-lock.json
+      - angular.json
+      - Dockerfile
+      - .gitlab-ci.yml
+    when: on_success
+
+.rules_main_or_feature: &rules_main_or_feature
+  - if: '$CI_COMMIT_BRANCH == "main"'
+    changes:
+      - src/**/*
+      - server/**/*
+      - package.json
+      - package-lock.json
+      - angular.json
+      - Dockerfile
+      - .gitlab-ci.yml
+    when: on_success
+  - if: '$CI_COMMIT_REF_NAME =~ /^(feature|hotfix|req)\/.+$/ && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    changes:
+      - src/**/*
+      - server/**/*
+      - package.json
+      - package-lock.json
+      - angular.json
+      - Dockerfile
+      - .gitlab-ci.yml
+    when: on_success
+
+.rules_feature_only: &rules_feature_only
+  - if: '$CI_COMMIT_REF_NAME =~ /^(feature|hotfix|req)\/.+$/ && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    changes:
+      - src/**/*
+      - server/**/*
+      - package.json
+      - package-lock.json
+      - angular.json
+      - Dockerfile
+      - .gitlab-ci.yml
+    when: on_success
+
+# ─────────────────────────────────────────────────────────────────────
+# Shared LDP templates
+# ─────────────────────────────────────────────────────────────────────
+include:
+  - project: 'lhind-devops-platform/gitlab-ci-templates'
+    file: 'ocp.yml'
+  - project: 'lhind-devops-platform/gitlab-ci-templates'
+    file: 'artifactory.yml'
+  - project: 'lhind-devops-platform/gitlab-ci-templates'
+    file: 'frogbot.yml'
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
+# ─────────────────────────────────────────────────────────────────────
+# Project-wide variables
+# ─────────────────────────────────────────────────────────────────────
+variables:
+  # Confirmed shared LHIND virtual Maven/Gradle repo (verified from java-template)
+  ARTIFACTORY_VIRTUAL_REPO: "devopsplatform-lhind-px-mvn-all"
+  # OCP namespaces — confirm via EMMA ticket #1, then update if assigned names differ
+  NAMESPACE_DEV: "atapp-dev"
+  NAMESPACE_PROD: "atapp-prod"
+  # Env repo path — fill in once group path is confirmed (open question #10)
+  ENV_REPO_PATH: "indautomotive/atapp/autohausterminbuchung.environment"
+
+# ─────────────────────────────────────────────────────────────────────
+# .pre — JFrog Xray vulnerability scan
+# ─────────────────────────────────────────────────────────────────────
+# Disabled until JFrog Xray watcher is provisioned (deferred ticket D2).
+# Remove the leading dot to enable.
+.vulnerability scan:
+  stage: .pre
+  image: image-registry.openshift-image-registry.svc:5000/openshift/jdk-25-runner:latest
+  extends: .artifactory-config
+  script:
+    - jf audit --watches=WATCHER_NAME_TODO
+  allow_failure: true
+  rules: *rules_main_or_feature
+
+# ─────────────────────────────────────────────────────────────────────
+# test — Gradle (backend) + npm (frontend)
+# ─────────────────────────────────────────────────────────────────────
+gradle tests:
+  stage: test
+  image: image-registry.openshift-image-registry.svc:5000/openshift/jdk-25-runner:latest
+  cache:
+    key:
+      files:
+        - server/build.gradle
+    paths:
+      - server/.gradle/
+  script:
+    - cd server && ./gradlew --no-daemon test jacocoTestReport
+  artifacts:
+    when: always
+    reports:
+      junit: server/build/test-results/test/*.xml
+    paths:
+      - server/build/reports/
+      - server/build/test-results/
+    expire_in: 1 week
+  rules: *rules_main_or_feature
+
+frontend tests:
+  stage: test
+  image: image-registry.openshift-image-registry.svc:5000/openshift/nodejs-22-runner:latest
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  script:
+    - npm ci --legacy-peer-deps
+    - npm run lint
+    - npm run test:ci
+  artifacts:
+    when: always
+    paths:
+      - coverage/
+    expire_in: 1 week
+  rules: *rules_main_or_feature
+
+# ─────────────────────────────────────────────────────────────────────
+# versioning — semantic-release produces version.txt + version_full.txt
+# ─────────────────────────────────────────────────────────────────────
+semantic versioning:
+  stage: versioning
+  image: image-registry.openshift-image-registry.svc:5000/openshift/nodejs-22-runner:latest
+  variables:
+    GIT_DEPTH: "0"
+  before_script:
+    - git config --global user.email "ci@autohaus.lhind.app"
+    - git config --global user.name "CI Bot"
+    - npm install -g semantic-release@22 conventional-changelog-conventionalcommits@7
+        @semantic-release/commit-analyzer @semantic-release/release-notes-generator
+        @semantic-release/exec
+  script:
+    - npx semantic-release --no-ci
+  artifacts:
+    paths:
+      - version.txt
+      - version_full.txt
+    expire_in: 1 day
+  rules: *rules_main_or_feature
+
+# ─────────────────────────────────────────────────────────────────────
+# sonarqube_scan — disabled until SonarQube project is provisioned
+# Rename `.sonarqube scan:` to `sonarqube scan:` and uncomment the stage
+# in `stages:` above to enable.
+# ─────────────────────────────────────────────────────────────────────
+.sonarqube scan:
+  stage: sonarqube_scan
+  image: image-registry.openshift-image-registry.svc:5000/openshift/jdk-25-runner:latest
+  extends: .artifactory-base
+  variables:
+    SONAR_HOST_URL: "https://codequality01.lhind.app.lufthansa.com/"
+    SONAR_PROJECT_KEY: "atapp-autohausterminbuchung"
+  script:
+    - cd server
+    - ./gradlew --no-daemon test jacocoTestReport sonar
+        -Dsonar.projectKey=$SONAR_PROJECT_KEY
+        -Dsonar.host.url=$SONAR_HOST_URL
+        -Dsonar.token=$SONAR_TOKEN
+        -Dsonar.branch.name=$CI_COMMIT_REF_NAME
+  rules: *rules_main_or_feature
+
+# ─────────────────────────────────────────────────────────────────────
+# build — Gradle bootJar (also runs the Angular build via buildAngular task)
+# ─────────────────────────────────────────────────────────────────────
+gradle build:
+  stage: build
+  image: image-registry.openshift-image-registry.svc:5000/openshift/jdk-25-runner:latest
+  cache:
+    key:
+      files:
+        - server/build.gradle
+        - package-lock.json
+    paths:
+      - server/.gradle/
+      - node_modules/
+  script:
+    # The buildAngular Gradle task shells out to `npm run build`, which requires
+    # node_modules. The JDK runner has no Node.js, so the cleanest split is to
+    # build Angular separately and skip buildAngular here.
+    # → For Phase 2 we use a single jdk runner WITH a sub-shell to install
+    #   Node via dnf only if absent. Long term: request a combined runner image.
+    - command -v node || (microdnf install -y nodejs npm || dnf install -y nodejs npm)
+    - npm ci --legacy-peer-deps
+    - cd server && ./gradlew --no-daemon bootJar
+  artifacts:
+    paths:
+      - server/build/libs/*.jar
+      - dist/
+    expire_in: 1 day
+  rules: *rules_main_or_feature
+
+# ─────────────────────────────────────────────────────────────────────
+# image — buildah → OCP internal registry
+# ─────────────────────────────────────────────────────────────────────
+build dev rc image:
+  stage: image
+  image: registry.access.redhat.com/ubi8/buildah:latest
+  extends: .ocp-build
+  needs:
+    - gradle build
+    - semantic versioning
+  script:
+    - VERSION=$(cat version_full.txt)
+    - TAG_RC="${VERSION}-rc"
+    - ocp-build-and-scan ./Dockerfile $NAMESPACE_DEV $CI_PROJECT_NAME:$TAG_RC
+    - ocp-push $NAMESPACE_DEV $CI_PROJECT_NAME:$TAG_RC
+  rules: *rules_feature_only
+
+build release image:
+  stage: image
+  image: registry.access.redhat.com/ubi8/buildah:latest
+  extends: .ocp-build
+  needs:
+    - gradle build
+    - semantic versioning
+  script:
+    - VERSION=$(cat version.txt)
+    - TAG="v${VERSION}"
+    - ocp-build-and-scan ./Dockerfile $NAMESPACE_DEV $CI_PROJECT_NAME:$TAG
+    - ocp-push $NAMESPACE_DEV $CI_PROJECT_NAME:$TAG
+  rules: *rules_main_only
+
+promote release image:
+  stage: image
+  image: image-registry.openshift-image-registry.svc:5000/openshift/lhind-ocp-tools:latest
+  needs:
+    - build release image
+  script:
+    - VERSION=$(cat version.txt)
+    - TAG="v${VERSION}"
+    - oc tag --reference-policy=local "$NAMESPACE_DEV/$CI_PROJECT_NAME:$TAG" "$NAMESPACE_PROD/$CI_PROJECT_NAME:$TAG"
+  rules: *rules_main_only
+
+# ─────────────────────────────────────────────────────────────────────
+# rollout — open MR in environment repo to bump appVersion
+# ─────────────────────────────────────────────────────────────────────
+.rollout-base:
+  stage: rollout
+  image: image-registry.openshift-image-registry.svc:5000/openshift/lhind-ocp-tools:latest
+  variables:
+    TARGET_PROJECT_BRANCH: "main"
+  before_script:
+    - git config --global user.email "ci@autohaus.lhind.app"
+    - git config --global user.name "CI Bot"
+
+deploy feature:
+  extends: .rollout-base
+  needs:
+    - semantic versioning
+    - build dev rc image
+  script:
+    - |
+      VERSION=$(cat version_full.txt)
+      TAG_RC="${VERSION}-rc"
+      git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git"
+      cd autohausterminbuchung.environment
+      git checkout "$TARGET_PROJECT_BRANCH"
+      BRANCH_NAME="version-update-${CI_COMMIT_SHORT_SHA}"
+      git checkout -b "$BRANCH_NAME"
+      yq eval ".global.appVersion = \"$TAG_RC\"" -i environments/dev/values.yaml
+      git add environments/dev/values.yaml
+      git commit -m "chore(dev): bump appVersion to $TAG_RC"
+      git push "https://root:${ACCESS_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_NAME" \
+        -o merge_request.create=true \
+        -o merge_request.target="$TARGET_PROJECT_BRANCH" \
+        -o merge_request.remove_source_branch \
+        -o merge_request.merge_when_pipeline_succeeds
+  rules: *rules_feature_only
+
+create release:
+  extends: .rollout-base
+  needs:
+    - semantic versioning
+    - build release image
+    - promote release image
+  script:
+    - |
+      VERSION=$(cat version.txt)
+      TAG="v${VERSION}"
+      git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git"
+      cd autohausterminbuchung.environment
+      git checkout "$TARGET_PROJECT_BRANCH"
+
+      # DEV MR — auto-merge on green pipeline
+      BRANCH_DEV="release/$TAG-DEV"
+      git checkout -b "$BRANCH_DEV"
+      yq eval ".global.appVersion = \"$TAG\"" -i environments/dev/values.yaml
+      git add environments/dev/values.yaml
+      git commit -m "chore(dev): release $TAG"
+      git push "https://root:${ACCESS_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_DEV" \
+        -o merge_request.create=true \
+        -o merge_request.target="$TARGET_PROJECT_BRANCH" \
+        -o merge_request.remove_source_branch \
+        -o merge_request.merge_when_pipeline_succeeds
+
+      # PROD MR — manual merge required
+      git checkout "$TARGET_PROJECT_BRANCH"
+      BRANCH_PROD="release/$TAG"
+      git checkout -b "$BRANCH_PROD"
+      yq eval ".global.appVersion = \"$TAG\"" -i environments/prod/values.yaml
+      git add environments/prod/values.yaml
+      git commit -m "chore(prod): release $TAG"
+      git push "https://root:${ACCESS_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_PROD" \
+        -o merge_request.create=true \
+        -o merge_request.target="$TARGET_PROJECT_BRANCH" \
+        -o merge_request.remove_source_branch
+  rules: *rules_main_only

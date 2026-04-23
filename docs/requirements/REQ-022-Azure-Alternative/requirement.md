@@ -1,9 +1,9 @@
-# REQ-019: Azure Container App Hosting
+# REQ-022: Azure Container App Hosting (Alternative)
 
 | Feld | Wert |
 |------|------|
-| **ID** | REQ-019 |
-| **Titel** | Azure Container App Hosting |
+| **ID** | REQ-022 |
+| **Titel** | Azure Container App Hosting (Alternative) |
 | **Status** | Draft |
 | **Prioritaet** | Hoch |
 | **Abhaengigkeiten** | REQ-018-Spring-Boot-Migration |

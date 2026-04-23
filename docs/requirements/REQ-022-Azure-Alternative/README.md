@@ -1,9 +1,9 @@
-# REQ-019 — Fahrplan: Azure Container App Hosting (Fallback)
+# REQ-022 — Fahrplan: Azure Container App Hosting (Alternative)
 
 Checkliste und Leitfaden fuer das Hosting in einer Azure Container App.
 Das eigentliche Requirement (AC-Liste) liegt in [`requirement.md`](./requirement.md).
 
-**Rolle:** Fallback-Hosting. Ziel-Plattform ist REQ-020 (OpenShift). REQ-019 wird nur aktiviert, wenn das Plattform-Team zu langsam ist.
+**Rolle:** Alternative Azure-Hosting-Variante. Primaere Ziel-Plattform ist REQ-019 (LDP/OpenShift), POC-Variante ist REQ-020 (Azure POC via deploy.sh). REQ-022 dokumentiert die Zero-Pipeline-Alternative (ACR Task + GitLab Webhook).
 **Deploy-Pfad:** Option B — **ACR Task + GitLab Webhook, Zero Pipeline**. Kein `.gitlab-ci.yml`, kein GitHub Actions.
 **Auth:** HTTPS + GitLab Personal Access Token (kein SSH).
 
