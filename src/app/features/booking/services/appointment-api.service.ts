@@ -53,6 +53,7 @@ export interface CreateAppointmentRequest {
   vehicle: AppointmentVehicle;
   note?: string;
   mobilityOption?: string;
+  rentCategoryId?: string;
 }
 
 export interface AppointmentResponse {

@@ -33,10 +33,13 @@ export class NotesContainerComponent {
   protected readonly selectedServices = this.store.selectedServices;
   protected readonly initialNote = this.store.bookingNote;
   protected readonly initialExtras = this.store.notesExtras;
+  protected readonly rentCategories = this.store.rentCategories;
+  protected readonly initialRentCategoryId = this.store.selectedRentCategoryId;
   protected readonly currentNote = signal<string | null>(this.store.bookingNote());
   protected readonly currentExtras = signal<NotesExtras>(
     this.store.notesExtras() ?? { ...DEFAULT_NOTES_EXTRAS }
   );
+  protected readonly currentRentCategoryId = signal<string | null>(this.store.selectedRentCategoryId());
 
   protected onNoteChanged(note: string | null): void {
     this.currentNote.set(note);
@@ -46,18 +49,23 @@ export class NotesContainerComponent {
     this.currentExtras.set(extras);
   }
 
+  protected onRentCategoryChanged(id: string | null): void {
+    this.currentRentCategoryId.set(id);
+  }
+
   protected onContinue(): void {
     const note = this.currentNote();
     const sanitizedNote = note && note.trim().length > 0 ? note.trim() : null;
     this.store.setBookingNote(sanitizedNote);
     this.store.setNotesExtras(this.currentExtras());
-    console.debug('[NotesContainer] Continue clicked, note:', sanitizedNote, 'extras:', this.currentExtras());
+    this.store.setSelectedRentCategoryId(this.currentRentCategoryId());
     void this.router.navigate(['/home/appointment']);
   }
 
   protected onBack(): void {
     this.store.setBookingNote(null);
     this.store.clearNotesExtras();
+    this.store.setSelectedRentCategoryId(null);
     void this.router.navigate(['/home/services']);
   }
 }

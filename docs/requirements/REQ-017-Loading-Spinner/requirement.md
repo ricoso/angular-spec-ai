@@ -28,6 +28,9 @@ Sammel-Requirement fuer Cleanup und Bugfixes im Buchungs-Wizard:
 - **(f) Stale-Snaps-Bug: Snaps immer neu laden bei Eintritt in Step 5 (Terminauswahl)**
 - **(g) Mobilitaets-Optionen (Mietwagen-Kategorien): Dropdown mit Rentcategories (Kleinwagen, Mittelklasse, etc.) anzeigen + bei Buchung an SoftNet API senden**
 - **(h) iframe-Embedding + Schliessen-Button: App laeuft im iframe-Overlay, X-Button leitet zurueck zur Autohaus-Seite**
+- **(i) Fingerprint-Konfiguration: Env-Variable enthaelt den JSON-Inhalt direkt (statt eines Datei-Pfades)**
+
+> **Hinweis:** Multi-Branch-Setup (27 Filialen mit je 2 Group-IDs fuer Standard/Radwechsel) + Radwechsel-Saison-Feature-Toggle sind in **REQ-021-Multi-Branch-Setup** ausgelagert.
 
 **Mobilitaets-Optionen Detail (g):**
 - Neuer API-Endpunkt: `GET /api/v1/rentcategories` → SoftNet `GET /api/planning/rentcategories`
@@ -50,6 +53,18 @@ Sammel-Requirement fuer Cleanup und Bugfixes im Buchungs-Wizard:
   - X-Button Click: `window.top.location.href = 'https://www.gottfried-schultz.de/werkstatt-termin/'`
   - Booking-Success-Page: Automatischer Redirect nach X Sekunden oder Button "Zurueck zur Webseite"
 - **Responsive im iframe:** Funktioniert — CSS Breakpoints basieren auf Container-Breite (em), nicht Viewport
+
+**Fingerprint-Konfiguration Detail (i):**
+- **Aktuell:** `SOFTNET_FINGERPRINT_PATH` enthaelt einen Datei-Pfad (z.B. `./config/softnet-fingerprint.json`). Das Backend liest per `Files.readString(path)` den JSON-Inhalt aus dem Dateisystem.
+- **Neu:** `SOFTNET_FINGERPRINT_PATH` enthaelt direkt den eigentlichen JSON-Wert als String (den vollstaendigen Inhalt der Fingerprint-Datei).
+- **Grund:** Im Deployment-Container (OpenShift/Docker) steht keine gemountete Datei zur Verfuegung — nur die Env-Variable mit dem reinen JSON-Wert.
+- **Backend-Aenderungen:**
+  - `SoftnetAuthService.loadFingerprint()`: Kein `Files.readString()` mehr — Property-Wert direkt an `objectMapper.readTree(value)` uebergeben.
+  - `SoftnetProperties.fingerprintPath` bleibt als Feldname bestehen (enthaelt jetzt JSON-Inhalt, nicht mehr einen Pfad).
+  - Logging anpassen: `"Fingerprint loaded from env variable"` statt Pfad-Ausgabe.
+- **Konfig-Schluessel:** Alles bleibt einheitlich auf `fingerprint-path` / `SOFTNET_FINGERPRINT_PATH` — kein Rename im App-Code, nur die Semantik des Wertes aendert sich.
+- **Lokale Entwicklung:** Entwickler exportieren den JSON-Inhalt direkt als Env-Variable (z.B. `export SOFTNET_FINGERPRINT_PATH="$(cat cognigy.net_fingerprint-*.json)"`).
+- **Tests:** `SoftnetAuthServiceTest` muss angepasst werden — kein temporaeres File mehr schreiben, JSON-String direkt als Property setzen.
 
 **Excluded:**
 - Aenderungen an bestehenden Spinner-Implementierungen (REQ-002, REQ-003)
@@ -80,6 +95,9 @@ Sammel-Requirement fuer Cleanup und Bugfixes im Buchungs-Wizard:
 - [ ] AC-6: Referenz-Implementierung: `location-selection-container.component.html:7-32` + `.scss:24-70` + `.ts:33-34,42-44`
 - [ ] AC-7: Spinner zeigt `role="status"` + `aria-live="polite"` (WCAG 2.1 AA)
 - [ ] AC-8: Error-State zeigt `role="alert"` + `aria-live="assertive"`
+- [ ] AC-9: `SOFTNET_FINGERPRINT_JSON` Env-Variable enthaelt JSON-Inhalt direkt, nicht mehr einen Datei-Pfad
+- [ ] AC-10: `SoftnetAuthService` liest Fingerprint aus Property-Wert (ohne `Files.readString()`)
+- [ ] AC-11: `SoftnetAuthServiceTest` deckt die neue Direkt-JSON-Variante ab (kein temporaeres File mehr)
 
 ---
 
@@ -312,6 +330,16 @@ Keine neuen Routes — Spinner sind Teil der bestehenden Container-Components.
 - **Given:** Spinner wird angezeigt
 - **When:** Screen-Reader aktiv
 - **Then:** `role="status"` wird vorgelesen, Error-State hat `role="alert"`
+
+### TC-7: Fingerprint aus Env-Variable (JSON direkt)
+- **Given:** `SOFTNET_FINGERPRINT_PATH` enthaelt den vollstaendigen JSON-Inhalt (nicht einen Pfad)
+- **When:** Backend startet
+- **Then:** `SoftnetAuthService` parst den JSON-Wert erfolgreich, `clientEmail`/`clientId`/`privateKeyId`/`privateKey` werden gesetzt, kein File-IO
+
+### TC-8: Fingerprint fehlerhaft/leer
+- **Given:** `SOFTNET_FINGERPRINT_PATH` ist leer oder kein gueltiges JSON
+- **When:** Backend startet
+- **Then:** Warnung wird geloggt, Backend startet trotzdem, SoftNet-Auth schlaegt beim ersten Request fehl
 
 ---
 

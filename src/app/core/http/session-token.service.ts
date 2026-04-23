@@ -23,7 +23,7 @@ export class SessionTokenService {
     if (this.token && this.expiresAt && this.expiresAt > new Date()) {
       return this.token;
     }
-    this.refreshToken();
+    void this.refreshToken();
     return this.token;
   }
 
@@ -51,7 +51,7 @@ export class SessionTokenService {
         error: (err: unknown) => {
           console.error('[TRACE] [SessionTokenService] Token fetch failed', err);
           this.fetchPromise = null;
-          reject(err);
+          reject(err instanceof Error ? err : new Error(typeof err === 'string' ? err : 'Session token fetch failed'));
         },
       });
     });

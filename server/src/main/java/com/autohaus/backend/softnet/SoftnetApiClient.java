@@ -80,6 +80,11 @@ public class SoftnetApiClient {
         return getList("/api/planning/mobilityalternatives", true);
     }
 
+    // === Rent Categories (WITH group header) ===
+    public List<JsonNode> getRentCategories() {
+        return getList("/api/planning/rentcategories", true);
+    }
+
     // === Vault Items / Customers (WITH group header) ===
     public JsonNode createVaultItem(Map<String, Object> customer) {
         return post("/api/planning/vaultitems", customer, true);

@@ -11,7 +11,7 @@ app:
 softnet:
   base-url: ${SOFTNET_BASE_URL:}
   auth-url: ${SOFTNET_AUTH_URL:}
-  fingerprint-path: ${SOFTNET_FINGERPRINT_PATH:}
+  fingerprint-json: ${SOFTNET_FINGERPRINT_JSON:}
   timeout: ${SOFTNET_TIMEOUT:10000}
   group-id: ${GROUP_ID:}
   branch-id: ${BRANCH_ID:}

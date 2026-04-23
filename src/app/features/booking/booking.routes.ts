@@ -9,6 +9,7 @@ import { servicesSelectedGuard } from './guards/services-selected.guard';
 import { appointmentsResolver } from './resolvers/appointments.resolver';
 import { brandsResolver } from './resolvers/brands.resolver';
 import { locationsResolver } from './resolvers/locations.resolver';
+import { rentCategoriesResolver } from './resolvers/rent-categories.resolver';
 import { servicesResolver } from './resolvers/services.resolver';
 
 export const bookingRoutes: Routes = [
@@ -42,7 +43,8 @@ export const bookingRoutes: Routes = [
     path: 'notes',
     loadComponent: () => import('./components/notes/notes-container.component')
       .then(m => m.NotesContainerComponent),
-    canActivate: [servicesSelectedGuard]
+    canActivate: [servicesSelectedGuard],
+    resolve: { _: rentCategoriesResolver }
   },
   {
     path: 'appointment',

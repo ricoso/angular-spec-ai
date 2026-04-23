@@ -164,5 +164,18 @@ describe('ServiceSelectionContainerComponent', () => {
       expect(store.selectedServices()).toEqual([]);
       expect(router.navigate).toHaveBeenCalledWith(['/home/brand']);
     });
+
+    it('should call loadServices on retry', () => {
+      const loadSpy = jest.spyOn(store, 'loadServices');
+      const exposed = component as unknown as { onRetry: () => void };
+      exposed.onRetry();
+      expect(loadSpy).toHaveBeenCalled();
+    });
+
+    it('should expose isLoading and error signals', () => {
+      const exposed = component as unknown as { isLoading: () => boolean; error: () => string | null };
+      expect(exposed.isLoading()).toBe(false);
+      expect(exposed.error()).toBeNull();
+    });
   });
 });

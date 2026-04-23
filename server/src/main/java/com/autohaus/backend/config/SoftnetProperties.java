@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record SoftnetProperties(
     String baseUrl,
     String authUrl,
-    String fingerprintPath,
+    String fingerprintJson,
     int timeout,
     String groupId,
     String branchId

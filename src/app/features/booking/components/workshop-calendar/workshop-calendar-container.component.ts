@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -21,6 +22,7 @@ import { WorkshopCalendarDayComponent } from './workshop-calendar-day.component'
     TranslatePipe,
     MatButtonModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     WizardBreadcrumbComponent,
     WorkshopCalendarDatePickerComponent,
     WorkshopCalendarDayComponent
@@ -40,6 +42,8 @@ export class WorkshopCalendarContainerComponent {
   protected readonly workshopCalendarDate = this.store.workshopCalendarDate;
   protected readonly selectedAppointment = this.store.selectedAppointment;
   protected readonly hasAppointmentSelected = this.store.hasAppointmentSelected;
+  protected readonly isLoading = this.store.isLoading;
+  protected readonly error = this.store.error;
 
   protected onDateSelected(date: Date): void {
     const isoDate = this.formatIsoDate(date);
@@ -60,13 +64,19 @@ export class WorkshopCalendarContainerComponent {
   }
 
   protected onContinue(): void {
-    console.debug('[WorkshopCalendarContainer] Continue clicked, appointment:', this.selectedAppointment());
     void this.router.navigate(['/home/carinformation']);
   }
 
   protected onBack(): void {
     this.store.clearWorkshopCalendar();
     void this.router.navigate(['/home/appointment']);
+  }
+
+  protected onRetry(): void {
+    const currentDate = this.store.workshopCalendarDate();
+    if (currentDate) {
+      this.store.loadWorkshopCalendarDays(currentDate);
+    }
   }
 
   private formatIsoDate(date: Date): string {

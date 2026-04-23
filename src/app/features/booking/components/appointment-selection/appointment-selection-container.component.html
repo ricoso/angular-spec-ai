@@ -6,52 +6,73 @@
     {{ booking.appointment.title | translate }}
   </h1>
 
-  <div
-    class="appointment-selection__grid"
-    role="radiogroup"
-    [attr.aria-label]="booking.appointment.ariaGroupLabel | translate"
-  >
-    @for (appointment of appointments(); track appointment.id) {
-      <app-appointment-card
-        [appointment]="appointment"
-        [isSelected]="selectedAppointment()?.id === appointment.id"
-        (appointmentSelected)="onAppointmentSelect($event)"
-      />
-    }
-  </div>
-
-  <button
-    class="appointment-selection__calendar-link"
-    type="button"
-    (click)="onCalendarLinkClick($event)"
-  >
-    {{ booking.appointment.calendarLink | translate }}
-  </button>
-
-  <nav class="appointment-selection__nav" [attr.aria-label]="booking.appointment.navAriaLabel | translate">
-    <button
-      mat-flat-button
-      class="appointment-selection__back-button"
-      type="button"
-      [attr.aria-label]="booking.appointment.backButton | translate"
-      (click)="onBack()"
+  @if (isLoading()) {
+    <div class="appointment-selection__loading" role="status" aria-live="polite">
+      <mat-spinner diameter="48" />
+      <p class="appointment-selection__loading-text">{{ booking.api.loading | translate }}</p>
+    </div>
+  } @else if (error()) {
+    <div class="appointment-selection__error" role="alert" aria-live="assertive">
+      <mat-icon class="appointment-selection__error-icon" aria-hidden="true">error_outline</mat-icon>
+      <h2 class="appointment-selection__error-title">{{ booking.api.errorTitle | translate }}</h2>
+      <p class="appointment-selection__error-message">{{ booking.api.errorUnknown | translate }}</p>
+      <button
+        mat-flat-button
+        color="primary"
+        class="appointment-selection__retry-button"
+        (click)="onRetry()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        {{ booking.api.retryButton | translate }}
+      </button>
+    </div>
+  } @else {
+    <div
+      class="appointment-selection__grid"
+      role="radiogroup"
+      [attr.aria-label]="booking.appointment.ariaGroupLabel | translate"
     >
-      <mat-icon aria-hidden="true">arrow_back</mat-icon>
-      {{ booking.appointment.backButton | translate }}
+      @for (appointment of appointments(); track appointment.id) {
+        <app-appointment-card
+          [appointment]="appointment"
+          [isSelected]="selectedAppointment()?.id === appointment.id"
+          (appointmentSelected)="onAppointmentSelect($event)"
+        />
+      }
+    </div>
+
+    <button
+      class="appointment-selection__calendar-link"
+      type="button"
+      (click)="onCalendarLinkClick($event)"
+    >
+      {{ booking.appointment.calendarLink | translate }}
     </button>
 
-    <button
-      mat-flat-button
-      color="primary"
-      class="appointment-selection__continue-button"
-      type="button"
-      [disabled]="!hasAppointmentSelected()"
-      [attr.aria-label]="booking.appointment.continueButton | translate"
-      (click)="onContinue()"
-    >
-      {{ booking.appointment.continueButton | translate }}
-      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-    </button>
-  </nav>
+    <nav class="appointment-selection__nav" [attr.aria-label]="booking.appointment.navAriaLabel | translate">
+      <button
+        mat-flat-button
+        class="appointment-selection__back-button"
+        type="button"
+        [attr.aria-label]="booking.appointment.backButton | translate"
+        (click)="onBack()"
+      >
+        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+        {{ booking.appointment.backButton | translate }}
+      </button>
+
+      <button
+        mat-flat-button
+        color="primary"
+        class="appointment-selection__continue-button"
+        type="button"
+        [disabled]="!hasAppointmentSelected()"
+        [attr.aria-label]="booking.appointment.continueButton | translate"
+        (click)="onContinue()"
+      >
+        {{ booking.appointment.continueButton | translate }}
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </button>
+    </nav>
+  }
 
 </section>

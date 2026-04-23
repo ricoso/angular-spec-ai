@@ -41,7 +41,9 @@
 | REQ-016 | User-Lookup | 📝 Draft | High | REQ-009, REQ-014 | User-Abfrage per Email/Kennzeichen mit Formular-Prefill |
 | REQ-017 | Loading-Spinner | 📝 Draft | High | REQ-002, REQ-003 | Globale Loading-Spinner-Nachrüstung für alle Wizard-Seiten mit API-Calls |
 | REQ-018 | Spring-Boot-Migration | 📝 Draft | Critical | REQ-014 | NestJS Backend durch Spring Boot (Gradle + Spring Security) ersetzen — API 1:1 kompatibel |
-| REQ-019 | Deployment | 📝 Draft | High | REQ-018 | Production Deployment mit Docker/Kubernetes |
+| REQ-019 | Azure-Container-App | 📝 Draft | Medium | REQ-018 | **Fallback-Hosting** in Azure Container App via ACR Task + GitLab Webhook (Zero Pipeline). Wird nur aktiviert, wenn REQ-020 zu lange dauert. |
+| REQ-020 | Deployment | 📝 Draft | High | REQ-018 | **Primaeres Deployment** auf OpenShift via GitLab CI/CD (Plattform-Team) |
+| REQ-021 | Multi-Branch-Setup | 📝 Draft | High | REQ-017 | **Setup-JSON** fuer 27 Filialen mit je 2 Group-IDs (Standard/Radwechsel) + Feature-Toggle `RADWECHSEL_ENABLED` fuer saisonale Aktivierung |
 
 ---
 
@@ -73,9 +75,12 @@ REQ-012-Hinweisseite-Erweitert (erweitert REQ-005)
 REQ-013-Branch-Marke-Tausch (erweitert REQ-002/REQ-003)
 
 REQ-017-Loading-Spinner (Cross-Cutting, Referenz: REQ-002/REQ-003)
+            │
+            └──► REQ-021-Multi-Branch-Setup (27 Filialen + Radwechsel-Saison-Toggle)
 
 REQ-014-NestJS-Backend ──► REQ-015-API-Data-Integration
-                    ──► REQ-018-Spring-Boot-Migration ──► REQ-019-Deployment
+                    ──► REQ-018-Spring-Boot-Migration ──► REQ-019-Azure-Container-App
+                                                      └──► REQ-020-Deployment (alt.)
 ```
 
 ---
@@ -102,7 +107,9 @@ REQ-014-NestJS-Backend ──► REQ-015-API-Data-Integration
 | REQ-016 | [REQ-016-User-Lookup](./REQ-016-User-Lookup/requirement.md) |
 | REQ-017 | [REQ-017-Loading-Spinner](./REQ-017-Loading-Spinner/requirement.md) |
 | REQ-018 | [REQ-018-Spring-Boot-Migration](./REQ-018-Spring-Boot-Migration/requirement.md) |
-| REQ-019 | [REQ-019-Deployment](./REQ-019-Deployment/requirement.md) |
+| REQ-019 | [REQ-019-Azure-Container-App](./REQ-019-Azure-Container-App/requirement.md) |
+| REQ-020 | [REQ-020-Deployment](./REQ-020-Deployment/requirement.md) |
+| REQ-021 | [REQ-021-Multi-Branch-Setup](./REQ-021-Multi-Branch-Setup/requirement.md) |
 
 ---
 
@@ -110,12 +117,12 @@ REQ-014-NestJS-Backend ──► REQ-015-API-Data-Integration
 
 | Status         | Count  |
 | -------------- | ------ |
-| 📝 Draft | 5 |
+| 📝 Draft | 6 |
 | 🔍 In Review | 1 |
 | ✅ Approved | 1 |
 | 🚧 In Progress | 1 |
 | ✔️ Implemented | 12 |
-| **Total** | **19** |
+| **Total** | **20** |
 
 
 ---

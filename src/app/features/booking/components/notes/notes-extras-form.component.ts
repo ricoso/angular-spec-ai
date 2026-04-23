@@ -11,6 +11,7 @@ import type {
   NotesExtras
 } from '../../models/notes-extras.model';
 import { DEFAULT_NOTES_EXTRAS } from '../../models/notes-extras.model';
+import type { RentCategory } from '../../models/rent-category.model';
 
 @Component({
   selector: 'app-notes-extras-form',
@@ -22,9 +23,13 @@ import { DEFAULT_NOTES_EXTRAS } from '../../models/notes-extras.model';
 })
 export class NotesExtrasFormComponent {
   public readonly initialExtras = input<NotesExtras | null>(null);
+  public readonly rentCategories = input<RentCategory[]>([]);
+  public readonly initialRentCategoryId = input<string | null>(null);
   public readonly extrasChanged = output<NotesExtras>();
+  public readonly rentCategoryChanged = output<string | null>();
 
   protected readonly notes = i18nKeys.booking.notes;
+  protected readonly selectedRentCategoryId = signal<string | null>(null);
 
   protected readonly mobilityOption = signal<MobilityOption>(DEFAULT_NOTES_EXTRAS.mobilityOption);
   protected readonly appointmentPreference = signal<AppointmentPreference>(DEFAULT_NOTES_EXTRAS.appointmentPreference);
@@ -57,6 +62,15 @@ export class NotesExtrasFormComponent {
         this.callbackOption.set(extras.callbackOption);
       }
     });
+
+    effect(() => {
+      this.selectedRentCategoryId.set(this.initialRentCategoryId());
+    });
+  }
+
+  protected onRentCategoryChange(value: string | null): void {
+    this.selectedRentCategoryId.set(value);
+    this.rentCategoryChanged.emit(value);
   }
 
   protected onMobilityOptionChange(value: MobilityOption): void {

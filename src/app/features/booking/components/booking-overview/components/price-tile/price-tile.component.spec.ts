@@ -39,4 +39,73 @@ describe('PriceTileComponent', () => {
     const exposed = component as unknown as { bookingOverview: Record<string, unknown> };
     expect(exposed.bookingOverview).toBeDefined();
   });
+
+  describe('mobilityOptionLabel', () => {
+    const exposed = (c: PriceTileComponent): { mobilityOptionLabel: () => string } =>
+      c as unknown as { mobilityOptionLabel: () => string };
+
+    it('should resolve label for "none"', () => {
+      fixture.componentRef.setInput('mobilityOption', 'none');
+      fixture.detectChanges();
+      expect(exposed(component).mobilityOptionLabel()).toBeTruthy();
+    });
+
+    it('should resolve label for "compact-car"', () => {
+      fixture.componentRef.setInput('mobilityOption', 'compact-car');
+      fixture.detectChanges();
+      expect(exposed(component).mobilityOptionLabel()).toBeTruthy();
+    });
+
+    it('should resolve label for "mid-range"', () => {
+      fixture.componentRef.setInput('mobilityOption', 'mid-range');
+      fixture.detectChanges();
+      expect(exposed(component).mobilityOptionLabel()).toBeTruthy();
+    });
+
+    it('should resolve label for "luxury"', () => {
+      fixture.componentRef.setInput('mobilityOption', 'luxury');
+      fixture.detectChanges();
+      expect(exposed(component).mobilityOptionLabel()).toBeTruthy();
+    });
+  });
+
+  describe('appointmentPreferenceLabel', () => {
+    const exposed = (c: PriceTileComponent): { appointmentPreferenceLabel: () => string } =>
+      c as unknown as { appointmentPreferenceLabel: () => string };
+
+    it('should resolve label for "anytime"', () => {
+      fixture.componentRef.setInput('appointmentPreference', 'anytime');
+      fixture.detectChanges();
+      expect(exposed(component).appointmentPreferenceLabel()).toBeTruthy();
+    });
+
+    it('should resolve label for "morning"', () => {
+      fixture.componentRef.setInput('appointmentPreference', 'morning');
+      fixture.detectChanges();
+      expect(exposed(component).appointmentPreferenceLabel()).toBeTruthy();
+    });
+
+    it('should resolve label for "afternoon"', () => {
+      fixture.componentRef.setInput('appointmentPreference', 'afternoon');
+      fixture.detectChanges();
+      expect(exposed(component).appointmentPreferenceLabel()).toBeTruthy();
+    });
+  });
+
+  describe('callbackOptionLabel', () => {
+    const exposed = (c: PriceTileComponent): { callbackOptionLabel: () => string } =>
+      c as unknown as { callbackOptionLabel: () => string };
+
+    it('should resolve label for "none"', () => {
+      fixture.componentRef.setInput('callbackOption', 'none');
+      fixture.detectChanges();
+      expect(exposed(component).callbackOptionLabel()).toBeTruthy();
+    });
+
+    it('should resolve label for "yes"', () => {
+      fixture.componentRef.setInput('callbackOption', 'yes');
+      fixture.detectChanges();
+      expect(exposed(component).callbackOptionLabel()).toBeTruthy();
+    });
+  });
 });

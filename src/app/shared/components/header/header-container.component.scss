@@ -69,7 +69,8 @@
     flex: 1;
   }
 
-  &__a11y-button {
+  &__a11y-button,
+  &__close-button {
     min-width: var(--touch-target-min);
     min-height: var(--touch-target-min);
 

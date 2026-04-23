@@ -34,6 +34,9 @@ export const translations = {
       logo: {
         alt: 'Firmenlogo'
       },
+      close: {
+        buttonLabel: 'Buchung schließen und zurück zur Webseite'
+      },
       cart: {
         button: 'Warenkorb',
         title: 'Warenkorb',
@@ -197,6 +200,11 @@ export const translations = {
           midRange: 'Mittelklasse',
           luxury: 'Oberklasse'
         },
+        rentCategory: {
+          title: 'Mietwagen-Kategorie',
+          label: 'Kategorie wählen',
+          none: 'Kein Mietwagen'
+        },
         appointmentPreference: {
           title: 'Terminpräferenz',
           label: 'Wählen',
@@ -296,11 +304,13 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
       },
       api: {
         loading: 'Daten werden geladen...',
+        submitting: 'Ihre Anfrage wird gesendet...',
         errorTitle: 'Fehler beim Laden',
         errorServerError: 'Der Server ist momentan nicht erreichbar. Bitte versuchen Sie es später erneut.',
         errorTimeout: 'Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut.',
         errorTokenFailed: 'Die Sitzung konnte nicht hergestellt werden. Bitte laden Sie die Seite neu.',
         errorUnknown: 'Ein unbekannter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
+        errorSubmit: 'Die Buchung konnte nicht gesendet werden. Bitte versuchen Sie es erneut.',
         retryButton: 'Erneut versuchen',
         fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
       },
@@ -344,6 +354,9 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
       },
       logo: {
         alt: 'Company Logo'
+      },
+      close: {
+        buttonLabel: 'Close booking and return to website'
       },
       cart: {
         button: 'Shopping Cart',
@@ -508,6 +521,11 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
           midRange: 'Mid-range',
           luxury: 'Luxury'
         },
+        rentCategory: {
+          title: 'Rental car category',
+          label: 'Select category',
+          none: 'No rental car'
+        },
         appointmentPreference: {
           title: 'Appointment preference',
           label: 'Select',
@@ -607,11 +625,13 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
       },
       api: {
         loading: 'Loading data...',
+        submitting: 'Sending your request...',
         errorTitle: 'Loading Error',
         errorServerError: 'The server is currently unavailable. Please try again later.',
         errorTimeout: 'The request took too long. Please try again.',
         errorTokenFailed: 'The session could not be established. Please reload the page.',
         errorUnknown: 'An unknown error occurred. Please try again.',
+        errorSubmit: 'The booking could not be sent. Please try again.',
         retryButton: 'Retry',
         fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
       },
@@ -655,6 +675,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
       },
       logo: {
         alt: 'Логотип компанії'
+      },
+      close: {
+        buttonLabel: 'Закрити бронювання та повернутися на сайт'
       },
       cart: {
         button: 'Кошик',
@@ -819,6 +842,11 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
           midRange: 'Середній клас',
           luxury: 'Преміум-клас'
         },
+        rentCategory: {
+          title: 'Категорія орендного автомобіля',
+          label: 'Обрати категорію',
+          none: 'Без орендного автомобіля'
+        },
         appointmentPreference: {
           title: 'Бажаний час',
           label: 'Обрати',
@@ -916,11 +944,13 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
       },
       api: {
         loading: 'Завантаження даних...',
+        submitting: 'Відправлення вашого запиту...',
         errorTitle: 'Помилка завантаження',
         errorServerError: 'Сервер наразі недоступний. Будь ласка, спробуйте пізніше.',
         errorTimeout: 'Запит тривав занадто довго. Будь ласка, спробуйте знову.',
         errorTokenFailed: 'Не вдалося встановити сеанс. Будь ласка, перезавантажте сторінку.',
         errorUnknown: 'Сталася невідома помилка. Будь ласка, спробуйте знову.',
+        errorSubmit: 'Не вдалося надіслати бронювання. Будь ласка, спробуйте знову.',
         retryButton: 'Повторити',
         fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
       },
@@ -964,6 +994,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
       },
       logo: {
         alt: 'Logo de l\'entreprise'
+      },
+      close: {
+        buttonLabel: 'Fermer la réservation et retourner au site'
       },
       cart: {
         button: 'Panier',
@@ -1128,6 +1161,11 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
           midRange: 'Gamme moyenne',
           luxury: 'Haut de gamme'
         },
+        rentCategory: {
+          title: 'Catégorie de voiture de location',
+          label: 'Choisir une catégorie',
+          none: 'Pas de voiture de location'
+        },
         appointmentPreference: {
           title: 'Préférence de rendez-vous',
           label: 'Sélectionner',
@@ -1225,11 +1263,13 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
       },
       api: {
         loading: 'Chargement des données...',
+        submitting: 'Envoi de votre demande en cours...',
         errorTitle: 'Erreur de chargement',
         errorServerError: 'Le serveur est actuellement indisponible. Veuillez réessayer plus tard.',
         errorTimeout: 'La requête a pris trop de temps. Veuillez réessayer.',
         errorTokenFailed: 'La session n\'a pas pu être établie. Veuillez recharger la page.',
         errorUnknown: 'Une erreur inconnue s\'est produite. Veuillez réessayer.',
+        errorSubmit: 'La réservation n\'a pas pu être envoyée. Veuillez réessayer.',
         retryButton: 'Réessayer',
         fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
       },
@@ -1273,6 +1313,9 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
       },
       logo: {
         alt: 'شعار الشركة'
+      },
+      close: {
+        buttonLabel: 'إغلاق الحجز والعودة إلى الموقع'
       },
       cart: {
         button: 'سلة التسوق',
@@ -1437,6 +1480,11 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
           midRange: 'فئة متوسطة',
           luxury: 'فئة فاخرة'
         },
+        rentCategory: {
+          title: 'فئة سيارة الإيجار',
+          label: 'اختر الفئة',
+          none: 'بدون سيارة إيجار'
+        },
         appointmentPreference: {
           title: 'تفضيل الموعد',
           label: 'اختيار',
@@ -1534,11 +1582,13 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم 
       },
       api: {
         loading: 'جارٍ تحميل البيانات...',
+        submitting: 'جارٍ إرسال طلبك...',
         errorTitle: 'خطأ في التحميل',
         errorServerError: 'الخادم غير متاح حالياً. يرجى المحاولة مرة أخرى لاحقاً.',
         errorTimeout: 'استغرق الطلب وقتاً طويلاً. يرجى المحاولة مرة أخرى.',
         errorTokenFailed: 'تعذر إنشاء الجلسة. يرجى إعادة تحميل الصفحة.',
         errorUnknown: 'حدث خطأ غير معروف. يرجى المحاولة مرة أخرى.',
+        errorSubmit: 'تعذر إرسال الحجز. يرجى المحاولة مرة أخرى.',
         retryButton: 'إعادة المحاولة',
         fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
       },

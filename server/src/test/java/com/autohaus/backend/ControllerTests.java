@@ -14,6 +14,9 @@ import com.autohaus.backend.jobtypes.dto.JobTypeResponseDto;
 import com.autohaus.backend.mobility.MobilityController;
 import com.autohaus.backend.mobility.MobilityService;
 import com.autohaus.backend.mobility.dto.MobilityAlternativeResponseDto;
+import com.autohaus.backend.rentcategories.RentCategoriesController;
+import com.autohaus.backend.rentcategories.RentCategoriesService;
+import com.autohaus.backend.rentcategories.dto.RentCategoryResponseDto;
 import com.autohaus.backend.cars.CarsController;
 import com.autohaus.backend.cars.CarsService;
 import com.autohaus.backend.cars.dto.CarResponseDto;
@@ -50,6 +53,7 @@ class ControllerTests {
     @Mock private BrandsService brandsService;
     @Mock private JobTypesService jobTypesService;
     @Mock private MobilityService mobilityService;
+    @Mock private RentCategoriesService rentCategoriesService;
     @Mock private CarsService carsService;
     @Mock private CustomersService customersService;
     @Mock private AppointmentsService appointmentsService;
@@ -194,7 +198,7 @@ class ControllerTests {
         CreateAppointmentRequest.VehicleDto vehicle = new CreateAppointmentRequest.VehicleDto(
             "B-MS1234", 50000, null, null, null, null
         );
-        CreateAppointmentRequest request = new CreateAppointmentRequest("snap1", customer, vehicle, "note", null);
+        CreateAppointmentRequest request = new CreateAppointmentRequest("snap1", customer, vehicle, "note", null, null);
 
         AppointmentResponseDto result = ctrl.createAppointment(request);
         assertNotNull(result);
@@ -271,6 +275,20 @@ class ControllerTests {
     }
 
     // === SessionController ===
+
+    // === RentCategoriesController ===
+
+    @Test
+    void rentCategoriesController_getRentCategories_returnsList() {
+        RentCategoriesController ctrl = new RentCategoriesController(rentCategoriesService);
+        RentCategoryResponseDto dto = new RentCategoryResponseDto("rc-1", "grp-1", "Kleinwagen", "desc", List.of("VW"), List.of("branch-1"));
+        when(rentCategoriesService.getRentCategories()).thenReturn(List.of(dto));
+
+        List<RentCategoryResponseDto> result = ctrl.getRentCategories();
+        assertEquals(1, result.size());
+        assertEquals("rc-1", result.get(0).id());
+        assertEquals("Kleinwagen", result.get(0).name());
+    }
 
     @Test
     void sessionController_getToken_returnsTokenResult() {

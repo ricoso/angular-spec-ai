@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -15,7 +16,7 @@ import { AppointmentCardComponent } from './appointment-card.component';
 @Component({
   selector: 'app-appointment-selection-container',
   standalone: true,
-  imports: [TranslatePipe, MatButtonModule, MatIconModule, WizardBreadcrumbComponent, AppointmentCardComponent],
+  imports: [TranslatePipe, MatButtonModule, MatIconModule, MatProgressSpinnerModule, WizardBreadcrumbComponent, AppointmentCardComponent],
   templateUrl: './appointment-selection-container.component.html',
   styleUrl: './appointment-selection-container.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -30,13 +31,14 @@ export class AppointmentSelectionContainerComponent {
   protected readonly appointments = this.store.appointments;
   protected readonly selectedAppointment = this.store.selectedAppointment;
   protected readonly hasAppointmentSelected = this.store.hasAppointmentSelected;
+  protected readonly isLoading = this.store.isLoading;
+  protected readonly error = this.store.error;
 
   protected onAppointmentSelect(appointment: AppointmentSlot): void {
     this.store.selectAppointment(appointment);
   }
 
   protected onContinue(): void {
-    console.debug('[AppointmentSelectionContainer] Continue clicked, appointment:', this.selectedAppointment());
     void this.router.navigate(['/home/carinformation']);
   }
 
@@ -48,5 +50,9 @@ export class AppointmentSelectionContainerComponent {
   protected onCalendarLinkClick(event: Event): void {
     event.preventDefault();
     void this.router.navigate(['/home/workshop-calendar']);
+  }
+
+  protected onRetry(): void {
+    this.store.loadAppointments();
   }
 }

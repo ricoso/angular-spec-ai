@@ -146,4 +146,25 @@ describe('WorkshopCalendarContainerComponent', () => {
     exposed.onSlotSelected(MOCK_SLOT, MOCK_DAY);
     expect(exposed.hasAppointmentSelected()).toBe(true);
   });
+
+  it('should expose isLoading and error signals', () => {
+    const exposed = component as unknown as { isLoading: () => boolean; error: () => string | null };
+    expect(exposed.isLoading()).toBe(false);
+    expect(exposed.error()).toBeNull();
+  });
+
+  it('should reload workshop calendar days on retry when a date is set', () => {
+    store.setWorkshopCalendarDate('2026-03-02');
+    const loadSpy = jest.spyOn(store, 'loadWorkshopCalendarDays');
+    const exposed = component as unknown as { onRetry: () => void };
+    exposed.onRetry();
+    expect(loadSpy).toHaveBeenCalledWith('2026-03-02');
+  });
+
+  it('should not reload on retry when no date is selected', () => {
+    const loadSpy = jest.spyOn(store, 'loadWorkshopCalendarDays');
+    const exposed = component as unknown as { onRetry: () => void };
+    exposed.onRetry();
+    expect(loadSpy).not.toHaveBeenCalled();
+  });
 });

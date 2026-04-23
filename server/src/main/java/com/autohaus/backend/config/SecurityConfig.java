@@ -23,12 +23,16 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
             .headers(headers -> headers
-                .frameOptions(frame -> frame.deny())
+                .frameOptions(frame -> frame.sameOrigin())
                 .contentTypeOptions(content -> {})
                 .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                 .permissionsPolicy(permissions -> permissions.policy("geolocation=(), microphone=(), camera=()"))
             )
             .headers(headers -> headers
+                .addHeaderWriter(new StaticHeadersWriter(
+                    "Content-Security-Policy",
+                    "frame-ancestors 'self' https://www.gottfried-schultz.de"
+                ))
                 .addHeaderWriter(new StaticHeadersWriter("X-Powered-By", ""))
             );
 

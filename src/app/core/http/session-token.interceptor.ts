@@ -27,17 +27,19 @@ export const sessionTokenInterceptor: HttpInterceptorFn = (
   return from(sessionTokenService.ensureToken()).pipe(
     switchMap((token) => {
       trace.log('Interceptor', `Token acquired, sending ${req.method} ${req.url}`, { correlationId });
-      const authReq = req.clone({
-        setHeaders: {
-          'X-Session-Token': token,
-          'X-Correlation-Id': correlationId,
-          'X-Session-Id': trace.sessionId,
-        },
-      });
+      const headers: Record<string, string> = {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'X-Session-Token': token,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'X-Correlation-Id': correlationId,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'X-Session-Id': trace.sessionId,
+      };
+      const authReq = req.clone({ setHeaders: headers });
       return next(authReq).pipe(
         tap({
           next: () => { trace.log('Interceptor', `← ${req.method} ${req.url} OK`, { correlationId }); },
-          error: (err) => { trace.error('Interceptor', `← ${req.method} ${req.url} FAILED`, { correlationId, error: err }); },
+          error: (err: unknown) => { trace.error('Interceptor', `← ${req.method} ${req.url} FAILED`, { correlationId, error: err }); },
         }),
       );
     }),

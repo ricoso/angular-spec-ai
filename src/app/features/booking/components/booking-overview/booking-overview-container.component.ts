@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe, TranslateService } from '@core/i18n';
@@ -22,6 +23,7 @@ import { ServicesTileComponent } from './components/services-tile/services-tile.
   imports: [
     MatButtonModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     TranslatePipe,
     WizardBreadcrumbComponent,
     AppointmentTileComponent,
@@ -38,6 +40,7 @@ export class BookingOverviewContainerComponent {
   private readonly router = inject(Router);
   private readonly translateService = inject(TranslateService);
 
+  protected readonly booking = i18nKeys.booking;
   protected readonly bookingOverview = i18nKeys.booking.bookingOverview;
   protected readonly wizardSteps = WIZARD_STEPS;
   protected readonly activeStepIndex = 6;
@@ -90,10 +93,15 @@ export class BookingOverviewContainerComponent {
 
   protected readonly isSubmitting = this.store.isBookingSubmitting;
   protected readonly hasSubmitted = this.store.hasBookingSubmitted;
+  protected readonly submitError = computed(() => this.store.hasBookingError() && !this.store.isBookingSubmitting());
 
   protected onSubmit(): void {
     this.store.submitBooking();
-    console.debug('[BookingOverviewContainer] Booking submission initiated');
+  }
+
+  protected onRetry(): void {
+    this.store.resetBookingSubmission();
+    this.store.submitBooking();
   }
 
   protected onBack(): void {

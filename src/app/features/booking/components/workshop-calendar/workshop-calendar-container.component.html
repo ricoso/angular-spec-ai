@@ -24,6 +24,25 @@
         <p class="right-panel__hint">
           {{ booking.workshopCalendar.hintBefore | translate }}
         </p>
+      } @else if (isLoading()) {
+        <div class="workshop-calendar__loading" role="status" aria-live="polite">
+          <mat-spinner diameter="48" />
+          <p class="workshop-calendar__loading-text">{{ booking.api.loading | translate }}</p>
+        </div>
+      } @else if (error()) {
+        <div class="workshop-calendar__error" role="alert" aria-live="assertive">
+          <mat-icon class="workshop-calendar__error-icon" aria-hidden="true">error_outline</mat-icon>
+          <h2 class="workshop-calendar__error-title">{{ booking.api.errorTitle | translate }}</h2>
+          <p class="workshop-calendar__error-message">{{ booking.api.errorUnknown | translate }}</p>
+          <button
+            mat-flat-button
+            color="primary"
+            class="workshop-calendar__retry-button"
+            (click)="onRetry()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            {{ booking.api.retryButton | translate }}
+          </button>
+        </div>
       } @else {
         <div class="right-panel__slots">
           <p class="slots__intro">

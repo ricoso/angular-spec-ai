@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,6 +20,8 @@ import { CartIconComponent } from './components/cart-icon/cart-icon.component';
  * Container Component for the Application Header
  * Connects AccessibilityStore, CartStore, and BookingStore
  */
+const IFRAME_RETURN_URL = 'https://www.gottfried-schultz.de/werkstatt-termin/';
+
 @Component({
   selector: 'app-header',
   standalone: true,
@@ -46,6 +48,8 @@ export class HeaderContainerComponent {
   protected readonly app = i18nKeys.app;
   protected readonly header = i18nKeys.header;
   protected readonly currentLanguage = this.translateService.getLanguageSignal();
+
+  protected readonly isEmbedded = signal(this.detectEmbedded());
 
   protected readonly selectedBrandName = computed(() => {
     const brand = this.bookingStore.selectedBrand();
@@ -106,5 +110,18 @@ export class HeaderContainerComponent {
 
   protected onCartOpen(): void {
     // Cart menu opens via matMenuTriggerFor
+  }
+
+  protected onClose(): void {
+    const target = window.top ?? window;
+    target.location.href = IFRAME_RETURN_URL;
+  }
+
+  private detectEmbedded(): boolean {
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
   }
 }

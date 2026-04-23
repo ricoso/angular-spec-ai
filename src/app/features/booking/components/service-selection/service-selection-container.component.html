@@ -4,23 +4,44 @@
   <h1 class="service-selection__title">{{ booking.services.title | translate }}</h1>
   <p class="service-selection__subtitle">{{ booking.services.subtitle | translate }}</p>
 
-  <div class="service-selection__grid" role="group" [attr.aria-label]="booking.services.ariaGroupLabel | translate">
-    @for (service of services(); track service.id) {
-      <app-service-card
-        [service]="service"
-        [isSelected]="selectedServiceIds().includes(service.id)"
-        [selectedOptionIds]="$any(selectedOptionsMap()[service.id]) || []"
-        (serviceClicked)="onServiceClick($event)"
-        (serviceConfirmed)="onServiceConfirm($event)"
-        (serviceDeselected)="onServiceDeselect($event)"
-      />
-    }
-  </div>
+  @if (isLoading()) {
+    <div class="service-selection__loading" role="status" aria-live="polite">
+      <mat-spinner diameter="48" />
+      <p class="service-selection__loading-text">{{ booking.api.loading | translate }}</p>
+    </div>
+  } @else if (error()) {
+    <div class="service-selection__error" role="alert" aria-live="assertive">
+      <mat-icon class="service-selection__error-icon" aria-hidden="true">error_outline</mat-icon>
+      <h2 class="service-selection__error-title">{{ booking.api.errorTitle | translate }}</h2>
+      <p class="service-selection__error-message">{{ booking.api.errorUnknown | translate }}</p>
+      <button
+        mat-flat-button
+        color="primary"
+        class="service-selection__retry-button"
+        (click)="onRetry()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        {{ booking.api.retryButton | translate }}
+      </button>
+    </div>
+  } @else {
+    <div class="service-selection__grid" role="group" [attr.aria-label]="booking.services.ariaGroupLabel | translate">
+      @for (service of services(); track service.id) {
+        <app-service-card
+          [service]="service"
+          [isSelected]="selectedServiceIds().includes(service.id)"
+          [selectedOptionIds]="selectedOptionsMap()[service.id] ?? []"
+          (serviceClicked)="onServiceClick($event)"
+          (serviceConfirmed)="onServiceConfirm($event)"
+          (serviceDeselected)="onServiceDeselect($event)"
+        />
+      }
+    </div>
 
-  <app-service-summary-bar
-    [selectedServiceCount]="selectedServiceCount()"
-    [hasServicesSelected]="hasServicesSelected()"
-    (continueClicked)="onContinue()"
-    (backClicked)="onBack()"
-  />
+    <app-service-summary-bar
+      [selectedServiceCount]="selectedServiceCount()"
+      [hasServicesSelected]="hasServicesSelected()"
+      (continueClicked)="onContinue()"
+      (backClicked)="onBack()"
+    />
+  }
 </section>

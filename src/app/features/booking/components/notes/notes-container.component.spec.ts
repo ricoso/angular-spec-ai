@@ -241,4 +241,32 @@ describe('NotesContainerComponent', () => {
       expect(exposed.initialExtras()).toEqual(extras);
     });
   });
+
+  describe('Rent Category', () => {
+    it('should update currentRentCategoryId on change', () => {
+      const exposed = component as unknown as {
+        onRentCategoryChanged: (id: string | null) => void;
+        currentRentCategoryId: () => string | null;
+      };
+      exposed.onRentCategoryChanged('rc-1');
+      expect(exposed.currentRentCategoryId()).toBe('rc-1');
+    });
+
+    it('should persist rentCategoryId to store on continue', () => {
+      const exposed = component as unknown as {
+        onRentCategoryChanged: (id: string | null) => void;
+        onContinue: () => void;
+      };
+      exposed.onRentCategoryChanged('rc-42');
+      exposed.onContinue();
+      expect(store.selectedRentCategoryId()).toBe('rc-42');
+    });
+
+    it('should clear rentCategoryId in store on back', () => {
+      store.setSelectedRentCategoryId('rc-1');
+      const exposed = component as unknown as { onBack: () => void };
+      exposed.onBack();
+      expect(store.selectedRentCategoryId()).toBeNull();
+    });
+  });
 });

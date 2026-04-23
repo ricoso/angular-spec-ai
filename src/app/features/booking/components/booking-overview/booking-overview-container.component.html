@@ -8,65 +8,84 @@
     {{ bookingOverview.subtitle | translate }}
   </p>
 
-  <div class="booking-overview__grid" role="region" [attr.aria-label]="bookingOverview.ariaGridLabel | translate">
-    @if (appointment(); as apt) {
-      <app-appointment-tile [appointment]="apt" />
-    }
-
-    <app-services-tile
-      [services]="services()"
-      [serviceLabels]="resolvedServiceLabels()"
-      [locationName]="resolvedLocationName()"
-    />
-
-    @if (customerInfo(); as customer) {
-      @if (vehicleInfo(); as vehicle) {
-        <app-personal-data-tile
-          [customerInfo]="customer"
-          [vehicleInfo]="vehicle"
-          [brandName]="resolvedBrandName()"
-        />
+  @if (isSubmitting()) {
+    <div class="booking-overview__loading" role="status" aria-live="polite">
+      <mat-spinner diameter="48" />
+      <p class="booking-overview__loading-text">{{ booking.api.submitting | translate }}</p>
+    </div>
+  } @else if (submitError()) {
+    <div class="booking-overview__error" role="alert" aria-live="assertive">
+      <mat-icon class="booking-overview__error-icon" aria-hidden="true">error_outline</mat-icon>
+      <h2 class="booking-overview__error-title">{{ booking.api.errorTitle | translate }}</h2>
+      <p class="booking-overview__error-message">{{ booking.api.errorSubmit | translate }}</p>
+      <button
+        mat-flat-button
+        color="primary"
+        class="booking-overview__retry-button"
+        (click)="onRetry()">
+        <mat-icon aria-hidden="true">refresh</mat-icon>
+        {{ booking.api.retryButton | translate }}
+      </button>
+    </div>
+  } @else {
+    <div class="booking-overview__grid" role="region" [attr.aria-label]="bookingOverview.ariaGridLabel | translate">
+      @if (appointment(); as apt) {
+        <app-appointment-tile [appointment]="apt" />
       }
-    }
 
-    <app-price-tile
-      [mobilityOption]="store.selectedMobilityOption()"
-      [appointmentPreference]="store.selectedAppointmentPreference()"
-      [callbackOption]="store.selectedCallbackOption()"
-      [bookingNote]="store.bookingNote() ?? ''"
-    />
-  </div>
+      <app-services-tile
+        [services]="services()"
+        [serviceLabels]="resolvedServiceLabels()"
+        [locationName]="resolvedLocationName()"
+      />
 
-  <nav class="booking-overview__navigation" [attr.aria-label]="bookingOverview.ariaNavLabel | translate">
-    <button
-      mat-flat-button
-      class="booking-overview__back-button"
-      type="button"
-      [attr.aria-label]="bookingOverview.navigation.back | translate"
-      (click)="onBack()"
-    >
-      <mat-icon aria-hidden="true">arrow_back</mat-icon>
-      {{ bookingOverview.navigation.back | translate }}
-    </button>
-
-    <button
-      mat-flat-button
-      color="primary"
-      class="booking-overview__submit-button"
-      type="button"
-      [disabled]="isSubmitting() || hasSubmitted()"
-      [attr.aria-label]="bookingOverview.navigation.submit | translate"
-      (click)="onSubmit()"
-    >
-      @if (isSubmitting()) {
-        {{ bookingOverview.navigation.submitting | translate }}
-      } @else if (hasSubmitted()) {
-        <mat-icon aria-hidden="true">check</mat-icon>
-        {{ bookingOverview.navigation.submitted | translate }}
-      } @else {
-        {{ bookingOverview.navigation.submit | translate }}
-        <mat-icon aria-hidden="true">send</mat-icon>
+      @if (customerInfo(); as customer) {
+        @if (vehicleInfo(); as vehicle) {
+          <app-personal-data-tile
+            [customerInfo]="customer"
+            [vehicleInfo]="vehicle"
+            [brandName]="resolvedBrandName()"
+          />
+        }
       }
-    </button>
-  </nav>
+
+      <app-price-tile
+        [mobilityOption]="store.selectedMobilityOption()"
+        [appointmentPreference]="store.selectedAppointmentPreference()"
+        [callbackOption]="store.selectedCallbackOption()"
+        [bookingNote]="store.bookingNote() ?? ''"
+      />
+    </div>
+
+    <nav class="booking-overview__navigation" [attr.aria-label]="bookingOverview.ariaNavLabel | translate">
+      <button
+        mat-flat-button
+        class="booking-overview__back-button"
+        type="button"
+        [attr.aria-label]="bookingOverview.navigation.back | translate"
+        (click)="onBack()"
+      >
+        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+        {{ bookingOverview.navigation.back | translate }}
+      </button>
+
+      <button
+        mat-flat-button
+        color="primary"
+        class="booking-overview__submit-button"
+        type="button"
+        [disabled]="hasSubmitted()"
+        [attr.aria-label]="bookingOverview.navigation.submit | translate"
+        (click)="onSubmit()"
+      >
+        @if (hasSubmitted()) {
+          <mat-icon aria-hidden="true">check</mat-icon>
+          {{ bookingOverview.navigation.submitted | translate }}
+        } @else {
+          {{ bookingOverview.navigation.submit | translate }}
+          <mat-icon aria-hidden="true">send</mat-icon>
+        }
+      </button>
+    </nav>
+  }
 </section>

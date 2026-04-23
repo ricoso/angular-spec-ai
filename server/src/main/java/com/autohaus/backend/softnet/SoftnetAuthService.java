@@ -16,8 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -53,16 +51,14 @@ public class SoftnetAuthService {
     }
 
     private void loadFingerprint() {
-        String fingerprintPath = properties.fingerprintPath();
-        if (fingerprintPath == null || fingerprintPath.isBlank()) {
-            log.warn("SOFTNET_FINGERPRINT_PATH not set — SoftNet auth will fail");
+        String fingerprintJson = properties.fingerprintJson();
+        if (fingerprintJson == null || fingerprintJson.isBlank()) {
+            log.warn("SOFTNET_FINGERPRINT_JSON not set — SoftNet auth will fail");
             return;
         }
 
-        Path absolutePath = Path.of(fingerprintPath).toAbsolutePath();
         try {
-            String content = Files.readString(absolutePath);
-            JsonNode node = objectMapper.readTree(content);
+            JsonNode node = objectMapper.readTree(fingerprintJson);
             this.clientEmail = node.get("client_email").asText();
             this.clientId = node.get("client_id").asText();
             this.privateKeyId = node.get("private_key_id").asText();
@@ -70,9 +66,9 @@ public class SoftnetAuthService {
             String pemKey = node.get("private_key").asText();
             this.privateKey = parseRsaPrivateKey(pemKey);
 
-            log.info("Fingerprint loaded from {}", absolutePath);
+            log.info("Fingerprint loaded from env variable");
         } catch (Exception e) {
-            log.error("Failed to load fingerprint from {}: {}", absolutePath, e.getMessage());
+            log.error("Failed to load fingerprint from env variable: {}", e.getMessage());
         }
     }
 

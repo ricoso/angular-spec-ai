@@ -8,7 +8,8 @@ public record CreateAppointmentRequest(
     @Valid CustomerDto customer,
     @Valid VehicleDto vehicle,
     String note,
-    String mobilityOption
+    String mobilityOption,
+    String rentCategoryId
 ) {
     public record CustomerDto(
         @NotBlank String email,

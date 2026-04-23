@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -14,7 +17,7 @@ import { ServiceSummaryBarComponent } from './service-summary-bar.component';
 @Component({
   selector: 'app-service-selection-container',
   standalone: true,
-  imports: [TranslatePipe, WizardBreadcrumbComponent, ServiceCardComponent, ServiceSummaryBarComponent],
+  imports: [TranslatePipe, MatButtonModule, MatIconModule, MatProgressSpinnerModule, WizardBreadcrumbComponent, ServiceCardComponent, ServiceSummaryBarComponent],
   templateUrl: './service-selection-container.component.html',
   styleUrl: './service-selection-container.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -30,6 +33,8 @@ export class ServiceSelectionContainerComponent {
   protected readonly selectedServices = this.store.selectedServices;
   protected readonly hasServicesSelected = this.store.hasServicesSelected;
   protected readonly selectedServiceCount = this.store.selectedServiceCount;
+  protected readonly isLoading = this.store.isLoading;
+  protected readonly error = this.store.error;
 
   protected readonly selectedServiceIds = computed(() =>
     this.store.selectedServices().map(s => s.serviceId)
@@ -56,12 +61,15 @@ export class ServiceSelectionContainerComponent {
   }
 
   protected onContinue(): void {
-    console.debug('[ServiceSelection] Continue clicked, services:', this.store.selectedServices());
     void this.router.navigate(['/home/notes']);
   }
 
   protected onBack(): void {
     this.store.clearSelectedServices();
     void this.router.navigate(['/home/brand']);
+  }
+
+  protected onRetry(): void {
+    this.store.loadServices();
   }
 }

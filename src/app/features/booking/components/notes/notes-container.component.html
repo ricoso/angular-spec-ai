@@ -6,7 +6,10 @@
 
   <app-notes-extras-form
     [initialExtras]="initialExtras()"
+    [rentCategories]="rentCategories()"
+    [initialRentCategoryId]="initialRentCategoryId()"
     (extrasChanged)="onExtrasChanged($event)"
+    (rentCategoryChanged)="onRentCategoryChanged($event)"
   />
 
   <app-notes-form

@@ -179,4 +179,24 @@ describe('BookingOverviewContainerComponent', () => {
     expect(labels['tire-change']).toBeDefined();
     expect(labels['tire-change']).toContain('—');
   });
+
+  it('should expose isSubmitting and hasSubmitted signals', () => {
+    const exposed = component as unknown as {
+      isSubmitting: () => boolean;
+      hasSubmitted: () => boolean;
+      submitError: () => boolean;
+    };
+    expect(exposed.isSubmitting()).toBe(false);
+    expect(exposed.hasSubmitted()).toBe(false);
+    expect(exposed.submitError()).toBe(false);
+  });
+
+  it('should call resetBookingSubmission and submitBooking on retry', () => {
+    const resetSpy = jest.spyOn(store, 'resetBookingSubmission');
+    const submitSpy = jest.spyOn(store, 'submitBooking');
+    const exposed = component as unknown as { onRetry: () => void };
+    exposed.onRetry();
+    expect(resetSpy).toHaveBeenCalled();
+    expect(submitSpy).toHaveBeenCalled();
+  });
 });

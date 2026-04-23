@@ -24,13 +24,13 @@ export class PriceTileComponent {
   private readonly notes = i18nKeys.booking.notes;
 
   protected readonly mobilityOptionLabel = computed(() => {
-    const map = {
-      'none': this.notes.mobilityOptions.none,
-      'compact-car': this.notes.mobilityOptions.compactCar,
-      'mid-range': this.notes.mobilityOptions.midRange,
-      'luxury': this.notes.mobilityOptions.luxury
-    } as const;
-    return this.translateService.instant(map[this.mobilityOption()]);
+    const value = this.mobilityOption();
+    switch (value) {
+      case 'none':        return this.translateService.instant(this.notes.mobilityOptions.none);
+      case 'compact-car': return this.translateService.instant(this.notes.mobilityOptions.compactCar);
+      case 'mid-range':   return this.translateService.instant(this.notes.mobilityOptions.midRange);
+      case 'luxury':      return this.translateService.instant(this.notes.mobilityOptions.luxury);
+    }
   });
 
   protected readonly appointmentPreferenceLabel = computed(() => {

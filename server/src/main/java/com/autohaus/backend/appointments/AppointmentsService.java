@@ -106,6 +106,12 @@ public class AppointmentsService {
         if (dto.note() != null && !dto.note().isBlank()) {
             wishlist.put("note", dto.note());
         }
+
+        if (dto.rentCategoryId() != null && !dto.rentCategoryId().isBlank()) {
+            wishlist.put("isFleet", true);
+            wishlist.put("fleetType", "rentObject");
+            wishlist.put("fleetCategoryid", dto.rentCategoryId());
+        }
     }
 
     private AppointmentResponseDto mapAppointmentResponse(JsonNode result, CreateAppointmentRequest dto) {

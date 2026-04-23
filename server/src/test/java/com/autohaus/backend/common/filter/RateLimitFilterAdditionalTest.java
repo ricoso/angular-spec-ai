@@ -25,8 +25,8 @@ class RateLimitFilterAdditionalTest {
         String ip = "99.99.99.99";
         FilterChain chain = mock(FilterChain.class);
 
-        // Exhaust the bucket (100 requests)
-        for (int i = 0; i < 100; i++) {
+        // Exhaust the bucket (500 requests — bucket capacity per IP)
+        for (int i = 0; i < 500; i++) {
             MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/test");
             request.setRemoteAddr(ip);
             request.setAttribute(RequestIdFilter.REQUEST_ID_ATTRIBUTE, "req-" + i);
@@ -34,7 +34,7 @@ class RateLimitFilterAdditionalTest {
             filter.doFilterInternal(request, response, chain);
         }
 
-        // 101st request should be rate limited
+        // Next request should be rate limited
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/test");
         request.setRemoteAddr(ip);
         request.setAttribute(RequestIdFilter.REQUEST_ID_ATTRIBUTE, "req-limited");
@@ -51,7 +51,7 @@ class RateLimitFilterAdditionalTest {
         String ip = "88.88.88.88";
         FilterChain chain = mock(FilterChain.class);
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 500; i++) {
             MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/test");
             request.setRemoteAddr(ip);
             MockHttpServletResponse response = new MockHttpServletResponse();
@@ -73,7 +73,7 @@ class RateLimitFilterAdditionalTest {
         FilterChain chain = mock(FilterChain.class);
 
         // Exhaust bucket for IP1
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 500; i++) {
             MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/test");
             request.setRemoteAddr("1.1.1.1");
             MockHttpServletResponse response = new MockHttpServletResponse();

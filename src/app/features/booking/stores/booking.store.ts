@@ -11,10 +11,12 @@ import type { Brand, BrandDisplay } from '../models/brand.model';
 import type { CustomerInfo, VehicleInfo } from '../models/customer.model';
 import type { LocationDisplay } from '../models/location.model';
 import type { NotesExtras } from '../models/notes-extras.model';
+import type { RentCategory } from '../models/rent-category.model';
 import type { SelectedService, ServiceDisplay, ServiceType } from '../models/service.model';
 import type { WorkshopCalendarDay } from '../models/workshop-calendar.model';
 import { AppointmentApiService } from '../services/appointment-api.service';
 import { BookingApiService } from '../services/booking-api.service';
+import { RentCategoryApiService } from '../services/rent-category-api.service';
 import { WorkshopCalendarApiService } from '../services/workshop-calendar-api.service';
 
 interface BookingState {
@@ -39,6 +41,8 @@ interface BookingState {
   bookingSubmitting: boolean;
   bookingError: string | null;
   appointmentId: string | null;
+  rentCategories: RentCategory[];
+  selectedRentCategoryId: string | null;
   isLoading: boolean;
   error: string | null;
   isDeepLinked: boolean;
@@ -66,6 +70,8 @@ const INITIAL_STATE: BookingState = {
   bookingSubmitting: false,
   bookingError: null,
   appointmentId: null,
+  rentCategories: [],
+  selectedRentCategoryId: null,
   isLoading: false,
   error: null,
   isDeepLinked: false
@@ -112,7 +118,7 @@ export const BookingStore = signalStore(
     selectedCallbackOption: computed(() => notesExtras()?.callbackOption ?? 'none')
   })),
 
-  withMethods((store, api = inject(BookingApiService), appointmentApi = inject(AppointmentApiService), workshopCalendarApi = inject(WorkshopCalendarApiService)) => ({
+  withMethods((store, api = inject(BookingApiService), appointmentApi = inject(AppointmentApiService), workshopCalendarApi = inject(WorkshopCalendarApiService), rentCategoryApi = inject(RentCategoryApiService)) => ({
     loadBrands: rxMethod<string | void>(
       pipe(
         tap(() => { patchState(store, { isLoading: true, error: null }); }),
@@ -260,7 +266,14 @@ export const BookingStore = signalStore(
 
     loadAppointments: rxMethod<void>(
       pipe(
-        tap(() => { patchState(store, { isLoading: true, error: null }); }),
+        tap(() => {
+          patchState(store, {
+            appointments: [],
+            selectedAppointment: null,
+            isLoading: true,
+            error: null
+          });
+        }),
         switchMap(() => {
           const branchId = store.selectedLocation()?.id ?? '';
           const serviceIds = store.selectedServices().map(s => s.serviceId);
@@ -360,12 +373,12 @@ export const BookingStore = signalStore(
               firstName: customer?.firstName ?? '',
               lastName: customer?.lastName ?? '',
               mobile: customer?.mobilePhone ?? '',
-              phone: customer?.phone || customer?.mobilePhone || '',
+              phone: (customer?.phone && customer.phone.length > 0 ? customer.phone : customer?.mobilePhone) ?? '',
               address: customer?.street ?? '',
               zipCode: customer?.postalCode ?? '',
               city: customer?.city ?? '',
-              country: customer?.country || 'DE',
-              language: customer?.language || 'de',
+              country: customer?.country && customer.country.length > 0 ? customer.country : 'DE',
+              language: customer?.language && customer.language.length > 0 ? customer.language : 'de',
               salutation: customer?.salutation,
             },
             vehicle: {
@@ -378,6 +391,7 @@ export const BookingStore = signalStore(
             },
             note: store.bookingNote() ?? undefined,
             mobilityOption: extras?.mobilityOption,
+            rentCategoryId: store.selectedRentCategoryId() ?? undefined,
           };
 
           return from(appointmentApi.createAppointment(request)).pipe(
@@ -391,7 +405,6 @@ export const BookingStore = signalStore(
             catchError((err: unknown) => {
               const message = err instanceof Error ? err.message : 'Booking submission failed';
               patchState(store, {
-                bookingSubmitted: true,
                 bookingSubmitting: false,
                 bookingError: message,
               });
@@ -401,6 +414,30 @@ export const BookingStore = signalStore(
         })
       )
     ),
+
+    resetBookingSubmission(): void {
+      patchState(store, { bookingError: null, bookingSubmitted: false });
+    },
+
+    loadRentCategories: rxMethod<void>(
+      pipe(
+        tap(() => { patchState(store, { isLoading: true, error: null }); }),
+        switchMap(() => from(rentCategoryApi.getRentCategories()).pipe(
+          tap((rentCategories) => {
+            patchState(store, { rentCategories, isLoading: false });
+          }),
+          catchError((err: unknown) => {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            patchState(store, { error: message, isLoading: false });
+            return EMPTY;
+          })
+        ))
+      )
+    ),
+
+    setSelectedRentCategoryId(id: string | null): void {
+      patchState(store, { selectedRentCategoryId: id });
+    },
 
     resetFromStep(targetIndex: number): void {
       if (targetIndex <= 0) { patchState(store, { selectedBranch: null, selectedLocation: null }); }

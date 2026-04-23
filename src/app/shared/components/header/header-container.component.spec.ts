@@ -7,6 +7,7 @@ import type { AppointmentSlot } from '@app/features/booking/models/appointment.m
 import { LOCATIONS_BY_BRAND } from '@app/features/booking/models/location.model';
 import { AppointmentApiService } from '@app/features/booking/services/appointment-api.service';
 import { BookingApiService } from '@app/features/booking/services/booking-api.service';
+import { RentCategoryApiService } from '@app/features/booking/services/rent-category-api.service';
 import { BookingStore } from '@app/features/booking/stores/booking.store';
 import { ACCESSIBILITY_DEFAULTS } from '@shared/models/accessibility.model';
 import { AccessibilityService } from '@shared/services/accessibility.service';
@@ -53,7 +54,8 @@ describe('HeaderContainerComponent', () => {
             createAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' }),
             getAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' })
           }
-        }
+        },
+        { provide: RentCategoryApiService, useValue: { getRentCategories: jest.fn().mockResolvedValue([]) } }
       ]
     })
       .overrideComponent(HeaderContainerComponent, {
@@ -193,6 +195,16 @@ describe('HeaderContainerComponent', () => {
       bookingStore.selectAppointment(mockAppointment);
       const exposed = component as unknown as { selectedAppointmentText: () => string | null };
       expect(exposed.selectedAppointmentText()).toBe('25.02.2026, 09:00 Uhr');
+    });
+
+    it('should expose isEmbedded signal', () => {
+      const exposed = component as unknown as { isEmbedded: () => boolean };
+      expect(typeof exposed.isEmbedded()).toBe('boolean');
+    });
+
+    it('should expose onClose handler', () => {
+      const exposed = component as unknown as { onClose: () => void };
+      expect(typeof exposed.onClose).toBe('function');
     });
 
     it('should update appointment text when appointment changes', () => {

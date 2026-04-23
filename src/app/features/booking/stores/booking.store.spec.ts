@@ -6,6 +6,7 @@ import { ALL_LOCATIONS,LOCATIONS_BY_BRAND } from '../models/location.model';
 import { AVAILABLE_SERVICES } from '../models/service.model';
 import { AppointmentApiService } from '../services/appointment-api.service';
 import { BookingApiService } from '../services/booking-api.service';
+import { RentCategoryApiService } from '../services/rent-category-api.service';
 
 import { BookingStore } from './booking.store';
 
@@ -28,7 +29,8 @@ describe('BookingStore', () => {
       providers: [
         BookingStore,
         { provide: BookingApiService, useValue: apiSpy },
-        { provide: AppointmentApiService, useValue: { getAppointments: jest.fn().mockResolvedValue([]), createAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' }), getAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' }) } }
+        { provide: AppointmentApiService, useValue: { getAppointments: jest.fn().mockResolvedValue([]), createAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' }), getAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' }) } },
+        { provide: RentCategoryApiService, useValue: { getRentCategories: jest.fn().mockResolvedValue([]) } }
       ]
     });
 
@@ -359,6 +361,28 @@ describe('BookingStore', () => {
       expect(store.selectedMobilityOption()).toBe('none');
       expect(store.selectedAppointmentPreference()).toBe('anytime');
       expect(store.selectedCallbackOption()).toBe('none');
+    });
+  });
+
+  describe('RentCategory', () => {
+    it('should start with empty rentCategories and no selection', () => {
+      expect(store.rentCategories()).toEqual([]);
+      expect(store.selectedRentCategoryId()).toBeNull();
+    });
+
+    it('should set and clear selectedRentCategoryId', () => {
+      store.setSelectedRentCategoryId('rc-1');
+      expect(store.selectedRentCategoryId()).toBe('rc-1');
+      store.setSelectedRentCategoryId(null);
+      expect(store.selectedRentCategoryId()).toBeNull();
+    });
+  });
+
+  describe('resetBookingSubmission', () => {
+    it('should clear bookingError and bookingSubmitted', () => {
+      store.resetBookingSubmission();
+      expect(store.hasBookingError()).toBe(false);
+      expect(store.hasBookingSubmitted()).toBe(false);
     });
   });
 

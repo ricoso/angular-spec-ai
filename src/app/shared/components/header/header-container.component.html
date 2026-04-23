@@ -100,6 +100,20 @@
       </span>
     </button>
 
+    <!-- Close Button (only visible when embedded in iframe) -->
+    @if (isEmbedded()) {
+      <button
+        mat-icon-button
+        class="header__close-button"
+        type="button"
+        [attr.aria-label]="header.close.buttonLabel | translate"
+        (click)="onClose()">
+        <span class="icon-framed icon-framed--sm">
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </span>
+      </button>
+    }
+
     <!-- Accessibility Menu -->
     <mat-menu #accessibilityMenu="matMenu" class="header__a11y-menu">
       <div role="group" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">

@@ -31,7 +31,7 @@ class PropertiesTest {
         SoftnetProperties props = new SoftnetProperties("base", "auth-url", "/path/fp", 3000, "grp", "br");
         assertEquals("base", props.baseUrl());
         assertEquals("auth-url", props.authUrl());
-        assertEquals("/path/fp", props.fingerprintPath());
+        assertEquals("/path/fp", props.fingerprintJson());
         assertEquals(3000, props.timeout());
         assertEquals("grp", props.groupId());
         assertEquals("br", props.branchId());
@@ -50,7 +50,7 @@ class PropertiesTest {
         SoftnetProperties props = new SoftnetProperties(null, null, null, 0, null, null);
         assertNull(props.baseUrl());
         assertNull(props.authUrl());
-        assertNull(props.fingerprintPath());
+        assertNull(props.fingerprintJson());
         assertEquals(10000, props.timeout());
         assertNull(props.groupId());
         assertNull(props.branchId());
