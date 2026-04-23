@@ -167,7 +167,8 @@ semantic versioning:
   before_script:
     - git config --global user.email "ci@autohaus.lhind.app"
     - git config --global user.name "CI Bot"
-    - git remote set-url origin "https://oauth2:${GL_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - export CI_REPOSITORY_URL="https://oauth2:${GL_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git remote set-url origin "$CI_REPOSITORY_URL"
     - npm install -g semantic-release@22 conventional-changelog-conventionalcommits@7
         @semantic-release/commit-analyzer @semantic-release/release-notes-generator
         @semantic-release/exec
