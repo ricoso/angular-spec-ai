@@ -2,6 +2,7 @@ package com.autohaus.backend.appointments;
 
 import com.autohaus.backend.appointments.dto.AppointmentResponseDto;
 import com.autohaus.backend.appointments.dto.CreateAppointmentRequest;
+import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.snaps.SnapCache;
 import com.autohaus.backend.softnet.SoftnetApiClient;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,11 +26,14 @@ public class AppointmentsService {
     private final SoftnetApiClient softnetApi;
     private final SnapCache snapCache;
     private final ObjectMapper objectMapper;
+    private final SetupService setupService;
 
-    public AppointmentsService(SoftnetApiClient softnetApi, SnapCache snapCache, ObjectMapper objectMapper) {
+    public AppointmentsService(SoftnetApiClient softnetApi, SnapCache snapCache, ObjectMapper objectMapper,
+                               SetupService setupService) {
         this.softnetApi = softnetApi;
         this.snapCache = snapCache;
         this.objectMapper = objectMapper;
+        this.setupService = setupService;
     }
 
     public AppointmentResponseDto createAppointment(CreateAppointmentRequest dto) {
@@ -38,6 +42,8 @@ public class AppointmentsService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Snap \"" + dto.snapId() + "\" not found in cache. The appointment slot may have expired. Please select a new time slot.");
         }
+
+        String groupId = setupService.resolveGroupId(dto.branchId(), dto.variant());
 
         ObjectNode snap = (ObjectNode) rawSnap;
         patchSnapWithBookingData(snap, dto);
@@ -51,17 +57,19 @@ public class AppointmentsService {
         log.debug("Creating appointment for snap {}, branch {}", dto.snapId(), branchLabel);
 
         Map<String, Object> snapMap = objectMapper.convertValue(snap, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
-        JsonNode result = softnetApi.createAppointment(snapMap);
+        JsonNode result = softnetApi.createAppointment(snapMap, groupId);
         return mapAppointmentResponse(result, dto);
     }
 
-    public AppointmentResponseDto getAppointment(String appointmentId) {
-        JsonNode result = softnetApi.getAppointment(appointmentId);
+    public AppointmentResponseDto getAppointment(String appointmentId, String branchId, String variant) {
+        String groupId = setupService.resolveGroupId(branchId, variant);
+        JsonNode result = softnetApi.getAppointment(appointmentId, groupId);
         return mapAppointmentResponse(result, null);
     }
 
-    public AppointmentResponseDto cancelAppointment(String appointmentId) {
-        JsonNode result = softnetApi.cancelAppointment(appointmentId);
+    public AppointmentResponseDto cancelAppointment(String appointmentId, String branchId, String variant) {
+        String groupId = setupService.resolveGroupId(branchId, variant);
+        JsonNode result = softnetApi.cancelAppointment(appointmentId, groupId);
         AppointmentResponseDto mapped = mapAppointmentResponse(result, null);
         return new AppointmentResponseDto(mapped.id(), "cancelled", mapped.date(), mapped.time(),
             mapped.branchName(), mapped.services(), mapped.customerName(), mapped.licensePlate());

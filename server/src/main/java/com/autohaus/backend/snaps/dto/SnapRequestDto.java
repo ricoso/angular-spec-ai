@@ -13,5 +13,6 @@ public record SnapRequestDto(
     @Pattern(regexp = "^(next-available|date-range)$") String mode,
     String brandName,
     String timePreference,
-    Boolean replacementCar
+    Boolean replacementCar,
+    String variant
 ) {}

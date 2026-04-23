@@ -22,7 +22,7 @@ class SoftnetApiClientTest {
     @BeforeEach
     void setUp() {
         SoftnetProperties props = new SoftnetProperties(
-            "http://nonexistent.local:9999", "http://auth", "/fp", 1000, "group-1", "branch-1"
+            "http://nonexistent.local:9999", "http://auth", "/fp", 1000
         );
         client = new SoftnetApiClient(authService, props, objectMapper);
     }
@@ -87,25 +87,25 @@ class SoftnetApiClientTest {
     @Test
     void getBrands_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.getBrands());
+        assertThrows(Exception.class, () -> client.getBrands("group-1"));
     }
 
     @Test
     void getJobTypes_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.getJobTypes());
+        assertThrows(Exception.class, () -> client.getJobTypes("group-1"));
     }
 
     @Test
     void getOperations_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.getOperations());
+        assertThrows(Exception.class, () -> client.getOperations("group-1"));
     }
 
     @Test
     void getMobilityAlternatives_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.getMobilityAlternatives());
+        assertThrows(Exception.class, () -> client.getMobilityAlternatives("group-1"));
     }
 
     @Test
@@ -117,55 +117,55 @@ class SoftnetApiClientTest {
     @Test
     void createVaultItem_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.createVaultItem(java.util.Map.of("email", "test@test.de")));
+        assertThrows(Exception.class, () -> client.createVaultItem(java.util.Map.of("email", "test@test.de"), "group-1"));
     }
 
     @Test
     void searchVaultItems_emptyQuery_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.searchVaultItems(java.util.Map.of()));
+        assertThrows(Exception.class, () -> client.searchVaultItems(java.util.Map.of(), "group-1"));
     }
 
     @Test
     void searchVaultItems_withQuery_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.searchVaultItems(java.util.Map.of("email", "test@test.de")));
+        assertThrows(Exception.class, () -> client.searchVaultItems(java.util.Map.of("email", "test@test.de"), "group-1"));
     }
 
     @Test
     void createCar_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.createCar(java.util.Map.of("licensePlate", "B-MS1234")));
+        assertThrows(Exception.class, () -> client.createCar(java.util.Map.of("licensePlate", "B-MS1234"), "group-1"));
     }
 
     @Test
     void createAppointment_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.createAppointment(java.util.Map.of("snapId", "s1")));
+        assertThrows(Exception.class, () -> client.createAppointment(java.util.Map.of("snapId", "s1"), "group-1"));
     }
 
     @Test
     void getAppointment_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.getAppointment("a1"));
+        assertThrows(Exception.class, () -> client.getAppointment("a1", "group-1"));
     }
 
     @Test
     void cancelAppointment_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.cancelAppointment("a1"));
+        assertThrows(Exception.class, () -> client.cancelAppointment("a1", "group-1"));
     }
 
     @Test
     void getSnaps_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
-        assertThrows(Exception.class, () -> client.getSnaps(java.util.Map.of("branchId", "b1")));
+        assertThrows(Exception.class, () -> client.getSnaps(java.util.Map.of("branchId", "b1"), "group-1"));
     }
 
     @Test
     void constructor_withNullBaseUrl_doesNotThrow() {
         SoftnetProperties props = new SoftnetProperties(
-            null, "http://auth", "/fp", 1000, "group-1", "branch-1"
+            null, "http://auth", "/fp", 1000
         );
         SoftnetApiClient nullUrlClient = new SoftnetApiClient(authService, props, objectMapper);
         assertNotNull(nullUrlClient);

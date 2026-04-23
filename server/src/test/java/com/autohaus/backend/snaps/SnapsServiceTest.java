@@ -1,6 +1,6 @@
 package com.autohaus.backend.snaps;
 
-import com.autohaus.backend.config.SoftnetProperties;
+import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.snaps.dto.SnapRequestDto;
 import com.autohaus.backend.snaps.dto.SnapResponseDto;
 import com.autohaus.backend.softnet.SoftnetApiClient;
@@ -16,6 +16,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,14 +25,15 @@ class SnapsServiceTest {
 
     @Mock private SoftnetApiClient softnetApi;
     @Mock private SnapCache snapCache;
+    @Mock private SetupService setupService;
     private final ObjectMapper om = new ObjectMapper();
     private SnapsService service;
 
     @BeforeEach
     void setUp() {
+        when(setupService.resolveGroupId(anyString(), any())).thenReturn("mock-group-id");
         OperationIdMapper mapper = new OperationIdMapper();
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "/fp", 10000, "group-1", "branch-1");
-        service = new SnapsService(softnetApi, mapper, snapCache, props);
+        service = new SnapsService(softnetApi, mapper, snapCache, setupService);
     }
 
     @Test
@@ -49,9 +52,9 @@ class SnapsServiceTest {
         snap3.put("internal", "snap-3");
         snap3.put("checkInTime", "2026-04-16T10:00:00.000Z");
 
-        when(softnetApi.getSnaps(any())).thenReturn(List.of(snap1, snap2, snap3));
+        when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of(snap1, snap2, snap3));
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", "BMW", null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", "BMW", null, null, null);
 
         List<SnapResponseDto> result = service.getSnaps(request);
 
@@ -73,21 +76,21 @@ class SnapsServiceTest {
 
     @Test
     void getSnaps_dateRangeMode() {
-        when(softnetApi.getSnaps(any())).thenReturn(List.of());
+        when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of());
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("oil-change"), "2026-04-15", "2026-04-29", "date-range", null, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("oil-change"), "2026-04-15", "2026-04-29", "date-range", null, null, null, null);
         List<SnapResponseDto> result = service.getSnaps(request);
         assertTrue(result.isEmpty());
     }
 
     @Test
     void getSnaps_withTimePreferenceAndReplacementCar() {
-        when(softnetApi.getSnaps(any())).thenReturn(List.of());
+        when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of());
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", "BMW", "AM", true);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", "BMW", "AM", true, null);
         List<SnapResponseDto> result = service.getSnaps(request);
         assertTrue(result.isEmpty());
-        verify(softnetApi).getSnaps(any());
+        verify(softnetApi).getSnaps(any(), eq("mock-group-id"));
     }
 
     @Test
@@ -96,9 +99,9 @@ class SnapsServiceTest {
         snap.put("internal", "snap-x");
         snap.put("checkInTime", "");
 
-        when(softnetApi.getSnaps(any())).thenReturn(List.of(snap));
+        when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of(snap));
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("tuv"), "2026-04-15", "2026-04-29", "next-available", null, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("tuv"), "2026-04-15", "2026-04-29", "next-available", null, null, null, null);
         List<SnapResponseDto> result = service.getSnaps(request);
         assertTrue(result.isEmpty());
     }
@@ -110,9 +113,9 @@ class SnapsServiceTest {
         snap.put("checkInTime", "2026-04-15T08:05:00.000Z");
         snap.put("checkInResource", "WS A");
 
-        when(softnetApi.getSnaps(any())).thenReturn(List.of(snap));
+        when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of(snap));
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", null, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", null, null, null, null);
         List<SnapResponseDto> result = service.getSnaps(request);
 
         assertEquals(1, result.size());

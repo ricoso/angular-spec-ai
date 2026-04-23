@@ -1,7 +1,7 @@
 package com.autohaus.backend.brands;
 
 import com.autohaus.backend.brands.dto.BrandResponseDto;
-import com.autohaus.backend.config.SoftnetProperties;
+import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.softnet.SoftnetApiClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,19 +14,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BrandsServiceTest {
 
     @Mock private SoftnetApiClient softnetApi;
+    @Mock private SetupService setupService;
     private final ObjectMapper om = new ObjectMapper();
     private BrandsService service;
 
     @BeforeEach
     void setUp() {
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "/fp", 10000, "group-1", "branch-1");
-        service = new BrandsService(softnetApi, props);
+        when(setupService.resolveGroupId(anyString(), any())).thenReturn("group-1");
+        service = new BrandsService(softnetApi, setupService);
     }
 
     @Test
@@ -43,7 +46,7 @@ class BrandsServiceTest {
         toyota.put("name", "Toyota");
 
         when(softnetApi.getGroups()).thenReturn(List.of(group));
-        when(softnetApi.getBrands()).thenReturn(List.of(bmw, toyota));
+        when(softnetApi.getBrands("group-1")).thenReturn(List.of(bmw, toyota));
 
         List<BrandResponseDto> result = service.getBrandsByBranch("any-branch");
         assertEquals(1, result.size());
@@ -61,7 +64,7 @@ class BrandsServiceTest {
         bmw.put("name", "BMW");
 
         when(softnetApi.getGroups()).thenReturn(List.of(group));
-        when(softnetApi.getBrands()).thenReturn(List.of(bmw));
+        when(softnetApi.getBrands("group-1")).thenReturn(List.of(bmw));
 
         List<BrandResponseDto> result = service.getBrandsByBranch("any");
         assertEquals(1, result.size());
@@ -70,7 +73,7 @@ class BrandsServiceTest {
     @Test
     void getBrandsByBranch_groupNotFound_returnsEmpty() {
         when(softnetApi.getGroups()).thenReturn(List.of());
-        when(softnetApi.getBrands()).thenReturn(List.of());
+        when(softnetApi.getBrands("group-1")).thenReturn(List.of());
 
         List<BrandResponseDto> result = service.getBrandsByBranch("any");
         assertTrue(result.isEmpty());

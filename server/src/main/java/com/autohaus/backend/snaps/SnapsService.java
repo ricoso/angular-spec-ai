@@ -1,6 +1,6 @@
 package com.autohaus.backend.snaps;
 
-import com.autohaus.backend.config.SoftnetProperties;
+import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.snaps.dto.SnapRequestDto;
 import com.autohaus.backend.snaps.dto.SnapResponseDto;
 import com.autohaus.backend.softnet.SoftnetApiClient;
@@ -25,18 +25,19 @@ public class SnapsService {
     private final SoftnetApiClient softnetApi;
     private final OperationIdMapper operationIdMapper;
     private final SnapCache snapCache;
-    private final String groupId;
+    private final SetupService setupService;
 
     public SnapsService(SoftnetApiClient softnetApi, OperationIdMapper operationIdMapper,
-                        SnapCache snapCache, SoftnetProperties properties) {
+                        SnapCache snapCache, SetupService setupService) {
         this.softnetApi = softnetApi;
         this.operationIdMapper = operationIdMapper;
         this.snapCache = snapCache;
-        this.groupId = properties.groupId();
+        this.setupService = setupService;
     }
 
     public List<SnapResponseDto> getSnaps(SnapRequestDto request) {
         List<String> mappedOps = operationIdMapper.mapToSoftnetOperations(request.jobTypeIds());
+        String groupId = setupService.resolveGroupId(request.branchId(), request.variant());
 
         Map<String, Object> softnetRequest = new LinkedHashMap<>();
         softnetRequest.put("groupid", groupId);
@@ -60,7 +61,7 @@ public class SnapsService {
         }
 
         log.debug("SoftNet snaps request: {}", softnetRequest);
-        List<JsonNode> rawSnaps = softnetApi.getSnaps(softnetRequest);
+        List<JsonNode> rawSnaps = softnetApi.getSnaps(softnetRequest, groupId);
         log.debug("SoftNet snaps response: {} items", rawSnaps.size());
 
         snapCache.cacheSnaps(rawSnaps);

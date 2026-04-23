@@ -39,83 +39,83 @@ public class SoftnetApiClient {
 
     // === Groups (NO group header) ===
     public List<JsonNode> getGroups() {
-        return getList("/api/planning/groups", false);
+        return getList("/api/planning/groups", null);
     }
 
     public JsonNode getGroup(String groupId) {
-        return get("/api/planning/groups/" + groupId, false);
+        return get("/api/planning/groups/" + groupId, null);
     }
 
     // === Branches (NO group header) ===
     public List<JsonNode> getBranches() {
-        return getList("/api/planning/branches", false);
+        return getList("/api/planning/branches", null);
     }
 
     public JsonNode getBranch(String branchId) {
-        return get("/api/planning/branches/" + branchId, false);
+        return get("/api/planning/branches/" + branchId, null);
     }
 
     // === Brands (WITH group header) ===
-    public List<JsonNode> getBrands() {
-        return getList("/api/planning/brands", true);
+    public List<JsonNode> getBrands(String groupId) {
+        return getList("/api/planning/brands", groupId);
     }
 
     // === JobTypes (WITH group header) ===
-    public List<JsonNode> getJobTypes() {
-        return getList("/api/planning/jobtypes", true);
+    public List<JsonNode> getJobTypes(String groupId) {
+        return getList("/api/planning/jobtypes", groupId);
     }
 
     // === Operations (WITH group header) ===
-    public List<JsonNode> getOperations() {
-        return getList("/api/planning/operations", true);
+    public List<JsonNode> getOperations(String groupId) {
+        return getList("/api/planning/operations", groupId);
     }
 
     // === Snaps (WITH group header) ===
-    public List<JsonNode> getSnaps(Object snapRequest) {
-        return postList("/api/planning/snaps", snapRequest, true);
+    public List<JsonNode> getSnaps(Object snapRequest, String groupId) {
+        return postList("/api/planning/snaps", snapRequest, groupId);
     }
 
     // === Mobility Alternatives (WITH group header) ===
-    public List<JsonNode> getMobilityAlternatives() {
-        return getList("/api/planning/mobilityalternatives", true);
+    public List<JsonNode> getMobilityAlternatives(String groupId) {
+        return getList("/api/planning/mobilityalternatives", groupId);
     }
 
     // === Rent Categories (WITH group header) ===
-    public List<JsonNode> getRentCategories() {
-        return getList("/api/planning/rentcategories", true);
+    public List<JsonNode> getRentCategories(String groupId) {
+        return getList("/api/planning/rentcategories", groupId);
     }
 
     // === Vault Items / Customers (WITH group header) ===
-    public JsonNode createVaultItem(Map<String, Object> customer) {
-        return post("/api/planning/vaultitems", customer, true);
+    public JsonNode createVaultItem(Map<String, Object> customer, String groupId) {
+        return post("/api/planning/vaultitems", customer, groupId);
     }
 
-    public List<JsonNode> searchVaultItems(Map<String, String> query) {
+    public List<JsonNode> searchVaultItems(Map<String, String> query, String groupId) {
         StringBuilder sb = new StringBuilder("/api/planning/vaultitems");
         if (!query.isEmpty()) {
             sb.append("?");
             query.forEach((k, v) -> sb.append(k).append("=").append(v).append("&"));
             sb.setLength(sb.length() - 1);
         }
-        return getList(sb.toString(), true);
+        return getList(sb.toString(), groupId);
     }
 
     // === Cars (WITH group header) ===
-    public JsonNode createCar(Map<String, Object> car) {
-        return post("/api/planning/cars", car, true);
+    public JsonNode createCar(Map<String, Object> car, String groupId) {
+        return post("/api/planning/cars", car, groupId);
     }
 
     // === Appointments (WITH group header) ===
-    public JsonNode createAppointment(Map<String, Object> appointment) {
-        return post("/api/planning/appointments", appointment, true);
+    public JsonNode createAppointment(Map<String, Object> appointment, String groupId) {
+        return post("/api/planning/appointments", appointment, groupId);
     }
 
-    public JsonNode getAppointment(String appointmentId) {
-        return get("/api/planning/appointments/" + appointmentId, true);
+    public JsonNode getAppointment(String appointmentId, String groupId) {
+        return get("/api/planning/appointments/" + appointmentId, groupId);
     }
 
-    public JsonNode cancelAppointment(String appointmentId) {
-        return put("/api/planning/appointments/" + appointmentId + "/cancel", true);
+    public JsonNode cancelAppointment(String appointmentId, String groupId) {
+        return put("/api/planning/appointments/" + appointmentId + "/cancel", groupId);
     }
 
     // === Health ping ===
@@ -132,43 +132,44 @@ public class SoftnetApiClient {
     public record PingResult(boolean healthy, long responseTime) {}
 
     // === Internal HTTP methods ===
-    private JsonNode get(String endpoint, boolean useGroupHeader) {
-        String body = executeRequest("GET", endpoint, null, useGroupHeader);
+    private JsonNode get(String endpoint, String groupId) {
+        String body = executeRequest("GET", endpoint, null, groupId);
         return parseJson(body);
     }
 
-    private List<JsonNode> getList(String endpoint, boolean useGroupHeader) {
-        String body = executeRequest("GET", endpoint, null, useGroupHeader);
+    private List<JsonNode> getList(String endpoint, String groupId) {
+        String body = executeRequest("GET", endpoint, null, groupId);
         return parseJsonList(body);
     }
 
-    private JsonNode post(String endpoint, Object requestBody, boolean useGroupHeader) {
-        String body = executeRequest("POST", endpoint, requestBody, useGroupHeader);
+    private JsonNode post(String endpoint, Object requestBody, String groupId) {
+        String body = executeRequest("POST", endpoint, requestBody, groupId);
         return parseJson(body);
     }
 
-    private List<JsonNode> postList(String endpoint, Object requestBody, boolean useGroupHeader) {
-        String body = executeRequest("POST", endpoint, requestBody, useGroupHeader);
+    private List<JsonNode> postList(String endpoint, Object requestBody, String groupId) {
+        String body = executeRequest("POST", endpoint, requestBody, groupId);
         return parseJsonList(body);
     }
 
-    private JsonNode put(String endpoint, boolean useGroupHeader) {
-        String body = executeRequest("PUT", endpoint, null, useGroupHeader);
+    private JsonNode put(String endpoint, String groupId) {
+        String body = executeRequest("PUT", endpoint, null, groupId);
         return parseJson(body);
     }
 
-    private String executeRequest(String method, String endpoint, Object requestBody, boolean useGroupHeader) {
+    private String executeRequest(String method, String endpoint, Object requestBody, String groupId) {
         long startTime = System.currentTimeMillis();
         String token = authService.getAccessToken();
         String url = (properties.baseUrl() != null ? properties.baseUrl() : "") + endpoint;
+        boolean useGroupHeader = groupId != null && !groupId.isBlank();
 
         try {
             String result = switch (method) {
                 case "GET" -> {
                     var spec = restClient.get().uri(url)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
-                    if (useGroupHeader && properties.groupId() != null) {
-                        spec = spec.header("x-nrg-group", properties.groupId());
+                    if (useGroupHeader) {
+                        spec = spec.header("x-nrg-group", groupId);
                     }
                     yield spec.retrieve().body(String.class);
                 }
@@ -176,8 +177,8 @@ public class SoftnetApiClient {
                     var spec = restClient.post().uri(url)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON);
-                    if (useGroupHeader && properties.groupId() != null) {
-                        spec = spec.header("x-nrg-group", properties.groupId());
+                    if (useGroupHeader) {
+                        spec = spec.header("x-nrg-group", groupId);
                     }
                     if (requestBody != null) {
                         String jsonBody = objectMapper.writeValueAsString(requestBody);
@@ -188,16 +189,16 @@ public class SoftnetApiClient {
                 case "PUT" -> {
                     var spec = restClient.put().uri(url)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
-                    if (useGroupHeader && properties.groupId() != null) {
-                        spec = spec.header("x-nrg-group", properties.groupId());
+                    if (useGroupHeader) {
+                        spec = spec.header("x-nrg-group", groupId);
                     }
                     yield spec.retrieve().body(String.class);
                 }
                 case "DELETE" -> {
                     var spec = restClient.delete().uri(url)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
-                    if (useGroupHeader && properties.groupId() != null) {
-                        spec = spec.header("x-nrg-group", properties.groupId());
+                    if (useGroupHeader) {
+                        spec = spec.header("x-nrg-group", groupId);
                     }
                     yield spec.retrieve().body(String.class);
                 }

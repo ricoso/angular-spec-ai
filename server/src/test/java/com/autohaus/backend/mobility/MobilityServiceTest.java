@@ -1,5 +1,6 @@
 package com.autohaus.backend.mobility;
 
+import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.mobility.dto.MobilityAlternativeResponseDto;
 import com.autohaus.backend.softnet.SoftnetApiClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,18 +14,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MobilityServiceTest {
 
     @Mock private SoftnetApiClient softnetApi;
+    @Mock private SetupService setupService;
     private final ObjectMapper om = new ObjectMapper();
     private MobilityService service;
 
     @BeforeEach
     void setUp() {
-        service = new MobilityService(softnetApi);
+        when(setupService.resolveGroupId(anyString(), any())).thenReturn("mock-group-id");
+        service = new MobilityService(softnetApi, setupService);
     }
 
     @Test
@@ -33,7 +38,7 @@ class MobilityServiceTest {
         alt.put("id", "mob-1");
         alt.put("name", "Leihwagen");
 
-        when(softnetApi.getMobilityAlternatives()).thenReturn(List.of(alt));
+        when(softnetApi.getMobilityAlternatives("mock-group-id")).thenReturn(List.of(alt));
 
         List<MobilityAlternativeResponseDto> result = service.getMobilityAlternatives("any-branch");
         assertEquals(1, result.size());
@@ -43,7 +48,7 @@ class MobilityServiceTest {
 
     @Test
     void getMobilityAlternatives_emptyResponse() {
-        when(softnetApi.getMobilityAlternatives()).thenReturn(List.of());
+        when(softnetApi.getMobilityAlternatives("mock-group-id")).thenReturn(List.of());
 
         List<MobilityAlternativeResponseDto> result = service.getMobilityAlternatives("any");
         assertTrue(result.isEmpty());

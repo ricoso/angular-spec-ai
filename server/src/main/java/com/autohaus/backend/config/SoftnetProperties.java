@@ -7,9 +7,7 @@ public record SoftnetProperties(
     String baseUrl,
     String authUrl,
     String fingerprintJson,
-    int timeout,
-    String groupId,
-    String branchId
+    int timeout
 ) {
     public SoftnetProperties {
         if (timeout <= 0) timeout = 10000;

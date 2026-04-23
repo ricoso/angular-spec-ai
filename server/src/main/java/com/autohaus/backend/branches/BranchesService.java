@@ -1,83 +1,73 @@
 package com.autohaus.backend.branches;
 
 import com.autohaus.backend.branches.dto.BranchResponseDto;
-import com.autohaus.backend.config.SoftnetProperties;
+import com.autohaus.backend.config.setup.BranchSetup;
+import com.autohaus.backend.config.setup.GroupEntry;
+import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.softnet.SoftnetApiClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class BranchesService {
 
     private final SoftnetApiClient softnetApi;
-    private final String groupId;
+    private final SetupService setupService;
 
-    public BranchesService(SoftnetApiClient softnetApi, SoftnetProperties properties) {
+    public BranchesService(SoftnetApiClient softnetApi, SetupService setupService) {
         this.softnetApi = softnetApi;
-        this.groupId = properties.groupId();
+        this.setupService = setupService;
     }
 
     public List<BranchResponseDto> getBranches() {
-        List<JsonNode> groups = softnetApi.getGroups();
-        List<JsonNode> branches = softnetApi.getBranches();
+        List<BranchSetup> setupBranches = setupService.getAllBranches();
+        if (setupBranches.isEmpty()) {
+            return List.of();
+        }
 
-        JsonNode group = findGroup(groups);
-        if (group == null) return List.of();
+        Map<String, JsonNode> groupsById = loadGroupsById();
 
-        Set<String> groupBranchIds = extractBranchIds(group);
-        List<String> brands = extractBrands(group);
-
-        return branches.stream()
-            .filter(b -> groupBranchIds.contains(b.path("id").asText()))
-            .map(b -> new BranchResponseDto(
-                b.path("id").asText(),
-                b.path("name").asText(),
-                getDescription(b),
-                brands
-            ))
+        return setupBranches.stream()
+            .map(b -> toDto(b, groupsById))
             .toList();
     }
 
     public BranchResponseDto getBranch(String branchId) {
-        JsonNode branch = softnetApi.getBranch(branchId);
-        List<JsonNode> groups = softnetApi.getGroups();
-        JsonNode group = findGroup(groups);
+        BranchSetup branch = setupService.findByBranchId(branchId);
+        Map<String, JsonNode> groupsById = loadGroupsById();
+        return toDto(branch, groupsById);
+    }
 
+    private Map<String, JsonNode> loadGroupsById() {
+        return softnetApi.getGroups().stream()
+            .collect(Collectors.toUnmodifiableMap(
+                g -> g.path("id").asText(),
+                g -> g,
+                (a, b) -> a
+            ));
+    }
+
+    private BranchResponseDto toDto(BranchSetup branch, Map<String, JsonNode> groupsById) {
+        String defaultGroupId = branch.groups().stream()
+            .filter(g -> "default".equals(g.variant()))
+            .findFirst()
+            .map(GroupEntry::groupId)
+            .orElse(branch.groups().isEmpty() ? null : branch.groups().get(0).groupId());
+
+        JsonNode group = defaultGroupId != null ? groupsById.get(defaultGroupId) : null;
         List<String> brands = group != null ? extractBrands(group) : List.of();
 
         return new BranchResponseDto(
-            branch.path("id").asText(),
-            branch.path("name").asText(),
-            getDescription(branch),
+            branch.branchId(),
+            branch.name(),
+            branch.address(),
             brands
         );
-    }
-
-    private JsonNode findGroup(List<JsonNode> groups) {
-        return groups.stream()
-            .filter(g -> groupId != null && groupId.equals(g.path("id").asText()))
-            .findFirst()
-            .orElse(null);
-    }
-
-    private Set<String> extractBranchIds(JsonNode group) {
-        Set<String> ids = new HashSet<>();
-        JsonNode branchesNode = group.path("branches");
-        if (branchesNode.isArray()) {
-            for (JsonNode b : branchesNode) {
-                if (b.isTextual()) {
-                    ids.add(b.asText());
-                } else {
-                    ids.add(b.path("id").asText());
-                }
-            }
-        }
-        return ids;
     }
 
     private List<String> extractBrands(JsonNode group) {
@@ -89,12 +79,5 @@ public class BranchesService {
             }
         }
         return brands;
-    }
-
-    private String getDescription(JsonNode branch) {
-        String label = branch.path("label").asText("");
-        if (!label.isEmpty()) return label;
-        String company = branch.path("company").asText("");
-        return company.isEmpty() ? "" : company;
     }
 }

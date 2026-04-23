@@ -148,7 +148,7 @@ class ControllerTests {
     void carsController_createCar_returnsCarResponse() {
         CarsController ctrl = new CarsController(carsService);
         when(carsService.createCar(any())).thenReturn(new CarResponseDto("1", "B-MS1234"));
-        CarResponseDto result = ctrl.createCar(new CreateCarRequest("B-MS1234", 50000, "WVWZZZ3CZWE123456", null));
+        CarResponseDto result = ctrl.createCar(new CreateCarRequest("B-MS1234", 50000, "WVWZZZ3CZWE123456", null, "branch-1"));
         assertNotNull(result);
         assertEquals("1", result.id());
         assertEquals("B-MS1234", result.licensePlate());
@@ -161,7 +161,7 @@ class ControllerTests {
         CustomersController ctrl = new CustomersController(customersService);
         when(customersService.createCustomer(any())).thenReturn(new CustomerResponseDto("1", "a@b.de", "Max", "Muster"));
         CustomerResponseDto result = ctrl.createCustomer(new CreateCustomerRequest(
-            "a@b.de", "mr", "Max", "Muster", "Str 1", "12345", "Berlin", "+491701234567"
+            "a@b.de", "mr", "Max", "Muster", "Str 1", "12345", "Berlin", "+491701234567", "branch-1"
         ));
         assertNotNull(result);
         assertEquals("Max", result.firstName());
@@ -170,18 +170,18 @@ class ControllerTests {
     @Test
     void customersController_searchCustomers_returnsList() {
         CustomersController ctrl = new CustomersController(customersService);
-        when(customersService.searchCustomers(null, null, "test@test.de")).thenReturn(List.of(
+        when(customersService.searchCustomers(null, null, "test@test.de", "branch-1")).thenReturn(List.of(
             new CustomerResponseDto("1", "test@test.de", "Test", "User")
         ));
-        List<CustomerResponseDto> result = ctrl.searchCustomers(null, null, "test@test.de");
+        List<CustomerResponseDto> result = ctrl.searchCustomers(null, null, "test@test.de", "branch-1");
         assertEquals(1, result.size());
     }
 
     @Test
     void customersController_searchCustomers_emptyResult() {
         CustomersController ctrl = new CustomersController(customersService);
-        when(customersService.searchCustomers("B-MS1234", null, null)).thenReturn(List.of());
-        assertTrue(ctrl.searchCustomers("B-MS1234", null, null).isEmpty());
+        when(customersService.searchCustomers("B-MS1234", null, null, "branch-1")).thenReturn(List.of());
+        assertTrue(ctrl.searchCustomers("B-MS1234", null, null, "branch-1").isEmpty());
     }
 
     // === AppointmentsController ===
@@ -198,7 +198,7 @@ class ControllerTests {
         CreateAppointmentRequest.VehicleDto vehicle = new CreateAppointmentRequest.VehicleDto(
             "B-MS1234", 50000, null, null, null, null
         );
-        CreateAppointmentRequest request = new CreateAppointmentRequest("snap1", customer, vehicle, "note", null, null);
+        CreateAppointmentRequest request = new CreateAppointmentRequest("snap1", "branch-1", null, customer, vehicle, "note", null, null);
 
         AppointmentResponseDto result = ctrl.createAppointment(request);
         assertNotNull(result);
@@ -208,10 +208,10 @@ class ControllerTests {
     @Test
     void appointmentsController_getAppointment_returnsResponse() {
         AppointmentsController ctrl = new AppointmentsController(appointmentsService);
-        when(appointmentsService.getAppointment("1")).thenReturn(
+        when(appointmentsService.getAppointment("1", "branch-1", null)).thenReturn(
             new AppointmentResponseDto("1", "confirmed", "2026-04-15", "14:30", "Branch", List.of(), "Max M", "B-MS1234")
         );
-        AppointmentResponseDto result = ctrl.getAppointment("1");
+        AppointmentResponseDto result = ctrl.getAppointment("1", "branch-1", null);
         assertNotNull(result);
         assertEquals("1", result.id());
     }
@@ -219,10 +219,10 @@ class ControllerTests {
     @Test
     void appointmentsController_cancelAppointment_returnsCancelled() {
         AppointmentsController ctrl = new AppointmentsController(appointmentsService);
-        when(appointmentsService.cancelAppointment("1")).thenReturn(
+        when(appointmentsService.cancelAppointment("1", "branch-1", null)).thenReturn(
             new AppointmentResponseDto("1", "cancelled", "2026-04-15", "14:30", "Branch", List.of(), "Max M", "B-MS1234")
         );
-        AppointmentResponseDto result = ctrl.cancelAppointment("1");
+        AppointmentResponseDto result = ctrl.cancelAppointment("1", "branch-1", null);
         assertEquals("cancelled", result.status());
     }
 
@@ -231,7 +231,7 @@ class ControllerTests {
     @Test
     void snapsController_getSnaps_returnsList() {
         SnapsController ctrl = new SnapsController(snapsService);
-        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null);
+        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null, null);
         when(snapsService.getSnaps(any())).thenReturn(List.of(
             new SnapResponseDto("2026-04-15", "Di 15.04.", "Di", List.of())
         ));
@@ -242,7 +242,7 @@ class ControllerTests {
     @Test
     void snapsController_getSnaps_emptyResult() {
         SnapsController ctrl = new SnapsController(snapsService);
-        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null);
+        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null, null);
         when(snapsService.getSnaps(any())).thenReturn(List.of());
         assertTrue(ctrl.getSnaps(request).isEmpty());
     }
@@ -282,9 +282,9 @@ class ControllerTests {
     void rentCategoriesController_getRentCategories_returnsList() {
         RentCategoriesController ctrl = new RentCategoriesController(rentCategoriesService);
         RentCategoryResponseDto dto = new RentCategoryResponseDto("rc-1", "grp-1", "Kleinwagen", "desc", List.of("VW"), List.of("branch-1"));
-        when(rentCategoriesService.getRentCategories()).thenReturn(List.of(dto));
+        when(rentCategoriesService.getRentCategories("branch-1")).thenReturn(List.of(dto));
 
-        List<RentCategoryResponseDto> result = ctrl.getRentCategories();
+        List<RentCategoryResponseDto> result = ctrl.getRentCategories("branch-1");
         assertEquals(1, result.size());
         assertEquals("rc-1", result.get(0).id());
         assertEquals("Kleinwagen", result.get(0).name());

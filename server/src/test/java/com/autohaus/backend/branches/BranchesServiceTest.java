@@ -1,11 +1,11 @@
 package com.autohaus.backend.branches;
 
 import com.autohaus.backend.branches.dto.BranchResponseDto;
-import com.autohaus.backend.config.SoftnetProperties;
+import com.autohaus.backend.config.setup.BranchSetup;
+import com.autohaus.backend.config.setup.GroupEntry;
+import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.softnet.SoftnetApiClient;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,35 +22,30 @@ import static org.mockito.Mockito.when;
 class BranchesServiceTest {
 
     @Mock private SoftnetApiClient softnetApi;
+    @Mock private SetupService setupService;
     private final ObjectMapper om = new ObjectMapper();
     private BranchesService service;
 
     @BeforeEach
     void setUp() {
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "/fp", 10000, "group-1", "branch-1");
-        service = new BranchesService(softnetApi, props);
+        service = new BranchesService(softnetApi, setupService);
     }
 
     @Test
-    void getBranches_filtersToGroupBranches() {
+    void getBranches_returnsBranchesFromSetup() {
+        BranchSetup setupBranch = new BranchSetup(
+            "branch-1",
+            "Filiale Mitte",
+            "Mitte",
+            List.of(new GroupEntry("default", "group-1", "Group 1"))
+        );
+
         ObjectNode group = om.createObjectNode();
         group.put("id", "group-1");
-        ArrayNode branches = group.putArray("branches");
-        branches.add("branch-1");
-        ArrayNode brands = group.putArray("brand");
-        brands.add("BMW");
+        group.putArray("brand").add("BMW");
 
-        ObjectNode branch1 = om.createObjectNode();
-        branch1.put("id", "branch-1");
-        branch1.put("name", "Filiale Mitte");
-        branch1.put("label", "Mitte");
-
-        ObjectNode branch2 = om.createObjectNode();
-        branch2.put("id", "branch-other");
-        branch2.put("name", "Other");
-
+        when(setupService.getAllBranches()).thenReturn(List.of(setupBranch));
         when(softnetApi.getGroups()).thenReturn(List.of(group));
-        when(softnetApi.getBranches()).thenReturn(List.of(branch1, branch2));
 
         List<BranchResponseDto> result = service.getBranches();
         assertEquals(1, result.size());
@@ -61,12 +56,8 @@ class BranchesServiceTest {
     }
 
     @Test
-    void getBranches_groupNotFound_returnsEmpty() {
-        ObjectNode group = om.createObjectNode();
-        group.put("id", "different-group");
-
-        when(softnetApi.getGroups()).thenReturn(List.of(group));
-        when(softnetApi.getBranches()).thenReturn(List.of());
+    void getBranches_emptySetup_returnsEmpty() {
+        when(setupService.getAllBranches()).thenReturn(List.of());
 
         List<BranchResponseDto> result = service.getBranches();
         assertTrue(result.isEmpty());
@@ -74,16 +65,18 @@ class BranchesServiceTest {
 
     @Test
     void getBranch_returnsBranch() {
-        ObjectNode branch = om.createObjectNode();
-        branch.put("id", "b-1");
-        branch.put("name", "Test Branch");
-        branch.put("label", "Test");
+        BranchSetup setupBranch = new BranchSetup(
+            "b-1",
+            "Test Branch",
+            "Test",
+            List.of(new GroupEntry("default", "group-1", "Group 1"))
+        );
 
         ObjectNode group = om.createObjectNode();
         group.put("id", "group-1");
         group.putArray("brand").add("Audi");
 
-        when(softnetApi.getBranch("b-1")).thenReturn(branch);
+        when(setupService.findByBranchId("b-1")).thenReturn(setupBranch);
         when(softnetApi.getGroups()).thenReturn(List.of(group));
 
         BranchResponseDto result = service.getBranch("b-1");
@@ -92,27 +85,20 @@ class BranchesServiceTest {
     }
 
     @Test
-    void getBranches_handlesObjectBranchIds() {
-        ObjectNode group = om.createObjectNode();
-        group.put("id", "group-1");
-        ArrayNode branches = group.putArray("branches");
-        ObjectNode branchRef = om.createObjectNode();
-        branchRef.put("id", "branch-1");
-        branchRef.put("name", "Test");
-        branches.add(branchRef);
-        group.putArray("brand").add("BMW");
+    void getBranches_groupNotFound_returnsBranchWithEmptyBrands() {
+        BranchSetup setupBranch = new BranchSetup(
+            "branch-1",
+            "Test",
+            "Test GmbH",
+            List.of(new GroupEntry("default", "unknown-group", "Group"))
+        );
 
-        ObjectNode branch1 = om.createObjectNode();
-        branch1.put("id", "branch-1");
-        branch1.put("name", "Test");
-        branch1.put("label", "");
-        branch1.put("company", "Test GmbH");
-
-        when(softnetApi.getGroups()).thenReturn(List.of(group));
-        when(softnetApi.getBranches()).thenReturn(List.of(branch1));
+        when(setupService.getAllBranches()).thenReturn(List.of(setupBranch));
+        when(softnetApi.getGroups()).thenReturn(List.of());
 
         List<BranchResponseDto> result = service.getBranches();
         assertEquals(1, result.size());
         assertEquals("Test GmbH", result.get(0).description());
+        assertTrue(result.get(0).brands().isEmpty());
     }
 }

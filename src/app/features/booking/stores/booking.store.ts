@@ -112,6 +112,9 @@ export const BookingStore = signalStore(
     isBookingSubmitting: computed(() => bookingSubmitting()),
     hasBookingError: computed(() => bookingError() !== null),
     submittedAppointmentId: computed(() => appointmentId()),
+    selectedVariant: computed<'default' | 'tireChange'>(() =>
+      selectedServices().some(s => s.serviceId === 'tire-change') ? 'tireChange' : 'default'
+    ),
     hasNotesExtras: computed(() => notesExtras() !== null),
     selectedMobilityOption: computed(() => notesExtras()?.mobilityOption ?? 'none'),
     selectedAppointmentPreference: computed(() => notesExtras()?.appointmentPreference ?? 'anytime'),
@@ -278,7 +281,8 @@ export const BookingStore = signalStore(
           const branchId = store.selectedLocation()?.id ?? '';
           const serviceIds = store.selectedServices().map(s => s.serviceId);
           const brandName = store.selectedBrand() ?? '';
-          return from(appointmentApi.getAppointments(branchId, serviceIds, brandName)).pipe(
+          const variant = store.selectedVariant();
+          return from(appointmentApi.getAppointments(branchId, serviceIds, brandName, variant)).pipe(
             tap((appointments) => {
               patchState(store, { appointments, isLoading: false });
             }),
@@ -368,6 +372,8 @@ export const BookingStore = signalStore(
 
           const request = {
             snapId: appointment?.id ?? '',
+            branchId: store.selectedLocation()?.id ?? '',
+            variant: store.selectedVariant(),
             customer: {
               email: customer?.email ?? '',
               firstName: customer?.firstName ?? '',
@@ -422,16 +428,23 @@ export const BookingStore = signalStore(
     loadRentCategories: rxMethod<void>(
       pipe(
         tap(() => { patchState(store, { isLoading: true, error: null }); }),
-        switchMap(() => from(rentCategoryApi.getRentCategories()).pipe(
-          tap((rentCategories) => {
-            patchState(store, { rentCategories, isLoading: false });
-          }),
-          catchError((err: unknown) => {
-            const message = err instanceof Error ? err.message : 'Unknown error';
-            patchState(store, { error: message, isLoading: false });
+        switchMap(() => {
+          const branchId = store.selectedLocation()?.id ?? '';
+          if (!branchId) {
+            patchState(store, { rentCategories: [], isLoading: false });
             return EMPTY;
-          })
-        ))
+          }
+          return from(rentCategoryApi.getRentCategories(branchId)).pipe(
+            tap((rentCategories) => {
+              patchState(store, { rentCategories, isLoading: false });
+            }),
+            catchError((err: unknown) => {
+              const message = err instanceof Error ? err.message : 'Unknown error';
+              patchState(store, { error: message, isLoading: false });
+              return EMPTY;
+            })
+          );
+        })
       )
     ),
 

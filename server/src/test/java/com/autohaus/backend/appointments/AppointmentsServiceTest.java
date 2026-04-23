@@ -2,6 +2,7 @@ package com.autohaus.backend.appointments;
 
 import com.autohaus.backend.appointments.dto.AppointmentResponseDto;
 import com.autohaus.backend.appointments.dto.CreateAppointmentRequest;
+import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.snaps.SnapCache;
 import com.autohaus.backend.softnet.SoftnetApiClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +16,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -22,12 +26,14 @@ class AppointmentsServiceTest {
 
     @Mock private SoftnetApiClient softnetApi;
     @Mock private SnapCache snapCache;
+    @Mock private SetupService setupService;
     private final ObjectMapper om = new ObjectMapper();
     private AppointmentsService service;
 
     @BeforeEach
     void setUp() {
-        service = new AppointmentsService(softnetApi, snapCache, om);
+        lenient().when(setupService.resolveGroupId(anyString(), any())).thenReturn("mock-group-id");
+        service = new AppointmentsService(softnetApi, snapCache, om, setupService);
     }
 
     @Test
@@ -36,6 +42,8 @@ class AppointmentsServiceTest {
 
         CreateAppointmentRequest dto = new CreateAppointmentRequest(
             "missing",
+            "branch-1",
+            null,
             new CreateAppointmentRequest.CustomerDto("test@test.de", "Max", "Muster", "0170", null, "Str 1", "12345", "Berlin", null, null, null),
             new CreateAppointmentRequest.VehicleDto("B-MS1234", 50000, null, null, null, null),
             null, null, null
@@ -63,10 +71,12 @@ class AppointmentsServiceTest {
         branchid.put("branchLabel", "Filiale A");
         result.set("branchid", branchid);
 
-        when(softnetApi.createAppointment(any())).thenReturn(result);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(result);
 
         CreateAppointmentRequest dto = new CreateAppointmentRequest(
             "snap-1",
+            "branch-1",
+            null,
             new CreateAppointmentRequest.CustomerDto("test@test.de", "Max", "Muster", "0170", null, "Str 1", "12345", "Berlin", null, null, null),
             new CreateAppointmentRequest.VehicleDto("B-MS1234", 50000, "WVWZZZ3CZWE123456", "Golf", "01", "2020"),
             "Bitte Klima prüfen", null, null
@@ -89,9 +99,9 @@ class AppointmentsServiceTest {
         result.put("status", "confirmed");
         result.put("checkInTime", "2026-04-15T10:00:00Z");
 
-        when(softnetApi.cancelAppointment("apt-2")).thenReturn(result);
+        when(softnetApi.cancelAppointment("apt-2", "mock-group-id")).thenReturn(result);
 
-        AppointmentResponseDto response = service.cancelAppointment("apt-2");
+        AppointmentResponseDto response = service.cancelAppointment("apt-2", "branch-1", null);
         assertEquals("cancelled", response.status());
     }
 }

@@ -1,5 +1,6 @@
 package com.autohaus.backend.rentcategories;
 
+import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.rentcategories.dto.RentCategoryResponseDto;
 import com.autohaus.backend.softnet.SoftnetApiClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,18 +15,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RentCategoriesServiceTest {
 
     @Mock private SoftnetApiClient softnetApi;
+    @Mock private SetupService setupService;
     private final ObjectMapper om = new ObjectMapper();
     private RentCategoriesService service;
 
     @BeforeEach
     void setUp() {
-        service = new RentCategoriesService(softnetApi);
+        when(setupService.resolveGroupId(anyString(), any())).thenReturn("mock-group-id");
+        service = new RentCategoriesService(softnetApi, setupService);
     }
 
     @Test
@@ -40,9 +45,9 @@ class RentCategoriesServiceTest {
         ArrayNode branches = node.putArray("branches");
         branches.add("branch-1");
 
-        when(softnetApi.getRentCategories()).thenReturn(List.of(node));
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of(node));
 
-        List<RentCategoryResponseDto> result = service.getRentCategories();
+        List<RentCategoryResponseDto> result = service.getRentCategories("branch-1");
 
         assertEquals(1, result.size());
         RentCategoryResponseDto dto = result.get(0);
@@ -61,9 +66,9 @@ class RentCategoriesServiceTest {
         node.put("groupid", "grp-1");
         node.put("name", "Mittelklasse");
 
-        when(softnetApi.getRentCategories()).thenReturn(List.of(node));
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of(node));
 
-        List<RentCategoryResponseDto> result = service.getRentCategories();
+        List<RentCategoryResponseDto> result = service.getRentCategories("branch-1");
         assertEquals("", result.get(0).description());
         assertTrue(result.get(0).brands().isEmpty());
         assertTrue(result.get(0).branches().isEmpty());
@@ -71,9 +76,9 @@ class RentCategoriesServiceTest {
 
     @Test
     void getRentCategories_empty_returnsEmptyList() {
-        when(softnetApi.getRentCategories()).thenReturn(List.of());
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of());
 
-        List<RentCategoryResponseDto> result = service.getRentCategories();
+        List<RentCategoryResponseDto> result = service.getRentCategories("branch-1");
         assertTrue(result.isEmpty());
     }
 }

@@ -21,12 +21,18 @@ public class AppointmentsController {
     }
 
     @GetMapping("/{id}")
-    public AppointmentResponseDto getAppointment(@PathVariable String id) {
-        return appointmentsService.getAppointment(id);
+    public AppointmentResponseDto getAppointment(
+            @PathVariable String id,
+            @RequestParam String branchId,
+            @RequestParam(required = false) String variant) {
+        return appointmentsService.getAppointment(id, branchId, variant);
     }
 
     @PutMapping("/{id}/cancel")
-    public AppointmentResponseDto cancelAppointment(@PathVariable String id) {
-        return appointmentsService.cancelAppointment(id);
+    public AppointmentResponseDto cancelAppointment(
+            @PathVariable String id,
+            @RequestParam String branchId,
+            @RequestParam(required = false) String variant) {
+        return appointmentsService.cancelAppointment(id, branchId, variant);
     }
 }

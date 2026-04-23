@@ -24,9 +24,9 @@ export class RentCategoryApiService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  public async getRentCategories(): Promise<RentCategory[]> {
+  public async getRentCategories(branchId: string): Promise<RentCategory[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<RentCategoryDto[]>>(`${this.apiUrl}/rentcategories`)
+      this.http.get<ApiResponse<RentCategoryDto[]>>(`${this.apiUrl}/branches/${branchId}/rentcategories`)
     );
     return response.data.map(dto => ({
       id: dto.id,

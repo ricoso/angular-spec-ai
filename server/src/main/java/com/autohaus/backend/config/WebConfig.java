@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.Base64;
 
 @Configuration
-@EnableConfigurationProperties({AppProperties.class, SoftnetProperties.class})
+@EnableConfigurationProperties({AppProperties.class, SoftnetProperties.class, FeatureProperties.class})
 public class WebConfig implements WebMvcConfigurer {
 
     @Bean

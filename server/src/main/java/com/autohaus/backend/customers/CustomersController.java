@@ -25,7 +25,8 @@ public class CustomersController {
     public List<CustomerResponseDto> searchCustomers(
             @RequestParam(required = false) String licensePlate,
             @RequestParam(required = false) String lastName,
-            @RequestParam(required = false) String email) {
-        return customersService.searchCustomers(licensePlate, lastName, email);
+            @RequestParam(required = false) String email,
+            @RequestParam String branchId) {
+        return customersService.searchCustomers(licensePlate, lastName, email, branchId);
     }
 }

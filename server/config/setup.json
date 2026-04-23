@@ -121,18 +121,18 @@
     },
     {
       "branchId": "68f78b538d2bb4389e3590c5",
-      "name": "Automobil Zentrum Leverkusen BS",
+      "name": "Automobil Zentrum Leverkusen",
       "address": "Willy-Brandt-Ring 10",
       "groups": [
         {
           "variant": "default",
-          "groupId": "692efcc9d6f69fcab895e50b",
-          "fullName": "Automobil Zentrum Leverkusen BS planning+"
-        },
-        {
-          "variant": "default",
           "groupId": "692efccada14063a833c6d55",
           "fullName": "Automobil Zentrum Leverkusen GmbH & Co. KG planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "692efcc9d6f69fcab895e50b",
+          "fullName": "Automobil Zentrum Leverkusen BS planning+"
         }
       ]
     },
@@ -415,12 +415,12 @@
       "groups": [
         {
           "variant": "default",
-          "groupId": "692efccdfa906b4a962c1c7b",
+          "groupId": "692efccc3dc2d2f9e953b942",
           "fullName": "Volkswagen Zentrum Leverkusen planning+"
         },
         {
-          "variant": "default",
-          "groupId": "692efccc3dc2d2f9e953b942",
+          "variant": "tireChange",
+          "groupId": "692efccdfa906b4a962c1c7b",
           "fullName": "Volkswagen Zentrum Leverkusen planning+"
         }
       ]

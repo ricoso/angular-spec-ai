@@ -31,9 +31,9 @@ describe('RentCategoryApiService', () => {
   });
 
   it('should fetch and map rent categories from API', async () => {
-    const promise = service.getRentCategories();
+    const promise = service.getRentCategories('branch-1');
 
-    const req = http.expectOne(`${environment.apiUrl}/rentcategories`);
+    const req = http.expectOne(`${environment.apiUrl}/branches/branch-1/rentcategories`);
     expect(req.request.method).toBe('GET');
 
     req.flush({
@@ -58,9 +58,9 @@ describe('RentCategoryApiService', () => {
   });
 
   it('should return empty list when API returns empty data', async () => {
-    const promise = service.getRentCategories();
+    const promise = service.getRentCategories('branch-1');
 
-    const req = http.expectOne(`${environment.apiUrl}/rentcategories`);
+    const req = http.expectOne(`${environment.apiUrl}/branches/branch-1/rentcategories`);
     req.flush({ data: [] });
 
     const result = await promise;

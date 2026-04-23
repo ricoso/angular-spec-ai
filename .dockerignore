@@ -1,0 +1,51 @@
+# Node / Angular
+node_modules
+dist
+coverage
+playwright-report
+test-results
+.angular
+
+# Spring Boot / Gradle
+server/build
+server/.gradle
+server/out
+server/bin
+server/*.log
+
+# Env / Secrets (niemals ins Image!)
+.env
+.env.*
+server/.env
+server/.env.*
+cognigy.net_fingerprint-*.json
+*fingerprint*.json
+config/*.json
+
+# Git / CI / IDE
+.git
+.github
+.gitlab-ci.yml
+.vscode
+.idea
+*.iml
+
+# Dokumentation / Requirements
+docs
+*.md
+!README.md
+
+# Tests
+playwright
+e2e
+*.spec.ts
+jest.config.ts
+playwright.config.ts
+playwright-backend.config.ts
+
+# Misc
+*.log
+.DS_Store
+tools
+mcp
+.claude

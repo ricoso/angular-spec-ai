@@ -15,15 +15,21 @@
   "portsAttributes": {
     "4200": {
       "label": "Angular Dev Server",
-      "onAutoForward": "notify"
+      "onAutoForward": "openPreview",
+      "visibility": "public",
+      "protocol": "http"
     },
     "3000": {
       "label": "Spring Boot Backend",
-      "onAutoForward": "notify"
+      "onAutoForward": "openPreview",
+      "visibility": "public",
+      "protocol": "http"
     },
     "3200": {
       "label": "Requirements Board",
-      "onAutoForward": "notify"
+      "onAutoForward": "openPreview",
+      "visibility": "public",
+      "protocol": "http"
     }
   },
 

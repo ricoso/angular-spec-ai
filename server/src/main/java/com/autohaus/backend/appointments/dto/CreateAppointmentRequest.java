@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 
 public record CreateAppointmentRequest(
     @NotBlank String snapId,
+    @NotBlank String branchId,
+    String variant,
     @Valid CustomerDto customer,
     @Valid VehicleDto vehicle,
     String note,

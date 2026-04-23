@@ -169,6 +169,8 @@ describe('AppointmentApiService', () => {
   it('should create appointment via POST with new DTO format', async () => {
     const request = {
       snapId: 'snap-123',
+      branchId: 'branch-1',
+      variant: 'default' as const,
       customer: {
         email: 'test@test.de',
         firstName: 'Max',
@@ -201,9 +203,10 @@ describe('AppointmentApiService', () => {
   it('should get appointment by ID via GET and unwrap response', async () => {
     const mockAppointment = { id: 'apt-1', status: 'confirmed', date: '2026-04-10', time: '08:00', branchName: 'Berlin', services: [], customerName: '', licensePlate: '' };
 
-    const promise = service.getAppointment('apt-1');
-    const req = httpMock.expectOne(`${environment.apiUrl}/appointments/apt-1`);
+    const promise = service.getAppointment('apt-1', 'branch-1');
+    const req = httpMock.expectOne(r => r.url === `${environment.apiUrl}/appointments/apt-1`);
     expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('branchId')).toBe('branch-1');
     req.flush({ data: mockAppointment });
 
     const result = await promise;

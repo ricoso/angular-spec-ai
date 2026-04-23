@@ -40,5 +40,24 @@ describe('branch-config.model', () => {
     it('should return default.svg path for empty string', () => {
       expect(getBrandLogoPath('')).toBe('assets/brands/default.svg');
     });
+
+    it('should resolve VW Nutzfahrzeuge spellings to vw_nutzfahrzeuge.svg', () => {
+      expect(getBrandLogoPath('VW Nutzfahrzeuge')).toBe('assets/brands/vw_nutzfahrzeuge.svg');
+      expect(getBrandLogoPath('VW-Nutzfahrzeuge')).toBe('assets/brands/vw_nutzfahrzeuge.svg');
+      expect(getBrandLogoPath('Volkswagen Nutzfahrzeuge')).toBe('assets/brands/vw_nutzfahrzeuge.svg');
+      expect(getBrandLogoPath('VWN')).toBe('assets/brands/vw_nutzfahrzeuge.svg');
+    });
+
+    it('should resolve brand names case-insensitive and whitespace/hyphen-agnostic', () => {
+      expect(getBrandLogoPath('volkswagen nutzfahrzeuge')).toBe('assets/brands/vw_nutzfahrzeuge.svg');
+      expect(getBrandLogoPath('VOLKSWAGEN-NUTZFAHRZEUGE')).toBe('assets/brands/vw_nutzfahrzeuge.svg');
+      expect(getBrandLogoPath('mercedes benz')).toBe('assets/brands/mercedes.svg');
+    });
+
+    it('should resolve ŠKODA and Skoda to skoda.svg', () => {
+      expect(getBrandLogoPath('ŠKODA')).toBe('assets/brands/skoda.svg');
+      expect(getBrandLogoPath('Skoda')).toBe('assets/brands/skoda.svg');
+      expect(getBrandLogoPath('skoda')).toBe('assets/brands/skoda.svg');
+    });
   });
 });

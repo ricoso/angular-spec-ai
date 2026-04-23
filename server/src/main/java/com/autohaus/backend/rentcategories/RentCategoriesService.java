@@ -1,5 +1,6 @@
 package com.autohaus.backend.rentcategories;
 
+import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.rentcategories.dto.RentCategoryResponseDto;
 import com.autohaus.backend.softnet.SoftnetApiClient;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,13 +13,16 @@ import java.util.List;
 public class RentCategoriesService {
 
     private final SoftnetApiClient softnetApi;
+    private final SetupService setupService;
 
-    public RentCategoriesService(SoftnetApiClient softnetApi) {
+    public RentCategoriesService(SoftnetApiClient softnetApi, SetupService setupService) {
         this.softnetApi = softnetApi;
+        this.setupService = setupService;
     }
 
-    public List<RentCategoryResponseDto> getRentCategories() {
-        List<JsonNode> categories = softnetApi.getRentCategories();
+    public List<RentCategoryResponseDto> getRentCategories(String branchId) {
+        String groupId = setupService.resolveGroupId(branchId, "default");
+        List<JsonNode> categories = softnetApi.getRentCategories(groupId);
         return categories.stream()
             .map(this::toDto)
             .toList();

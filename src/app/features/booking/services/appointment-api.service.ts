@@ -49,6 +49,8 @@ export interface AppointmentVehicle {
 
 export interface CreateAppointmentRequest {
   snapId: string;
+  branchId: string;
+  variant?: 'default' | 'tireChange';
   customer: AppointmentCustomer;
   vehicle: AppointmentVehicle;
   note?: string;
@@ -72,7 +74,7 @@ export class AppointmentApiService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  public async getAppointments(branchId: string, serviceIds: string[], brandName?: string): Promise<AppointmentSlot[]> {
+  public async getAppointments(branchId: string, serviceIds: string[], brandName?: string, variant?: 'default' | 'tireChange'): Promise<AppointmentSlot[]> {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const fromDate = this.formatIsoDate(tomorrow);
@@ -88,6 +90,7 @@ export class AppointmentApiService {
         toDate: this.formatIsoDate(toDate),
         mode: 'next-available',
         brandName: brandName ?? '',
+        variant: variant ?? 'default',
       })
     );
 
@@ -115,9 +118,13 @@ export class AppointmentApiService {
     return response.data;
   }
 
-  public async getAppointment(appointmentId: string): Promise<AppointmentResponse> {
+  public async getAppointment(appointmentId: string, branchId: string, variant?: 'default' | 'tireChange'): Promise<AppointmentResponse> {
+    const params: Record<string, string> = { branchId };
+    if (variant) {
+      params['variant'] = variant;
+    }
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<AppointmentResponse>>(`${this.apiUrl}/appointments/${appointmentId}`)
+      this.http.get<ApiResponse<AppointmentResponse>>(`${this.apiUrl}/appointments/${appointmentId}`, { params })
     );
     return response.data;
   }

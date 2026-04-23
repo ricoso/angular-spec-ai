@@ -10,5 +10,6 @@ public record CreateCustomerRequest(
     @NotBlank @Size(max = 100) String street,
     @NotBlank @Pattern(regexp = "^\\d{4,5}$") String postalCode,
     @NotBlank @Size(min = 2, max = 50) @Pattern(regexp = "^[a-zA-ZäöüÄÖÜß\\s\\-]+$") String city,
-    @NotBlank @Pattern(regexp = "^\\+?[\\d\\s\\-/()]{6,20}$") String mobilePhone
+    @NotBlank @Pattern(regexp = "^\\+?[\\d\\s\\-/()]{6,20}$") String mobilePhone,
+    @NotBlank String branchId
 ) {}

@@ -13,8 +13,13 @@ softnet:
   auth-url: ${SOFTNET_AUTH_URL:}
   fingerprint-json: ${SOFTNET_FINGERPRINT_JSON:}
   timeout: ${SOFTNET_TIMEOUT:10000}
-  group-id: ${GROUP_ID:}
-  branch-id: ${BRANCH_ID:}
+
+setup:
+  json: ${SETUP_JSON:}
+  json-path: ${SETUP_JSON_PATH:config/setup.json}
+
+features:
+  radwechsel-enabled: ${RADWECHSEL_ENABLED:false}
 
 logging:
   level:
