@@ -116,7 +116,7 @@ autohausterminbuchung/
 | Status | Online / Idle |
 | Cluster | `ocp04` |
 
-**Critical:** The CI pipeline must use tags `atapp` and `ocp04` (not `example-projects` like the template).
+**Critical:** The CI pipeline must use tags `atapp` and `openshift` (not `example-projects` like the template).
 
 ### Available Infrastructure
 
@@ -317,7 +317,7 @@ stages:
 default:
   tags:
     - atapp       # ← project-specific runner tag
-    - ocp04
+    - openshift
 
 # ─── Rule Anchors ───
 .rules_main_only: &rules_main_only
@@ -577,7 +577,7 @@ create release:
 
 ### Notes
 
-- **Tags:** Changed from `example-projects` + `ocp03` to `atapp` + `ocp04` to match the assigned runner.
+- **Tags:** Changed from `example-projects` + `ocp03` to `atapp` + `openshift` to match the assigned runner.
 - **Node.js in JDK runner:** ✅ **Verified — JDK runners do NOT include Node.js.** The CI must use a split build: `nodejs-22-runner` for Angular → `jdk-25-runner` for Gradle. Or request a custom image with both.
 - **`ACCESS_TOKEN`:** A CI/CD variable with write access to the environment repo. Must be set up.
 
@@ -852,7 +852,7 @@ default:
   interruptible: true
   tags:
     - atapp
-    - ocp04
+    - openshift
 
 variables:
   HELM_RELEASE_NAME: "autohausterminbuchung"
@@ -1243,28 +1243,25 @@ Or via `~/.gradle/init.gradle` injected in CI (so we don't hard-code Artifactory
 **Phase 2 notes:**
 - The `gradle build` stage installs Node.js into the JDK runner via `microdnf`/`dnf` because the LDP JDK runner image has no Node.js pre-installed (verified — see Section 5 "Split Build Required"). If `microdnf install nodejs npm` is blocked by Kyverno or fails on the LDP, the alternative is to split the stage into separate `frontend build` (nodejs-22-runner) and `backend build` (jdk-25-runner) jobs that share the `dist/` artifact — same pattern the local Dockerfile uses.
 - `ENV_REPO_PATH` is set to `atapp/autohausterminbuchung.environment` as a placeholder; final value depends on open question #10 (GitLab group path).
-- All five stages use `tags: [atapp, ocp04]` to bind to the assigned group runner `#581`.
+- All five stages use `tags: [atapp, openshift]` to bind to the assigned group runner `#581`.
 
-### Phase 3: Environment Repository — ⚠️ BLOCKED on git push
+### Phase 3: Environment Repository — ✅ PUSHED (2026-04-23)
 
 GitLab repo created (project ID 4865): `indautomotive/atapp/autohausterminbuchung.environment`
-All Helm files created locally at `/Users/U792082/3_AutoHausTermin/autohausterminbuchung.environment/` and validated with `helm lint` + `helm template`.
+Initial commit pushed to `main` on 2026-04-23 after obtaining Owner access.
 
-**Blocker:** Group `indautomotive/atapp` has `default_branch_protection: 2` (full protection). Developer access (level 30) cannot create the first branch in an empty repo — requires Owner/Maintainer. Need one of the group Owners (U724924 SCHMIDT, U725273 MUELLER, or U767043 SONNTAG) to either:
-1. Push the initial commit, OR
-2. Temporarily grant Maintainer access on project 4865
-
-**Completed locally:**
+**Completed:**
 - [x] Create `autohausterminbuchung.environment` repo on GitLab (project ID 4865)
 - [x] Create `base/` Helm chart (templates: deployment, service, route, serviceaccount, configmap, hpa, externalsecret, secretstore)
 - [x] Create `environments/dev/` and `environments/prod/` value overlays
-- [x] Create `.gitlab-ci.yml` for env repo (package → deploy-dev → deploy-prod)
+- [x] Create `.gitlab-ci.yml` for env repo (package → deploy-dev → deploy-prod → validate)
 - [x] Validate with `helm lint` and `helm template` — all templates render correctly
-
-**Blocked on Owner push:**
-- [ ] Push initial commit to GitLab (blocked on branch protection)
-- [ ] Test Helm package + push to GitLab Package Registry
-- [ ] Test `helm upgrade --install` to dev namespace
+- [x] Push initial commit to GitLab — commit `b446e0b` on `main`
+- [x] Fix runner tags to `atapp` + `openshift` — commit `8e9add3`
+- [x] Add `.gitlab-ci.yml` to `changes:` filters — commit `2cf00b9`
+- [x] Verify `trigger-helm-package` CI job publishes base chart to GitLab Package Registry — ✅ succeeded, base chart available
+- [x] Verify `deploy-dev` CI job runs end-to-end — ✅ Helm dependency resolution works, deployment attempted. Failed with `context deadline exceeded` — expected: no app image exists in OCP registry yet. Will succeed once app CI builds first image.
+- [ ] Test `helm upgrade --install` to dev namespace with real app image (blocked on app repo CI — Phase 2)
 
 ### Phase 4: Secrets — DEV ✅ READY (namespace exists on `ocp04`)
 
@@ -1296,9 +1293,11 @@ oc get secret autohausterminbuchung-secrets -n autohandel-terminbuchungs-app-dev
 
 **Checklist:**
 - [x] Create `autohausterminbuchung-secrets` in `autohandel-terminbuchungs-app-dev` — created 2026-04-23 via `oc create secret generic` (keys: `fingerprint.json`, `SESSION_SECRET`)
+- [x] Verify dev secret key names match Helm template expectations — confirmed 2026-04-23: `fingerprint.json` (volume mount → `/app/config/fingerprint.json`) + `SESSION_SECRET` (env var via `secretKeyRef`)
+- [x] Verify Helm deployment template renders correctly — `helm template` confirms: `secretKeyRef` for SESSION_SECRET, volume mount at `/app/config`, `SOFTNET_FINGERPRINT_PATH=/app/config/fingerprint.json`
 - [ ] Verify fingerprint file accessible at `/app/config/fingerprint.json` in pod (blocked on first deployment)
 - [ ] Verify `SESSION_SECRET` env var injected correctly (blocked on first deployment)
-- [ ] Create `autohausterminbuchung-secrets` in `autohandel-terminbuchungs-app-prod` (prod namespace exists, create when ready)
+- [ ] Create `autohausterminbuchung-secrets` in `autohandel-terminbuchungs-app-prod` (deferred — create when ready for prod deployment)
 - [ ] Document secret rotation procedure for the team
 
 ### Phase 5: End-to-End Validation
