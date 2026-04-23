@@ -92,9 +92,9 @@ include:
 variables:
   # Confirmed shared LHIND virtual Maven/Gradle repo (verified from java-template)
   ARTIFACTORY_VIRTUAL_REPO: "devopsplatform-lhind-px-mvn-all"
-  # OCP namespaces — confirm via EMMA ticket #1, then update if assigned names differ
-  NAMESPACE_DEV: "atapp-dev"
-  NAMESPACE_PROD: "atapp-prod"
+  # OCP namespaces — confirmed on ocp04
+  NAMESPACE_DEV: "autohandel-terminbuchungs-app-dev"
+  NAMESPACE_PROD: "autohandel-terminbuchungs-app-prod"
   # Env repo path — fill in once group path is confirmed (open question #10)
   ENV_REPO_PATH: "indautomotive/atapp/autohausterminbuchung.environment"
 

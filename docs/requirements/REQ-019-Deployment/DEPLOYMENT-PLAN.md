@@ -4,7 +4,7 @@
 **Date:** 2026-04-21  
 **Backend:** Spring Boot 4.1 (Java 25, Gradle) — per REQ-018  
 **Frontend:** Angular 21 (served as static files by Spring Boot)  
-**Target:** LHIND DevOps Platform (LDP) — OpenShift on `ocp03`  
+**Target:** LHIND DevOps Platform (LDP) — OpenShift on `ocp04`  
 **Reference:** LDP Java Template (project ID 2290 + environment 2291)
 
 ---
@@ -114,9 +114,9 @@ autohausterminbuchung/
 | Type | Group runner (`atapp`) |
 | Tags | `openshift`, `atapp`, `ATAPP` |
 | Status | Online / Idle |
-| Cluster | `ocp03` |
+| Cluster | `ocp04` |
 
-**Critical:** The CI pipeline must use tags `atapp` and `ocp03` (not `example-projects` like the template).
+**Critical:** The CI pipeline must use tags `atapp` and `ocp04` (not `example-projects` like the template).
 
 ### Available Infrastructure
 
@@ -141,9 +141,8 @@ The LDP provides shared CI templates at `lhind-devops-platform/gitlab-ci-templat
 ### Image Strategy
 
 ```
-Build → image-registry.openshift-image-registry.svc:5000/<namespace-dev>/<app>:<tag>
-Promote → oc tag <dev-ns>/<app>:<tag>  <int-ns>/<app>:<tag>
-Promote → oc tag <int-ns>/<app>:<tag>  <prod-ns>/<app>:<tag>
+Build → image-registry.openshift-image-registry.svc:5000/autohandel-terminbuchungs-app-dev/<app>:<tag>
+Promote → oc tag autohandel-terminbuchungs-app-dev/<app>:<tag>  autohandel-terminbuchungs-app-prod/<app>:<tag>
 ```
 
 Images are **not pushed to JFrog**. They live in the OpenShift internal registry and are promoted between namespaces via `oc tag`.
@@ -318,7 +317,7 @@ stages:
 default:
   tags:
     - atapp       # ← project-specific runner tag
-    - ocp03
+    - ocp04
 
 # ─── Rule Anchors ───
 .rules_main_only: &rules_main_only
@@ -471,8 +470,8 @@ build dev rc image:
   script:
     - VERSION=$(cat version_full.txt)
     - TAG_RC="${VERSION}-rc"
-    - ocp-build-and-scan ./Dockerfile <NAMESPACE_DEV> $CI_PROJECT_NAME:$TAG_RC
-    - ocp-push <NAMESPACE_DEV> $CI_PROJECT_NAME:$TAG_RC
+    - ocp-build-and-scan ./Dockerfile autohandel-terminbuchungs-app-dev $CI_PROJECT_NAME:$TAG_RC
+    - ocp-push autohandel-terminbuchungs-app-dev $CI_PROJECT_NAME:$TAG_RC
   rules: *rules_feature_only
 
 # ─── IMAGE: Build release image (main) ───
@@ -486,8 +485,8 @@ build release image:
   script:
     - VERSION=$(cat version.txt)
     - TAG="v${VERSION}"
-    - ocp-build-and-scan ./Dockerfile <NAMESPACE_DEV> $CI_PROJECT_NAME:$TAG
-    - ocp-push <NAMESPACE_DEV> $CI_PROJECT_NAME:$TAG
+    - ocp-build-and-scan ./Dockerfile autohandel-terminbuchungs-app-dev $CI_PROJECT_NAME:$TAG
+    - ocp-push autohandel-terminbuchungs-app-dev $CI_PROJECT_NAME:$TAG
   rules: *rules_main_only
 
 # ─── IMAGE: Promote release to prod ───
@@ -499,7 +498,7 @@ promote release image:
   script:
     - VERSION=$(cat version.txt)
     - TAG="v${VERSION}"
-    - oc tag --reference-policy=local <NAMESPACE_DEV>/$CI_PROJECT_NAME:$TAG <NAMESPACE_PROD>/$CI_PROJECT_NAME:$TAG
+    - oc tag --reference-policy=local autohandel-terminbuchungs-app-dev/$CI_PROJECT_NAME:$TAG autohandel-terminbuchungs-app-prod/$CI_PROJECT_NAME:$TAG
   rules: *rules_main_only
 
 # ─── ROLLOUT: Update env repo + create MR ───
@@ -578,7 +577,7 @@ create release:
 
 ### Notes
 
-- **Tags:** Changed from `example-projects` + `ocp03` to `atapp` + `ocp03` to match the assigned runner.
+- **Tags:** Changed from `example-projects` + `ocp03` to `atapp` + `ocp04` to match the assigned runner.
 - **Node.js in JDK runner:** ✅ **Verified — JDK runners do NOT include Node.js.** The CI must use a split build: `nodejs-22-runner` for Angular → `jdk-25-runner` for Gradle. Or request a custom image with both.
 - **`ACCESS_TOKEN`:** A CI/CD variable with write access to the environment repo. Must be set up.
 
@@ -631,7 +630,7 @@ deployment:
   replicaCount: 1
   serviceAccountName: autohausterminbuchung
   image:
-    repository: image-registry.openshift-image-registry.svc:5000/atapp-dev/autohausterminbuchung
+    repository: image-registry.openshift-image-registry.svc:5000/autohandel-terminbuchungs-app-dev/autohausterminbuchung
     pullPolicy: Always
   service:
     type: ClusterIP
@@ -712,7 +711,7 @@ base:
     replicaCount: 1
     serviceAccountName: autohausterminbuchung
     image:
-      repository: image-registry.openshift-image-registry.svc:5000/atapp-dev/autohausterminbuchung
+      repository: image-registry.openshift-image-registry.svc:5000/autohandel-terminbuchungs-app-dev/autohausterminbuchung
       pullPolicy: Always
     ports:
       - name: http
@@ -727,7 +726,7 @@ base:
         memory: "512Mi"
         cpu: "500m"
   route:
-    host: autohausterminbuchung-dev.apps.ocp03.cloud.lhind.app.lufthansa.com
+    host: autohausterminbuchung-dev.apps.ocp04.app.lhind.cloud
     targetPort: 3000
   env:
     keyValue:
@@ -752,7 +751,7 @@ base:
       - name: BRANCH_ID
         value: "58341c5cbe856f6dc47e9f05"
       - name: CORS_ALLOWED_ORIGINS
-        value: "https://autohausterminbuchung-dev.apps.ocp03.cloud.lhind.app.lufthansa.com"
+        value: "https://autohausterminbuchung-dev.apps.ocp04.app.lhind.cloud"
       - name: SESSION_TTL_MINUTES
         value: "20"
       - name: TLS_ENABLED
@@ -783,7 +782,7 @@ base:
     replicaCount: 2
     serviceAccountName: autohausterminbuchung
     image:
-      repository: image-registry.openshift-image-registry.svc:5000/atapp-prod/autohausterminbuchung
+      repository: image-registry.openshift-image-registry.svc:5000/autohandel-terminbuchungs-app-prod/autohausterminbuchung
       pullPolicy: Always
     ports:
       - name: http
@@ -798,7 +797,7 @@ base:
         memory: "512Mi"
         cpu: "500m"
   route:
-    host: autohausterminbuchung.apps.ocp03.cloud.lhind.app.lufthansa.com
+    host: autohausterminbuchung.apps.ocp04.app.lhind.cloud
     targetPort: 3000
   env:
     keyValue:
@@ -823,7 +822,7 @@ base:
       - name: BRANCH_ID
         value: "<prod-branch-id>"
       - name: CORS_ALLOWED_ORIGINS
-        value: "https://autohausterminbuchung.apps.ocp03.cloud.lhind.app.lufthansa.com"
+        value: "https://autohausterminbuchung.apps.ocp04.app.lhind.cloud"
       - name: SESSION_TTL_MINUTES
         value: "20"
       - name: TLS_ENABLED
@@ -853,7 +852,7 @@ default:
   interruptible: true
   tags:
     - atapp
-    - ocp03
+    - ocp04
 
 variables:
   HELM_RELEASE_NAME: "autohausterminbuchung"
@@ -902,7 +901,7 @@ trigger-helm-package:
 deploy-dev:
   extends: .deploy_template
   variables:
-    KUBERNETES_NAMESPACE: "atapp-dev"    # ← confirm with platform team
+    KUBERNETES_NAMESPACE: "autohandel-terminbuchungs-app-dev"
     HELM_CHART_PATH: "environments/dev"
     VALUES_FILE: "environments/dev/values.yaml"
   rules:
@@ -913,7 +912,7 @@ deploy-dev:
 deploy-prod:
   extends: .deploy_template
   variables:
-    KUBERNETES_NAMESPACE: "atapp-prod"   # ← confirm with platform team
+    KUBERNETES_NAMESPACE: "autohandel-terminbuchungs-app-prod"
     HELM_CHART_PATH: "environments/prod"
     VALUES_FILE: "environments/prod/values.yaml"
   rules:
@@ -936,7 +935,7 @@ This was chosen over External Secrets Operator (ESO) because:
 - **Secrets never leave the cluster** — RSA fingerprint keys stay in etcd, never pass through GitLab
 - **Simpler architecture** — no SecretStore/ExternalSecret CRDs, no GitLab token dependency
 - **Clear audit trail** — OpenShift audit log tracks all secret access
-- **No ESO dependency** — works regardless of whether ESO is installed on `ocp03`
+- **No ESO dependency** — works regardless of whether ESO is installed on `ocp04`
 
 ```
 Admin creates Secrets (OpenShift Console or `oc` CLI)
@@ -974,7 +973,7 @@ Combines the fingerprint file + SESSION_SECRET in one secret:
 oc create secret generic autohausterminbuchung-secrets \
   --from-file=fingerprint.json=./fingerprint-read.json \
   --from-literal=SESSION_SECRET=$(openssl rand -hex 16) \
-  -n atapp-dev
+  -n autohandel-terminbuchungs-app-dev
 ```
 
 Or create via **OpenShift Console** → Project → Secrets → Create.
@@ -1032,7 +1031,7 @@ secrets:        # fingerprint file — volume-mounted from same Secret
    - `atapp-dev` — development
    - `atapp-prod` — production
 2. **Request ServiceAccount** with image pull/push permissions across namespaces
-3. **Request Route wildcard domain:** `*.apps.ocp03.cloud.lhind.app.lufthansa.com`
+3. **Request Route wildcard domain:** `*.apps.ocp04.app.lhind.cloud`
 4. **Whitelist external access:** The pod needs outbound HTTPS access to:
    - `api.soft-nrg.com` (SoftNet Read API)
    - `auth.soft-nrg.com` (SoftNet Auth)
@@ -1096,8 +1095,8 @@ Created once per namespace by an ADMIN. Not managed by CI/CD.
 
 | Secret Name | Namespace | Type | Purpose |
 |---|---|---|---|
-| `autohausterminbuchung-secrets` | `atapp-dev` | Opaque (file + literal) | RSA fingerprint JSON (`fingerprint.json`) + `SESSION_SECRET`. Mounted at `/app/config/` + env var |
-| `autohausterminbuchung-secrets` | `atapp-prod` | Opaque (file + literal) | Same — production fingerprint + production SESSION_SECRET |
+| `autohausterminbuchung-secrets` | `autohandel-terminbuchungs-app-dev` | Opaque (file + literal) | RSA fingerprint JSON (`fingerprint.json`) + `SESSION_SECRET`. Mounted at `/app/config/` + env var |
+| `autohausterminbuchung-secrets` | `autohandel-terminbuchungs-app-prod` | Opaque (file + literal) | Same — production fingerprint + production SESSION_SECRET |
 
 ---
 
@@ -1109,11 +1108,11 @@ The following must be requested from the LDP team via EMMA (`lhind.ams-devops-bu
 
 | # | Request | Details |
 |---|---|---|
-| 1 | **OpenShift Namespaces** | `atapp-dev` and `atapp-prod` on `ocp03` |
+| 1 | **OpenShift Namespaces** | ✅ Both provisioned on `ocp04`: `autohandel-terminbuchungs-app-dev` + `autohandel-terminbuchungs-app-prod` |
 | 2 | **GitLab Runner Verification** | Confirm runner `#581` has access to new repos and correct tags |
-| 3 | **External Network Egress** | Whitelist `*.soft-nrg.com` for outbound HTTPS from `atapp-*` namespaces |
+| 3 | **External Network Egress** | Whitelist `*.soft-nrg.com` for outbound HTTPS from `autohandel-terminbuchungs-app-*` namespaces |
 | 4 | **Base Image Whitelist** | Allow pull of `ubi9/openjdk-25`, `ubi9/nodejs-22`, `ubi8/buildah` |
-| 5 | **Route Domain** | Confirm `autohausterminbuchung-dev.apps.ocp03.cloud.lhind.app.lufthansa.com` is available |
+| 5 | **Route Domain** | Confirm `autohausterminbuchung-dev.apps.ocp04.app.lhind.cloud` is available |
 | 6 | **User Roles** | Submit ADMINS/DEVS/READERS list for Azure Entra group mapping |
 
 ### Deferred (add after first successful deployment)
@@ -1135,7 +1134,7 @@ The following must be requested from the LDP team via EMMA (`lhind.ams-devops-bu
 |---|---|---|
 | ~~1~~ | ~~What Java version is available?~~ | ✅ JDK 17, 21, 25 all available as runner images |
 | ~~2~~ | ~~Does JDK runner include Node.js?~~ | ✅ No. JDK runners only have JDK + oc + jf + helm + sonar + grype. Need split build (nodejs-22 → jdk-25) |
-| ~~4~~ | ~~Is External Secrets Operator installed on `ocp03`?~~ | ✅ N/A — secrets managed directly in OpenShift Console/CLI |
+| ~~4~~ | ~~Is External Secrets Operator installed on `ocp04`?~~ | ✅ N/A — secrets managed directly in OpenShift Console/CLI |
 | ~~5~~ | ~~What Artifactory repo for Maven/Gradle dependencies?~~ | ✅ `devopsplatform-lhind-px-mvn-all` (verified from LDP Java template `.gitlab-ci.yml` line 119, 143, 165). This is the shared LHIND virtual repo for all Java projects |
 | ~~7~~ | ~~Do we need a custom SCC for the fingerprint volume mount?~~ | ✅ No. `restricted-v2` SCC permits Secret volume mounts by default — that's a base K8s feature, not a privileged operation. Only matters for hostPath, hostNetwork, or RunAsRoot |
 | ~~8~~ | ~~Can we use Gradle instead of Maven?~~ | ✅ Yes. The Gradle wrapper (`./gradlew`) is fully self-contained — it downloads its own Gradle distribution + dependencies on first run. Just needs JDK + network access (which the JDK runner already has via Artifactory). Only catch: configure Gradle to fetch dependencies through `devopsplatform-lhind-px-mvn-all` instead of Maven Central directly (see below). The LDP template happens to use Maven but there's no platform constraint forcing Maven |
@@ -1145,8 +1144,8 @@ The following must be requested from the LDP team via EMMA (`lhind.ams-devops-bu
 
 | # | Question | Why we can't answer ourselves |
 |---|---|---|
-| 3 | What are the **namespace names**? (`atapp-dev`/`atapp-prod` assumed) | Platform team allocates namespaces per project — we can only propose names. Will be assigned via EMMA ticket |
-| 6 | Is the cluster route domain `*.apps.ocp03.cloud.lhind.app.lufthansa.com`? | Need to confirm exact cluster wildcard. Most likely correct (standard OpenShift pattern), but should be verified before issuing the EMMA route ticket |
+| ~~3~~ | ~~What are the **namespace names**?~~ | ✅ **RESOLVED** — Dev: `autohandel-terminbuchungs-app-dev` (confirmed on `ocp04`). Prod: `autohandel-terminbuchungs-app-prod` (naming convention) |
+| ~~6~~ | ~~Is the cluster route domain?~~ | ✅ **RESOLVED** — Cluster is `ocp04`, domain is `*.apps.ocp04.app.lhind.cloud` (confirmed from OpenShift Console URL) |
 | 10 | What's the **GitLab group path** for the new repos? (`atapp/`? `lhind-projects/atapp/`?) | We need to know where to create the env repo + which group the runner is bound to |
 | 11 | Are there **EMMA approval lead times** we should plan around? | Need to know expected wait time per ticket type to sequence the rollout realistically |
 
@@ -1202,7 +1201,7 @@ Or via `~/.gradle/init.gradle` injected in CI (so we don't hard-code Artifactory
 
 ### Pre-Implementation (Admin/Setup)
 
-- [ ] Submit EMMA ticket for OpenShift namespaces (`atapp-dev`, `atapp-prod`)
+- [x] ~~Submit EMMA ticket for OpenShift namespaces~~ → `autohandel-terminbuchungs-app-dev` provisioned on `ocp04`
 - [ ] Submit EMMA ticket for network egress whitelist (`*.soft-nrg.com`)
 - [ ] Submit EMMA ticket for base image whitelist (`ubi9/openjdk-25`, `ubi9/nodejs-22`, `ubi8/buildah`)
 - [ ] Confirm runner `#581` tags and access
@@ -1244,24 +1243,62 @@ Or via `~/.gradle/init.gradle` injected in CI (so we don't hard-code Artifactory
 **Phase 2 notes:**
 - The `gradle build` stage installs Node.js into the JDK runner via `microdnf`/`dnf` because the LDP JDK runner image has no Node.js pre-installed (verified — see Section 5 "Split Build Required"). If `microdnf install nodejs npm` is blocked by Kyverno or fails on the LDP, the alternative is to split the stage into separate `frontend build` (nodejs-22-runner) and `backend build` (jdk-25-runner) jobs that share the `dist/` artifact — same pattern the local Dockerfile uses.
 - `ENV_REPO_PATH` is set to `atapp/autohausterminbuchung.environment` as a placeholder; final value depends on open question #10 (GitLab group path).
-- All five stages use `tags: [atapp, ocp03]` to bind to the assigned group runner `#581`.
+- All five stages use `tags: [atapp, ocp04]` to bind to the assigned group runner `#581`.
 
-### Phase 3: Environment Repository
+### Phase 3: Environment Repository — ⚠️ BLOCKED on git push
 
-- [ ] Create `autohausterminbuchung.environment` repo
-- [ ] Create `base/` Helm chart (templates + values)
-- [ ] Create `environments/dev/` and `environments/prod/` overlays
-- [ ] Create `.gitlab-ci.yml` for env repo
-- [ ] Set up CI/CD variables for secrets (all env vars listed above)
+GitLab repo created (project ID 4865): `indautomotive/atapp/autohausterminbuchung.environment`
+All Helm files created locally at `/Users/U792082/3_AutoHausTermin/autohausterminbuchung.environment/` and validated with `helm lint` + `helm template`.
+
+**Blocker:** Group `indautomotive/atapp` has `default_branch_protection: 2` (full protection). Developer access (level 30) cannot create the first branch in an empty repo — requires Owner/Maintainer. Need one of the group Owners (U724924 SCHMIDT, U725273 MUELLER, or U767043 SONNTAG) to either:
+1. Push the initial commit, OR
+2. Temporarily grant Maintainer access on project 4865
+
+**Completed locally:**
+- [x] Create `autohausterminbuchung.environment` repo on GitLab (project ID 4865)
+- [x] Create `base/` Helm chart (templates: deployment, service, route, serviceaccount, configmap, hpa, externalsecret, secretstore)
+- [x] Create `environments/dev/` and `environments/prod/` value overlays
+- [x] Create `.gitlab-ci.yml` for env repo (package → deploy-dev → deploy-prod)
+- [x] Validate with `helm lint` and `helm template` — all templates render correctly
+
+**Blocked on Owner push:**
+- [ ] Push initial commit to GitLab (blocked on branch protection)
 - [ ] Test Helm package + push to GitLab Package Registry
 - [ ] Test `helm upgrade --install` to dev namespace
 
-### Phase 4: Secrets
+### Phase 4: Secrets — DEV ✅ READY (namespace exists on `ocp04`)
 
-- [ ] Create `autohausterminbuchung-secrets` in `atapp-dev` (`--from-file=fingerprint.json --from-literal=SESSION_SECRET`)
-- [ ] Create `autohausterminbuchung-secrets` in `atapp-prod` (production fingerprint + production SESSION_SECRET)
-- [ ] Verify fingerprint file accessible at `/app/config/fingerprint.json` in pod
-- [ ] Verify `SESSION_SECRET` env var injected correctly
+**Dev namespace `autohandel-terminbuchungs-app-dev` is provisioned.** Execute via OpenShift Console or `oc` CLI:
+
+```bash
+# 1. Login to ocp04
+oc login https://api.ocp04.app.lhind.cloud:6443
+
+# 2. Switch to dev namespace
+oc project autohandel-terminbuchungs-app-dev
+
+# 3. Create the secret (fingerprint file + SESSION_SECRET)
+oc create secret generic autohausterminbuchung-secrets \
+  --from-file=fingerprint.json=./server/cognigy.net_fingerprint-e6ced285a2bfce274426c261cca6edcd.json \
+  --from-literal=SESSION_SECRET=$(openssl rand -hex 16) \
+  -n autohandel-terminbuchungs-app-dev
+
+# 4. Verify
+oc get secret autohausterminbuchung-secrets -n autohandel-terminbuchungs-app-dev -o yaml
+```
+
+**Or via OpenShift Console:**
+1. Go to https://console-openshift-console.apps.ocp04.app.lhind.cloud/k8s/ns/autohandel-terminbuchungs-app-dev/secrets
+2. Create → Key/Value Secret
+3. Name: `autohausterminbuchung-secrets`
+4. Add key `fingerprint.json` → upload `server/cognigy.net_fingerprint-e6ced285a2bfce274426c261cca6edcd.json`
+5. Add key `SESSION_SECRET` → paste output of `openssl rand -hex 16`
+
+**Checklist:**
+- [x] Create `autohausterminbuchung-secrets` in `autohandel-terminbuchungs-app-dev` — created 2026-04-23 via `oc create secret generic` (keys: `fingerprint.json`, `SESSION_SECRET`)
+- [ ] Verify fingerprint file accessible at `/app/config/fingerprint.json` in pod (blocked on first deployment)
+- [ ] Verify `SESSION_SECRET` env var injected correctly (blocked on first deployment)
+- [ ] Create `autohausterminbuchung-secrets` in `autohandel-terminbuchungs-app-prod` (prod namespace exists, create when ready)
 - [ ] Document secret rotation procedure for the team
 
 ### Phase 5: End-to-End Validation
@@ -1299,5 +1336,5 @@ Or via `~/.gradle/init.gradle` injected in CI (so we don't hard-code Artifactory
 | Deploy method | `helm upgrade --install` from app CI | Two-repo GitOps: app CI → MR → env CI → helm |
 | Secrets | GitLab vars → `helm --set` | OpenShift-managed Secrets (Console/CLI). No ESO. |
 | Helm charts | In-repo (`deploy/helm/`) | Separate env repo (`*.environment`) |
-| CI runner | Generic Docker executor | LDP runner `#581` (tags: `atapp`, `ocp03`) |
+| CI runner | Generic Docker executor | LDP runner `#581` (tags: `atapp`, `ocp04`) |
 | User UID | 1001 (explicit) | Random (OpenShift `restricted-v2` SCC) |
