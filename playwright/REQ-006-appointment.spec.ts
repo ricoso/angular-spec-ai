@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { getCurrentRoute, setLanguage, navigateTo, waitForAngular } from './helpers/app.helpers';
+import { getCurrentRoute, navigateTo, setLanguage, waitForAngular } from './helpers/app.helpers';
 import {
   clickAppointmentBack,
   clickAppointmentContinue,

@@ -847,7 +847,7 @@ test.describe('REQ-015: Full Wizard Flow (TC-30)', () => {
 
     // Check form validity before submitting
     const formValid = await page.evaluate(() => {
-      const btn = document.querySelector('.carinformation__continue-button') as HTMLButtonElement;
+      const btn = document.querySelector('.carinformation__continue-button');
       return { disabled: btn?.disabled, tagName: btn?.tagName, type: btn?.getAttribute('type') };
     });
     console.log('Button state before submit:', JSON.stringify(formValid));
