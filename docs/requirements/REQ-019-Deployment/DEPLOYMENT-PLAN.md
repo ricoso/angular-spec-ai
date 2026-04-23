@@ -413,6 +413,8 @@ semantic versioning:
   before_script:
     - git config --global user.email "ci@autohaus.lhind.app"
     - git config --global user.name "CI Bot"
+    - export CI_REPOSITORY_URL="https://oauth2:${GL_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git remote set-url origin "$CI_REPOSITORY_URL"
     - npm install -g semantic-release conventional-changelog-conventionalcommits @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/exec
   script:
     - semantic-release --no-ci
@@ -1069,11 +1071,12 @@ We keep the annotation per the LDP template — no need to deviate.
 
 **Required for first deployment:**
 
-| Variable | Value | Type | Purpose |
-|---|---|---|---|
-| `ACCESS_TOKEN` | `glpat-...` | Masked | Write access to env repo for MR creation |
-| `JF_USER` | `<jfrog-username>` | Variable | JFrog Artifactory auth (Gradle dependency proxy) |
-| `JF_PASSWORD` | `<jfrog-password>` | Masked | JFrog Artifactory auth (Gradle dependency proxy) |
+| Variable | Value | Type | Protected | Purpose |
+|---|---|---|---|---|
+| `GL_TOKEN` | `glpat-...` | Masked | No | Project Access Token (`read_repository` + `write_repository`). Required by semantic-release to read branches and push version tags. Auth via `oauth2` username + `CI_REPOSITORY_URL` override. |
+| `ACCESS_TOKEN` | `glpat-...` | Masked | — | Write access to env repo for MR creation |
+| `JF_USER` | `<jfrog-username>` | Variable | — | JFrog Artifactory auth (Gradle dependency proxy) |
+| `JF_PASSWORD` | `<jfrog-password>` | Masked | — | JFrog Artifactory auth (Gradle dependency proxy) |
 
 **Deferred (add later):**
 
@@ -1235,6 +1238,7 @@ Or via `~/.gradle/init.gradle` injected in CI (so we don't hard-code Artifactory
 - [x] Create `.gitlab-ci.yml` in app repo (without `sonarqube_scan` stage) — see [`.gitlab-ci.yml`](../../../.gitlab-ci.yml). YAML validated with `js-yaml`. SonarQube job present but disabled (`.sonarqube scan:` — leading dot).
 - [x] Create `release.config.cjs` for semantic-release — see [`release.config.cjs`](../../../release.config.cjs). Writes `version.txt` (semver) + `version_full.txt` (semver + branch + sha).
 - [x] Create `version.txt` (initial `0.1.0`) — see [`version.txt`](../../../version.txt).
+- [x] Set up CI/CD variable `GL_TOKEN` (Project Access Token, `write_repository`, unprotected, masked) — required for semantic-release tag push. ✅ Done 2026-04-23.
 - [ ] Set up CI/CD variables: `ACCESS_TOKEN`, `JF_USER`, `JF_PASSWORD` (`SONAR_TOKEN` deferred) — **blocked on GitLab project creation**
 - [ ] Test pipeline on feature branch (test + build stages) — **blocked on runner access**
 - [ ] Test image build via buildah → push to OCP registry — **blocked on namespace + runner**
