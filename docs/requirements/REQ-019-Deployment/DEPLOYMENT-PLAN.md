@@ -134,7 +134,7 @@ autohausterminbuchung/
 
 The LDP provides shared CI templates at `lhind-devops-platform/gitlab-ci-templates`:
 
-- **`ocp.yml`** — `ocp-build-and-scan` (buildah build + JFrog Xray scan), `ocp-push` (push to OCP registry)
+- **`ocp.yml`** — `ocp-build` (buildah build only), `ocp-build-and-scan` (buildah + JFrog Xray — requires Xray credentials, deferred), `ocp-push` (push to OCP registry)
 - **`artifactory.yml`** — JFrog CLI configuration + wrapper scripts (npm/mvn/pip → jf)
 - **`frogbot.yml`** — Merge request security scanning
 
@@ -160,12 +160,11 @@ Following the LDP Java Template pattern, deployment uses **two separate reposito
 - Spring Boot backend source (`server/`)
 - Dockerfile
 - `.gitlab-ci.yml` — build, test, image build, version bump, trigger env repo MR
-- `release.config.cjs` — semantic-release config
-- `version.txt`, `version_full.txt` — version tracking
+- `version.txt`, `version_full.txt` — version tracking (shell-based, no semantic-release — PAT push not reliable on this GitLab instance)
 
 **CI Pipeline Stages:**
 ```
-.pre (vulnerability scan) → test → versioning → sonarqube_scan → build (frontend → backend) → image → rollout
+test → versioning → build (frontend → backend) → image → rollout
 ```
 
 ### Repo 2: Environment Repository (`autohausterminbuchung.environment`)
@@ -567,7 +566,9 @@ deploy feature:
     - |
       VERSION=$(cat version_full.txt)
       TAG_RC="${VERSION}-rc"
-      git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@$CI_SERVER_HOST/$TARGET_PROJECT_URL
+      # ENV_REPO_TOKEN: Project Access Token from env repo (Developer role, read+write_repository).
+      # CI_JOB_TOKEN does not support cross-project push on this GitLab instance.
+      git clone https://oauth2:${ENV_REPO_TOKEN}@$CI_SERVER_HOST/$TARGET_PROJECT_URL
       cd autohausterminbuchung.environment
       git checkout $TARGET_PROJECT_BRANCH
       BRANCH_NAME="version-update-${CI_COMMIT_SHORT_SHA}"
@@ -577,7 +578,7 @@ deploy feature:
       yq eval ".global.appVersion = \"$TAG_RC\"" -i environments/dev/values.yaml
       git add environments/dev/values.yaml
       git commit -m "Update appVersion in dev to $TAG_RC"
-      git push https://root:$ACCESS_TOKEN@$CI_SERVER_HOST/$TARGET_PROJECT_URL HEAD:$BRANCH_NAME \
+      git push https://oauth2:${ENV_REPO_TOKEN}@$CI_SERVER_HOST/$TARGET_PROJECT_URL HEAD:$BRANCH_NAME \
         -o merge_request.create=true \
         -o merge_request.target=$TARGET_PROJECT_BRANCH \
         -o merge_request.remove_source_branch \
@@ -598,7 +599,9 @@ create release:
     - |
       VERSION=$(cat version.txt)
       TAG="v${VERSION}"
-      git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@$CI_SERVER_HOST/$TARGET_PROJECT_URL
+      # ENV_REPO_TOKEN: Project Access Token from env repo (Developer role, read+write_repository).
+      # CI_JOB_TOKEN does not support cross-project push on this GitLab instance.
+      git clone https://oauth2:${ENV_REPO_TOKEN}@$CI_SERVER_HOST/$TARGET_PROJECT_URL
       cd autohausterminbuchung.environment
       git checkout $TARGET_PROJECT_BRANCH
       git config --global user.email "ci@autohaus.lhind.app"
@@ -609,7 +612,7 @@ create release:
       yq eval ".global.appVersion = \"$TAG\"" -i environments/dev/values.yaml
       git add environments/dev/values.yaml
       git commit -m "Release $TAG to dev"
-      git push https://root:$ACCESS_TOKEN@$CI_SERVER_HOST/$TARGET_PROJECT_URL HEAD:$BRANCH_DEV \
+      git push https://oauth2:${ENV_REPO_TOKEN}@$CI_SERVER_HOST/$TARGET_PROJECT_URL HEAD:$BRANCH_DEV \
         -o merge_request.create=true \
         -o merge_request.target=$TARGET_PROJECT_BRANCH \
         -o merge_request.remove_source_branch \
@@ -620,7 +623,7 @@ create release:
       yq eval ".global.appVersion = \"$TAG\"" -i environments/prod/values.yaml
       git add environments/prod/values.yaml
       git commit -m "Release $TAG to prod"
-      git push https://root:$ACCESS_TOKEN@$CI_SERVER_HOST/$TARGET_PROJECT_URL HEAD:$BRANCH_PROD \
+      git push https://oauth2:${ENV_REPO_TOKEN}@$CI_SERVER_HOST/$TARGET_PROJECT_URL HEAD:$BRANCH_PROD \
         -o merge_request.create=true \
         -o merge_request.target=$TARGET_PROJECT_BRANCH \
         -o merge_request.remove_source_branch
@@ -630,8 +633,10 @@ create release:
 ### Notes
 
 - **Tags:** Changed from `example-projects` + `ocp03` to `atapp` + `openshift` to match the assigned runner.
-- **Node.js in JDK runner:** ✅ **Verified — JDK runners do NOT include Node.js.** The CI must use a split build: `nodejs-22-runner` for Angular → `jdk-25-runner` for Gradle. Or request a custom image with both.
-- **`ACCESS_TOKEN`:** A CI/CD variable with write access to the environment repo. Must be set up.
+- **Node.js in JDK runner:** ✅ **Verified — JDK runners do NOT include Node.js.** The CI must use a split build: `nodejs-22-runner` for Angular → `jdk-25-runner` for Gradle. Installing Node.js via `microdnf` is blocked by `restricted-v2` SCC (non-root).
+- **`ENV_REPO_TOKEN`:** Project Access Token created **on the env repo** with **Developer** role and `read_repository` + `write_repository` scopes. Stored as masked+protected CI variable in the app repo. `CI_JOB_TOKEN` cross-project push is not supported on this GitLab instance. Token role must be ≥ Developer (Guest/Reporter cannot read or write repos regardless of scopes).
+- **Image build:** Uses `ocp-build` (build-only). `ocp-build-and-scan` requires JFrog Xray credentials (deferred ticket D2).
+- **Auto-merge:** The bot user created by the env repo PAT needs merge permissions on `main`. Either allow Developers to merge in protected branch settings, or merge MRs manually.
 
 ---
 
@@ -1123,8 +1128,8 @@ We keep the annotation per the LDP template — no need to deviate.
 
 | Variable | Value | Type | Protected | Purpose |
 |---|---|---|---|---|
-| `GL_TOKEN` | `glpat-...` | Masked | No | Project Access Token (`read_repository` + `write_repository`). Currently unused — versioning switched from semantic-release to local shell-based script (no remote access needed). Kept for potential future use (e.g., git tag push). |
-| `ACCESS_TOKEN` | `glpat-...` | Masked | — | Write access to env repo for MR creation |
+| `ENV_REPO_TOKEN` | `glpat-...` | Masked | Yes | Project Access Token from **env repo** (Developer role, `read_repository` + `write_repository`). Used by rollout jobs to clone/push branches + create MRs. `CI_JOB_TOKEN` cross-project push not supported on this instance. ✅ Done 2026-04-24. |
+| `GL_TOKEN` | `glpat-...` | Masked | No | Project Access Token (app repo, `write_repository`). Currently unused — kept for potential future use (e.g., git tag push). |
 | `JF_USER` | `<jfrog-username>` | Variable | — | JFrog Artifactory auth (Gradle dependency proxy) |
 | `JF_PASSWORD` | `<jfrog-password>` | Masked | — | JFrog Artifactory auth (Gradle dependency proxy) |
 
@@ -1286,10 +1291,11 @@ Or via `~/.gradle/init.gradle` injected in CI (so we don't hard-code Artifactory
 ### Phase 2: Application CI/CD ⏳ DRAFTED LOCALLY (2026-04-21)
 
 - [x] Create `.gitlab-ci.yml` in app repo (without `sonarqube_scan` stage) — see [`.gitlab-ci.yml`](../../../.gitlab-ci.yml). YAML validated with `js-yaml`. SonarQube job present but disabled (`.sonarqube scan:` — leading dot).
-- [x] Create `release.config.cjs` for semantic-release — see [`release.config.cjs`](../../../release.config.cjs). Writes `version.txt` (semver) + `version_full.txt` (semver + branch + sha).
+- [x] ~~Create `release.config.cjs` for semantic-release~~ — replaced with shell-based versioning (semantic-release PAT push not reliable on this GitLab instance). `release.config.cjs` is orphaned.
 - [x] Create `version.txt` (initial `0.1.0`) — see [`version.txt`](../../../version.txt).
 - [x] Set up CI/CD variable `GL_TOKEN` (Project Access Token, `write_repository`, unprotected, masked) — required for semantic-release tag push. ✅ Done 2026-04-23.
-- [ ] Set up CI/CD variables: `ACCESS_TOKEN`, `JF_USER`, `JF_PASSWORD` (`SONAR_TOKEN` deferred) — **blocked on GitLab project creation**
+- [x] Set up CI/CD variable `ENV_REPO_TOKEN` (Project Access Token from env repo, `write_repository`, protected, masked) — required for rollout jobs to push to env repo. `CI_JOB_TOKEN` push not supported on this GitLab instance. ✅ Done 2026-04-24.
+- [ ] Set up CI/CD variables: `JF_USER`, `JF_PASSWORD` (`SONAR_TOKEN` deferred) — **blocked on JFrog provisioning**
 - [ ] Test pipeline on feature branch (test + build stages) — **blocked on runner access**
 - [ ] Test image build via buildah → push to OCP registry — **blocked on namespace + runner**
 - [ ] Test rollout stage (env repo MR creation) — **blocked on env repo (Phase 3)**
