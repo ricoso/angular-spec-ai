@@ -3,8 +3,8 @@
 # Pipeline:
 #   .pre (vulnerability scan)
 #   → test (gradle + frontend)
-#   → versioning (semantic-release, auth via GL_TOKEN + oauth2)
-#   → build (gradle bootJar)
+#   → versioning (local shell-based semver from conventional commits)
+#   → build (frontend on nodejs-22 → backend on jdk-25, split because JDK runner lacks Node.js)
 #   → image (buildah → OCP registry; promote on main)
 #   → rollout (MR into autohausterminbuchung.environment)
 #
@@ -242,32 +242,43 @@ semantic versioning:
   rules: *rules_main_or_feature
 
 # ─────────────────────────────────────────────────────────────────────
-# build — Gradle bootJar (also runs the Angular build via buildAngular task)
+# build — Split into frontend (nodejs) + backend (jdk) because the
+#          JDK runner has no Node.js and microdnf is blocked by SCC.
 # ─────────────────────────────────────────────────────────────────────
-gradle build:
+frontend build:
+  stage: build
+  image: image-registry.openshift-image-registry.svc:5000/openshift/nodejs-22-runner:latest
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  script:
+    - npm ci --legacy-peer-deps
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 day
+  rules: *rules_main_or_feature
+
+backend build:
   stage: build
   image: image-registry.openshift-image-registry.svc:5000/openshift/jdk-25-runner:latest
+  needs:
+    - frontend build
   cache:
     key:
       files:
         - server/build.gradle
-        - package-lock.json
     paths:
       - server/.gradle/
-      - node_modules/
   script:
-    # The buildAngular Gradle task shells out to `npm run build`, which requires
-    # node_modules. The JDK runner has no Node.js, so the cleanest split is to
-    # build Angular separately and skip buildAngular here.
-    # → For Phase 2 we use a single jdk runner WITH a sub-shell to install
-    #   Node via dnf only if absent. Long term: request a combined runner image.
-    - command -v node || (microdnf install -y nodejs npm || dnf install -y nodejs npm)
-    - npm ci --legacy-peer-deps
-    - cd server && ./gradlew --no-daemon bootJar
+    - cd server && ./gradlew --no-daemon bootJar -x buildAngular -x npmInstall
   artifacts:
     paths:
       - server/build/libs/*.jar
-      - dist/
     expire_in: 1 day
   rules: *rules_main_or_feature
 
@@ -279,7 +290,8 @@ build dev rc image:
   image: registry.access.redhat.com/ubi8/buildah:latest
   extends: .ocp-build
   needs:
-    - gradle build
+    - frontend build
+    - backend build
     - semantic versioning
   script:
     - VERSION=$(cat version_full.txt)
@@ -293,7 +305,8 @@ build release image:
   image: registry.access.redhat.com/ubi8/buildah:latest
   extends: .ocp-build
   needs:
-    - gradle build
+    - frontend build
+    - backend build
     - semantic versioning
   script:
     - VERSION=$(cat version.txt)

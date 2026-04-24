@@ -165,7 +165,7 @@ Following the LDP Java Template pattern, deployment uses **two separate reposito
 
 **CI Pipeline Stages:**
 ```
-.pre (vulnerability scan) → test → versioning → sonarqube_scan → build → image → rollout
+.pre (vulnerability scan) → test → versioning → sonarqube_scan → build (frontend → backend) → image → rollout
 ```
 
 ### Repo 2: Environment Repository (`autohausterminbuchung.environment`)
@@ -404,24 +404,50 @@ frontend tests:
       - coverage/
   rules: *rules_main_or_feature
 
-# ─── VERSIONING: semantic-release ───
+# ─── VERSIONING: local shell-based semver from conventional commits ───
+# No remote access required. Analyzes commits since last tag to determine
+# major/minor/patch bump. Writes version.txt + version_full.txt.
 semantic versioning:
   stage: versioning
-  image: image-registry.openshift-image-registry.svc:5000/openshift/nodejs-20-runner:latest
+  image: image-registry.openshift-image-registry.svc:5000/openshift/nodejs-22-runner:latest
   variables:
     GIT_DEPTH: "0"
-  before_script:
-    - git config --global user.email "ci@autohaus.lhind.app"
-    - git config --global user.name "CI Bot"
-    - export CI_REPOSITORY_URL="https://oauth2:${GL_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
-    - git remote set-url origin "$CI_REPOSITORY_URL"
-    - npm install -g semantic-release conventional-changelog-conventionalcommits @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/exec
   script:
-    - semantic-release --no-ci
+    - |
+      LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)
+      if [ -z "$LATEST_TAG" ]; then
+        LATEST_TAG="0.0.0"; RANGE="HEAD"
+      else
+        RANGE="${LATEST_TAG}..HEAD"
+      fi
+      BASE=$(echo "$LATEST_TAG" | tr -d 'v')
+      MAJOR=$(echo "$BASE" | cut -d. -f1)
+      MINOR=$(echo "$BASE" | cut -d. -f2)
+      PATCH=$(echo "$BASE" | cut -d. -f3)
+      HAS_BREAKING=false; HAS_FEAT=false; HAS_FIX=false
+      while IFS= read -r msg; do
+        case "$msg" in
+          *"BREAKING CHANGE"*|*"!"*) HAS_BREAKING=true ;;
+          feat*) HAS_FEAT=true ;;
+          fix*) HAS_FIX=true ;;
+        esac
+      done <<< "$(git log --format='%s' $RANGE 2>/dev/null)"
+      if [ "$HAS_BREAKING" = true ]; then MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0
+      elif [ "$HAS_FEAT" = true ]; then MINOR=$((MINOR+1)); PATCH=0
+      elif [ "$HAS_FIX" = true ]; then PATCH=$((PATCH+1))
+      else PATCH=$((PATCH+1)); fi
+      VERSION="${MAJOR}.${MINOR}.${PATCH}"
+      SLUG=$(echo "$CI_COMMIT_REF_NAME" | sed 's/[^a-zA-Z0-9.-]/-/g')
+      VERSION_FULL="${VERSION}-${SLUG}.${CI_COMMIT_SHORT_SHA}"
+      echo "$VERSION" > version.txt
+      echo "$VERSION_FULL" > version_full.txt
+      echo "Version: $VERSION"
+      echo "Version full: $VERSION_FULL"
   artifacts:
     paths:
       - version.txt
       - version_full.txt
+    expire_in: 1 day
   rules: *rules_main_or_feature
 
 # ─── SONARQUBE (DEFERRED — enable once SonarQube project is provisioned) ───
@@ -442,23 +468,43 @@ semantic versioning:
         -Dsonar.branch.name=$CI_COMMIT_REF_NAME
   rules: *rules_main_or_feature
 
-# ─── BUILD: Gradle bootJar ───
-gradle build:
+# ─── BUILD: Split into frontend (nodejs) + backend (jdk) ───
+# JDK runner has no Node.js; microdnf/dnf blocked by restricted-v2 SCC.
+frontend build:
   stage: build
-  image: image-registry.openshift-image-registry.svc:5000/openshift/jdk-17-runner:latest
-  extends: .artifactory-base
-  variables:
-    ARTIFACTORY_VIRTUAL_REPO: <YOUR_MVN_VIRTUAL_REPO>
+  image: image-registry.openshift-image-registry.svc:5000/openshift/nodejs-22-runner:latest
   cache:
-    key: gradle-cache
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  script:
+    - npm ci --legacy-peer-deps
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 day
+  rules: *rules_main_or_feature
+
+backend build:
+  stage: build
+  image: image-registry.openshift-image-registry.svc:5000/openshift/jdk-25-runner:latest
+  needs:
+    - frontend build
+  cache:
+    key:
+      files:
+        - server/build.gradle
     paths:
       - server/.gradle/
   script:
-    - npm ci                          # Angular dependencies
-    - cd server && ./gradlew bootJar  # Builds Angular + Spring Boot JAR
+    - cd server && ./gradlew --no-daemon bootJar -x buildAngular -x npmInstall
   artifacts:
     paths:
       - server/build/libs/*.jar
+    expire_in: 1 day
   rules: *rules_main_or_feature
 
 # ─── IMAGE: Build RC image (feature/hotfix) ───
@@ -467,7 +513,8 @@ build dev rc image:
   image: registry.access.redhat.com/ubi8/buildah:latest
   extends: .ocp-build
   needs:
-    - gradle build
+    - frontend build
+    - backend build
     - semantic versioning
   script:
     - VERSION=$(cat version_full.txt)
@@ -482,7 +529,8 @@ build release image:
   image: registry.access.redhat.com/ubi8/buildah:latest
   extends: .ocp-build
   needs:
-    - gradle build
+    - frontend build
+    - backend build
     - semantic versioning
   script:
     - VERSION=$(cat version.txt)
@@ -1073,7 +1121,7 @@ We keep the annotation per the LDP template — no need to deviate.
 
 | Variable | Value | Type | Protected | Purpose |
 |---|---|---|---|---|
-| `GL_TOKEN` | `glpat-...` | Masked | No | Project Access Token (`read_repository` + `write_repository`). Required by semantic-release to read branches and push version tags. Auth via `oauth2` username + `CI_REPOSITORY_URL` override. |
+| `GL_TOKEN` | `glpat-...` | Masked | No | Project Access Token (`read_repository` + `write_repository`). Currently unused — versioning switched from semantic-release to local shell-based script (no remote access needed). Kept for potential future use (e.g., git tag push). |
 | `ACCESS_TOKEN` | `glpat-...` | Masked | — | Write access to env repo for MR creation |
 | `JF_USER` | `<jfrog-username>` | Variable | — | JFrog Artifactory auth (Gradle dependency proxy) |
 | `JF_PASSWORD` | `<jfrog-password>` | Masked | — | JFrog Artifactory auth (Gradle dependency proxy) |
@@ -1176,7 +1224,7 @@ Or via `~/.gradle/init.gradle` injected in CI (so we don't hard-code Artifactory
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| **JDK runner lacks Node.js** → Angular build fails in CI | **CONFIRMED** | High | Split into 2 build stages (nodejs-22 → jdk-25) or request custom runner image |
+| ~~**JDK runner lacks Node.js** → Angular build fails in CI~~ | ~~N/A~~ | ~~N/A~~ | ✅ **RESOLVED** — Split into `frontend build` (nodejs-22-runner) + `backend build` (jdk-25-runner) with `-x buildAngular -x npmInstall`. `microdnf`/`dnf` install also blocked by restricted-v2 SCC (non-root can't write `/var/cache/yum`). |
 | ~~Java 25 not available on LDP~~ | ~~N/A~~ | ~~N/A~~ | ✅ **RESOLVED** — `jdk-25-runner` exists (project 4835, base `ubi9/openjdk-25`) |
 | **Gradle not pre-configured** in runner images (only Maven) | Medium | Low | Gradle wrapper (`./gradlew`) is self-contained — should work regardless |
 | ~~**External Secrets Operator not installed**~~ | ~~N/A~~ | ~~N/A~~ | ✅ **RESOLVED** — Not using ESO; secrets managed directly in OpenShift |
@@ -1245,7 +1293,7 @@ Or via `~/.gradle/init.gradle` injected in CI (so we don't hard-code Artifactory
 - [ ] Test rollout stage (env repo MR creation) — **blocked on env repo (Phase 3)**
 
 **Phase 2 notes:**
-- The `gradle build` stage installs Node.js into the JDK runner via `microdnf`/`dnf` because the LDP JDK runner image has no Node.js pre-installed (verified — see Section 5 "Split Build Required"). If `microdnf install nodejs npm` is blocked by Kyverno or fails on the LDP, the alternative is to split the stage into separate `frontend build` (nodejs-22-runner) and `backend build` (jdk-25-runner) jobs that share the `dist/` artifact — same pattern the local Dockerfile uses.
+- ✅ **Build split confirmed working (2026-04-24):** `microdnf install nodejs npm` was blocked by restricted-v2 SCC (non-root can't write `/var/cache/yum`; `dnf` not installed). Switched to split build: `frontend build` (nodejs-22-runner: `npm ci && npm run build` → `dist/` artifact) + `backend build` (jdk-25-runner: `./gradlew bootJar -x buildAngular -x npmInstall`). Same pattern as the multi-stage Dockerfile.
 - `ENV_REPO_PATH` is set to `atapp/autohausterminbuchung.environment` as a placeholder; final value depends on open question #10 (GitLab group path).
 - All five stages use `tags: [atapp, openshift]` to bind to the assigned group runner `#581`.
 
