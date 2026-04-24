@@ -84,6 +84,13 @@ img {
   }
 }
 
+// iframe-Embedding: Bei Deep-Link-Einbettung ist die Filiale bereits per URL-Parameter
+// gesetzt — der Zurueck-Button auf der Marken-Auswahl-Seite fuehrt zurueck zur
+// Filialauswahl, was in diesem Kontext nicht gewollt ist. Daher nur hier ausblenden.
+:root.is-embedded .brand-selection__back-button {
+  display: none;
+}
+
 // Common Utilities
 .text-center { text-align: center; }
 .text-left { text-align: left; }

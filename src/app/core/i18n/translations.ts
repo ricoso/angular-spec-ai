@@ -68,8 +68,8 @@ export const translations = {
         infoSeparator: '—'
       },
       brand: {
-        title: 'Welche Marke möchten Sie servicen lassen?',
-        subtitle: 'Am Standort stehen Ihnen folgende Marken zur Verfügung',
+        title: 'Welche Fahrzeugmarke fahren Sie?',
+        subtitle: 'Bitte wählen Sie die gewünschte Marke aus.',
         backButton: 'Zurück',
         noBrandsAvailable: 'Für diesen Standort sind derzeit keine Marken verfügbar.',
         ariaGroupLabel: 'Markenauswahl',
@@ -389,8 +389,8 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
         infoSeparator: '—'
       },
       brand: {
-        title: 'Which brand would you like to have serviced?',
-        subtitle: 'The following brands are available at your location',
+        title: 'Which vehicle brand do you drive?',
+        subtitle: 'Please choose the brand you need.',
         backButton: 'Back',
         noBrandsAvailable: 'No brands are currently available for this location.',
         ariaGroupLabel: 'Brand selection',

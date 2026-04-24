@@ -74,6 +74,16 @@ Dieses Requirement fuehrt ein:
 
 - (x) **Booking-Overview Submit-Button: Text groesser, Icon kleiner.** Text `var(--font-size-lg)` + `font-weight: 600`. Icon auf `font-size: 1em` relativ zum Text. Zurueckhaltendes Senden-Icon, praegnanter „Jetzt anfragen"-Text.
 
+- (y) **Kundendaten-Seite bereinigt:**
+  - „Schon einmal bei uns gewesen?"-Banner mit „Jetzt Daten abrufen!"-Button komplett entfernt (Placeholder fuer zukuenftiges REQ-010+). HTML-, SCSS- und Handler-Code in `carinformation-container.component.{html,ts,scss}` geloescht, Spec-Block fuer `onReturningCustomer` entfernt.
+  - Zurueck-Button (`carinformation__back-button`): `arrow_back`-Icon vor dem Text.
+  - Weiter-Button (`carinformation__continue-button`): `arrow_forward`-Icon vor dem Text („→ Zur Buchungsuebersicht") — konsistent mit Zurueck, Pfeil-Optik vorne.
+  - `MatIconModule` in `carinformation-container.component.ts` importiert.
+
+- (z) **Fehlertexte in Kundendaten-Formular reaktiv:** Das `computed(...)`-Pattern fuer `xxxErrors`-Signals hatte nur `form()` (Input-Signal) als Dependency. Da Reactive-Forms nicht Signal-basiert sind, wurde das Computed nie neu evaluiert, wenn `FormControl.valid`/`FormControl.touched` sich aenderte — Fehlermeldungen erschienen nicht (z. B. bei Mobilfunknummer mit Eingabe `12345` fehlte „Muss mit 0 oder + beginnen"). Fix in `customer-form.component.ts` + `vehicle-form.component.ts`: `toSignal(merge(form.valueChanges, form.statusChanges))` als globale `formEvents`-Dependency, alle Error-Computeds lesen es zu Beginn → reagieren jetzt auf Tippen/Status-Aenderungen.
+
+- (aa) **Setup-Variant Fallback auf `default` (500er Fix):** `SetupService.resolveGroupId(branchId, variant)` warf `VariantNotFoundException` (HTTP 500), wenn eine Variant (z. B. `tireChange`) in `setup.json` fuer eine Branch nicht existiert ODER durch `applyFeatureToggle` bei ausgeschalteter Radwechsel-Saison herausgefiltert wurde. Frontend fragte trotzdem `tireChange` an → Crash. Fix: fallback auf `default`-Variant, wenn die angefragte Variant nicht verfuegbar ist (mit `log.warn`). Nur noch Exception, wenn auch keine `default`-Gruppe existiert. Neue Tests: `resolveGroupId_fallsBackToDefaultWhenVariantMissing`, `..._fallsBackToDefaultWhenSeasonDisabled`, `..._throwsVariantNotFoundWhenNoDefaultExists`.
+
 - (t) **Workshop-Kalender: Ausgewaehlter Tag + naechster Business-Tag, ALLE Slots pro Tag.**
   - Vorher: `mode: 'date-range'` + `.find(day => day.date === fromDate)` → nur der EINE ausgewaehlte Tag mit evtl. 5-7 Slots (weil SoftNet bei `checkInDate=<date>` stingy ist).
   - Jetzt: `mode: 'next-available'` (SoftNet `asSoonAsPossible`, breiterer Scan) + 14-Tage-Fenster + KEIN `timePreference` → Backend holt viele Slots ueber mehrere Tage.
@@ -110,8 +120,11 @@ Diese Änderungen entstanden in einer einzigen Iteration, nachdem die App das er
 | (v) | `calendar_today`-Icon vor Datepicker entfernt (Redundanz) | `workshop-calendar-date-picker.component.html` |
 | (w) | Service-Seite `.summary-bar` in Mobile-Stack-Regel | `styles.scss` |
 | (x) | Submit-Button: Text groesser, Icon kleiner | `booking-overview-container.component.scss` |
+| (y) | Kundendaten-Seite: Returning-Banner raus, Back/Weiter mit Pfeil-Icons | `carinformation-container.component.{html,ts,scss,spec.ts}` |
+| (z) | Form-Error-Texte reaktiv via `toSignal(valueChanges \| statusChanges)` | `customer-form.component.ts`, `vehicle-form.component.ts` |
+| (aa) | `SetupService.resolveGroupId` Fallback auf `default`-Variant (500er Fix) | `SetupService.java` + `SetupServiceTest.java` |
 
-**Test-Status nach Iteration:** 556 Jest-Tests grün, TypeScript-Compile grün, Backend-Gradle 226 Tests grün.
+**Test-Status nach Iteration:** 604 Jest-Tests grün, TypeScript-Compile grün, Backend-Gradle 226 Tests grün.
 
 **Nicht deployed.** Alles lokal; nächster `az acr build` + `az containerapp update` wenn gewünscht.
 
@@ -144,6 +157,10 @@ Empfehlung: bei jeder neuen Wizard-Seite auch einen Cart-Overlay-Sichtbarkeits-T
 - [ ] AC-20: Unit-Test fuer `selectedServiceLabels` deckt drei Cases ab: leer, Sub-Options, keine Sub-Options (Titel)
 - [ ] AC-21: Playwright-E2E `REQ-cart-overlay.spec.ts` validiert Cart-Panel DOM-Inhalt nach Service-Auswahl
 - [ ] AC-22: Mobilfunknummer-Feld akzeptiert `+49...`/`+41...` und `01701234567` — getestet in `customer-form.component.spec.ts`
+- [ ] AC-23: Kundendaten-Seite zeigt kein „Schon einmal bei uns gewesen?"-Banner mehr; Zurueck-Button hat `arrow_back`-Icon links vom Text, Weiter-Button hat `arrow_forward`-Icon links vom Text („→ Zur Buchungsuebersicht")
+- [ ] AC-24: `onReturningCustomer`-Handler entfernt (unused nach Banner-Loeschung); `MatIconModule` in Container-Component importiert
+- [ ] AC-25: Form-Fehlertexte im Kundendaten-Formular werden bei jedem Tippen reaktiv neu berechnet — z. B. Mobilfunknummer „12345" zeigt sofort „Muss mit 0 oder + beginnen". Realisiert ueber `toSignal(merge(form.valueChanges, form.statusChanges))` als Dependency aller `xxxErrors`-Computeds (statt nur `form()`)
+- [ ] AC-26: `SetupService.resolveGroupId(branchId, variant)` faellt auf `default`-Variant zurueck, wenn die angefragte Variant nicht (mehr) verfuegbar ist — verhindert HTTP 500 bei Reifenwechsel-Anfrage waehrend ausgeschalteter Radwechsel-Saison. Tests: `resolveGroupId_fallsBackToDefaultWhenVariantMissing`, `...WhenSeasonDisabled`, `...throwsWhenNoDefaultExists`
 
 **Excluded:**
 - Admin-UI fuer Filial-Management
