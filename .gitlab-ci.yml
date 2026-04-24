@@ -378,6 +378,11 @@ create release:
     - |
       VERSION=$(cat version.txt)
       TAG="v${VERSION}"
+
+      # Tag the app repo so next pipeline computes the correct next version
+      git tag "$TAG" 2>/dev/null || echo "Tag $TAG already exists — skipping"
+      git push "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "$TAG" 2>/dev/null || echo "Tag $TAG already pushed — skipping"
+
       git clone "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git"
       cd autohausterminbuchung.environment
       git checkout "$TARGET_PROJECT_BRANCH"
