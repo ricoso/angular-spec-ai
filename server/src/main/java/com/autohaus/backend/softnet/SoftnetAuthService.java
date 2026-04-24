@@ -16,6 +16,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -52,8 +54,24 @@ public class SoftnetAuthService {
 
     private void loadFingerprint() {
         String fingerprintJson = properties.fingerprintJson();
+
+        // Fall back to file if env var is empty
+        if ((fingerprintJson == null || fingerprintJson.isBlank()) && properties.fingerprintPath() != null && !properties.fingerprintPath().isBlank()) {
+            try {
+                Path path = Path.of(properties.fingerprintPath());
+                if (Files.exists(path)) {
+                    fingerprintJson = Files.readString(path);
+                    log.info("Fingerprint loaded from file: {}", properties.fingerprintPath());
+                } else {
+                    log.warn("SOFTNET_FINGERPRINT_PATH set but file not found: {}", properties.fingerprintPath());
+                }
+            } catch (Exception e) {
+                log.error("Failed to read fingerprint from file {}: {}", properties.fingerprintPath(), e.getMessage());
+            }
+        }
+
         if (fingerprintJson == null || fingerprintJson.isBlank()) {
-            log.warn("SOFTNET_FINGERPRINT_JSON not set — SoftNet auth will fail");
+            log.warn("SOFTNET_FINGERPRINT_JSON not set and no fingerprint file available — SoftNet auth will fail");
             return;
         }
 
@@ -66,9 +84,9 @@ public class SoftnetAuthService {
             String pemKey = node.get("private_key").asText();
             this.privateKey = parseRsaPrivateKey(pemKey);
 
-            log.info("Fingerprint loaded from env variable");
+            log.info("Fingerprint parsed successfully — SoftNet auth ready");
         } catch (Exception e) {
-            log.error("Failed to load fingerprint from env variable: {}", e.getMessage());
+            log.error("Failed to parse fingerprint JSON: {}", e.getMessage());
         }
     }
 

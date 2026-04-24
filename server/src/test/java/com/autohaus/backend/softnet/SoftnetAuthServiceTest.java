@@ -12,28 +12,28 @@ class SoftnetAuthServiceTest {
 
     @Test
     void init_withEmptyFingerprint_doesNotThrow() {
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "", 10000);
+        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "", null, 10000);
         SoftnetAuthService service = new SoftnetAuthService(props, objectMapper);
         assertDoesNotThrow(service::init);
     }
 
     @Test
     void init_withNullFingerprint_doesNotThrow() {
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", null, 10000);
+        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", null, null, 10000);
         SoftnetAuthService service = new SoftnetAuthService(props, objectMapper);
         assertDoesNotThrow(service::init);
     }
 
     @Test
     void init_withBlankFingerprint_doesNotThrow() {
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "   ", 10000);
+        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "   ", null, 10000);
         SoftnetAuthService service = new SoftnetAuthService(props, objectMapper);
         assertDoesNotThrow(service::init);
     }
 
     @Test
     void init_withInvalidJsonString_doesNotThrow() {
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "not valid json {{{", 10000);
+        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "not valid json {{{", null, 10000);
         SoftnetAuthService service = new SoftnetAuthService(props, objectMapper);
         assertDoesNotThrow(service::init);
     }
@@ -41,7 +41,7 @@ class SoftnetAuthServiceTest {
     @Test
     void init_withIncompleteJsonString_doesNotThrow() {
         String incompleteJson = "{\"client_email\": \"test@test.com\"}";
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", incompleteJson, 10000);
+        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", incompleteJson, null, 10000);
         SoftnetAuthService service = new SoftnetAuthService(props, objectMapper);
         assertDoesNotThrow(service::init);
     }
@@ -56,14 +56,14 @@ class SoftnetAuthServiceTest {
             + "\"private_key_id\": \"pkid-123\","
             + "\"private_key\": \"-----BEGIN PRIVATE KEY-----\\nTk9UQVZBTElES0VZ\\n-----END PRIVATE KEY-----\""
             + "}";
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", validStructure, 10000);
+        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", validStructure, null, 10000);
         SoftnetAuthService service = new SoftnetAuthService(props, objectMapper);
         assertDoesNotThrow(service::init);
     }
 
     @Test
     void getAccessToken_withoutFingerprint_throwsRuntimeException() {
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "", 10000);
+        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "", null, 10000);
         SoftnetAuthService service = new SoftnetAuthService(props, objectMapper);
         service.init();
         RuntimeException ex = assertThrows(RuntimeException.class, service::getAccessToken);
@@ -72,7 +72,7 @@ class SoftnetAuthServiceTest {
 
     @Test
     void getAccessToken_withNullFingerprint_throwsRuntimeException() {
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", null, 10000);
+        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", null, null, 10000);
         SoftnetAuthService service = new SoftnetAuthService(props, objectMapper);
         service.init();
         assertThrows(RuntimeException.class, service::getAccessToken);
@@ -80,7 +80,7 @@ class SoftnetAuthServiceTest {
 
     @Test
     void getAccessToken_withBadJsonString_throwsRuntimeException() {
-        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "not json", 10000);
+        SoftnetProperties props = new SoftnetProperties("http://test", "http://auth", "not json", null, 10000);
         SoftnetAuthService service = new SoftnetAuthService(props, objectMapper);
         service.init();
         assertThrows(RuntimeException.class, service::getAccessToken);

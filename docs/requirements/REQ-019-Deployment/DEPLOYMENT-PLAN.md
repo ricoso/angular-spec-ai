@@ -99,7 +99,7 @@ autohausterminbuchung/
 - **SoftNet integration:** All business data via `SoftnetApiClient` with RSA JWT authentication
 - **Session tokens:** HMAC-SHA256 signed, validated per-request via `SessionTokenFilter`
 - **Filters:** RequestId → Logging → RateLimit → Origin → SessionToken
-- **Fingerprint files:** RSA private key JSON files for SoftNet auth, loaded from `SOFTNET_FINGERPRINT_PATH`
+- **Fingerprint files:** RSA private key JSON files for SoftNet auth, loaded from `SOFTNET_FINGERPRINT_JSON` env var (inline JSON, local dev) or `SOFTNET_FINGERPRINT_PATH` file fallback (K8s volume mount)
 - **Configuration:** `application.yml` with `${ENV_VAR:default}` pattern + `DotenvConfig` for local `.env`
 
 ---
@@ -745,7 +745,7 @@ env:
       keys:
         - SESSION_SECRET
 
-# Fingerprint file + SESSION_SECRET in one Secret, volume-mounted
+# Fingerprint file + setup.json + SESSION_SECRET in one Secret, volume-mounted
 secrets:
   - name: autohausterminbuchung-secrets
     include: true
@@ -1004,7 +1004,7 @@ Pod
 
 ### Secret Layout (per namespace)
 
-**One secret** per namespace — the SoftNet fingerprint JSON file + `SESSION_SECRET`.
+**One secret** per namespace — the SoftNet fingerprint JSON file, branch/group setup config (`setup.json`), + `SESSION_SECRET`.
 
 All other variables (`SOFTNET_BASE_URL`, `GROUP_ID`, etc.) are **not sensitive** — they're just URLs and identifiers. Those go into plain `env.keyValue` entries in the Helm values.
 
@@ -1023,12 +1023,13 @@ The fingerprint JSON contains the **RSA private key** + client identity used for
 
 #### Secret: `autohausterminbuchung-secrets`
 
-Combines the fingerprint file + SESSION_SECRET in one secret:
+Combines the fingerprint file, setup.json (branch/group config), and SESSION_SECRET in one secret:
 
 ```bash
-# Create the secret with both the fingerprint file and SESSION_SECRET
+# Create the secret with fingerprint, setup.json, and SESSION_SECRET
 oc create secret generic autohausterminbuchung-secrets \
   --from-file=fingerprint.json=./fingerprint-read.json \
+  --from-file=setup.json=./server/config/setup.json \
   --from-literal=SESSION_SECRET=$(openssl rand -hex 16) \
   -n autohandel-terminbuchungs-app-dev
 ```
@@ -1036,8 +1037,10 @@ oc create secret generic autohausterminbuchung-secrets \
 Or create via **OpenShift Console** → Project → Secrets → Create.
 
 The secret is consumed in two ways:
-- **Volume mount** at `/app/config/` → exposes `fingerprint.json` as a file
+- **Volume mount** at `/app/config/` → exposes `fingerprint.json` + `setup.json` as files
 - **Env var** → `SESSION_SECRET` injected into the pod environment
+
+**Fingerprint loading strategy:** `SoftnetAuthService.loadFingerprint()` first checks `SOFTNET_FINGERPRINT_JSON` (inline JSON env var, used in local dev). If empty, falls back to reading `SOFTNET_FINGERPRINT_PATH` (file path, used in K8s where the secret is volume-mounted at `/app/config/fingerprint.json`).
 
 ### How Helm References Pre-Existing Secrets
 
@@ -1153,8 +1156,8 @@ Created once per namespace by an ADMIN. Not managed by CI/CD.
 
 | Secret Name | Namespace | Type | Purpose |
 |---|---|---|---|
-| `autohausterminbuchung-secrets` | `autohandel-terminbuchungs-app-dev` | Opaque (file + literal) | RSA fingerprint JSON (`fingerprint.json`) + `SESSION_SECRET`. Mounted at `/app/config/` + env var |
-| `autohausterminbuchung-secrets` | `autohandel-terminbuchungs-app-prod` | Opaque (file + literal) | Same — production fingerprint + production SESSION_SECRET |
+| `autohausterminbuchung-secrets` | `autohandel-terminbuchungs-app-dev` | Opaque (files + literal) | RSA fingerprint JSON (`fingerprint.json`) + branch/group config (`setup.json`) + `SESSION_SECRET`. Mounted at `/app/config/` + env var |
+| `autohausterminbuchung-secrets` | `autohandel-terminbuchungs-app-prod` | Opaque (files + literal) | Same — production fingerprint + production setup.json + production SESSION_SECRET |
 
 ---
 
@@ -1334,9 +1337,10 @@ oc login https://api.ocp04.app.lhind.cloud:6443
 # 2. Switch to dev namespace
 oc project autohandel-terminbuchungs-app-dev
 
-# 3. Create the secret (fingerprint file + SESSION_SECRET)
+# 3. Create the secret (fingerprint file + setup.json + SESSION_SECRET)
 oc create secret generic autohausterminbuchung-secrets \
   --from-file=fingerprint.json=./server/cognigy.net_fingerprint-e6ced285a2bfce274426c261cca6edcd.json \
+  --from-file=setup.json=./server/config/setup.json \
   --from-literal=SESSION_SECRET=$(openssl rand -hex 16) \
   -n autohandel-terminbuchungs-app-dev
 
@@ -1352,11 +1356,11 @@ oc get secret autohausterminbuchung-secrets -n autohandel-terminbuchungs-app-dev
 5. Add key `SESSION_SECRET` → paste output of `openssl rand -hex 16`
 
 **Checklist:**
-- [x] Create `autohausterminbuchung-secrets` in `autohandel-terminbuchungs-app-dev` — created 2026-04-23 via `oc create secret generic` (keys: `fingerprint.json`, `SESSION_SECRET`)
-- [x] Verify dev secret key names match Helm template expectations — confirmed 2026-04-23: `fingerprint.json` (volume mount → `/app/config/fingerprint.json`) + `SESSION_SECRET` (env var via `secretKeyRef`)
+- [x] Create `autohausterminbuchung-secrets` in `autohandel-terminbuchungs-app-dev` — created 2026-04-23 via `oc create secret generic` (keys: `fingerprint.json`, `SESSION_SECRET`). Updated 2026-04-24: added `setup.json` (branch/group config required by `SetupService.init()`).
+- [x] Verify dev secret key names match Helm template expectations — confirmed: `fingerprint.json` + `setup.json` (volume mount → `/app/config/`) + `SESSION_SECRET` (env var via `secretKeyRef`)
 - [x] Verify Helm deployment template renders correctly — `helm template` confirms: `secretKeyRef` for SESSION_SECRET, volume mount at `/app/config`, `SOFTNET_FINGERPRINT_PATH=/app/config/fingerprint.json`
-- [ ] Verify fingerprint file accessible at `/app/config/fingerprint.json` in pod (blocked on first deployment)
-- [ ] Verify `SESSION_SECRET` env var injected correctly (blocked on first deployment)
+- [x] Verify fingerprint file accessible at `/app/config/fingerprint.json` in pod — confirmed 2026-04-24. File was mounted correctly but `SoftnetAuthService` only read from `SOFTNET_FINGERPRINT_JSON` env var (not set in K8s). Fixed: added `SOFTNET_FINGERPRINT_PATH` file fallback to `SoftnetAuthService.loadFingerprint()` (env var → file priority).
+- [ ] Verify `SESSION_SECRET` env var injected correctly (blocked on redeployment with fingerprint fix)
 - [ ] Create `autohausterminbuchung-secrets` in `autohandel-terminbuchungs-app-prod` (deferred — create when ready for prod deployment)
 - [ ] Document secret rotation procedure for the team
 

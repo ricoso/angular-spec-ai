@@ -10,45 +10,47 @@ class PropertiesTest {
 
     @Test
     void softnetProperties_defaultTimeout_whenZero() {
-        SoftnetProperties props = new SoftnetProperties("url", "auth", "/fp", 0);
+        SoftnetProperties props = new SoftnetProperties("url", "auth", "/fp", null, 0);
         assertEquals(10000, props.timeout());
     }
 
     @Test
     void softnetProperties_defaultTimeout_whenNegative() {
-        SoftnetProperties props = new SoftnetProperties("url", "auth", "/fp", -1);
+        SoftnetProperties props = new SoftnetProperties("url", "auth", "/fp", null, -1);
         assertEquals(10000, props.timeout());
     }
 
     @Test
     void softnetProperties_customTimeout() {
-        SoftnetProperties props = new SoftnetProperties("url", "auth", "/fp", 5000);
+        SoftnetProperties props = new SoftnetProperties("url", "auth", "/fp", null, 5000);
         assertEquals(5000, props.timeout());
     }
 
     @Test
     void softnetProperties_allAccessors() {
-        SoftnetProperties props = new SoftnetProperties("base", "auth-url", "/path/fp", 3000);
+        SoftnetProperties props = new SoftnetProperties("base", "auth-url", "/path/fp", "/path/file", 3000);
         assertEquals("base", props.baseUrl());
         assertEquals("auth-url", props.authUrl());
         assertEquals("/path/fp", props.fingerprintJson());
+        assertEquals("/path/file", props.fingerprintPath());
         assertEquals(3000, props.timeout());
     }
 
     @Test
     void softnetProperties_equality() {
-        SoftnetProperties a = new SoftnetProperties("url", "auth", "/fp", 5000);
-        SoftnetProperties b = new SoftnetProperties("url", "auth", "/fp", 5000);
+        SoftnetProperties a = new SoftnetProperties("url", "auth", "/fp", null, 5000);
+        SoftnetProperties b = new SoftnetProperties("url", "auth", "/fp", null, 5000);
         assertEquals(a, b);
         assertEquals(a.hashCode(), b.hashCode());
     }
 
     @Test
     void softnetProperties_nullValues() {
-        SoftnetProperties props = new SoftnetProperties(null, null, null, 0);
+        SoftnetProperties props = new SoftnetProperties(null, null, null, null, 0);
         assertNull(props.baseUrl());
         assertNull(props.authUrl());
         assertNull(props.fingerprintJson());
+        assertNull(props.fingerprintPath());
         assertEquals(10000, props.timeout());
     }
 

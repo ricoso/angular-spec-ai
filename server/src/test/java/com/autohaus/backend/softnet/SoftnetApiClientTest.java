@@ -22,7 +22,7 @@ class SoftnetApiClientTest {
     @BeforeEach
     void setUp() {
         SoftnetProperties props = new SoftnetProperties(
-            "http://nonexistent.local:9999", "http://auth", "/fp", 1000
+            "http://nonexistent.local:9999", "http://auth", "/fp", null, 1000
         );
         client = new SoftnetApiClient(authService, props, objectMapper);
     }
@@ -165,7 +165,7 @@ class SoftnetApiClientTest {
     @Test
     void constructor_withNullBaseUrl_doesNotThrow() {
         SoftnetProperties props = new SoftnetProperties(
-            null, "http://auth", "/fp", 1000
+            null, "http://auth", "/fp", null, 1000
         );
         SoftnetApiClient nullUrlClient = new SoftnetApiClient(authService, props, objectMapper);
         assertNotNull(nullUrlClient);

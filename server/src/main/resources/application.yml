@@ -12,6 +12,7 @@ softnet:
   base-url: ${SOFTNET_BASE_URL:}
   auth-url: ${SOFTNET_AUTH_URL:}
   fingerprint-json: ${SOFTNET_FINGERPRINT_JSON:}
+  fingerprint-path: ${SOFTNET_FINGERPRINT_PATH:}
   timeout: ${SOFTNET_TIMEOUT:10000}
 
 setup:

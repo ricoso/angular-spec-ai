@@ -7,6 +7,7 @@ public record SoftnetProperties(
     String baseUrl,
     String authUrl,
     String fingerprintJson,
+    String fingerprintPath,
     int timeout
 ) {
     public SoftnetProperties {
