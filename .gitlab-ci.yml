@@ -349,7 +349,7 @@ deploy feature:
     - |
       VERSION=$(cat version_full.txt)
       TAG_RC="${VERSION}-rc"
-      git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git"
+      git clone "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git"
       cd autohausterminbuchung.environment
       git checkout "$TARGET_PROJECT_BRANCH"
       BRANCH_NAME="version-update-${CI_COMMIT_SHORT_SHA}"
@@ -357,7 +357,7 @@ deploy feature:
       yq eval ".global.appVersion = \"$TAG_RC\"" -i environments/dev/values.yaml
       git add environments/dev/values.yaml
       git commit -m "chore(dev): bump appVersion to $TAG_RC"
-      git push "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_NAME" \
+      git push "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_NAME" \
         -o merge_request.create=true \
         -o merge_request.target="$TARGET_PROJECT_BRANCH" \
         -o merge_request.remove_source_branch \
@@ -374,7 +374,7 @@ create release:
     - |
       VERSION=$(cat version.txt)
       TAG="v${VERSION}"
-      git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git"
+      git clone "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git"
       cd autohausterminbuchung.environment
       git checkout "$TARGET_PROJECT_BRANCH"
 
@@ -384,7 +384,7 @@ create release:
       yq eval ".global.appVersion = \"$TAG\"" -i environments/dev/values.yaml
       git add environments/dev/values.yaml
       git commit -m "chore(dev): release $TAG"
-      git push "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_DEV" \
+      git push "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_DEV" \
         -o merge_request.create=true \
         -o merge_request.target="$TARGET_PROJECT_BRANCH" \
         -o merge_request.remove_source_branch \
@@ -397,7 +397,7 @@ create release:
       yq eval ".global.appVersion = \"$TAG\"" -i environments/prod/values.yaml
       git add environments/prod/values.yaml
       git commit -m "chore(prod): release $TAG"
-      git push "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_PROD" \
+      git push "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_PROD" \
         -o merge_request.create=true \
         -o merge_request.target="$TARGET_PROJECT_BRANCH" \
         -o merge_request.remove_source_branch
