@@ -2,9 +2,8 @@
 // Generates version.txt (semver, e.g. "0.1.0") and version_full.txt
 // (semver + branch + sha for RC builds, e.g. "0.1.0-feature.req-019.abcdef1").
 //
-// Plugins are intentionally minimal: we don't push tags, changelogs, or
-// GitLab releases from CI yet — that can be enabled later by adding
-// @semantic-release/git, @semantic-release/changelog, @semantic-release/gitlab.
+// Uses GL_TOKEN (Developer role, read+write) to push git tags.
+// Plugins: commit-analyzer, release-notes-generator, exec (writes version files).
 
 const branch = process.env.CI_COMMIT_REF_NAME || 'local';
 const sha = (process.env.CI_COMMIT_SHORT_SHA || 'local').slice(0, 8);
