@@ -3,7 +3,7 @@
 # Pipeline:
 #   .pre (vulnerability scan)
 #   → test (gradle + frontend)
-#   → versioning (semantic-release)
+#   → versioning (semantic-release, auth via GL_TOKEN + oauth2)
 #   → build (gradle bootJar)
 #   → image (buildah → OCP registry; promote on main)
 #   → rollout (MR into autohausterminbuchung.environment)
