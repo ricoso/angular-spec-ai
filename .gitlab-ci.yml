@@ -157,23 +157,62 @@ frontend tests:
   rules: *rules_main_or_feature
 
 # ─────────────────────────────────────────────────────────────────────
-# versioning — semantic-release produces version.txt + version_full.txt
+# versioning — conventional-commit-based semver from local git history
+# No remote access required. Analyzes commits since last tag to
+# determine major/minor/patch bump. Writes version.txt + version_full.txt.
 # ─────────────────────────────────────────────────────────────────────
 semantic versioning:
   stage: versioning
   image: image-registry.openshift-image-registry.svc:5000/openshift/nodejs-22-runner:latest
   variables:
     GIT_DEPTH: "0"
-  before_script:
-    - git config --global user.email "ci@autohaus.lhind.app"
-    - git config --global user.name "CI Bot"
-    - export CI_REPOSITORY_URL="https://oauth2:${GL_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
-    - git remote set-url origin "$CI_REPOSITORY_URL"
-    - npm install -g semantic-release@22 conventional-changelog-conventionalcommits@7
-        @semantic-release/commit-analyzer @semantic-release/release-notes-generator
-        @semantic-release/exec
   script:
-    - npx semantic-release --no-ci
+    - |
+      # Get latest semver tag, default to 0.0.0
+      LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+      if [ -z "$LATEST_TAG" ]; then
+        LATEST_TAG="0.0.0"
+        RANGE="HEAD"
+      else
+        RANGE="${LATEST_TAG}..HEAD"
+      fi
+      BASE=$(echo "$LATEST_TAG" | tr -d 'v')
+      MAJOR=$(echo "$BASE" | cut -d. -f1)
+      MINOR=$(echo "$BASE" | cut -d. -f2)
+      PATCH=$(echo "$BASE" | cut -d. -f3)
+
+      # Analyze conventional commits since last tag
+      HAS_BREAKING=false
+      HAS_FEAT=false
+      HAS_FIX=false
+      while IFS= read -r msg; do
+        case "$msg" in
+          *"BREAKING CHANGE"*|*"!"*) HAS_BREAKING=true ;;
+          feat*) HAS_FEAT=true ;;
+          fix*) HAS_FIX=true ;;
+        esac
+      done <<< "$(git log --format='%s' $RANGE 2>/dev/null)"
+
+      # Bump version
+      if [ "$HAS_BREAKING" = true ]; then
+        MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+      elif [ "$HAS_FEAT" = true ]; then
+        MINOR=$((MINOR + 1)); PATCH=0
+      elif [ "$HAS_FIX" = true ]; then
+        PATCH=$((PATCH + 1))
+      else
+        # No conventional commits — bump patch anyway to ensure unique version
+        PATCH=$((PATCH + 1))
+      fi
+
+      VERSION="${MAJOR}.${MINOR}.${PATCH}"
+      SLUG=$(echo "$CI_COMMIT_REF_NAME" | sed 's/[^a-zA-Z0-9.-]/-/g')
+      VERSION_FULL="${VERSION}-${SLUG}.${CI_COMMIT_SHORT_SHA}"
+
+      echo "$VERSION" > version.txt
+      echo "$VERSION_FULL" > version_full.txt
+      echo "Version: $VERSION"
+      echo "Version full: $VERSION_FULL"
   artifacts:
     paths:
       - version.txt
