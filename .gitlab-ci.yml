@@ -296,7 +296,8 @@ build dev rc image:
   script:
     - VERSION=$(cat version_full.txt)
     - TAG_RC="${VERSION}-rc"
-    - ocp-build-and-scan ./Dockerfile $NAMESPACE_DEV $CI_PROJECT_NAME:$TAG_RC
+    # ocp-build-and-scan skipped — JFrog Xray credentials not provisioned yet (deferred ticket D2)
+    - ocp-build ./Dockerfile $NAMESPACE_DEV $CI_PROJECT_NAME:$TAG_RC
     - ocp-push $NAMESPACE_DEV $CI_PROJECT_NAME:$TAG_RC
   rules: *rules_feature_only
 
@@ -311,7 +312,8 @@ build release image:
   script:
     - VERSION=$(cat version.txt)
     - TAG="v${VERSION}"
-    - ocp-build-and-scan ./Dockerfile $NAMESPACE_DEV $CI_PROJECT_NAME:$TAG
+    # ocp-build-and-scan skipped — JFrog Xray credentials not provisioned yet (deferred ticket D2)
+    - ocp-build ./Dockerfile $NAMESPACE_DEV $CI_PROJECT_NAME:$TAG
     - ocp-push $NAMESPACE_DEV $CI_PROJECT_NAME:$TAG
   rules: *rules_main_only
 

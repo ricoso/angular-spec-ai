@@ -519,7 +519,8 @@ build dev rc image:
   script:
     - VERSION=$(cat version_full.txt)
     - TAG_RC="${VERSION}-rc"
-    - ocp-build-and-scan ./Dockerfile autohandel-terminbuchungs-app-dev $CI_PROJECT_NAME:$TAG_RC
+    # ocp-build-and-scan skipped — JFrog Xray credentials not provisioned yet (deferred ticket D2)
+    - ocp-build ./Dockerfile autohandel-terminbuchungs-app-dev $CI_PROJECT_NAME:$TAG_RC
     - ocp-push autohandel-terminbuchungs-app-dev $CI_PROJECT_NAME:$TAG_RC
   rules: *rules_feature_only
 
@@ -535,7 +536,8 @@ build release image:
   script:
     - VERSION=$(cat version.txt)
     - TAG="v${VERSION}"
-    - ocp-build-and-scan ./Dockerfile autohandel-terminbuchungs-app-dev $CI_PROJECT_NAME:$TAG
+    # ocp-build-and-scan skipped — JFrog Xray credentials not provisioned yet (deferred ticket D2)
+    - ocp-build ./Dockerfile autohandel-terminbuchungs-app-dev $CI_PROJECT_NAME:$TAG
     - ocp-push autohandel-terminbuchungs-app-dev $CI_PROJECT_NAME:$TAG
   rules: *rules_main_only
 
@@ -1171,7 +1173,7 @@ The following must be requested from the LDP team via EMMA (`lhind.ams-devops-bu
 | # | Request | Why deferred |
 |---|---|---|
 | D1 | **SonarQube Project** | Code quality gate — not blocking deployment. Add later when ready to enforce quality metrics in CI |
-| D2 | **JFrog project-specific repo / Xray watcher** | Vulnerability scanning — not blocking. We use the shared `devopsplatform-lhind-px-mvn-all` virtual repo for Gradle dependencies, which should already be accessible via the group runner |
+| D2 | **JFrog project-specific repo / Xray watcher** | Vulnerability scanning — not blocking. `ocp-build-and-scan` replaced with `ocp-build` (Xray returns 401 Bad Credentials). Re-enable scan after EMMA ticket provisions JFrog Xray credentials for the project |
 
 ---
 
@@ -1368,7 +1370,7 @@ oc get secret autohausterminbuchung-secrets -n autohandel-terminbuchungs-app-dev
 
 | Template | Project | Purpose |
 |---|---|---|
-| `ocp.yml` | `lhind-devops-platform/gitlab-ci-templates` | `ocp-build-and-scan`, `ocp-push` (buildah + JFrog Xray) |
+| `ocp.yml` | `lhind-devops-platform/gitlab-ci-templates` | `ocp-build` (buildah only; `ocp-build-and-scan` disabled until Xray creds provisioned), `ocp-push` |
 | `artifactory.yml` | `lhind-devops-platform/gitlab-ci-templates` | JFrog CLI config + npm/mvn wrappers |
 | `frogbot.yml` | `lhind-devops-platform/gitlab-ci-templates` | MR security scanning |
 | Java Template App | `lhind-devops-platform/example-projects/java-template/java-template` (ID 2290) | Reference `.gitlab-ci.yml`, Dockerfile, pom.xml |
