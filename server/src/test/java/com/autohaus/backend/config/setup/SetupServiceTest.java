@@ -120,13 +120,41 @@ class SetupServiceTest {
     }
 
     @Test
-    void resolveGroupId_throwsVariantNotFoundForUnknownVariant() {
+    void resolveGroupId_fallsBackToDefaultWhenVariantMissing() {
+        // branch-2 hat nur 'default', keine 'tireChange'-Gruppe — darf nicht mehr werfen.
         SetupService svc = newService(SAMPLE_JSON, true);
+        assertEquals("grp-2-default", svc.resolveGroupId("branch-2", "tireChange"));
+    }
+
+    @Test
+    void resolveGroupId_fallsBackToDefaultWhenSeasonDisabled() {
+        // branch-1 hat beide, aber Saison aus → tireChange wird gefiltert → Fallback auf default.
+        SetupService svc = newService(SAMPLE_JSON, false);
+        assertEquals("grp-1-default", svc.resolveGroupId("branch-1", "tireChange"));
+    }
+
+    @Test
+    void resolveGroupId_throwsVariantNotFoundWhenNoDefaultExists() {
+        String onlyTireChange = """
+            {
+              "branches": [
+                {
+                  "branchId": "only-tire",
+                  "name": "Nur Radwechsel",
+                  "address": "Str 1",
+                  "groups": [
+                    { "variant": "tireChange", "groupId": "grp-tc", "fullName": "Nur Radwechsel" }
+                  ]
+                }
+              ]
+            }
+            """;
+        SetupService svc = newService(onlyTireChange, true);
         VariantNotFoundException ex = assertThrows(
             VariantNotFoundException.class,
-            () -> svc.resolveGroupId("branch-2", "tireChange")
+            () -> svc.resolveGroupId("only-tire", "unknownVariant")
         );
-        assertTrue(ex.getMessage().contains("tireChange"));
+        assertTrue(ex.getMessage().contains("unknownVariant"));
     }
 
     @Test

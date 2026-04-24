@@ -120,6 +120,10 @@ public class AppointmentsService {
             wishlist.put("fleetType", "rentObject");
             wishlist.put("fleetCategoryid", dto.rentCategoryId());
         }
+
+        if (Boolean.TRUE.equals(dto.callbackRequested())) {
+            wishlist.put("callbackPreference", true);
+        }
     }
 
     private AppointmentResponseDto mapAppointmentResponse(JsonNode result, CreateAppointmentRequest dto) {

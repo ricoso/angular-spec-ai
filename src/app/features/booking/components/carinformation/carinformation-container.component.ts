@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -21,6 +22,7 @@ import { VehicleFormComponent } from './components/vehicle-form/vehicle-form.com
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,
+    MatIconModule,
     TranslatePipe,
     WizardBreadcrumbComponent,
     CustomerFormComponent,
@@ -47,7 +49,7 @@ export class CarinformationContainerComponent {
     street: ['', [Validators.required]],
     postalCode: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
     city: ['', [Validators.required, Validators.pattern(/^[a-zA-ZÀ-ÖØ-öø-ÿ\s-]+$/)]],
-    mobilePhone: ['', [Validators.required, Validators.pattern(/^0[0-9]+$/)]]
+    mobilePhone: ['', [Validators.required, Validators.pattern(/^(\+|0)[0-9\s]+$/)]]
   });
 
   protected readonly vehicleForm = this.fb.group({
@@ -117,10 +119,5 @@ export class CarinformationContainerComponent {
 
   protected onBack(): void {
     void this.router.navigate(['/home/appointment']);
-  }
-
-  protected onReturningCustomer(): void {
-    // TODO: REQ-010+ — retrieve existing customer data
-    console.debug('[CarinformationContainer] Returning customer button clicked');
   }
 }

@@ -32,7 +32,7 @@ export class WorkshopCalendarApiService {
 
   public async getWorkshopCalendarDays(fromDate: string, branchId: string, serviceIds: string[], brandName?: string): Promise<WorkshopCalendarDay[]> {
     const toDate = new Date(`${fromDate}T00:00:00`);
-    toDate.setDate(toDate.getDate() + 7);
+    toDate.setDate(toDate.getDate() + 14);
     const toDateStr = this.formatIsoDate(toDate);
 
     const response = await firstValueFrom(
@@ -41,12 +41,36 @@ export class WorkshopCalendarApiService {
         jobTypeIds: serviceIds,
         fromDate,
         toDate: toDateStr,
-        mode: 'date-range',
+        // 'next-available' liefert erfahrungsgemaess mehr Slots als 'date-range'
+        // (SoftNet `asSoonAsPossible` scannt breiter).
+        mode: 'next-available',
         brandName: brandName ?? '',
+        // KEIN timePreference → alle Slots (vor- und nachmittags)
       })
     );
 
-    return response.data.slice(0, 3).map(day => this.mapToCalendarDay(day));
+    // Genau 2 Tage zeigen: ausgewaehlter Tag + naechster Business-Tag (Mo-Fr).
+    // Jeder Tag bekommt ALLE verfuegbaren Slots (kein AM/PM-Filter, keine Slot-Limitierung).
+    const daysFromResponse = response.data
+      .filter(day => day.date >= fromDate)
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    const firstDay = daysFromResponse[0];
+    if (!firstDay) return [];
+
+    const nextBusinessDay = daysFromResponse
+      .slice(1)
+      .find(day => this.isBusinessDay(day.date));
+
+    const daysToShow = nextBusinessDay ? [firstDay, nextBusinessDay] : [firstDay];
+    return daysToShow.map(day => this.mapToCalendarDay(day));
+  }
+
+  private isBusinessDay(dateStr: string): boolean {
+    const d = new Date(`${dateStr}T00:00:00`);
+    const dow = d.getDay(); // 0=So, 1=Mo, ..., 6=Sa
+    return dow !== 0 && dow !== 6;
   }
 
   private mapToCalendarDay(day: SnapDayDto): WorkshopCalendarDay {

@@ -2,6 +2,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
 import type { NotesExtras } from '../../models/notes-extras.model';
+import type { RentCategory } from '../../models/rent-category.model';
 
 import { NotesExtrasFormComponent } from './notes-extras-form.component';
 
@@ -28,11 +29,6 @@ describe('NotesExtrasFormComponent', () => {
   });
 
   describe('Default State', () => {
-    it('should have default mobility option', () => {
-      const exposed = component as unknown as { mobilityOption: () => string };
-      expect(exposed.mobilityOption()).toBe('none');
-    });
-
     it('should have default appointment preference', () => {
       const exposed = component as unknown as { appointmentPreference: () => string };
       expect(exposed.appointmentPreference()).toBe('anytime');
@@ -42,12 +38,16 @@ describe('NotesExtrasFormComponent', () => {
       const exposed = component as unknown as { callbackOption: () => string };
       expect(exposed.callbackOption()).toBe('none');
     });
+
+    it('should have no selected rent category initially', () => {
+      const exposed = component as unknown as { selectedRentCategoryId: () => string | null };
+      expect(exposed.selectedRentCategoryId()).toBeNull();
+    });
   });
 
-  describe('Initial Extras Input', () => {
+  describe('Initial Inputs', () => {
     it('should apply initial extras when provided', () => {
       const extras: NotesExtras = {
-        mobilityOption: 'mid-range',
         appointmentPreference: 'morning',
         callbackOption: 'yes'
       };
@@ -55,47 +55,58 @@ describe('NotesExtrasFormComponent', () => {
       fixture.detectChanges();
 
       const exposed = component as unknown as {
-        mobilityOption: () => string;
         appointmentPreference: () => string;
         callbackOption: () => string;
       };
-      expect(exposed.mobilityOption()).toBe('mid-range');
       expect(exposed.appointmentPreference()).toBe('morning');
       expect(exposed.callbackOption()).toBe('yes');
+    });
+
+    it('should apply initial rent category id', () => {
+      fixture.componentRef.setInput('initialRentCategoryId', 'cat-mid');
+      fixture.detectChanges();
+      const exposed = component as unknown as { selectedRentCategoryId: () => string | null };
+      expect(exposed.selectedRentCategoryId()).toBe('cat-mid');
     });
 
     it('should keep defaults when initialExtras is null', () => {
       fixture.componentRef.setInput('initialExtras', null);
       fixture.detectChanges();
-
       const exposed = component as unknown as {
-        mobilityOption: () => string;
         appointmentPreference: () => string;
         callbackOption: () => string;
       };
-      expect(exposed.mobilityOption()).toBe('none');
       expect(exposed.appointmentPreference()).toBe('anytime');
       expect(exposed.callbackOption()).toBe('none');
     });
   });
 
-  describe('onMobilityOptionChange', () => {
-    it('should update mobility option and emit extras', () => {
+  describe('onRentCategoryChange', () => {
+    it('should update selected rent category and emit', () => {
       const spy = jest.fn();
-      component.extrasChanged.subscribe(spy);
+      component.rentCategoryChanged.subscribe(spy);
 
       const exposed = component as unknown as {
-        onMobilityOptionChange: (value: string) => void;
-        mobilityOption: () => string;
+        onRentCategoryChange: (value: string | null) => void;
+        selectedRentCategoryId: () => string | null;
       };
-      exposed.onMobilityOptionChange('luxury');
+      exposed.onRentCategoryChange('cat-small');
 
-      expect(exposed.mobilityOption()).toBe('luxury');
-      expect(spy).toHaveBeenCalledWith({
-        mobilityOption: 'luxury',
-        appointmentPreference: 'anytime',
-        callbackOption: 'none'
-      });
+      expect(exposed.selectedRentCategoryId()).toBe('cat-small');
+      expect(spy).toHaveBeenCalledWith('cat-small');
+    });
+
+    it('should allow unsetting rent category via null', () => {
+      const spy = jest.fn();
+      component.rentCategoryChanged.subscribe(spy);
+      const exposed = component as unknown as {
+        onRentCategoryChange: (value: string | null) => void;
+        selectedRentCategoryId: () => string | null;
+      };
+      exposed.onRentCategoryChange('cat-small');
+      exposed.onRentCategoryChange(null);
+      expect(exposed.selectedRentCategoryId()).toBeNull();
+      expect(spy).toHaveBeenLastCalledWith(null);
     });
   });
 
@@ -112,7 +123,6 @@ describe('NotesExtrasFormComponent', () => {
 
       expect(exposed.appointmentPreference()).toBe('afternoon');
       expect(spy).toHaveBeenCalledWith({
-        mobilityOption: 'none',
         appointmentPreference: 'afternoon',
         callbackOption: 'none'
       });
@@ -120,7 +130,7 @@ describe('NotesExtrasFormComponent', () => {
   });
 
   describe('onCallbackOptionChange', () => {
-    it('should update callback option and emit extras', () => {
+    it('should update callback option and emit extras with yes', () => {
       const spy = jest.fn();
       component.extrasChanged.subscribe(spy);
 
@@ -132,44 +142,25 @@ describe('NotesExtrasFormComponent', () => {
 
       expect(exposed.callbackOption()).toBe('yes');
       expect(spy).toHaveBeenCalledWith({
-        mobilityOption: 'none',
         appointmentPreference: 'anytime',
         callbackOption: 'yes'
       });
     });
   });
 
-  describe('Combined Changes', () => {
-    it('should emit correct extras after multiple changes', () => {
-      const spy = jest.fn();
-      component.extrasChanged.subscribe(spy);
-
-      const exposed = component as unknown as {
-        onMobilityOptionChange: (value: string) => void;
-        onAppointmentPreferenceChange: (value: string) => void;
-        onCallbackOptionChange: (value: string) => void;
-      };
-
-      exposed.onMobilityOptionChange('compact-car');
-      exposed.onAppointmentPreferenceChange('morning');
-      exposed.onCallbackOptionChange('yes');
-
-      expect(spy).toHaveBeenCalledTimes(3);
-      expect(spy).toHaveBeenLastCalledWith({
-        mobilityOption: 'compact-car',
-        appointmentPreference: 'morning',
-        callbackOption: 'yes'
-      });
+  describe('Rent Categories Input', () => {
+    it('should accept a list of rent categories', () => {
+      const cats: RentCategory[] = [
+        { id: 'cat-small', groupId: 'g1', name: 'Kleinwagen', description: '', brands: [], branches: [] },
+        { id: 'cat-mid',   groupId: 'g1', name: 'Mittelklasse', description: '', brands: [], branches: [] }
+      ];
+      fixture.componentRef.setInput('rentCategories', cats);
+      fixture.detectChanges();
+      expect(component.rentCategories()).toHaveLength(2);
     });
   });
 
   describe('Option Items', () => {
-    it('should have 4 mobility option items', () => {
-      const exposed = component as unknown as { mobilityOptionItems: () => { value: string; label: string }[] };
-      expect(exposed.mobilityOptionItems()).toHaveLength(4);
-      expect(exposed.mobilityOptionItems().map(i => i.value)).toEqual(['none', 'compact-car', 'mid-range', 'luxury']);
-    });
-
     it('should have 3 appointment option items', () => {
       const exposed = component as unknown as { appointmentOptionItems: () => { value: string; label: string }[] };
       expect(exposed.appointmentOptionItems()).toHaveLength(3);

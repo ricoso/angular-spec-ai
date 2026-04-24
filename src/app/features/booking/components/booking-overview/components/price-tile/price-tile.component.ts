@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 
 import { i18nKeys, TranslatePipe, TranslateService } from '@core/i18n';
 
-import type { AppointmentPreference, CallbackOption, MobilityOption } from '../../../../models/notes-extras.model';
+import type { AppointmentPreference, CallbackOption } from '../../../../models/notes-extras.model';
 
 @Component({
   selector: 'app-price-tile',
@@ -15,7 +15,7 @@ import type { AppointmentPreference, CallbackOption, MobilityOption } from '../.
 export class PriceTileComponent {
   private readonly translateService = inject(TranslateService);
 
-  public readonly mobilityOption = input.required<MobilityOption>();
+  public readonly rentCategoryName = input<string | null>(null);
   public readonly appointmentPreference = input.required<AppointmentPreference>();
   public readonly callbackOption = input.required<CallbackOption>();
   public readonly bookingNote = input<string>('');
@@ -24,13 +24,8 @@ export class PriceTileComponent {
   private readonly notes = i18nKeys.booking.notes;
 
   protected readonly mobilityOptionLabel = computed(() => {
-    const value = this.mobilityOption();
-    switch (value) {
-      case 'none':        return this.translateService.instant(this.notes.mobilityOptions.none);
-      case 'compact-car': return this.translateService.instant(this.notes.mobilityOptions.compactCar);
-      case 'mid-range':   return this.translateService.instant(this.notes.mobilityOptions.midRange);
-      case 'luxury':      return this.translateService.instant(this.notes.mobilityOptions.luxury);
-    }
+    const name = this.rentCategoryName();
+    return name ?? this.translateService.instant(this.notes.rentCategory.none);
   });
 
   protected readonly appointmentPreferenceLabel = computed(() => {

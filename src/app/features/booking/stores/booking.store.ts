@@ -10,9 +10,11 @@ import type { BranchConfig } from '../models/branch-config.model';
 import type { Brand, BrandDisplay } from '../models/brand.model';
 import type { CustomerInfo, VehicleInfo } from '../models/customer.model';
 import type { LocationDisplay } from '../models/location.model';
-import type { NotesExtras } from '../models/notes-extras.model';
+import type { AppointmentPreference, NotesExtras } from '../models/notes-extras.model';
 import type { RentCategory } from '../models/rent-category.model';
 import type { SelectedService, ServiceDisplay, ServiceType } from '../models/service.model';
+import { AVAILABLE_SERVICES } from '../models/service.model';
+import type { TranslationKey } from '@core/i18n';
 import type { WorkshopCalendarDay } from '../models/workshop-calendar.model';
 import { AppointmentApiService } from '../services/appointment-api.service';
 import { BookingApiService } from '../services/booking-api.service';
@@ -77,12 +79,28 @@ const INITIAL_STATE: BookingState = {
   isDeepLinked: false
 };
 
+/**
+ * Maps the UI-side appointment preference (`anytime|morning|afternoon`) to
+ * SoftNet's `checkInTimePreference` filter (`AM|PM`). `anytime` yields
+ * `undefined` so the filter is omitted and all slots are returned.
+ */
+export function mapAppointmentPreferenceToSoftnet(
+  pref: AppointmentPreference,
+): 'AM' | 'PM' | undefined {
+  switch (pref) {
+    case 'morning':   return 'AM';
+    case 'afternoon': return 'PM';
+    case 'anytime':
+    default:          return undefined;
+  }
+}
+
 export const BookingStore = signalStore(
   { providedIn: 'root' },
 
   withState<BookingState>(INITIAL_STATE),
 
-  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, appointmentId, notesExtras }) => ({
+  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, appointmentId, notesExtras, rentCategories, selectedRentCategoryId }) => ({
     hasBranchSelected: computed(() => selectedBranch() !== null),
     selectedBranchBrands: computed(() => {
       const branch = selectedBranch();
@@ -92,6 +110,23 @@ export const BookingStore = signalStore(
     hasLocationSelected: computed(() => selectedLocation() !== null),
     selectedServiceCount: computed(() => selectedServices().length),
     hasServicesSelected: computed(() => selectedServices().length > 0),
+    /** Flat list of user-selected sub-options (or service titles if no options). Used for cart display. */
+    selectedServiceLabels: computed<TranslationKey[]>(() => {
+      const labels: TranslationKey[] = [];
+      for (const sel of selectedServices()) {
+        const service = AVAILABLE_SERVICES.find(s => s.id === sel.serviceId);
+        if (!service) continue;
+        if (sel.selectedOptionIds.length === 0) {
+          labels.push(service.titleKey);
+        } else {
+          for (const optId of sel.selectedOptionIds) {
+            const opt = service.options.find(o => o.id === optId);
+            if (opt) labels.push(opt.labelKey);
+          }
+        }
+      }
+      return labels;
+    }),
     hasBookingNote: computed(() => bookingNote() !== null && bookingNote() !== ''),
     hasAppointmentSelected: computed(() => selectedAppointment() !== null),
     hasWorkshopSlotSelected: computed(() => {
@@ -116,9 +151,14 @@ export const BookingStore = signalStore(
       selectedServices().some(s => s.serviceId === 'tire-change') ? 'tireChange' : 'default'
     ),
     hasNotesExtras: computed(() => notesExtras() !== null),
-    selectedMobilityOption: computed(() => notesExtras()?.mobilityOption ?? 'none'),
     selectedAppointmentPreference: computed(() => notesExtras()?.appointmentPreference ?? 'anytime'),
-    selectedCallbackOption: computed(() => notesExtras()?.callbackOption ?? 'none')
+    selectedCallbackOption: computed(() => notesExtras()?.callbackOption ?? 'none'),
+    callbackRequested: computed(() => notesExtras()?.callbackOption === 'yes'),
+    selectedRentCategoryName: computed<string | null>(() => {
+      const id = selectedRentCategoryId();
+      if (!id) return null;
+      return rentCategories().find(c => c.id === id)?.name ?? null;
+    }),
   })),
 
   withMethods((store, api = inject(BookingApiService), appointmentApi = inject(AppointmentApiService), workshopCalendarApi = inject(WorkshopCalendarApiService), rentCategoryApi = inject(RentCategoryApiService)) => ({
@@ -282,7 +322,8 @@ export const BookingStore = signalStore(
           const serviceIds = store.selectedServices().map(s => s.serviceId);
           const brandName = store.selectedBrand() ?? '';
           const variant = store.selectedVariant();
-          return from(appointmentApi.getAppointments(branchId, serviceIds, brandName, variant)).pipe(
+          const timePreference = mapAppointmentPreferenceToSoftnet(store.selectedAppointmentPreference());
+          return from(appointmentApi.getAppointments(branchId, serviceIds, brandName, variant, timePreference)).pipe(
             tap((appointments) => {
               patchState(store, { appointments, isLoading: false });
             }),
@@ -396,8 +437,8 @@ export const BookingStore = signalStore(
               firstRegYear: vehicle?.firstRegYear,
             },
             note: store.bookingNote() ?? undefined,
-            mobilityOption: extras?.mobilityOption,
             rentCategoryId: store.selectedRentCategoryId() ?? undefined,
+            callbackRequested: extras?.callbackOption === 'yes',
           };
 
           return from(appointmentApi.createAppointment(request)).pipe(

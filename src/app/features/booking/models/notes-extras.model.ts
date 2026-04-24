@@ -1,9 +1,4 @@
 /**
- * Mobility option for replacement vehicle
- */
-export type MobilityOption = 'none' | 'compact-car' | 'mid-range' | 'luxury';
-
-/**
  * Appointment preference for scheduling
  */
 export type AppointmentPreference = 'anytime' | 'morning' | 'afternoon';
@@ -14,16 +9,15 @@ export type AppointmentPreference = 'anytime' | 'morning' | 'afternoon';
 export type CallbackOption = 'none' | 'yes';
 
 /**
- * Extended notes extras — dropdown selections on notes page
+ * Extended notes extras — dropdown selections on notes page.
+ * Mietwagen-Kategorie kommt separat als rentCategoryId im Store (dynamisch aus SoftNet).
  */
 export interface NotesExtras {
-  mobilityOption: MobilityOption;
   appointmentPreference: AppointmentPreference;
   callbackOption: CallbackOption;
 }
 
 export const DEFAULT_NOTES_EXTRAS: NotesExtras = {
-  mobilityOption: 'none',
   appointmentPreference: 'anytime',
   callbackOption: 'none'
 };

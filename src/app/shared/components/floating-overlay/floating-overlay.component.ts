@@ -36,6 +36,7 @@ export class FloatingOverlayComponent {
   protected readonly selectedLocationName = computed(() => this.bookingStore.selectedLocation()?.name ?? '');
   protected readonly selectedBrandName = computed(() => this.bookingStore.selectedBrand() ?? '');
   protected readonly selectedServiceCount = computed(() => this.bookingStore.selectedServiceCount());
+  protected readonly selectedServiceLabels = computed(() => this.bookingStore.selectedServiceLabels());
 
   protected readonly fontSize = this.a11yStore.fontSize;
   protected readonly highContrast = this.a11yStore.highContrast;

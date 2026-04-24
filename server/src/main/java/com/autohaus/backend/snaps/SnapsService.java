@@ -36,8 +36,8 @@ public class SnapsService {
     }
 
     public List<SnapResponseDto> getSnaps(SnapRequestDto request) {
-        List<String> mappedOps = operationIdMapper.mapToSoftnetOperations(request.jobTypeIds());
         String groupId = setupService.resolveGroupId(request.branchId(), request.variant());
+        List<String> mappedOps = operationIdMapper.mapToSoftnetOperations(groupId, request.jobTypeIds());
 
         Map<String, Object> softnetRequest = new LinkedHashMap<>();
         softnetRequest.put("groupid", groupId);

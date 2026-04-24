@@ -7,7 +7,6 @@ import { i18nKeys, TranslatePipe } from '@core/i18n';
 import type {
   AppointmentPreference,
   CallbackOption,
-  MobilityOption,
   NotesExtras
 } from '../../models/notes-extras.model';
 import { DEFAULT_NOTES_EXTRAS } from '../../models/notes-extras.model';
@@ -31,16 +30,8 @@ export class NotesExtrasFormComponent {
   protected readonly notes = i18nKeys.booking.notes;
   protected readonly selectedRentCategoryId = signal<string | null>(null);
 
-  protected readonly mobilityOption = signal<MobilityOption>(DEFAULT_NOTES_EXTRAS.mobilityOption);
   protected readonly appointmentPreference = signal<AppointmentPreference>(DEFAULT_NOTES_EXTRAS.appointmentPreference);
   protected readonly callbackOption = signal<CallbackOption>(DEFAULT_NOTES_EXTRAS.callbackOption);
-
-  protected readonly mobilityOptionItems = computed(() => [
-    { value: 'none' as MobilityOption, label: this.notes.mobilityOptions.none },
-    { value: 'compact-car' as MobilityOption, label: this.notes.mobilityOptions.compactCar },
-    { value: 'mid-range' as MobilityOption, label: this.notes.mobilityOptions.midRange },
-    { value: 'luxury' as MobilityOption, label: this.notes.mobilityOptions.luxury }
-  ]);
 
   protected readonly appointmentOptionItems = computed(() => [
     { value: 'anytime' as AppointmentPreference, label: this.notes.appointmentPreference.anytime },
@@ -57,7 +48,6 @@ export class NotesExtrasFormComponent {
     effect(() => {
       const extras = this.initialExtras();
       if (extras) {
-        this.mobilityOption.set(extras.mobilityOption);
         this.appointmentPreference.set(extras.appointmentPreference);
         this.callbackOption.set(extras.callbackOption);
       }
@@ -73,11 +63,6 @@ export class NotesExtrasFormComponent {
     this.rentCategoryChanged.emit(value);
   }
 
-  protected onMobilityOptionChange(value: MobilityOption): void {
-    this.mobilityOption.set(value);
-    this.emitExtras();
-  }
-
   protected onAppointmentPreferenceChange(value: AppointmentPreference): void {
     this.appointmentPreference.set(value);
     this.emitExtras();
@@ -90,7 +75,6 @@ export class NotesExtrasFormComponent {
 
   private emitExtras(): void {
     this.extrasChanged.emit({
-      mobilityOption: this.mobilityOption(),
       appointmentPreference: this.appointmentPreference(),
       callbackOption: this.callbackOption()
     });

@@ -44,9 +44,9 @@ public class WebConfig implements WebMvcConfigurer {
 
         // Try to find the Angular dist folder
         String basePath = System.getProperty("user.dir");
-        Path distDir = Path.of(basePath, "..", "dist", "angular-21-project", "browser");
+        Path distDir = Path.of(basePath, "..", "dist", "terminbuchungsapp", "browser");
         if (!Files.exists(distDir)) {
-            distDir = Path.of(basePath, "dist", "angular-21-project", "browser");
+            distDir = Path.of(basePath, "dist", "terminbuchungsapp", "browser");
         }
         this.distPath = distDir.toAbsolutePath().normalize().toString();
 

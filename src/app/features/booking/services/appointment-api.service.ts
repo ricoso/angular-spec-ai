@@ -54,8 +54,8 @@ export interface CreateAppointmentRequest {
   customer: AppointmentCustomer;
   vehicle: AppointmentVehicle;
   note?: string;
-  mobilityOption?: string;
   rentCategoryId?: string;
+  callbackRequested?: boolean;
 }
 
 export interface AppointmentResponse {
@@ -74,13 +74,21 @@ export class AppointmentApiService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  public async getAppointments(branchId: string, serviceIds: string[], brandName?: string, variant?: 'default' | 'tireChange'): Promise<AppointmentSlot[]> {
+  public async getAppointments(
+    branchId: string,
+    serviceIds: string[],
+    brandName?: string,
+    variant?: 'default' | 'tireChange',
+    timePreference?: 'AM' | 'PM',
+  ): Promise<AppointmentSlot[]> {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const fromDate = this.formatIsoDate(tomorrow);
 
+    // 28-Tage-Fenster — damit der strikte AM/PM-Filter genug Kandidaten hat,
+    // auch wenn viele Tage nicht passen. Frontend zeigt weiterhin .slice(0, 4).
     const toDate = new Date(tomorrow);
-    toDate.setDate(toDate.getDate() + 14);
+    toDate.setDate(toDate.getDate() + 28);
 
     const response = await firstValueFrom(
       this.http.post<ApiResponse<SnapDayDto[]>>(`${this.apiUrl}/snaps`, {
@@ -91,24 +99,33 @@ export class AppointmentApiService {
         mode: 'next-available',
         brandName: brandName ?? '',
         variant: variant ?? 'default',
+        timePreference: timePreference,
       })
     );
 
-    // Take first available slot from each day
+    // Soft AM/PM preference: nimm Slot der passt, sonst fallback auf frühesten
+    // verfügbaren. User sieht immer Termine, auch wenn Filter nicht greift.
+    const isMorning = (time: string): boolean => parseInt(time.split(':')[0] ?? '0', 10) < 12;
+    const pickSlot = (slots: SnapDayDto['slots']): SnapDayDto['slots'][number] | undefined => {
+      const available = slots.filter(s => s.available);
+      if (available.length === 0) return undefined;
+      if (timePreference === 'AM') return available.find(s => isMorning(s.time)) ?? available[0];
+      if (timePreference === 'PM') return available.find(s => !isMorning(s.time)) ?? available[0];
+      return available[0];
+    };
+
     return response.data
-      .filter(day => day.slots.some(s => s.available))
+      .map(day => ({ day, slot: pickSlot(day.slots) }))
+      .filter((entry): entry is { day: SnapDayDto; slot: NonNullable<ReturnType<typeof pickSlot>> } => entry.slot !== undefined)
       .slice(0, 4)
-      .map(day => {
-        const slot = day.slots.find(s => s.available)!;
-        return {
-          id: slot.id,
-          date: day.date,
-          displayDate: day.displayDate,
-          dayAbbreviation: day.dayAbbreviation as DayAbbreviation,
-          time: slot.time,
-          displayTime: slot.displayTime,
-        };
-      });
+      .map(({ day, slot }) => ({
+        id: slot.id,
+        date: day.date,
+        displayDate: day.displayDate,
+        dayAbbreviation: day.dayAbbreviation as DayAbbreviation,
+        time: slot.time,
+        displayTime: slot.displayTime,
+      }));
   }
 
   public async createAppointment(request: CreateAppointmentRequest): Promise<AppointmentResponse> {

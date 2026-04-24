@@ -1,48 +1,26 @@
 <div class="notes-extras" role="group" [attr.aria-label]="notes.mobilityOptions.title | translate">
-  <!-- Mobility Options -->
+  <!-- Mobility / Rent Category (dynamic from SoftNet API) -->
   <div class="notes-extras__section" role="region">
     <h2 class="notes-extras__heading">{{ notes.mobilityOptions.title | translate }}</h2>
     <div class="notes-extras__card">
       <mat-form-field appearance="outline" class="notes-extras__field">
-        <mat-label>{{ notes.mobilityOptions.label | translate }}</mat-label>
+        <mat-label>{{ notes.rentCategory.label | translate }}</mat-label>
         <mat-select
-          [value]="mobilityOption()"
-          (selectionChange)="onMobilityOptionChange($event.value)"
+          [value]="selectedRentCategoryId()"
+          (selectionChange)="onRentCategoryChange($event.value)"
         >
-          @for (item of mobilityOptionItems(); track item.value) {
-            <mat-option [value]="item.value">
-              {{ item.label | translate }}
+          <mat-option [value]="null">
+            {{ notes.rentCategory.none | translate }}
+          </mat-option>
+          @for (category of rentCategories(); track category.id) {
+            <mat-option [value]="category.id">
+              {{ category.name }}
             </mat-option>
           }
         </mat-select>
       </mat-form-field>
     </div>
   </div>
-
-  <!-- Rent Category (dynamic from SoftNet API) -->
-  @if (rentCategories().length > 0) {
-    <div class="notes-extras__section" role="region">
-      <h2 class="notes-extras__heading">{{ notes.rentCategory.title | translate }}</h2>
-      <div class="notes-extras__card">
-        <mat-form-field appearance="outline" class="notes-extras__field">
-          <mat-label>{{ notes.rentCategory.label | translate }}</mat-label>
-          <mat-select
-            [value]="selectedRentCategoryId()"
-            (selectionChange)="onRentCategoryChange($event.value)"
-          >
-            <mat-option [value]="null">
-              {{ notes.rentCategory.none | translate }}
-            </mat-option>
-            @for (category of rentCategories(); track category.id) {
-              <mat-option [value]="category.id">
-                {{ category.name }}
-              </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
-    </div>
-  }
 
   <!-- Appointment Preference -->
   <div class="notes-extras__section" role="region">

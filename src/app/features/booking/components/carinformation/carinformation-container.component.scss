@@ -21,62 +21,6 @@
     text-align: center;
   }
 
-  &__returning-banner {
-    background-color: var(--color-background-surface);
-    border: 0.0625em solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-md) var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-
-    @include tablet {
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-    }
-  }
-
-  &__returning-content {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-md);
-  }
-
-  &__returning-text {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-  }
-
-  &__returning-title {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-primary);
-    font-weight: 500;
-  }
-
-  &__returning-description {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
-    line-height: var(--line-height-normal);
-    margin: 0;
-  }
-
-  &__returning-button {
-    min-height: var(--touch-target-min);
-    white-space: nowrap;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-
-    &:focus-visible {
-      outline: 0.125em solid var(--color-focus-ring);
-      outline-offset: 0.125em;
-    }
-  }
-
   &__form {
     display: flex;
     flex-direction: column;

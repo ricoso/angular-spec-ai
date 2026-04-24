@@ -27,14 +27,18 @@
             <span class="floating-overlay__item-value">{{ selectedBrandName() }}</span>
           </div>
         }
-        @if (selectedServiceCount() > 0) {
-          <div class="floating-overlay__item">
+        @if (selectedServiceLabels().length > 0) {
+          <div class="floating-overlay__item floating-overlay__item--services">
             <mat-icon aria-hidden="true">build</mat-icon>
             <span class="floating-overlay__item-label">{{ overlay.servicesLabel | translate }}:</span>
-            <span class="floating-overlay__item-value">{{ selectedServiceCount() }}</span>
+            <ul class="floating-overlay__service-list">
+              @for (labelKey of selectedServiceLabels(); track labelKey) {
+                <li class="floating-overlay__service-list-item">{{ labelKey | translate }}</li>
+              }
+            </ul>
           </div>
         }
-        @if (!selectedLocationName() && !selectedBrandName() && selectedServiceCount() === 0) {
+        @if (!selectedLocationName() && !selectedBrandName() && selectedServiceLabels().length === 0) {
           <p class="floating-overlay__empty">{{ overlay.emptySelection | translate }}</p>
         }
       </div>

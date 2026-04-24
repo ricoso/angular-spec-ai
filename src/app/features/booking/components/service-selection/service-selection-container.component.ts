@@ -40,8 +40,8 @@ export class ServiceSelectionContainerComponent {
     this.store.selectedServices().map(s => s.serviceId)
   );
 
-  protected readonly selectedOptionsMap = computed(() => {
-    const map: Record<string, string[]> = {};
+  protected readonly selectedOptionsMap = computed((): Partial<Record<ServiceType, string[]>> => {
+    const map: Partial<Record<ServiceType, string[]>> = {};
     for (const s of this.store.selectedServices()) {
       map[s.serviceId] = s.selectedOptionIds;
     }

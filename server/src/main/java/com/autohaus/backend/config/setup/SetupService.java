@@ -122,15 +122,29 @@ public class SetupService {
     public String resolveGroupId(String branchId, String variant) {
         BranchSetup branch = findByBranchId(branchId);
         String effectiveVariant = variant == null || variant.isBlank() ? "default" : variant;
-        return branch.groups().stream()
+        var direct = branch.groups().stream()
             .filter(g -> g.variant().equals(effectiveVariant))
             .map(GroupEntry::groupId)
-            .findFirst()
-            .orElseThrow(() -> new VariantNotFoundException(
-                branchId,
-                effectiveVariant,
-                branch.groups().stream().map(GroupEntry::variant).toList()
-            ));
+            .findFirst();
+        if (direct.isPresent()) {
+            return direct.get();
+        }
+        // Fallback auf default: z. B. wenn tireChange angefragt wird, aber Radwechsel-Saison
+        // ausgeschaltet ist, soll die Buchung in der Default-Gruppe landen statt zu crashen.
+        var fallback = branch.groups().stream()
+            .filter(g -> "default".equals(g.variant()))
+            .map(GroupEntry::groupId)
+            .findFirst();
+        if (fallback.isPresent()) {
+            log.warn("Variant '{}' not available for branch '{}', falling back to 'default'",
+                effectiveVariant, branchId);
+            return fallback.get();
+        }
+        throw new VariantNotFoundException(
+            branchId,
+            effectiveVariant,
+            branch.groups().stream().map(GroupEntry::variant).toList()
+        );
     }
 
     public boolean isTireChangeEnabled() {

@@ -78,7 +78,7 @@ describe('NotesContainerComponent', () => {
     it('should expose currentExtras with defaults initially', () => {
       const exposed = component as unknown as { currentExtras: () => NotesExtras };
       expect(exposed.currentExtras()).toEqual({
-        mobilityOption: 'none',
+        
         appointmentPreference: 'anytime',
         callbackOption: 'none'
       });
@@ -108,7 +108,7 @@ describe('NotesContainerComponent', () => {
   describe('onExtrasChanged', () => {
     it('should update currentExtras when extras change', () => {
       const extras: NotesExtras = {
-        mobilityOption: 'luxury',
+        
         appointmentPreference: 'afternoon',
         callbackOption: 'yes'
       };
@@ -124,7 +124,7 @@ describe('NotesContainerComponent', () => {
   describe('onContinue', () => {
     it('should save note and extras to store and navigate', () => {
       const extras: NotesExtras = {
-        mobilityOption: 'mid-range',
+        
         appointmentPreference: 'morning',
         callbackOption: 'yes'
       };
@@ -175,7 +175,7 @@ describe('NotesContainerComponent', () => {
       const exposed = component as unknown as { onContinue: () => void };
       exposed.onContinue();
       expect(store.notesExtras()).toEqual({
-        mobilityOption: 'none',
+        
         appointmentPreference: 'anytime',
         callbackOption: 'none'
       });
@@ -192,7 +192,7 @@ describe('NotesContainerComponent', () => {
 
     it('should clear booking note and notesExtras in store before navigating back', () => {
       store.setBookingNote('Test note');
-      store.setNotesExtras({ mobilityOption: 'luxury', appointmentPreference: 'afternoon', callbackOption: 'yes' });
+      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes' });
 
       const exposed = component as unknown as { onBack: () => void };
       exposed.onBack();
@@ -232,7 +232,7 @@ describe('NotesContainerComponent', () => {
 
     it('should reflect notesExtras from store', () => {
       const extras: NotesExtras = {
-        mobilityOption: 'compact-car',
+        
         appointmentPreference: 'morning',
         callbackOption: 'yes'
       };

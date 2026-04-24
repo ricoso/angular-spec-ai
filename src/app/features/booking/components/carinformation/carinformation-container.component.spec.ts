@@ -140,10 +140,4 @@ describe('CarinformationContainerComponent', () => {
     });
   });
 
-  describe('onReturningCustomer', () => {
-    it('should be callable without throwing', () => {
-      const exposed = component as unknown as { onReturningCustomer: () => void };
-      expect(() => { exposed.onReturningCustomer(); }).not.toThrow();
-    });
-  });
 });

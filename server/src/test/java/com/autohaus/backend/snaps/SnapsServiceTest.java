@@ -32,7 +32,10 @@ class SnapsServiceTest {
     @BeforeEach
     void setUp() {
         when(setupService.resolveGroupId(anyString(), any())).thenReturn("mock-group-id");
-        OperationIdMapper mapper = new OperationIdMapper();
+        // Operations API returns empty list — mapper passes through hex IDs as-is,
+        // drops frontend keys. Tests below use hex IDs in SnapRequestDto.
+        when(softnetApi.getOperations(anyString())).thenReturn(List.of());
+        OperationIdMapper mapper = new OperationIdMapper(softnetApi);
         service = new SnapsService(softnetApi, mapper, snapCache, setupService);
     }
 

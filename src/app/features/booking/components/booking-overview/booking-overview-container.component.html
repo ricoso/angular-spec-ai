@@ -50,7 +50,7 @@
       }
 
       <app-price-tile
-        [mobilityOption]="store.selectedMobilityOption()"
+        [rentCategoryName]="store.selectedRentCategoryName()"
         [appointmentPreference]="store.selectedAppointmentPreference()"
         [callbackOption]="store.selectedCallbackOption()"
         [bookingNote]="store.bookingNote() ?? ''"
@@ -79,11 +79,9 @@
         (click)="onSubmit()"
       >
         @if (hasSubmitted()) {
-          <mat-icon aria-hidden="true">check</mat-icon>
-          {{ bookingOverview.navigation.submitted | translate }}
+          <span>{{ bookingOverview.navigation.submitted | translate }}</span>
         } @else {
-          {{ bookingOverview.navigation.submit | translate }}
-          <mat-icon aria-hidden="true">send</mat-icon>
+          <span>{{ bookingOverview.navigation.submit | translate }}</span>
         }
       </button>
     </nav>

@@ -8,7 +8,7 @@ import { AppointmentApiService } from '../services/appointment-api.service';
 import { BookingApiService } from '../services/booking-api.service';
 import { RentCategoryApiService } from '../services/rent-category-api.service';
 
-import { BookingStore } from './booking.store';
+import { BookingStore, mapAppointmentPreferenceToSoftnet } from './booking.store';
 
 describe('BookingStore', () => {
   let store: InstanceType<typeof BookingStore>;
@@ -325,42 +325,42 @@ describe('BookingStore', () => {
     });
 
     it('should have default computed values initially', () => {
-      expect(store.selectedMobilityOption()).toBe('none');
       expect(store.selectedAppointmentPreference()).toBe('anytime');
       expect(store.selectedCallbackOption()).toBe('none');
+      expect(store.callbackRequested()).toBe(false);
     });
 
     it('should set notesExtras', () => {
-      const extras = { mobilityOption: 'mid-range' as const, appointmentPreference: 'morning' as const, callbackOption: 'yes' as const };
+      const extras = { appointmentPreference: 'morning' as const, callbackOption: 'yes' as const };
       store.setNotesExtras(extras);
       expect(store.notesExtras()).toEqual(extras);
     });
 
     it('should update hasNotesExtras to true after set', () => {
-      store.setNotesExtras({ mobilityOption: 'none', appointmentPreference: 'anytime', callbackOption: 'none' });
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'none' });
       expect(store.hasNotesExtras()).toBe(true);
     });
 
     it('should update computed signals after set', () => {
-      store.setNotesExtras({ mobilityOption: 'luxury', appointmentPreference: 'afternoon', callbackOption: 'yes' });
-      expect(store.selectedMobilityOption()).toBe('luxury');
+      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes' });
       expect(store.selectedAppointmentPreference()).toBe('afternoon');
       expect(store.selectedCallbackOption()).toBe('yes');
+      expect(store.callbackRequested()).toBe(true);
     });
 
     it('should clear notesExtras', () => {
-      store.setNotesExtras({ mobilityOption: 'compact-car', appointmentPreference: 'morning', callbackOption: 'yes' });
+      store.setNotesExtras({ appointmentPreference: 'morning', callbackOption: 'yes' });
       store.clearNotesExtras();
       expect(store.notesExtras()).toBeNull();
       expect(store.hasNotesExtras()).toBe(false);
     });
 
     it('should reset computed signals after clear', () => {
-      store.setNotesExtras({ mobilityOption: 'luxury', appointmentPreference: 'afternoon', callbackOption: 'yes' });
+      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes' });
       store.clearNotesExtras();
-      expect(store.selectedMobilityOption()).toBe('none');
       expect(store.selectedAppointmentPreference()).toBe('anytime');
       expect(store.selectedCallbackOption()).toBe('none');
+      expect(store.callbackRequested()).toBe(false);
     });
   });
 
@@ -383,6 +383,64 @@ describe('BookingStore', () => {
       store.resetBookingSubmission();
       expect(store.hasBookingError()).toBe(false);
       expect(store.hasBookingSubmitted()).toBe(false);
+    });
+  });
+
+  describe('selectedServiceLabels', () => {
+    it('returns empty list when no services are selected', () => {
+      expect(store.selectedServiceLabels()).toEqual([]);
+    });
+
+    it('returns each selected sub-option as a separate label', () => {
+      store.confirmServiceOptions('inspection', ['inspection', 'oil-change', 'brake-check']);
+      const labels = store.selectedServiceLabels();
+      expect(labels).toHaveLength(3);
+      expect(labels).toContain('booking.services.inspection.options.inspection');
+      expect(labels).toContain('booking.services.inspection.options.oilChange');
+      expect(labels).toContain('booking.services.inspection.options.brakeCheck');
+    });
+
+    it('uses the service title when no sub-options are selected', () => {
+      store.toggleService('brake-fluid'); // keine options
+      const labels = store.selectedServiceLabels();
+      expect(labels).toHaveLength(1);
+      expect(labels[0]).toBe('booking.services.brakeFluid.title');
+    });
+  });
+
+  describe('mapAppointmentPreferenceToSoftnet', () => {
+    it('maps morning to AM', () => {
+      expect(mapAppointmentPreferenceToSoftnet('morning')).toBe('AM');
+    });
+
+    it('maps afternoon to PM', () => {
+      expect(mapAppointmentPreferenceToSoftnet('afternoon')).toBe('PM');
+    });
+
+    it('maps anytime to undefined (filter omitted)', () => {
+      expect(mapAppointmentPreferenceToSoftnet('anytime')).toBeUndefined();
+    });
+  });
+
+  describe('selectedRentCategoryName', () => {
+    it('returns null when no rent category is selected', () => {
+      expect(store.selectedRentCategoryName()).toBeNull();
+    });
+  });
+
+  describe('callbackRequested computed', () => {
+    it('is false initially', () => {
+      expect(store.callbackRequested()).toBe(false);
+    });
+
+    it('is true when callbackOption is yes', () => {
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'yes' });
+      expect(store.callbackRequested()).toBe(true);
+    });
+
+    it('is false when callbackOption is none', () => {
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'none' });
+      expect(store.callbackRequested()).toBe(false);
     });
   });
 
