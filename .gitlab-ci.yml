@@ -356,12 +356,16 @@ deploy feature:
       git checkout -b "$BRANCH_NAME"
       yq eval ".global.appVersion = \"$TAG_RC\"" -i environments/dev/values.yaml
       git add environments/dev/values.yaml
-      git commit -m "chore(dev): bump appVersion to $TAG_RC"
-      git push "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_NAME" \
-        -o merge_request.create=true \
-        -o merge_request.target="$TARGET_PROJECT_BRANCH" \
-        -o merge_request.remove_source_branch \
-        -o merge_request.merge_when_pipeline_succeeds
+      if git diff --cached --quiet; then
+        echo "DEV: appVersion already $TAG_RC — skipping"
+      else
+        git commit -m "chore(dev): bump appVersion to $TAG_RC"
+        git push "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_NAME" \
+          -o merge_request.create=true \
+          -o merge_request.target="$TARGET_PROJECT_BRANCH" \
+          -o merge_request.remove_source_branch \
+          -o merge_request.merge_when_pipeline_succeeds
+      fi
   rules: *rules_feature_only
 
 create release:
@@ -383,12 +387,16 @@ create release:
       git checkout -b "$BRANCH_DEV"
       yq eval ".global.appVersion = \"$TAG\"" -i environments/dev/values.yaml
       git add environments/dev/values.yaml
-      git commit -m "chore(dev): release $TAG"
-      git push "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_DEV" \
-        -o merge_request.create=true \
-        -o merge_request.target="$TARGET_PROJECT_BRANCH" \
-        -o merge_request.remove_source_branch \
-        -o merge_request.merge_when_pipeline_succeeds
+      if git diff --cached --quiet; then
+        echo "DEV: appVersion already $TAG — skipping"
+      else
+        git commit -m "chore(dev): release $TAG"
+        git push "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_DEV" \
+          -o merge_request.create=true \
+          -o merge_request.target="$TARGET_PROJECT_BRANCH" \
+          -o merge_request.remove_source_branch \
+          -o merge_request.merge_when_pipeline_succeeds
+      fi
 
       # PROD MR — manual merge required
       git checkout "$TARGET_PROJECT_BRANCH"
@@ -396,9 +404,13 @@ create release:
       git checkout -b "$BRANCH_PROD"
       yq eval ".global.appVersion = \"$TAG\"" -i environments/prod/values.yaml
       git add environments/prod/values.yaml
-      git commit -m "chore(prod): release $TAG"
-      git push "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_PROD" \
-        -o merge_request.create=true \
-        -o merge_request.target="$TARGET_PROJECT_BRANCH" \
-        -o merge_request.remove_source_branch
+      if git diff --cached --quiet; then
+        echo "PROD: appVersion already $TAG — skipping"
+      else
+        git commit -m "chore(prod): release $TAG"
+        git push "https://oauth2:${ENV_REPO_TOKEN}@${CI_SERVER_HOST}/${ENV_REPO_PATH}.git" "HEAD:$BRANCH_PROD" \
+          -o merge_request.create=true \
+          -o merge_request.target="$TARGET_PROJECT_BRANCH" \
+          -o merge_request.remove_source_branch
+      fi
   rules: *rules_main_only
