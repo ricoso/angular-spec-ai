@@ -37,17 +37,19 @@ Volle Buchungsstrecke mit Filialauswahl zu Beginn:
 
 Wenn die Einbettung auf einer filialspezifischen Unterseite erfolgt, kann die Filiale per URL-Parameter direkt gesetzt werden. Der Kunde überspringt dann die Filialauswahl und startet bei der Markenauswahl.
 
+**Es werden zwei Parameter benötigt: `branchId` und `groupId`** — der Deep-Link-Guard validiert beide gegen das Backend, bevor er die Filialauswahl überspringt. Pro Filiale gibt es zwei Group-IDs (Standard-Service + Reifenwechsel) — beide finden Sie in der mitgelieferten Excel-Tabelle `Names_and_IDs.xlsx`, jeweils zusammen mit der fertigen iframe-URL in der Spalte `iframe-URL`.
+
 ```html
-<!-- Beispiel: Audi Mettmann -->
+<!-- Beispiel: Audi Mettmann (Standard-Service) -->
 <iframe
-  src="https://gs-terminbuchungs-app.greensand-67f75bb2.westeurope.azurecontainerapps.io/home/location?branchId=68f606798d2bb4389ed1af51"
+  src="https://gs-terminbuchungs-app.greensand-67f75bb2.westeurope.azurecontainerapps.io/home/location?branchId=68f606798d2bb4389ed1af51&groupId=6908807454f4bb2b69b03fde"
   title="Termin Audi Mettmann"
   style="width: 100%; height: 900px; border: 0;"
   loading="lazy">
 </iframe>
 ```
 
-Die `branchId` pro Filiale finden Sie in der mitgelieferten Excel-Tabelle `Names_and_IDs.xlsx`.
+Pro Filiale also bis zu zwei iframe-URLs in der Excel: eine für Standard, eine für Reifenwechsel. Beide haben die selbe `branchId`, aber unterschiedliche `groupId`.
 
 ---
 
