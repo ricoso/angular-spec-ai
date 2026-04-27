@@ -84,6 +84,22 @@ Dieses Requirement fuehrt ein:
 
 - (aa) **Setup-Variant Fallback auf `default` (500er Fix):** `SetupService.resolveGroupId(branchId, variant)` warf `VariantNotFoundException` (HTTP 500), wenn eine Variant (z. B. `tireChange`) in `setup.json` fuer eine Branch nicht existiert ODER durch `applyFeatureToggle` bei ausgeschalteter Radwechsel-Saison herausgefiltert wurde. Frontend fragte trotzdem `tireChange` an → Crash. Fix: fallback auf `default`-Variant, wenn die angefragte Variant nicht verfuegbar ist (mit `log.warn`). Nur noch Exception, wenn auch keine `default`-Gruppe existiert. Neue Tests: `resolveGroupId_fallsBackToDefaultWhenVariantMissing`, `..._fallsBackToDefaultWhenSeasonDisabled`, `..._throwsVariantNotFoundWhenNoDefaultExists`.
 
+- (bb) **Brand-Selection-Text umformuliert:** „Welche Marke möchten Sie servicen lassen?" (DE) / „Which brand would you like to have serviced?" (EN) war stilistisch sperrig. Neu: „Welche Fahrzeugmarke fahren Sie?" / „Which vehicle brand do you drive?"; Subtitle: „Bitte wählen Sie die gewünschte Marke aus." / „Please choose the brand you need." — kürzer, näher am Kundenwording. Keys in `src/app/core/i18n/translations.ts`.
+
+- (cc) **iframe-URL-Format: Hash-Routing-Bug.** Im Excel `Names_and_IDs.xlsx` waren alle 54 `iframe-URL`-Spalten im Format `.../#/home/location?branchId=...&groupId=...`. Angular läuft aber mit **Path-Routing** (`provideRouter(routes)` ohne `withHashLocation()`), d. h. alles nach `#` wird vom Browser verworfen → der `deepLinkGuard` sieht keine Query-Params → Filialauswahl wird gezeigt. Fix: Excel-Spalte via Python-Skript vereinheitlicht auf `.../home/location?branchId=<branchId>` (ohne `#`, ohne `groupId` — Radwechsel-Variant wird später anhand der `branchId` bestimmt). Default + tireChange-Zeilen bekommen identische URL; `group-ID`-Spalte bleibt als interne Referenz. `docs/iframe-embed-test.html` analog gefixt (`buildUrl()` baut `?branchId=` statt `/#/home/...`).
+
+- (dd) **iframe-Embed-Test-HTML (`docs/iframe-embed-test.html`) ausgebaut:** Von 4 Wuppertal-Einträgen auf alle 54 aus dem Excel. Gruppierung nach `branchId` (robust bei Namens-Varianten wie „Essen Kray" vs. „Essen -Kray" oder „Velbert" vs. „Volkswagen und Audi Velbert"). Search-Filter oben (filtert Branch-Name + Adresse + Full-Name), Counter unten („X von 29 Standorten"). Bei Filialen mit mehreren default-Einträgen (Leverkusen BS + GmbH) werden Vollnamen auf den Buttons angezeigt. Close-Button (×) des Overlay neu gestylt: transparent, dunkelgrau, `font-size: 3rem`, `font-weight: 300`, Hover-Opacity — kein Hintergrund, kein Border.
+
+- (ee) **Kunden-Einbindungs-Anleitung (`docs/kunden-einbindung.md`)** neu angelegt: CSP-Freigabe-Hinweis (`https://www.gottfried-schultz.de` whitelisted), Minimal-iframe-Snippet, Deep-Link mit `branchId`, responsive Höhe (Desktop 900px / Mobile 1200px), Overlay-/Modal-Variante als Option, Feature-Überblick, Kontakt-Punkt für CSP-Probleme. Dient als copy-paste-tauglicher Brief/Mail an Kundenseiten-Entwickler.
+
+- (ff) **CSP `APP_FRAME_ANCESTORS` um localhost-Testdomains erweitert:** Für lokales iframe-Testing via `npx http-server -p 8080` (Port 8080 von `docs/`) wurde `http://localhost:8080` und `http://127.0.0.1:8080` in die Azure-Env-Variable `APP_FRAME_ANCESTORS` aufgenommen — zusätzlich zum Prod-Host `https://www.gottfried-schultz.de` und `'self'`. Setzung per `az containerapp update --set-env-vars`, keine Image-Rebuild nötig.
+
+- (gg) **Floating-Overlay FAB-Bug: Viereck im Kreis.** Der Warenkorb-FAB (`floating-overlay__fab`, `mat-icon-button`) zeigte ein sichtbares viereckiges Element mitten im runden blauen Button. Ursache: `.icon-framed` hat default einen viereckigen `border` + `box-shadow`, die in MDC-Buttons über eine Override-Regel (`_utilities.scss` Zeile 154 ff.) abgeschaltet werden — aber nur für `mat-flat-button`, `mat-raised-button`, `mat-fab`, `mat-mini-fab`. `mat-icon-button` fehlte in der Liste. Fix: `[mat-icon-button] &` zur Liste ergänzt. Zusätzlich: FAB von `width/height/min-width: 3em` auf `2.5em` verkleinert (kompakterer blauer Rand um das Icon).
+
+- (hh) **iframe-Detection + Brand-Selection Back-Button im iframe ausblenden.** Wenn die App per Deep-Link (`?branchId=...`) im iframe eingebettet läuft, ist die Filiale bereits durch die URL gesetzt — der „Zurück"-Button auf der Marken-Auswahl-Seite würde zurück zur Filialauswahl führen, was in diesem Kontext sinnlos/irreführend ist. Umsetzung: `main.ts` prüft `window.self !== window.top` (mit try/catch gegen Cross-Origin-Fehler) und setzt `document.documentElement.classList.add('is-embedded')`. Globale CSS-Regel in `src/styles.scss`: `:root.is-embedded .brand-selection__back-button { display: none; }`. Gezielt nur auf dieser einen Seite und nur im iframe — alle anderen Zurück-Buttons und der direkte Aufruf (nicht eingebettet) bleiben unverändert.
+
+- (ii) **Kundendaten-Formular: Zurück/Weiter-Button mit Pfeil-Icons, Anpassung:** Weiter-Button (`carinformation__continue-button`) hat jetzt `arrow_forward`-Icon **vor** dem Text („→ Zur Buchungsübersicht") — konsistent mit dem `arrow_back` des Zurück-Buttons, beide Pfeile in Leserichtung links vom Text.
+
 - (t) **Workshop-Kalender: Ausgewaehlter Tag + naechster Business-Tag, ALLE Slots pro Tag.**
   - Vorher: `mode: 'date-range'` + `.find(day => day.date === fromDate)` → nur der EINE ausgewaehlte Tag mit evtl. 5-7 Slots (weil SoftNet bei `checkInDate=<date>` stingy ist).
   - Jetzt: `mode: 'next-available'` (SoftNet `asSoonAsPossible`, breiterer Scan) + 14-Tage-Fenster + KEIN `timePreference` → Backend holt viele Slots ueber mehrere Tage.
@@ -123,10 +139,29 @@ Diese Änderungen entstanden in einer einzigen Iteration, nachdem die App das er
 | (y) | Kundendaten-Seite: Returning-Banner raus, Back/Weiter mit Pfeil-Icons | `carinformation-container.component.{html,ts,scss,spec.ts}` |
 | (z) | Form-Error-Texte reaktiv via `toSignal(valueChanges \| statusChanges)` | `customer-form.component.ts`, `vehicle-form.component.ts` |
 | (aa) | `SetupService.resolveGroupId` Fallback auf `default`-Variant (500er Fix) | `SetupService.java` + `SetupServiceTest.java` |
+| (bb) | Brand-Selection-Text umformuliert (DE + EN) | `core/i18n/translations.ts` |
+| (cc) | iframe-URLs Hash-Routing-Fix + Excel vereinheitlicht auf `?branchId=` | `Names_and_IDs.xlsx`, `docs/iframe-embed-test.html` |
+| (dd) | Test-HTML: alle 54 Einträge, Suche, Gruppierung nach branchId, Close-Button-Styling | `docs/iframe-embed-test.html` |
+| (ee) | Kunden-Einbindungs-Anleitung (iframe-Snippets, CSP, Deep-Link, Responsive) | `docs/kunden-einbindung.md` |
+| (ff) | CSP: `APP_FRAME_ANCESTORS` um `localhost:8080` + `127.0.0.1:8080` erweitert | Azure Env-Var (kein Code) |
+| (gg) | Floating-Overlay FAB: Viereck-Bug gefixt + FAB kleiner (3em → 2.5em) | `_utilities.scss`, `floating-overlay.component.scss` |
+| (hh) | iframe-Detection + Brand-Selection-Back-Button im iframe ausblenden | `main.ts`, `src/styles.scss` |
+| (ii) | Kundendaten: `arrow_forward`-Icon vor Text auf Weiter-Button (konsistent mit Back) | `carinformation-container.component.html` |
+
+**Deploy-Historie (Azure Container App `gs-terminbuchungs-app`, Registry `lhindmobility.azurecr.io`):**
+
+| Revision | Build-Run | Inhalt |
+|----------|-----------|--------|
+| `v202604240701` | `dn7` | Basis-Fixes i–x |
+| `v202604240731` | `dn9` | SetupService-Fallback (aa) |
+| `v202604240958` | `dna` | Brand-Text + Kundendaten (bb, y) |
+| `v202604241013` | `dnb` | Re-Deploy |
+| `csp202604241026` | (nur Env) | CSP-Freigabe localhost (ff) |
+| `v202604241050` | `dnc` | Brand-Text (bb) |
+| `v202604241114` | `dnd` | FAB-Shrink + icon-framed Fix (gg) |
+| `v202604241125` | `dne` | iframe-Detection + Back-Button-Hide (hh) |
 
 **Test-Status nach Iteration:** 604 Jest-Tests grün, TypeScript-Compile grün, Backend-Gradle 226 Tests grün.
-
-**Nicht deployed.** Alles lokal; nächster `az acr build` + `az containerapp update` wenn gewünscht.
 
 **E2E-Test-Luecke (Nachtrag):**
 
@@ -161,6 +196,14 @@ Empfehlung: bei jeder neuen Wizard-Seite auch einen Cart-Overlay-Sichtbarkeits-T
 - [ ] AC-24: `onReturningCustomer`-Handler entfernt (unused nach Banner-Loeschung); `MatIconModule` in Container-Component importiert
 - [ ] AC-25: Form-Fehlertexte im Kundendaten-Formular werden bei jedem Tippen reaktiv neu berechnet — z. B. Mobilfunknummer „12345" zeigt sofort „Muss mit 0 oder + beginnen". Realisiert ueber `toSignal(merge(form.valueChanges, form.statusChanges))` als Dependency aller `xxxErrors`-Computeds (statt nur `form()`)
 - [ ] AC-26: `SetupService.resolveGroupId(branchId, variant)` faellt auf `default`-Variant zurueck, wenn die angefragte Variant nicht (mehr) verfuegbar ist — verhindert HTTP 500 bei Reifenwechsel-Anfrage waehrend ausgeschalteter Radwechsel-Saison. Tests: `resolveGroupId_fallsBackToDefaultWhenVariantMissing`, `...WhenSeasonDisabled`, `...throwsWhenNoDefaultExists`
+- [ ] AC-27: Brand-Selection-Seite zeigt „Welche Fahrzeugmarke fahren Sie?" (DE) / „Which vehicle brand do you drive?" (EN) als Titel und „Bitte wählen Sie die gewünschte Marke aus." / „Please choose the brand you need." als Subtitle — i18n-Keys `booking.brand.title` und `booking.brand.subtitle`
+- [ ] AC-28: `Names_and_IDs.xlsx` iframe-URL-Spalte ist für alle 54 Zeilen auf `https://gs-terminbuchungs-app.<region>.azurecontainerapps.io/home/location?branchId=<BID>` vereinheitlicht — ohne `#`, ohne `groupId`. Default- und tireChange-Zeilen haben identische URLs (Radwechsel-Variant wird später per branchId-Regel bestimmt)
+- [ ] AC-29: `docs/iframe-embed-test.html` listet alle 29 Standorte aus dem Excel, gruppiert nach `branchId`, mit Suchfeld (Filter nach Name + Adresse + Full-Name) und Counter („X von 29 Standorten"). Overlay-Close-Button (×) transparent, dunkelgrau (`#1f2937`), `font-size: 3rem`, kein Border/Background
+- [ ] AC-30: `docs/kunden-einbindung.md` existiert und enthält: CSP-Voraussetzung, Minimal-iframe-Snippet, Deep-Link pro Filiale (nur `branchId`), responsive Höhen (Desktop 900px / Mobile 1200px), Overlay-Variante, Feature-Überblick, Kontaktpunkt
+- [ ] AC-31: Azure-Env `APP_FRAME_ANCESTORS` enthält neben `'self'` + `https://www.gottfried-schultz.de` auch `http://localhost:8080` + `http://127.0.0.1:8080` (für lokale iframe-Tests über `npx http-server`). Header `content-security-policy: frame-ancestors …` wird korrekt vom Backend ausgeliefert
+- [ ] AC-32: Floating-Overlay-FAB (Warenkorb) ist `2.5em × 2.5em` (statt 3em), `border-radius: 50%`, keine sichtbare viereckige Innen-Fläche mehr. `_utilities.scss`-Override `[mat-icon-button] &` entfernt `border` + `background` + `box-shadow` vom inneren `.icon-framed`
+- [ ] AC-33: `main.ts` setzt `document.documentElement.classList.add('is-embedded')`, wenn `window.self !== window.top` (mit try/catch für Cross-Origin-Fehler). Globale CSS-Regel `:root.is-embedded .brand-selection__back-button { display: none; }` blendet den Zurück-Button auf der Marken-Auswahl-Seite **nur im iframe** aus. Direktaufruf und alle anderen Zurück-Buttons bleiben sichtbar
+- [ ] AC-34: Weiter-Button auf der Kundendaten-Seite (`carinformation__continue-button`) zeigt `arrow_forward`-Icon **links** vom Text („→ Zur Buchungsübersicht") — parallel zum Zurück-Button mit `arrow_back` links vom Text
 
 **Excluded:**
 - Admin-UI fuer Filial-Management

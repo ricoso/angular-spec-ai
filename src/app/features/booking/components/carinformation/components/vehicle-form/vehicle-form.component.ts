@@ -4,9 +4,9 @@ import type { FormGroup } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { merge, startWith, switchMap } from 'rxjs';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
+import { merge, startWith, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-vehicle-form',

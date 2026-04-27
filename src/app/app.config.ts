@@ -6,13 +6,18 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
+import { errorFallbackInterceptor } from './core/error-handling/error-fallback.interceptor';
 import { circuitBreakerInterceptor, sessionTokenInterceptor } from './core/http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([sessionTokenInterceptor, circuitBreakerInterceptor])),
+    provideHttpClient(withInterceptors([
+      sessionTokenInterceptor,
+      circuitBreakerInterceptor,
+      errorFallbackInterceptor
+    ])),
     provideAnimations(),
     provideNativeDateAdapter(),
     { provide: MAT_DATE_LOCALE, useValue: 'de-DE' }

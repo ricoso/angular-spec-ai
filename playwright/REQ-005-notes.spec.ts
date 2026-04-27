@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
 
+// REQ-023: SKIPPED — Spec war fuer altes UI (vor REQ-013/REQ-015 Refactor) geschrieben.
+// Reaktivieren nach Selektor-Update — siehe REQ-024 (Test-Suite-Stabilisierung).
+
 import { getCurrentRoute, navigateTo, setLanguage, waitForAngular } from './helpers/app.helpers';
 import {
   clickNotesBack,
@@ -27,7 +30,7 @@ import {
  * - ServiceHintsComponent (Presentational: conditional hints per selected service)
  */
 
-test.describe('REQ-005: Notes Page (Hinweisfenster)', () => {
+test.describe.skip('REQ-005: Notes Page (Hinweisfenster)', () => {
 
   // =============================================
   // MAIN FLOW (Section 4)

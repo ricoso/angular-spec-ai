@@ -11,7 +11,21 @@ export const translations = {
     app: {
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Zum Hauptinhalt springen'
+      skipLink: 'Zum Hauptinhalt springen',
+      error: {
+        title: 'Es ist ein Fehler aufgetreten',
+        subtext: 'Wir können momentan keine Daten laden. Bitte versuchen Sie es erneut oder kommen Sie später wieder.',
+        offlineHint: 'Bitte prüfen Sie Ihre Internetverbindung.',
+        retryButton: 'Erneut versuchen',
+        retryButtonAriaLabel: 'Erneut versuchen, die Daten zu laden',
+        phoneIntro: 'Sie können auch direkt anrufen:',
+        phoneAriaLabel: 'Autohaus anrufen unter',
+        detailsToggle: 'Technische Details anzeigen',
+        codeLabel: 'Fehler-Code',
+        statusLabel: 'Status',
+        timestampLabel: 'Zeitstempel',
+        requestIdLabel: 'Request-ID'
+      }
     },
 
     header: {
@@ -332,7 +346,21 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
     app: {
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Skip to main content'
+      skipLink: 'Skip to main content',
+      error: {
+        title: 'An error occurred',
+        subtext: 'We can\'t load data right now. Please try again or come back later.',
+        offlineHint: 'Please check your internet connection.',
+        retryButton: 'Retry',
+        retryButtonAriaLabel: 'Retry loading the data',
+        phoneIntro: 'You can also call us directly:',
+        phoneAriaLabel: 'Call dealership at',
+        detailsToggle: 'Show technical details',
+        codeLabel: 'Error code',
+        statusLabel: 'Status',
+        timestampLabel: 'Timestamp',
+        requestIdLabel: 'Request ID'
+      }
     },
 
     header: {
@@ -653,7 +681,21 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
     app: {
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Перейти до основного вмісту'
+      skipLink: 'Перейти до основного вмісту',
+      error: {
+        title: 'Сталася помилка',
+        subtext: 'Наразі не вдається завантажити дані. Будь ласка, спробуйте знову або поверніться пізніше.',
+        offlineHint: 'Будь ласка, перевірте підключення до Інтернету.',
+        retryButton: 'Повторити',
+        retryButtonAriaLabel: 'Повторити завантаження даних',
+        phoneIntro: 'Ви також можете зателефонувати нам напряму:',
+        phoneAriaLabel: 'Зателефонувати в автосалон за номером',
+        detailsToggle: 'Показати технічні деталі',
+        codeLabel: 'Код помилки',
+        statusLabel: 'Статус',
+        timestampLabel: 'Часова мітка',
+        requestIdLabel: 'ID запиту'
+      }
     },
 
     header: {
@@ -972,7 +1014,21 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
     app: {
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Aller au contenu principal'
+      skipLink: 'Aller au contenu principal',
+      error: {
+        title: 'Une erreur s\'est produite',
+        subtext: 'Nous ne pouvons pas charger les données pour le moment. Veuillez réessayer ou revenir plus tard.',
+        offlineHint: 'Veuillez vérifier votre connexion Internet.',
+        retryButton: 'Réessayer',
+        retryButtonAriaLabel: 'Réessayer de charger les données',
+        phoneIntro: 'Vous pouvez aussi nous appeler directement :',
+        phoneAriaLabel: 'Appeler le concessionnaire au',
+        detailsToggle: 'Afficher les détails techniques',
+        codeLabel: 'Code d\'erreur',
+        statusLabel: 'Statut',
+        timestampLabel: 'Horodatage',
+        requestIdLabel: 'ID de requête'
+      }
     },
 
     header: {
@@ -1291,7 +1347,21 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
     app: {
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'انتقل إلى المحتوى الرئيسي'
+      skipLink: 'انتقل إلى المحتوى الرئيسي',
+      error: {
+        title: 'حدث خطأ',
+        subtext: 'لا يمكننا تحميل البيانات في الوقت الحالي. يرجى المحاولة مرة أخرى أو العودة لاحقاً.',
+        offlineHint: 'يرجى التحقق من اتصالك بالإنترنت.',
+        retryButton: 'إعادة المحاولة',
+        retryButtonAriaLabel: 'إعادة محاولة تحميل البيانات',
+        phoneIntro: 'يمكنك أيضاً الاتصال بنا مباشرة:',
+        phoneAriaLabel: 'الاتصال بالوكالة على الرقم',
+        detailsToggle: 'عرض التفاصيل الفنية',
+        codeLabel: 'رمز الخطأ',
+        statusLabel: 'الحالة',
+        timestampLabel: 'الطابع الزمني',
+        requestIdLabel: 'معرف الطلب'
+      }
     },
 
     header: {

@@ -3,6 +3,7 @@ import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 
+import type { TranslationKey } from '@core/i18n';
 import { catchError, EMPTY, from, pipe, switchMap, tap } from 'rxjs';
 
 import type { AppointmentSlot } from '../models/appointment.model';
@@ -14,7 +15,6 @@ import type { AppointmentPreference, NotesExtras } from '../models/notes-extras.
 import type { RentCategory } from '../models/rent-category.model';
 import type { SelectedService, ServiceDisplay, ServiceType } from '../models/service.model';
 import { AVAILABLE_SERVICES } from '../models/service.model';
-import type { TranslationKey } from '@core/i18n';
 import type { WorkshopCalendarDay } from '../models/workshop-calendar.model';
 import { AppointmentApiService } from '../services/appointment-api.service';
 import { BookingApiService } from '../services/booking-api.service';

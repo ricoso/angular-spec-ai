@@ -1,0 +1,83 @@
+<section
+  class="error-fallback"
+  role="alert"
+  aria-live="assertive"
+  aria-labelledby="error-fallback-title"
+  aria-describedby="error-fallback-message"
+>
+  <div class="error-fallback__icon-wrapper" aria-hidden="true">
+    <mat-icon class="error-fallback__icon">error_outline</mat-icon>
+  </div>
+
+  <h1 class="error-fallback__title" id="error-fallback-title">
+    {{ error.title | translate }}
+  </h1>
+
+  <p class="error-fallback__message" id="error-fallback-message">
+    {{ error.subtext | translate }}
+    @if (isOffline()) {
+      <span class="error-fallback__offline-hint">{{ error.offlineHint | translate }}</span>
+    }
+  </p>
+
+  <div class="error-fallback__actions">
+    <button
+      #retryButton
+      type="button"
+      mat-flat-button
+      color="primary"
+      class="error-fallback__retry"
+      [attr.aria-label]="error.retryButtonAriaLabel | translate"
+      (click)="onRetry()"
+    >
+      <mat-icon aria-hidden="true">refresh</mat-icon>
+      {{ error.retryButton | translate }}
+    </button>
+  </div>
+
+  <aside class="error-fallback__phone" role="note">
+    <mat-icon class="error-fallback__phone-icon" aria-hidden="true">phone_in_talk</mat-icon>
+    <p class="error-fallback__phone-text">
+      {{ error.phoneIntro | translate }}
+      <a
+        class="error-fallback__phone-link"
+        [href]="phoneTelHref()"
+        [attr.aria-label]="(error.phoneAriaLabel | translate) + ' ' + phoneNumber()"
+      >{{ phoneNumber() }}</a>
+    </p>
+  </aside>
+
+  @if (criticalError(); as err) {
+    <details class="error-fallback__details">
+      <summary class="error-fallback__summary">
+        <mat-icon class="error-fallback__summary-icon" aria-hidden="true">info_outline</mat-icon>
+        <span class="error-fallback__summary-text">{{ error.detailsToggle | translate }}</span>
+        <mat-icon class="error-fallback__chevron" aria-hidden="true">expand_more</mat-icon>
+      </summary>
+      <div class="error-fallback__details-body">
+        <ul class="error-fallback__detail-list">
+          <li class="error-fallback__detail-item">
+            <span class="error-fallback__detail-label">{{ error.codeLabel | translate }}:</span>
+            <span class="error-fallback__detail-value">{{ err.code }}</span>
+          </li>
+          @if (err.httpStatus !== undefined) {
+            <li class="error-fallback__detail-item">
+              <span class="error-fallback__detail-label">{{ error.statusLabel | translate }}:</span>
+              <span class="error-fallback__detail-value">{{ err.httpStatus }}</span>
+            </li>
+          }
+          <li class="error-fallback__detail-item">
+            <span class="error-fallback__detail-label">{{ error.timestampLabel | translate }}:</span>
+            <span class="error-fallback__detail-value">{{ err.timestamp }}</span>
+          </li>
+          @if (err.requestId) {
+            <li class="error-fallback__detail-item">
+              <span class="error-fallback__detail-label">{{ error.requestIdLabel | translate }}:</span>
+              <span class="error-fallback__detail-value">{{ err.requestId }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    </details>
+  }
+</section>

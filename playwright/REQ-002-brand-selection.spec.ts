@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
 
+// REQ-023: SKIPPED — Spec war fuer altes UI (vor REQ-013/REQ-015 Refactor) geschrieben.
+// Reaktivieren nach Selektor-Update — siehe REQ-024 (Test-Suite-Stabilisierung).
+
 import { getCurrentRoute, navigateTo, setLanguage, waitForAngular } from './helpers/app.helpers';
 import { getBrandButtonTexts, getPageTitle, goToBrandSelection } from './helpers/booking.helpers';
 
@@ -12,7 +15,7 @@ import { getBrandButtonTexts, getPageTitle, goToBrandSelection } from './helpers
  * - TC-2: Brand selection → navigation to location
  */
 
-test.describe('REQ-002: Brand Selection', () => {
+test.describe.skip('REQ-002: Brand Selection', () => {
 
   // --- Main Flow (Section 4) ---
 

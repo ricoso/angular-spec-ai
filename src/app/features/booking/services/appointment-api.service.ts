@@ -99,7 +99,7 @@ export class AppointmentApiService {
         mode: 'next-available',
         brandName: brandName ?? '',
         variant: variant ?? 'default',
-        timePreference: timePreference,
+        timePreference,
       })
     );
 
@@ -138,7 +138,7 @@ export class AppointmentApiService {
   public async getAppointment(appointmentId: string, branchId: string, variant?: 'default' | 'tireChange'): Promise<AppointmentResponse> {
     const params: Record<string, string> = { branchId };
     if (variant) {
-      params['variant'] = variant;
+      params.variant = variant;
     }
     const response = await firstValueFrom(
       this.http.get<ApiResponse<AppointmentResponse>>(`${this.apiUrl}/appointments/${appointmentId}`, { params })

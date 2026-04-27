@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REQ-025 API-Driven Content - Mockup (kombinierte Übersicht)</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* =========================================================================
+       CSS Custom Properties - Design System (from _variables.scss)
+       ========================================================================= */
+    :root {
+      /* Brand Colors */
+      --color-primary: #667eea;
+      --color-primary-hover: #5a67d8;
+      --color-secondary: #764ba2;
+      --color-accent: #ed8936;
+
+      /* Text Colors (WCAG AA) */
+      --color-text-primary: #1a1a1a;
+      --color-text-secondary: #595959;
+      --color-text-muted: #767676;
+      --color-text-on-primary: #ffffff;
+      --color-text-on-dark: #ffffff;
+
+      /* Background Colors */
+      --color-background-page: #f8f9fa;
+      --color-background-surface: #ffffff;
+      --color-background-hover: #f5f5f5;
+
+      /* Border & Divider */
+      --color-border: #e0e0e0;
+      --color-divider: #eeeeee;
+
+      /* Semantic Colors */
+      --color-error: #c62828;
+      --color-success: #2e7d32;
+      --color-warning: #e65100;
+      --color-info: #1565c0;
+      --color-info-bg: #e3f2fd;
+      --color-info-border: #90caf9;
+
+      /* Focus */
+      --color-focus-ring: #005fcc;
+
+      /* Shadows */
+      --shadow-small: 0 0.0625em 0.125em rgba(0, 0, 0, 0.1);
+      --shadow-medium: 0 0.25em 0.5em rgba(0, 0, 0, 0.1);
+      --shadow-large: 0 0.5em 1em rgba(0, 0, 0, 0.15);
+
+      /* Typography */
+      --font-size-base: 1em;
+      --font-size-xs: 0.875em;
+      --font-size-sm: 1em;
+      --font-size-md: 1.125em;
+      --font-size-lg: 1.25em;
+      --font-size-xl: 1.5em;
+      --font-size-2xl: 2em;
+
+      --line-height-tight: 1.25;
+      --line-height-normal: 1.5;
+      --line-height-relaxed: 1.75;
+
+      /* Spacing */
+      --spacing-xs: 0.25em;
+      --spacing-sm: 0.5em;
+      --spacing-md: 1em;
+      --spacing-lg: 1.5em;
+      --spacing-xl: 2em;
+
+      /* Border Radius */
+      --radius-sm: 0.25em;
+      --radius-md: 0.5em;
+      --radius-lg: 0.75em;
+      --radius-xl: 1em;
+      --radius-full: 50%;
+
+      /* Touch Targets */
+      --touch-target-min: 2.75em;
+    }
+
+    /* =========================================================================
+       Reset & Base
+       ========================================================================= */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      font-size: 16px;
+      line-height: var(--line-height-normal);
+      color: var(--color-text-primary);
+      background-color: var(--color-background-page);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Visually Hidden / Screen Reader Only */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Skip Link */
+    .skip-link {
+      position: absolute;
+      top: -3em;
+      left: 0;
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      text-decoration: none;
+      z-index: 1000;
+      transition: top 0.2s;
+    }
+
+    .skip-link:focus {
+      top: var(--spacing-sm);
+    }
+
+    /* =========================================================================
+       App Layout
+       ========================================================================= */
+    .app-layout {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--color-background-page);
+    }
+
+    .app-main {
+      flex: 1;
+      padding: var(--spacing-md);
+      width: 100%;
+      max-width: 80em;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 48em) {
+      .app-main {
+        padding: var(--spacing-xl);
+      }
+    }
+
+    /* =========================================================================
+       Icon Framed (from _utilities.scss)
+       ========================================================================= */
+    .icon-framed {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5em;
+      height: 2.5em;
+      background: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-small);
+    }
+
+    .icon-framed--sm {
+      width: 2em;
+      height: 2em;
+    }
+
+    .icon-framed--primary {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .icon-framed--info {
+      border-color: var(--color-info-border);
+      color: var(--color-info);
+    }
+
+    .material-icons {
+      font-size: 1.5em;
+      vertical-align: middle;
+    }
+
+    /* =========================================================================
+       Header (from header-container.component)
+       ========================================================================= */
+    .header {
+      background-color: var(--color-background-surface);
+      border-bottom: 0.0625em solid var(--color-border);
+      box-shadow: var(--shadow-small);
+    }
+
+    .header__content {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      max-width: 80em;
+      margin: 0 auto;
+      min-height: 3.5em;
+    }
+
+    .header__logo-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      text-decoration: none;
+      color: inherit;
+      min-height: var(--touch-target-min);
+      padding: var(--spacing-xs);
+      border-radius: var(--radius-sm);
+      transition: background-color 0.2s ease;
+    }
+
+    .header__logo-link:hover {
+      background-color: var(--color-background-hover);
+    }
+
+    .header__logo-link:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .header__logo-container {
+      width: 2.5em;
+      height: 2.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .header__logo-circle {
+      width: 2.5em;
+      height: 2.5em;
+      border-radius: var(--radius-full);
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: var(--font-size-sm);
+      letter-spacing: 0.05em;
+    }
+
+    .header__company {
+      display: flex;
+      flex-direction: column;
+      line-height: var(--line-height-tight);
+    }
+
+    .header__company-name {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .header__company-subtitle {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+
+    .header__spacer {
+      flex: 1;
+    }
+
+    .header__icon-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      min-width: var(--touch-target-min);
+      min-height: var(--touch-target-min);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      position: relative;
+      padding: 0;
+      color: var(--color-text-primary);
+    }
+
+    .header__icon-button:hover {
+      background-color: var(--color-background-hover);
+    }
+
+    .header__icon-button:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: 0.125em;
+      right: -0.125em;
+      background-color: var(--color-accent);
+      color: var(--color-text-on-primary);
+      font-size: 0.6875em;
+      font-weight: 700;
+      min-width: 1.25em;
+      height: 1.25em;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      padding: 0 0.25em;
+    }
+
+    @media (max-width: 47.9375em) {
+      .header__company {
+        display: none;
+      }
+      .header__content {
+        padding: var(--spacing-xs) var(--spacing-sm);
+      }
+    }
+
+    /* =========================================================================
+       Mockup Annotation (visual section dividers — for combined preview only)
+       ========================================================================= */
+    .mockup-annotation {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      margin: var(--spacing-xl) 0 var(--spacing-md);
+      background: linear-gradient(90deg, rgba(102, 126, 234, 0.08), rgba(102, 126, 234, 0.02));
+      border-left: 0.25em solid var(--color-primary);
+      border-radius: var(--radius-md);
+    }
+
+    .mockup-annotation__badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.5em;
+      height: 2.5em;
+      padding: 0 var(--spacing-sm);
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+      border-radius: var(--radius-full);
+      font-weight: 700;
+      font-size: var(--font-size-md);
+    }
+
+    .mockup-annotation__title {
+      font-size: var(--font-size-lg);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin: 0;
+      line-height: var(--line-height-tight);
+    }
+
+    .mockup-annotation__desc {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+      margin: var(--spacing-xs) 0 0;
+    }
+
+    /* API-Driven Marker (small badge on changed elements) */
+    .api-driven-marker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25em;
+      padding: 0.125em 0.5em;
+      background-color: rgba(46, 125, 50, 0.12);
+      color: var(--color-success);
+      border: 0.0625em solid var(--color-success);
+      border-radius: var(--radius-sm);
+      font-size: 0.75em;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      vertical-align: middle;
+    }
+
+    .api-driven-marker .material-icons {
+      font-size: 1em;
+    }
+
+    /* =========================================================================
+       SECTION A — Brand-Selection Info-Banner (Standort + Adresse + PLZ)
+       ========================================================================= */
+    .brand-selection {
+      max-width: 70em;
+      margin: 0 auto;
+      padding: var(--spacing-lg) 0;
+    }
+
+    .brand-selection__info-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      background-color: var(--color-info-bg);
+      border: 0.0625em solid var(--color-info-border);
+      border-radius: var(--radius-md);
+      text-align: left;
+    }
+
+    .brand-selection__info-icon {
+      flex-shrink: 0;
+      color: var(--color-info);
+    }
+
+    .brand-selection__info-icon .material-icons {
+      font-size: 1.5em;
+    }
+
+    .brand-selection__info-text {
+      font-size: var(--font-size-sm);
+      color: var(--color-info);
+      font-weight: 500;
+      line-height: var(--line-height-normal);
+    }
+
+    .brand-selection__info-text strong {
+      font-weight: 700;
+    }
+
+    .brand-selection__info-text .api-driven-marker {
+      margin-left: var(--spacing-sm);
+    }
+
+    /* =========================================================================
+       SECTION B — Service-Selection (dynamic categories from API)
+       ========================================================================= */
+    .service-selection {
+      max-width: 70em;
+      margin: 0 auto;
+      padding: var(--spacing-md) 0;
+    }
+
+    .service-selection__title {
+      font-size: var(--font-size-2xl);
+      line-height: var(--line-height-tight);
+      color: var(--color-text-primary);
+      margin: 0 0 var(--spacing-sm);
+      font-weight: 700;
+    }
+
+    .service-selection__subtitle {
+      font-size: var(--font-size-md);
+      line-height: var(--line-height-normal);
+      color: var(--color-text-secondary);
+      margin: 0 0 var(--spacing-lg);
+    }
+
+    .service-selection__branch-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      background: var(--color-background-surface);
+      border: 0.0625em dashed var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+      margin: 0 0 var(--spacing-lg);
+    }
+
+    .service-selection__branch-hint .material-icons {
+      font-size: 1em;
+      color: var(--color-info);
+    }
+
+    .service-selection__grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--spacing-lg);
+    }
+
+    @media (min-width: 48em) {
+      .service-selection__grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 64em) {
+      .service-selection__grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .service-card {
+      position: relative;
+      background-color: var(--color-background-surface);
+      border: 0.125em solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      text-align: center;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .service-card:hover {
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-medium);
+    }
+
+    .service-card__api-badge {
+      position: absolute;
+      top: var(--spacing-sm);
+      right: var(--spacing-sm);
+    }
+
+    .service-card__content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .service-card__icon-frame {
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .service-card__icon-frame .material-icons {
+      font-size: 1.75em;
+      color: var(--color-primary);
+    }
+
+    .service-card__title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0;
+    }
+
+    .service-card__description {
+      font-size: var(--font-size-sm);
+      line-height: var(--line-height-normal);
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
+
+    /* =========================================================================
+       SECTION C — Notes / Hinweis-Seite
+       ========================================================================= */
+    .hints-page {
+      max-width: 70em;
+      margin: 0 auto;
+      padding: var(--spacing-md) 0 var(--spacing-xl);
+    }
+
+    .hints-page__title {
+      font-size: var(--font-size-2xl);
+      line-height: var(--line-height-tight);
+      color: var(--color-text-primary);
+      margin: 0 0 var(--spacing-xl);
+      font-weight: 700;
+    }
+
+    @media (max-width: 47.9375em) {
+      .hints-page__title {
+        font-size: var(--font-size-xl);
+      }
+    }
+
+    /* Message Section */
+    .message-section {
+      background-color: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-small);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .message-section__heading {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0 0 var(--spacing-md);
+    }
+
+    .message-section__textarea-wrapper {
+      position: relative;
+    }
+
+    .message-section__textarea {
+      width: 100%;
+      min-height: 8em;
+      padding: var(--spacing-md);
+      border: 0.125em solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: var(--font-size-sm);
+      line-height: var(--line-height-relaxed);
+      color: var(--color-text-primary);
+      background-color: var(--color-background-surface);
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+
+    .message-section__textarea::placeholder {
+      color: var(--color-text-muted);
+      font-style: italic;
+    }
+
+    .message-section__textarea:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 0.125em rgba(102, 126, 234, 0.2);
+    }
+
+    .message-section__textarea:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.0625em;
+    }
+
+    .message-section__char-count {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: var(--spacing-xs);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+    }
+
+    .message-section__placeholder-note {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      margin-top: var(--spacing-sm);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+
+    /* Service Hints */
+    .service-hints {
+      background-color: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-small);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .service-hints__header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-lg);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 0.0625em solid var(--color-divider);
+      flex-wrap: wrap;
+    }
+
+    .service-hints__heading {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0;
+    }
+
+    .service-hints__icon {
+      color: var(--color-info);
+    }
+
+    .hint-item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      border-left: 0.25em solid var(--color-warning);
+      background-color: #fff8f0;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .hint-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .hint-item__header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .hint-item__service-name {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .hint-item__icon {
+      color: var(--color-warning);
+      font-size: var(--font-size-md);
+    }
+
+    .hint-item__text {
+      font-size: var(--font-size-sm);
+      line-height: var(--line-height-relaxed);
+      color: var(--color-text-secondary);
+    }
+
+    .hint-item__source-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25em;
+      margin-top: var(--spacing-xs);
+      font-size: var(--font-size-xs);
+      font-style: italic;
+      color: var(--color-text-muted);
+    }
+
+    /* Rentcategory Price Block (NEW) */
+    .rent-price-block {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-lg);
+      padding: var(--spacing-md) var(--spacing-lg);
+      background-color: rgba(102, 126, 234, 0.08);
+      border: 0.0625em solid var(--color-primary);
+      border-left: 0.25em solid var(--color-primary);
+      border-radius: var(--radius-md);
+    }
+
+    .rent-price-block__icon {
+      flex-shrink: 0;
+      color: var(--color-primary);
+    }
+
+    .rent-price-block__icon .material-icons {
+      font-size: 1.75em;
+    }
+
+    .rent-price-block__body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+      flex: 1;
+    }
+
+    .rent-price-block__label {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .rent-price-block__category {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .rent-price-block__price {
+      font-size: var(--font-size-lg);
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .rent-price-block__price-suffix {
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      margin-left: var(--spacing-xs);
+    }
+
+    /* Notes Extras (Mobility / Appointment / Callback) */
+    .notes-extras {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    @media (min-width: 48em) {
+      .notes-extras {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .notes-extras__section {
+      background-color: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-small);
+      padding: var(--spacing-lg);
+    }
+
+    .notes-extras__heading {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0 0 var(--spacing-md);
+    }
+
+    .notes-extras__field-label {
+      display: block;
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-xs);
+      font-weight: 500;
+    }
+
+    /* Custom select (mat-select look-alike) */
+    .custom-select {
+      position: relative;
+      width: 100%;
+    }
+
+    .custom-select__field {
+      width: 100%;
+      min-height: var(--touch-target-min);
+      padding: var(--spacing-sm) var(--spacing-md);
+      padding-right: 2.5em;
+      border: 0.125em solid var(--color-border);
+      border-radius: var(--radius-md);
+      background-color: var(--color-background-surface);
+      font-family: inherit;
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      transition: border-color 0.2s;
+    }
+
+    .custom-select__field:hover {
+      border-color: var(--color-primary);
+    }
+
+    .custom-select__field:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 0.125em rgba(102, 126, 234, 0.2);
+    }
+
+    .custom-select__field:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.0625em;
+    }
+
+    .custom-select__chevron {
+      position: absolute;
+      right: var(--spacing-sm);
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--color-text-secondary);
+    }
+
+    .notes-extras__source-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25em;
+      margin-top: var(--spacing-sm);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+      font-style: italic;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      min-height: var(--touch-target-min);
+      padding: 0.625em 1.5em;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      line-height: 1;
+    }
+
+    .btn:focus-visible {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .btn--primary {
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+    }
+
+    .btn--primary:hover {
+      background-color: var(--color-primary-hover);
+      box-shadow: var(--shadow-medium);
+    }
+
+    .btn--flat {
+      background-color: var(--color-background-hover);
+      color: var(--color-text-primary);
+    }
+
+    .btn--flat:hover {
+      background-color: var(--color-border);
+    }
+
+    /* Navigation Bar */
+    .navigation-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: var(--spacing-lg);
+      border-top: 0.0625em solid var(--color-divider);
+    }
+
+    /* Footer */
+    .app-footer {
+      background: var(--color-background-surface);
+      padding: var(--spacing-md);
+      text-align: center;
+      border-top: 0.0625em solid var(--color-border);
+    }
+
+    @media (min-width: 48em) {
+      .app-footer {
+        padding: var(--spacing-lg);
+      }
+    }
+
+    .app-footer p {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-xs);
+    }
+
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      .message-section__textarea,
+      .header__logo-link,
+      .service-card,
+      .custom-select__field,
+      .btn {
+        transition: none;
+      }
+    }
+
+    /* High Contrast */
+    html[data-high-contrast="true"] {
+      --color-text-primary: #000000;
+      --color-text-secondary: #000000;
+      --color-background-page: #ffffff;
+      --color-border: #000000;
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Zum Hauptinhalt springen</a>
+
+  <div class="app-layout">
+
+    <!-- ===================================================================
+         HEADER
+         =================================================================== -->
+    <header class="header" role="banner">
+      <div class="header__content">
+        <a href="#" class="header__logo-link" aria-label="Zur Startseite">
+          <div class="header__logo-container">
+            <div class="header__logo-circle" aria-hidden="true">AH</div>
+          </div>
+          <div class="header__company">
+            <span class="header__company-name">Autohaus GmbH</span>
+            <span class="header__company-subtitle">API-Driven Content Übersicht</span>
+          </div>
+        </a>
+
+        <div class="header__spacer"></div>
+
+        <button
+          class="header__icon-button"
+          type="button"
+          aria-label="Warenkorb: 2 Services ausgewählt">
+          <span class="icon-framed icon-framed--sm" style="overflow: visible; position: relative;">
+            <span class="material-icons" aria-hidden="true">shopping_cart</span>
+            <span class="cart-badge" aria-hidden="true">2</span>
+          </span>
+        </button>
+
+        <button
+          class="header__icon-button"
+          type="button"
+          aria-label="Barrierefreiheit-Einstellungen">
+          <span class="icon-framed icon-framed--sm">
+            <span class="material-icons" aria-hidden="true">accessibility_new</span>
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================================================================
+         MAIN CONTENT (Combined Overview)
+         =================================================================== -->
+    <main id="main-content" class="app-main" role="main">
+
+      <!-- ===========================================================
+           SECTION A — Brand-Selection Info-Banner
+           =========================================================== -->
+      <div class="mockup-annotation" role="region" aria-label="Section A: Brand-Selection Info-Banner">
+        <span class="mockup-annotation__badge" aria-hidden="true">A</span>
+        <div>
+          <h2 class="mockup-annotation__title">Brand-Selection — Info-Banner mit erweiterter Adresse</h2>
+          <p class="mockup-annotation__desc">Ihr Standort kommt jetzt vollständig aus der API (Adresse + PLZ + Stadt aus SoftNet / setup.json). Kein lokales Mapping mehr.</p>
+        </div>
+      </div>
+
+      <section class="brand-selection" aria-labelledby="section-a-heading">
+        <h1 id="section-a-heading" class="sr-only">Markenauswahl mit Standort-Banner</h1>
+        <div class="brand-selection__info-banner" role="status" aria-live="polite">
+          <span class="brand-selection__info-icon">
+            <span class="icon-framed icon-framed--info" aria-hidden="true">
+              <span class="material-icons">location_on</span>
+            </span>
+          </span>
+          <span class="brand-selection__info-text">
+            Ihr Standort: <strong>Audi Mettmann</strong> &mdash; Düsseldorfer Str. 189-191, <strong>40822 Mettmann</strong>
+            <span class="api-driven-marker" aria-label="Daten aus API">
+              <span class="material-icons" aria-hidden="true">cloud_done</span>
+              API
+            </span>
+          </span>
+        </div>
+      </section>
+
+      <!-- ===========================================================
+           SECTION B — Service-Selection (dynamic categories from API)
+           =========================================================== -->
+      <div class="mockup-annotation" role="region" aria-label="Section B: Service-Selection mit dynamischen Kategorien">
+        <span class="mockup-annotation__badge" aria-hidden="true">B</span>
+        <div>
+          <h2 class="mockup-annotation__title">Service-Selection — Leistungs-Kategorien aus API</h2>
+          <p class="mockup-annotation__desc">Statt lokalem AVAILABLE_SERVICES-Mapping: pro Filiale eigene Service-Kategorien aus SoftNet (<code>/api/v1/branches/{branchId}/jobtypes</code>).</p>
+        </div>
+      </div>
+
+      <section class="service-selection" aria-labelledby="section-b-heading">
+        <h2 id="section-b-heading" class="service-selection__title">
+          Welche Leistung wünschen Sie?
+        </h2>
+        <p class="service-selection__subtitle">
+          Filial-spezifische Auswahl &mdash; jede Filiale bietet eigene Leistungen an.
+        </p>
+        <p class="service-selection__branch-hint" aria-live="polite">
+          <span class="material-icons" aria-hidden="true">storefront</span>
+          Verfügbare Leistungen für Filiale: <strong style="margin-left:0.25em;">Audi Mettmann</strong>
+        </p>
+
+        <div class="service-selection__grid" role="list">
+          <article class="service-card" role="listitem">
+            <span class="api-driven-marker service-card__api-badge" aria-label="Aus API geladen">
+              <span class="material-icons" aria-hidden="true">cloud_done</span>
+              API
+            </span>
+            <div class="service-card__content">
+              <span class="icon-framed icon-framed--primary service-card__icon-frame" aria-hidden="true">
+                <span class="material-icons">build</span>
+              </span>
+              <h3 class="service-card__title">Inspektion</h3>
+              <p class="service-card__description">
+                Reguläre Inspektion nach Hersteller-Vorgabe &mdash; Termin in Audi Mettmann buchen.
+              </p>
+            </div>
+          </article>
+
+          <article class="service-card" role="listitem">
+            <span class="api-driven-marker service-card__api-badge" aria-label="Aus API geladen">
+              <span class="material-icons" aria-hidden="true">cloud_done</span>
+              API
+            </span>
+            <div class="service-card__content">
+              <span class="icon-framed icon-framed--primary service-card__icon-frame" aria-hidden="true">
+                <span class="material-icons">tire_repair</span>
+              </span>
+              <h3 class="service-card__title">Reifenwechsel</h3>
+              <p class="service-card__description">
+                Saisonaler Reifenwechsel inkl. Auswuchten &mdash; Räder griffbereit halten.
+              </p>
+            </div>
+          </article>
+
+          <article class="service-card" role="listitem">
+            <span class="api-driven-marker service-card__api-badge" aria-label="Aus API geladen">
+              <span class="material-icons" aria-hidden="true">cloud_done</span>
+              API
+            </span>
+            <div class="service-card__content">
+              <span class="icon-framed icon-framed--primary service-card__icon-frame" aria-hidden="true">
+                <span class="material-icons">ac_unit</span>
+              </span>
+              <h3 class="service-card__title">Klima-Check</h3>
+              <p class="service-card__description">
+                Klimaanlagen-Check inkl. Desinfektion &mdash; nur in ausgewählten Filialen verfügbar.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ===========================================================
+           SECTION C — Notes / Hinweis-Seite (größte Änderungen)
+           =========================================================== -->
+      <div class="mockup-annotation" role="region" aria-label="Section C: Notes / Hinweis-Seite">
+        <span class="mockup-annotation__badge" aria-hidden="true">C</span>
+        <div>
+          <h2 class="mockup-annotation__title">Notes / Hinweis-Seite — neuer Placeholder, API-Hints, Rückruf-Default &quot;Nein&quot;, Mietwagen-Preis</h2>
+          <p class="mockup-annotation__desc">Vier Änderungen: (a) neuer Textfeld-Placeholder, (b) Service-Hints aus API, (c) Rückruf-Default = &quot;Nein&quot; statt &quot;Keine Auswahl&quot;, (d) neuer Preis-Block für Mietwagen-Kategorie.</p>
+        </div>
+      </div>
+
+      <section class="hints-page" aria-labelledby="section-c-heading">
+        <h2 id="section-c-heading" class="hints-page__title">
+          Bitte geben Sie uns weitere Hinweise zu Ihrer Buchung
+        </h2>
+
+        <!-- (a) Notes Textarea with new placeholder -->
+        <div class="message-section" role="region" aria-labelledby="message-heading">
+          <h3 id="message-heading" class="message-section__heading">
+            Möchten Sie uns noch etwas zu Ihrer Buchung mitteilen?
+          </h3>
+
+          <div class="message-section__textarea-wrapper">
+            <label for="booking-notes" class="sr-only">
+              Nachricht an uns (optional, max. 2000 Zeichen)
+            </label>
+            <textarea
+              id="booking-notes"
+              class="message-section__textarea"
+              name="bookingNotes"
+              maxlength="2000"
+              rows="5"
+              placeholder="Bitte tragen Sie hier Ihre Nachricht an uns ein."
+              aria-describedby="char-count-hint placeholder-note"
+            ></textarea>
+          </div>
+
+          <div class="message-section__char-count" id="char-count-hint" aria-live="polite">
+            <span>0 / 2000 Zeichen</span>
+          </div>
+
+          <p class="message-section__placeholder-note" id="placeholder-note">
+            <span class="material-icons" aria-hidden="true" style="font-size:1em; color:var(--color-info);">info_outline</span>
+            <span><strong>Neu:</strong> Placeholder zeigt jetzt &quot;Bitte tragen Sie hier Ihre Nachricht an uns ein.&quot;</span>
+          </p>
+        </div>
+
+        <!-- (b) Service Hints from API -->
+        <div class="service-hints" role="region" aria-labelledby="service-hints-heading">
+          <div class="service-hints__header">
+            <span class="icon-framed icon-framed--info" aria-hidden="true">
+              <span class="material-icons service-hints__icon">info_outline</span>
+            </span>
+            <h3 id="service-hints-heading" class="service-hints__heading">
+              Wichtige Hinweise zu Ihren ausgewählten Services
+            </h3>
+            <span class="api-driven-marker" aria-label="Hinweise aus API">
+              <span class="material-icons" aria-hidden="true">cloud_done</span>
+              API
+            </span>
+          </div>
+
+          <div class="hint-item" role="note" aria-label="Hinweis: Inspektion">
+            <div class="hint-item__header">
+              <span class="material-icons hint-item__icon" aria-hidden="true">warning_amber</span>
+              <span class="hint-item__service-name">Inspektion</span>
+            </div>
+            <p class="hint-item__text">
+              Hinweis-Text aus SoftNet pro Service: &quot;Bitte bringen Sie das Scheckheft mit. Die Durchführung dauert ca. 2&ndash;4 Stunden.&quot;
+            </p>
+            <span class="hint-item__source-note">
+              <span class="material-icons" aria-hidden="true" style="font-size:1em;">cloud_done</span>
+              Quelle: SoftNet (<code>jobType.hint</code>) &mdash; Text variabel pro Service
+            </span>
+          </div>
+
+          <div class="hint-item" role="note" aria-label="Hinweis: Reifenwechsel">
+            <div class="hint-item__header">
+              <span class="material-icons hint-item__icon" aria-hidden="true">warning_amber</span>
+              <span class="hint-item__service-name">Reifenwechsel</span>
+            </div>
+            <p class="hint-item__text">
+              Hinweis-Text aus SoftNet pro Service: &quot;Saisonräder bitte griffbereit halten oder im Kofferraum verstauen. Bei beschädigten Reifen informieren wir vorab über Mehrkosten.&quot;
+            </p>
+            <span class="hint-item__source-note">
+              <span class="material-icons" aria-hidden="true" style="font-size:1em;">cloud_done</span>
+              Quelle: SoftNet (<code>jobType.hint</code>) &mdash; Text variabel pro Service
+            </span>
+          </div>
+
+          <!-- (d) Rentcategory Price Block — sichtbar nur wenn Kategorie != null -->
+          <div class="rent-price-block" role="region" aria-label="Mietwagen-Preis">
+            <span class="rent-price-block__icon" aria-hidden="true">
+              <span class="material-icons">directions_car</span>
+            </span>
+            <div class="rent-price-block__body">
+              <span class="rent-price-block__label">Mietwagen-Kategorie</span>
+              <span class="rent-price-block__category">Kleinwagen</span>
+              <span>
+                <span class="rent-price-block__price">49,00 &euro;</span>
+                <span class="rent-price-block__price-suffix">pro Tag</span>
+                <span class="api-driven-marker" style="margin-left:var(--spacing-sm);" aria-label="Preis aus API">
+                  <span class="material-icons" aria-hidden="true">cloud_done</span>
+                  API
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Extras: Mobility / Appointment / Callback -->
+        <div class="notes-extras" role="group" aria-label="Weitere Optionen">
+
+          <div class="notes-extras__section" role="region" aria-labelledby="mobility-heading">
+            <h3 id="mobility-heading" class="notes-extras__heading">Mietwagen / Mobilität</h3>
+            <label class="notes-extras__field-label" for="rent-category">Mietwagen-Kategorie</label>
+            <div class="custom-select">
+              <select id="rent-category" class="custom-select__field" aria-describedby="rent-category-source">
+                <option>Keine Auswahl</option>
+                <option selected>Kleinwagen</option>
+                <option>Kompaktklasse</option>
+                <option>Mittelklasse</option>
+              </select>
+              <span class="custom-select__chevron material-icons" aria-hidden="true">expand_more</span>
+            </div>
+            <p class="notes-extras__source-note" id="rent-category-source">
+              <span class="material-icons" aria-hidden="true" style="font-size:1em;">cloud_done</span>
+              Kategorien + Preise aus SoftNet API
+            </p>
+          </div>
+
+          <div class="notes-extras__section" role="region" aria-labelledby="appt-heading">
+            <h3 id="appt-heading" class="notes-extras__heading">Wunschtermin-Zeit</h3>
+            <label class="notes-extras__field-label" for="appt-pref">Bevorzugte Tageszeit</label>
+            <div class="custom-select">
+              <select id="appt-pref" class="custom-select__field">
+                <option selected>Keine Präferenz</option>
+                <option>Vormittags (AM)</option>
+                <option>Nachmittags (PM)</option>
+              </select>
+              <span class="custom-select__chevron material-icons" aria-hidden="true">expand_more</span>
+            </div>
+          </div>
+
+          <!-- (c) Callback Dropdown — Default "Nein", KEIN "Keine Auswahl" mehr -->
+          <div class="notes-extras__section" role="region" aria-labelledby="callback-heading">
+            <h3 id="callback-heading" class="notes-extras__heading">Rückruf gewünscht?</h3>
+            <label class="notes-extras__field-label" for="callback-pref">Rückruf vom Service-Team</label>
+            <div class="custom-select">
+              <select id="callback-pref" class="custom-select__field" aria-describedby="callback-source">
+                <option>Ja</option>
+                <option selected>Nein</option>
+              </select>
+              <span class="custom-select__chevron material-icons" aria-hidden="true">expand_more</span>
+            </div>
+            <p class="notes-extras__source-note" id="callback-source">
+              <span class="material-icons" aria-hidden="true" style="font-size:1em; color:var(--color-success);">check_circle</span>
+              <strong>Neu:</strong> Default = &quot;Nein&quot; (statt &quot;Keine Auswahl&quot;) &mdash; nur Optionen Ja/Nein
+            </p>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="navigation-bar" aria-label="Seitennavigation">
+          <a
+            href="#"
+            class="btn btn--flat"
+            aria-label="Zurück zur Serviceauswahl">
+            <span class="material-icons" aria-hidden="true">arrow_back</span>
+            Zurück
+          </a>
+
+          <a
+            href="#"
+            class="btn btn--primary"
+            aria-label="Weiter zum nächsten Schritt">
+            Weiter
+            <span class="material-icons" aria-hidden="true">arrow_forward</span>
+          </a>
+        </nav>
+
+      </section>
+    </main>
+
+    <!-- ===================================================================
+         FOOTER
+         =================================================================== -->
+    <footer class="app-footer" role="contentinfo">
+      <p>Autohaus GmbH &mdash; REQ-025 API-Driven Content (Mockup)</p>
+    </footer>
+
+  </div>
+</body>
+</html>

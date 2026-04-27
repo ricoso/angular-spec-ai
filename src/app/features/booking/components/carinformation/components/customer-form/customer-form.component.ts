@@ -5,9 +5,9 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { merge, startWith, switchMap } from 'rxjs';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
+import { merge, startWith, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-customer-form',
