@@ -14,6 +14,13 @@
         class="carinformation__privacy-checkbox"
       >
         {{ carinformation.form.privacy.consent | translate }}
+        <a
+          href="https://www.gottfried-schultz.de/rechtliches/datenschutz/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="carinformation__privacy-link"
+          (click)="$event.stopPropagation()"
+        >{{ carinformation.form.privacy.privacyLink | translate }}</a>.
       </mat-checkbox>
       @if (privacyError()) {
         <p class="carinformation__privacy-error" role="alert">

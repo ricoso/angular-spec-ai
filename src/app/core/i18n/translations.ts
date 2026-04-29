@@ -262,8 +262,8 @@ export const translations = {
             error: { required: 'Bitte geben Sie den Kilometerstand ein.', digitsOnly: 'Kilometerstand darf nur Zahlen enthalten.' } },
 vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der FIN',
             error: { required: 'Bitte geben Sie die Fahrzeugidentifikationsnummer ein.', invalidLength: 'Die FIN muss genau 17 Zeichen enthalten.', invalidFormat: 'Die FIN darf nur Buchstaben und Zahlen enthalten.' } },
-          privacy: { consent: 'Ich willige in die Verarbeitung meiner personenbezogenen Daten zum Zwecke der Online-Terminvereinbarung ein. Näheres finden Sie in unserer',
-            privacyLink: 'Datenschutzerklärung',
+          privacy: { consent: 'Ich willige in die Verarbeitung meiner personenbezogenen Daten zum Zwecke der Online-Terminvereinbarung ein. Informationen',
+            privacyLink: 'hier',
             error: { required: 'Bitte bestätigen Sie die Datenschutzerklärung.' } },
           requiredHint: 'Pflichtfelder sind mit * gekennzeichnet'
         },
@@ -593,8 +593,8 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
             error: { required: 'Please enter the current mileage.', digitsOnly: 'Mileage may only contain digits.' } },
 vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of VIN',
             error: { required: 'Please enter the vehicle identification number.', invalidLength: 'The VIN must be exactly 17 characters.', invalidFormat: 'The VIN may only contain letters and digits.' } },
-          privacy: { consent: 'I consent to the processing of my personal data for the purpose of online appointment booking. More information can be found in our',
-            privacyLink: 'Privacy Policy',
+          privacy: { consent: 'I consent to the processing of my personal data for the purpose of online appointment booking. More information',
+            privacyLink: 'here',
             error: { required: 'Please accept the privacy policy.' } },
           requiredHint: 'Required fields are marked with *'
         },
