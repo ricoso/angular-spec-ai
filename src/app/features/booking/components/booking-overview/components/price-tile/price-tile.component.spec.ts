@@ -21,7 +21,7 @@ describe('PriceTileComponent', () => {
 
     fixture.componentRef.setInput('rentCategoryName', null);
     fixture.componentRef.setInput('appointmentPreference', 'anytime');
-    fixture.componentRef.setInput('callbackOption', 'none');
+    fixture.componentRef.setInput('callbackOption', 'no');
     fixture.componentRef.setInput('bookingNote', '');
 
     fixture.detectChanges();
@@ -88,7 +88,7 @@ describe('PriceTileComponent', () => {
       c as unknown as { callbackOptionLabel: () => string };
 
     it('should resolve label for "none"', () => {
-      fixture.componentRef.setInput('callbackOption', 'none');
+      fixture.componentRef.setInput('callbackOption', 'no');
       fixture.detectChanges();
       expect(exposed(component).callbackOptionLabel()).toBeTruthy();
     });

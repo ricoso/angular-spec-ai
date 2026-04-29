@@ -22,11 +22,12 @@
         </span>
         <span class="location-card__brands">
           @for (logo of branch.brandLogos; track logo.name) {
-            <img
-              [src]="logo.path"
-              [alt]="logo.name"
+            <span
+              [attr.aria-label]="logo.name"
+              role="img"
               class="location-card__brand-logo"
-            />
+              [style.--brand-logo-url]="'url(' + logo.path + ')'"
+            ></span>
           }
         </span>
       </label>

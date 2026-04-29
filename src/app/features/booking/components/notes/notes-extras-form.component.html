@@ -19,6 +19,12 @@
           }
         </mat-select>
       </mat-form-field>
+      @if (selectedRentCategoryDescription(); as desc) {
+        <p class="notes-extras__rent-category-info" role="note" aria-live="polite">
+          <mat-icon aria-hidden="true">info_outline</mat-icon>
+          <span>{{ desc }}</span>
+        </p>
+      }
     </div>
   </div>
 

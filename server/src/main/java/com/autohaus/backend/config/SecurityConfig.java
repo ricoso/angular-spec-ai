@@ -17,9 +17,12 @@ public class SecurityConfig {
     private final String frameAncestors;
 
     public SecurityConfig(
-        @Value("${app.frame-ancestors:'self' https://www.gottfried-schultz.de}") String frameAncestors
+        @Value("${app.frame-ancestors:'self' https://www.gottfried-schultz.de https://gottfried-schultz.de}") String frameAncestors
     ) {
-        this.frameAncestors = frameAncestors;
+        // REQ-025: Erlaubt mehrere Hosts (space- oder komma-getrennt). Beispiel via Env-Var:
+        //   APP_FRAME_ANCESTORS="'self' https://www.gottfried-schultz.de https://kunde-typo3.de https://*.kundedomain.de"
+        // Komma-getrennte Listen werden in Spaces normalisiert (CSP-konform).
+        this.frameAncestors = frameAncestors == null ? "'self'" : frameAncestors.replace(",", " ").trim();
     }
 
     @Bean

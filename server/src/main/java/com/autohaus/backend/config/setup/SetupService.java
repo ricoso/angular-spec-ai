@@ -46,6 +46,7 @@ public class SetupService {
         this.setupJsonPath = setupJsonPath;
     }
 
+    /** REQ-025 (Iter.3): setup.json wird beim App-Start einmal geladen. */
     @PostConstruct
     public void init() {
         String json = resolveJson();

@@ -57,6 +57,7 @@ export class WorkshopCalendarApiService {
       .sort((a, b) => a.date.localeCompare(b.date));
 
     const firstDay = daysFromResponse[0];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!firstDay) return [];
 
     const nextBusinessDay = daysFromResponse

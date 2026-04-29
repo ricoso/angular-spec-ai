@@ -3,6 +3,7 @@
   [class.service-card--selected]="isSelected()"
   [class.service-card--clickable]="!hasOptions()"
   [class.service-card--expandable]="hasOptions()"
+  [class.service-card--expanded]="isExpanded()"
   [attr.role]="hasOptions() ? 'region' : 'button'"
   [attr.aria-pressed]="hasOptions() ? null : isSelected()"
   [attr.aria-expanded]="hasOptions() ? isExpanded() : null"
@@ -16,21 +17,34 @@
   }
 
   <mat-card-content class="service-card__content">
-    <span class="icon-framed icon-framed--xl service-card__icon">
-      <img [src]="service().svgIcon" [alt]="service().titleKey | translate" class="service-card__svg-icon">
-    </span>
-    <h2 class="service-card__title">{{ service().titleKey | translate }}</h2>
-    <p class="service-card__description">{{ service().descriptionKey | translate }}</p>
+    @if (iconPath(); as ico) {
+      <span class="icon-framed icon-framed--xl service-card__icon" aria-hidden="true">
+        <img [src]="ico" [alt]="''" class="service-card__svg-icon">
+      </span>
+    } @else {
+      <span class="icon-framed icon-framed--xl service-card__icon" aria-hidden="true">
+        <mat-icon>build</mat-icon>
+      </span>
+    }
+    <h2 class="service-card__title">{{ category().name }}</h2>
+    <p class="service-card__count">{{ operationCount() }} Services</p>
 
     @if (hasOptions() && isExpanded()) {
       <div class="service-card__options" tabindex="-1" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()">
-        @for (option of service().options; track option.id) {
-          <mat-checkbox
-            class="service-card__checkbox"
-            [checked]="selectedCheckboxOptions().has(option.id)"
-            (change)="onCheckboxChange(option.id, $event.checked)">
-            {{ option.labelKey | translate }}
-          </mat-checkbox>
+        @for (op of operations(); track op.id) {
+          <div class="service-card__option">
+            <span class="service-card__option-row">
+              <mat-checkbox
+                class="service-card__checkbox"
+                [checked]="selectedCheckboxOptions().has(op.id)"
+                (change)="onCheckboxChange(op.id, $event.checked)">
+                {{ op.name }}
+              </mat-checkbox>
+            </span>
+            @if (op.description) {
+              <span class="service-card__option-desc">{{ op.description }}</span>
+            }
+          </div>
         }
 
         <div class="service-card__actions">

@@ -37,7 +37,12 @@ export class BrandSelectionContainerComponent {
   protected readonly formattedBranchAddress = computed(() => {
     const branch = this.selectedBranch();
     if (!branch) return '';
-    return branch.address.street || branch.name;
+    const { street, zip, city } = branch.address;
+    const zipCity = [zip, city].filter(part => !!part && part.trim().length > 0).join(' ').trim();
+    if (street && zipCity) {
+      return `${street}, ${zipCity}`;
+    }
+    return street || zipCity || branch.name;
   });
 
   protected onBrandSelect(brand: Brand): void {

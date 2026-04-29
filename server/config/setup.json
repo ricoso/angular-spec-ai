@@ -3,7 +3,12 @@
     {
       "branchId": "68f606798d2bb4389ed1af51",
       "name": "Audi Mettmann",
-      "address": "Düsseldorfer Str. 189-191",
+      "address": {
+        "street": "Düsseldorfer Str. 189-191",
+        "zip": "40822",
+        "city": "Mettmann",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -20,7 +25,12 @@
     {
       "branchId": "68f60ef18d2bb4389eee4ddc",
       "name": "Audi Zentrum Duisburg",
-      "address": "Düsseldorfer Landstr. 37",
+      "address": {
+        "street": "Düsseldorfer Landstr. 37",
+        "zip": "47239",
+        "city": "Duisburg",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -37,7 +47,12 @@
     {
       "branchId": "68f603148d2bb4389ec92d75",
       "name": "Audi Zentrum Düsseldorf",
-      "address": "Höherweg 210",
+      "address": {
+        "street": "Höherweg 210",
+        "zip": "40231",
+        "city": "Düsseldorf",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -54,7 +69,12 @@
     {
       "branchId": "68f60cd58d2bb4389ee98bbd",
       "name": "Audi Zentrum Essen",
-      "address": "Altendorfer Str. 50",
+      "address": {
+        "street": "Altendorfer Str. 50",
+        "zip": "45143",
+        "city": "Essen",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -71,7 +91,12 @@
     {
       "branchId": "68f60f708d2bb4389eef6e6a",
       "name": "Audi Zentrum Mülheim",
-      "address": "Düsseldorfer Str. 261",
+      "address": {
+        "street": "Düsseldorfer Str. 261",
+        "zip": "45481",
+        "city": "Mülheim an der Ruhr",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -88,7 +113,12 @@
     {
       "branchId": "68d25d008d2bb4389eb9d11a",
       "name": "Audi Zentrum Neuss",
-      "address": "Jülicher Landstrasse 41-43",
+      "address": {
+        "street": "Jülicher Landstrasse 41-43",
+        "zip": "41464",
+        "city": "Neuss",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -105,7 +135,12 @@
     {
       "branchId": "68f6053f8d2bb4389ece92b5",
       "name": "Audi Zentrum Wuppertal",
-      "address": "Uellendahler Str. 306",
+      "address": {
+        "street": "Uellendahler Str. 306",
+        "zip": "42109",
+        "city": "Wuppertal",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -121,8 +156,13 @@
     },
     {
       "branchId": "68f78b538d2bb4389e3590c5",
-      "name": "Automobil Zentrum Leverkusen",
-      "address": "Willy-Brandt-Ring 10",
+      "name": "Audi Zentrum Leverkusen",
+      "address": {
+        "street": "Willy-Brandt-Ring 10",
+        "zip": "51373",
+        "city": "Leverkusen",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -138,8 +178,13 @@
     },
     {
       "branchId": "68d25e2c8d2bb4389ebc6b45",
-      "name": "Dormagen",
-      "address": "Lübecker Straße 17",
+      "name": "Volkswagen Dormagen",
+      "address": {
+        "street": "Lübecker Straße 17",
+        "zip": "41540",
+        "city": "Dormagen",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -155,8 +200,13 @@
     },
     {
       "branchId": "68f608e98d2bb4389ed80784",
-      "name": "Erkrath",
-      "address": "Schimmelbuschstr. 1",
+      "name": "Volkswagen Erkrath",
+      "address": {
+        "street": "Schimmelbuschstr. 1",
+        "zip": "40699",
+        "city": "Erkrath",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -172,8 +222,13 @@
     },
     {
       "branchId": "68f60e658d2bb4389eed1f03",
-      "name": "Essen -Kray",
-      "address": "Kleine Schönscheidtstr. 1",
+      "name": "Volkswagen Essen-Kray",
+      "address": {
+        "street": "Kleine Schönscheidtstr. 1",
+        "zip": "45307",
+        "city": "Essen",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -189,8 +244,13 @@
     },
     {
       "branchId": "68f60df88d2bb4389eec1d39",
-      "name": "Essen Wickenburg",
-      "address": "An der Wickenburg 1",
+      "name": "Volkswagen & ŠKODA Service Wickenburg",
+      "address": {
+        "street": "An der Wickenburg 1",
+        "zip": "45128",
+        "city": "Essen",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -206,8 +266,13 @@
     },
     {
       "branchId": "68d25dbf8d2bb4389ebb6f2b",
-      "name": "Grevenbroich",
-      "address": "Lilienthalstraße 6",
+      "name": "Volkswagen Grevenbroich",
+      "address": {
+        "street": "Lilienthalstraße 6",
+        "zip": "41515",
+        "city": "Grevenbroich",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -223,8 +288,13 @@
     },
     {
       "branchId": "68f606f38d2bb4389ed2f0ba",
-      "name": "Mettmann VW",
-      "address": "Johannes-Flintrop-Str. 127",
+      "name": "Volkswagen Mettmann",
+      "address": {
+        "street": "Johannes-Flintrop-Str. 127",
+        "zip": "40822",
+        "city": "Mettmann",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -240,8 +310,13 @@
     },
     {
       "branchId": "6911dd328d2bb4389e2a01c8",
-      "name": "Mülheim Saarn",
-      "address": "Kölner Str. 25 / Ecke Sommerfeld",
+      "name": "Volkswagen Mülheim Saarn",
+      "address": {
+        "street": "Kölner Str. 25 / Ecke Sommerfeld",
+        "zip": "45481",
+        "city": "Mülheim an der Ruhr",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -257,8 +332,13 @@
     },
     {
       "branchId": "68a41f82acd563b069148661",
-      "name": "Neuss Hammer Landstr.",
-      "address": "Hammer Landstr. 99",
+      "name": "Volkswagen Neuss",
+      "address": {
+        "street": "Hammer Landstr. 99",
+        "zip": "41460",
+        "city": "Neuss",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -274,8 +354,13 @@
     },
     {
       "branchId": "68f608428d2bb4389ed6543f",
-      "name": "Schultz, Düsseldorf Benrath",
-      "address": "Professor-OehlerStr. 13",
+      "name": "Volkswagen Düsseldorf-Benrath",
+      "address": {
+        "street": "Professor-OehlerStr. 13",
+        "zip": "40597",
+        "city": "Düsseldorf",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -291,8 +376,13 @@
     },
     {
       "branchId": "68f60b838d2bb4389ee68bd2",
-      "name": "Schultz, Hagen",
-      "address": "Weststr. 1",
+      "name": "Volkswagen Hagen",
+      "address": {
+        "street": "Weststr. 1",
+        "zip": "58095",
+        "city": "Hagen",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -308,8 +398,13 @@
     },
     {
       "branchId": "68f60fe18d2bb4389ef0741d",
-      "name": "Schultz, Mülheim",
-      "address": "Ruhrorter Str. 13",
+      "name": "Volkswagen Mülheim",
+      "address": {
+        "street": "Ruhrorter Str. 13",
+        "zip": "45478",
+        "city": "Mülheim an der Ruhr",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -325,8 +420,13 @@
     },
     {
       "branchId": "68f6047e8d2bb4389ecca880",
-      "name": "Skoda-Centrum, Düsseldorf",
-      "address": "Höherweg 119",
+      "name": "ŠKODA Centrum Düsseldorf",
+      "address": {
+        "street": "Höherweg 119",
+        "zip": "40231",
+        "city": "Düsseldorf",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -342,8 +442,13 @@
     },
     {
       "branchId": "68b986298d2bb4389e1acd35",
-      "name": "Solingen Kullerstr.",
-      "address": "Kuller Str. 16",
+      "name": "Volkswagen Solingen",
+      "address": {
+        "street": "Kuller Str. 16",
+        "zip": "42651",
+        "city": "Solingen",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -359,8 +464,13 @@
     },
     {
       "branchId": "68b986f88d2bb4389e1c1119",
-      "name": "Solingen Schlagbaumerstr (Audi)",
-      "address": "Schlagbaumer Str. 118",
+      "name": "Audi Solingen",
+      "address": {
+        "street": "Schlagbaumer Str. 118",
+        "zip": "42653",
+        "city": "Solingen",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -376,8 +486,13 @@
     },
     {
       "branchId": "68f604138d2bb4389ecbacaf",
-      "name": "VW-Zentrum Nordrhein, Düsseldorf",
-      "address": "Höherweg 85",
+      "name": "Volkswagen Zentrum Düsseldorf",
+      "address": {
+        "street": "Höherweg 85",
+        "zip": "40231",
+        "city": "Düsseldorf",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -394,7 +509,12 @@
     {
       "branchId": "68f60d5a8d2bb4389eeab6d4",
       "name": "Volkswagen Zentrum Essen",
-      "address": "ThyssenKrupp Allee 20",
+      "address": {
+        "street": "ThyssenKrupp Allee 20",
+        "zip": "45143",
+        "city": "Essen",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -411,7 +531,12 @@
     {
       "branchId": "68f78bda8d2bb4389e36b7f0",
       "name": "Volkswagen Zentrum Leverkusen",
-      "address": "Robert-Blum-Str. 71",
+      "address": {
+        "street": "Robert-Blum-Str. 71",
+        "zip": "51373",
+        "city": "Leverkusen",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -427,8 +552,13 @@
     },
     {
       "branchId": "68272511acd563b0699cd562",
-      "name": "Volkswagen und Audi Velbert",
-      "address": "Nevigeser Straße 163",
+      "name": "Volkswagen Velbert",
+      "address": {
+        "street": "Nevigeser Straße 163",
+        "zip": "42549",
+        "city": "Velbert",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",
@@ -444,8 +574,13 @@
     },
     {
       "branchId": "68f605c68d2bb4389ecfe3e9",
-      "name": "Wuppertal Uellendahler Str.",
-      "address": "Uellendahler Str. 245-251",
+      "name": "Volkswagen Zentrum Wuppertal",
+      "address": {
+        "street": "Uellendahler Str. 245-251",
+        "zip": "42109",
+        "city": "Wuppertal",
+        "country": "DE"
+      },
       "groups": [
         {
           "variant": "default",

@@ -6,13 +6,16 @@
       [placeholder]="booking.notes.textareaPlaceholder | translate"
       [maxlength]="maxLength"
       [attr.aria-label]="booking.notes.sectionTitle | translate"
-      [attr.aria-describedby]="'char-counter'"
+      [attr.aria-describedby]="'notes-hint notes-counter'"
       rows="6"
       class="notes-form__textarea"
     ></textarea>
+    <mat-hint id="notes-hint" align="start" class="notes-form__hint">
+      {{ booking.notes.textareaHint | translate }}
+    </mat-hint>
     <mat-hint align="end">
       <span
-        id="char-counter"
+        id="notes-counter"
         aria-live="polite"
         class="notes-form__counter"
       >

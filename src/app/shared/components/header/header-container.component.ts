@@ -62,8 +62,43 @@ export class HeaderContainerComponent {
   });
 
   protected readonly cartServiceChips = computed(() => {
+    // REQ-025 (b) Iter. 3: Operations primär, JobTypes als Fallback, AVAILABLE_SERVICES als Legacy.
+    const ICON_BY_RANK: Record<number, string> = {
+      0: 'assets/icons/services/inspection.svg',
+      1: 'assets/icons/services/tuv.svg',
+      2: 'assets/icons/services/brake-fluid.svg',
+      3: 'assets/icons/services/tire-change.svg',
+      4: 'assets/icons/services/actions-checks.svg',
+      5: 'assets/icons/services/repair.svg',
+      6: 'assets/icons/services/bodywork.svg',
+      99: 'assets/icons/services/pickup-delivery.svg'
+    };
     const selected = this.bookingStore.selectedServices();
+    const operations = this.bookingStore.operations();
+    const categories = this.bookingStore.categories();
+    const jobTypes = this.bookingStore.jobTypes();
     return selected.map(s => {
+      const op = operations.find(o => o.id === s.serviceId);
+      if (op) {
+        // Icon: rank-niedrigster Tag der Operation, oder rank=99 für Hol & Bringservice
+        const primaryRank = categories
+          .filter(c => op.tagIds.includes(c.id))
+          .map(c => c.rank)
+          .sort((a, b) => a - b)[0] ?? 0;
+        const rank = op.name === 'Hol & Bringservice' ? 99 : primaryRank;
+        return { title: op.name, svgIcon: ICON_BY_RANK[rank] ?? ICON_BY_RANK[0], optionLabels: [] as string[] };
+      }
+      const jt = jobTypes.find(j => j.id === s.serviceId);
+      if (jt) {
+        const optionLabels: string[] = [];
+        if (s.selectedOptionIds.length > 0) {
+          for (const optionId of s.selectedOptionIds) {
+            const op = jt.operations.find(o => o.id === optionId);
+            if (op) optionLabels.push(op.name);
+          }
+        }
+        return { title: jt.name, svgIcon: jt.iconUrl ?? 'build', optionLabels };
+      }
       const serviceData = AVAILABLE_SERVICES.find(svc => svc.id === s.serviceId);
       const title = serviceData ? this.translateService.instant(serviceData.titleKey) : s.serviceId;
       const svgIcon = serviceData?.svgIcon ?? 'build';

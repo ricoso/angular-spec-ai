@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -29,8 +29,10 @@ export class ServiceSelectionContainerComponent {
   protected readonly booking = i18nKeys.booking;
   protected readonly wizardSteps = WIZARD_STEPS;
   protected readonly activeStepIndex = 2;
-  protected readonly services = this.store.services;
-  protected readonly selectedServices = this.store.selectedServices;
+  /** REQ-025 (b) Iter. 3: Tags + virtuelle „Hol & Bringservice"-Card als Cards. */
+  protected readonly categories = this.store.categoriesWithVirtual;
+  /** REQ-025 (b) Iter. 3: Operations gruppiert nach Tag-ID. */
+  protected readonly operationsByCategory = this.store.operationsByCategory;
   protected readonly hasServicesSelected = this.store.hasServicesSelected;
   protected readonly selectedServiceCount = this.store.selectedServiceCount;
   protected readonly isLoading = this.store.isLoading;
@@ -40,24 +42,72 @@ export class ServiceSelectionContainerComponent {
     this.store.selectedServices().map(s => s.serviceId)
   );
 
-  protected readonly selectedOptionsMap = computed((): Partial<Record<ServiceType, string[]>> => {
-    const map: Partial<Record<ServiceType, string[]>> = {};
-    for (const s of this.store.selectedServices()) {
-      map[s.serviceId] = s.selectedOptionIds;
+  /** Map Category-ID → selectedOperationIds. */
+  protected readonly selectedOptionsMap = computed((): Record<string, string[]> => {
+    const map: Record<string, string[]> = {};
+    const selected = this.store.selectedServices();
+    const opsByCat = this.store.operationsByCategory();
+    // operationsByCategory enthält bereits die virtuelle Pickup-Card + alle echten Tags
+    for (const catId of Object.keys(opsByCat)) {
+      const ids: string[] = [];
+      const opsInCat = opsByCat[catId];
+      for (const sel of selected) {
+        if (opsInCat.some(o => o.id === sel.serviceId)) {
+          ids.push(sel.serviceId);
+        }
+      }
+      map[catId] = ids;
     }
     return map;
   });
 
-  protected onServiceClick(serviceId: ServiceType): void {
-    this.store.toggleService(serviceId);
+  /** Pro Card: ist mindestens eine Operation aus dieser Kategorie selektiert? */
+  protected readonly categorySelectedMap = computed((): Record<string, boolean> => {
+    const result: Record<string, boolean> = {};
+    const map = this.selectedOptionsMap();
+    for (const catId of Object.keys(map)) {
+      result[catId] = map[catId].length > 0;
+    }
+    return result;
+  });
+
+  constructor() {
+    // REQ-025 (b) Iter. 3: Categories + Operations parallel laden, sobald Branch da ist.
+    effect(() => {
+      const branch = this.store.selectedBranch();
+      const cats = this.store.categories();
+      const ops = this.store.operations();
+      if (branch && cats.length === 0) {
+        this.store.loadCategoriesForBranch(branch.branchId);
+      }
+      if (branch && ops.length === 0) {
+        this.store.loadOperationsForBranch(branch.branchId);
+      }
+    });
   }
 
-  protected onServiceConfirm(event: { serviceId: ServiceType; optionIds: string[] }): void {
-    this.store.confirmServiceOptions(event.serviceId, event.optionIds);
+  protected onServiceClick(operationId: string): void {
+    this.store.toggleService(operationId as ServiceType);
   }
 
-  protected onServiceDeselect(serviceId: ServiceType): void {
-    this.store.deselectService(serviceId);
+  protected onServiceConfirm(event: { serviceId: string; optionIds: string[] }): void {
+    // event.serviceId ist die Category-ID (Tag), optionIds sind Operation-IDs.
+    // Erst alle Operations dieser Kategorie raus, dann nur die confirmed wieder rein.
+    const opsInCategory = this.operationsByCategory()[event.serviceId] ?? [];
+    for (const op of opsInCategory) {
+      this.store.deselectService(op.id as ServiceType);
+    }
+    for (const opId of event.optionIds) {
+      this.store.confirmServiceOptions(opId as ServiceType, []);
+    }
+  }
+
+  protected onServiceDeselect(categoryId: string): void {
+    // Alle Operations dieser Kategorie deselektieren.
+    const opsToRemove = this.operationsByCategory()[categoryId] ?? [];
+    for (const op of opsToRemove) {
+      this.store.deselectService(op.id as ServiceType);
+    }
   }
 
   protected onContinue(): void {
@@ -70,6 +120,10 @@ export class ServiceSelectionContainerComponent {
   }
 
   protected onRetry(): void {
-    this.store.loadServices();
+    const branch = this.store.selectedBranch();
+    if (branch) {
+      this.store.loadCategoriesForBranch(branch.branchId);
+      this.store.loadOperationsForBranch(branch.branchId);
+    }
   }
 }

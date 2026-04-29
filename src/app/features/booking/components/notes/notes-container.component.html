@@ -20,8 +20,14 @@
   @if (selectedServices().length > 0) {
     <app-service-hints
       [selectedServices]="selectedServices()"
+      [operations]="operations()"
+      [categories]="categories()"
+      [jobTypes]="jobTypes()"
     />
   }
+
+  <app-rent-category-price-block />
+
 
   <div class="notes__actions">
     <button

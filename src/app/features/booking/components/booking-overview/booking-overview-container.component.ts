@@ -64,9 +64,34 @@ export class BookingOverviewContainerComponent {
 
   protected readonly resolvedServiceLabels = computed(() => {
     const selected = this.store.selectedServices();
+    const jobTypes = this.store.jobTypes();
+    const operations = this.store.operations();
     const labels: Record<string, string> = {};
 
     for (const service of selected) {
+      // REQ-025 (b) Iter. 3: Operations sind primäre Quelle (jede Operation = ein Service).
+      const op = operations.find(o => o.id === service.serviceId);
+      if (op) {
+        labels[service.serviceId] = op.name;
+        continue;
+      }
+
+      // REQ-025 (b): API jobTypes als Fallback.
+      const jt = jobTypes.find(j => j.id === service.serviceId);
+      if (jt) {
+        let label = jt.name;
+        if (service.selectedOptionIds.length > 0) {
+          const optionLabels = service.selectedOptionIds
+            .map(optionId => jt.operations.find(o => o.id === optionId)?.name ?? '')
+            .filter(Boolean);
+          if (optionLabels.length > 0) {
+            label += ' — ' + optionLabels.join(', ');
+          }
+        }
+        labels[service.serviceId] = label;
+        continue;
+      }
+
       const serviceDisplay = AVAILABLE_SERVICES.find(s => s.id === service.serviceId);
       if (!serviceDisplay) { continue; }
 

@@ -27,12 +27,19 @@ export class LocationCardsComponent {
   protected readonly booking = i18nKeys.booking;
 
   protected readonly enrichedBranches = computed<EnrichedBranch[]>(() =>
-    this.branches().map(branch => ({
-      ...branch,
-      formattedAddress: branch.address.street || branch.name,
-      brandLogos: branch.brands
-        .map(name => ({ name, path: getBrandLogoPath(name) }))
-    }))
+    this.branches().map(branch => {
+      // REQ-025 (i): Adresse aus strukturierten Feldern formatieren — `<Street>, <ZIP> <City>`.
+      const { street, zip, city } = branch.address;
+      const zipCity = [zip, city].filter(p => !!p && p.trim().length > 0).join(' ').trim();
+      const formatted = street && zipCity
+        ? `${street}, ${zipCity}`
+        : (street || zipCity || branch.name);
+      return {
+        ...branch,
+        formattedAddress: formatted,
+        brandLogos: branch.brands.map(name => ({ name, path: getBrandLogoPath(name) }))
+      };
+    })
   );
 
   protected onSelect(branch: BranchConfig): void {

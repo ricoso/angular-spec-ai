@@ -55,12 +55,6 @@ describe('ErrorFallbackContainerComponent', () => {
     expect(exposed.criticalError()).toEqual(err);
   });
 
-  it('should fall back to default phone when no branch selected', () => {
-    const exposed = component as unknown as { phoneNumber: () => string; phoneTelHref: () => string };
-    expect(exposed.phoneNumber()).toBe('+49 211 1234567');
-    expect(exposed.phoneTelHref()).toBe('tel:+492111234567');
-  });
-
   it('should clear error and navigate on retry', () => {
     errorStore.setCriticalError({ code: 'NETWORK', message: 'm', requestId: null, timestamp: 't' });
     const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);

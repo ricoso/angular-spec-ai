@@ -1,15 +1,24 @@
-<section
-  class="service-hints"
-  [attr.aria-label]="booking.notes.hintsTitle | translate"
->
-  <h2 class="service-hints__title">{{ booking.notes.hintsTitle | translate }}</h2>
+@if (visibleHints().length > 0) {
+  <section
+    class="service-hints"
+    [attr.aria-label]="booking.notes.hintsTitle | translate"
+  >
+    <h2 class="service-hints__title">{{ booking.notes.hintsTitle | translate }}</h2>
 
-  @for (hint of visibleHints(); track hint.serviceId) {
-    <div class="service-hints__item" role="note">
-      <span class="icon-framed service-hints__icon" aria-hidden="true">
-        <img [src]="hint.svgIcon" [alt]="''" class="service-hints__svg-icon">
-      </span>
-      <p class="service-hints__text">{{ hint.hintKey | translate }}</p>
-    </div>
-  }
-</section>
+    @for (hint of visibleHints(); track hint.key) {
+      <div class="service-hints__item" role="note">
+        @if (hint.iconUrl) {
+          <span class="icon-framed service-hints__icon" aria-hidden="true">
+            <img [src]="hint.iconUrl" [alt]="''" class="service-hints__svg-icon">
+          </span>
+        }
+        <div class="service-hints__body">
+          <h3 class="service-hints__service-name">{{ hint.serviceName }}</h3>
+          @if (hint.hint) {
+            <p class="service-hints__text">{{ hint.hint }}</p>
+          }
+        </div>
+      </div>
+    }
+  </section>
+}

@@ -79,11 +79,11 @@ function build(
 }
 
 function extractRequestId(err: HttpErrorResponse): string | null {
-  const header = err.headers?.get('X-Request-Id') ?? err.headers?.get('x-request-id');
+  const header = err.headers.get('X-Request-Id') ?? err.headers.get('x-request-id');
   if (header && header.trim().length > 0) {
     return header;
   }
-  const body = err.error;
+  const body = err.error as { requestId?: unknown } | null;
   if (body && typeof body === 'object' && 'requestId' in body && typeof body.requestId === 'string') {
     return body.requestId;
   }
@@ -91,6 +91,9 @@ function extractRequestId(err: HttpErrorResponse): string | null {
 }
 
 // exported for tests only — resets the auth-loop counter between specs
-export function _resetAuthLoopCounter(): void {
+ 
+export function resetAuthLoopCounter(): void {
   consecutive401Count = 0;
 }
+
+export { resetAuthLoopCounter as _resetAuthLoopCounter };

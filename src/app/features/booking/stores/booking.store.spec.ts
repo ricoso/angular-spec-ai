@@ -326,7 +326,7 @@ describe('BookingStore', () => {
 
     it('should have default computed values initially', () => {
       expect(store.selectedAppointmentPreference()).toBe('anytime');
-      expect(store.selectedCallbackOption()).toBe('none');
+      expect(store.selectedCallbackOption()).toBe('no');
       expect(store.callbackRequested()).toBe(false);
     });
 
@@ -337,7 +337,7 @@ describe('BookingStore', () => {
     });
 
     it('should update hasNotesExtras to true after set', () => {
-      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'none' });
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no' });
       expect(store.hasNotesExtras()).toBe(true);
     });
 
@@ -359,7 +359,7 @@ describe('BookingStore', () => {
       store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes' });
       store.clearNotesExtras();
       expect(store.selectedAppointmentPreference()).toBe('anytime');
-      expect(store.selectedCallbackOption()).toBe('none');
+      expect(store.selectedCallbackOption()).toBe('no');
       expect(store.callbackRequested()).toBe(false);
     });
   });
@@ -439,7 +439,7 @@ describe('BookingStore', () => {
     });
 
     it('is false when callbackOption is none', () => {
-      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'none' });
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no' });
       expect(store.callbackRequested()).toBe(false);
     });
   });

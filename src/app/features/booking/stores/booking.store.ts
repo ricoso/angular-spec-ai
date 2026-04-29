@@ -13,8 +13,8 @@ import type { CustomerInfo, VehicleInfo } from '../models/customer.model';
 import type { LocationDisplay } from '../models/location.model';
 import type { AppointmentPreference, NotesExtras } from '../models/notes-extras.model';
 import type { RentCategory } from '../models/rent-category.model';
-import type { SelectedService, ServiceDisplay, ServiceType } from '../models/service.model';
-import { AVAILABLE_SERVICES } from '../models/service.model';
+import type { ApiCategory, ApiJobType, ApiOperation, SelectedService, ServiceDisplay, ServiceType } from '../models/service.model';
+import { AVAILABLE_SERVICES, TIRE_CHANGE_TAG_RANK } from '../models/service.model';
 import type { WorkshopCalendarDay } from '../models/workshop-calendar.model';
 import { AppointmentApiService } from '../services/appointment-api.service';
 import { BookingApiService } from '../services/booking-api.service';
@@ -45,6 +45,12 @@ interface BookingState {
   appointmentId: string | null;
   rentCategories: RentCategory[];
   selectedRentCategoryId: string | null;
+  /** REQ-025: API-driven JobType-Liste für die gewählte Branch. */
+  jobTypes: ApiJobType[];
+  /** REQ-025 (b) Iter. 3: Service-Kategorien (Tags) für die gewählte Branch. */
+  categories: ApiCategory[];
+  /** REQ-025 (b) Iter. 3: Operations (Services) für die gewählte Branch. */
+  operations: ApiOperation[];
   isLoading: boolean;
   error: string | null;
   isDeepLinked: boolean;
@@ -74,6 +80,9 @@ const INITIAL_STATE: BookingState = {
   appointmentId: null,
   rentCategories: [],
   selectedRentCategoryId: null,
+  jobTypes: [],
+  categories: [],
+  operations: [],
   isLoading: false,
   error: null,
   isDeepLinked: false
@@ -100,7 +109,7 @@ export const BookingStore = signalStore(
 
   withState<BookingState>(INITIAL_STATE),
 
-  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, appointmentId, notesExtras, rentCategories, selectedRentCategoryId }) => ({
+  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, appointmentId, notesExtras, rentCategories, selectedRentCategoryId, jobTypes, categories, operations }) => ({
     hasBranchSelected: computed(() => selectedBranch() !== null),
     selectedBranchBrands: computed(() => {
       const branch = selectedBranch();
@@ -110,10 +119,18 @@ export const BookingStore = signalStore(
     hasLocationSelected: computed(() => selectedLocation() !== null),
     selectedServiceCount: computed(() => selectedServices().length),
     hasServicesSelected: computed(() => selectedServices().length > 0),
-    /** Flat list of user-selected sub-options (or service titles if no options). Used for cart display. */
+    /** Flat list of user-selected operation names (REQ-025 b Iter. 3) bzw. Legacy-Labels. */
     selectedServiceLabels: computed<TranslationKey[]>(() => {
       const labels: TranslationKey[] = [];
+      const ops = operations();
       for (const sel of selectedServices()) {
+        // REQ-025 (b) Iter. 3: Operations primär — name als Label.
+        const op = ops.find(o => o.id === sel.serviceId);
+        if (op) {
+          labels.push(op.name as TranslationKey);
+          continue;
+        }
+        // Legacy-Fallback: AVAILABLE_SERVICES
         const service = AVAILABLE_SERVICES.find(s => s.id === sel.serviceId);
         if (!service) continue;
         if (sel.selectedOptionIds.length === 0) {
@@ -147,21 +164,155 @@ export const BookingStore = signalStore(
     isBookingSubmitting: computed(() => bookingSubmitting()),
     hasBookingError: computed(() => bookingError() !== null),
     submittedAppointmentId: computed(() => appointmentId()),
-    selectedVariant: computed<'default' | 'tireChange'>(() =>
-      selectedServices().some(s => s.serviceId === 'tire-change') ? 'tireChange' : 'default'
-    ),
+    selectedVariant: computed<'default' | 'tireChange'>(() => {
+      // REQ-025 AC-7 + (b) Iter. 3: prüft Tag rank=3 (TireChange), fällt auf API-jobType.category
+      // und alte Service-ID-Heuristik zurück.
+      const selectedIds = selectedServices().map(s => s.serviceId as string);
+      // Neuer Pfad: Tag mit rank=TIRE_CHANGE_TAG_RANK + selektierte Operation hat diesen tagId
+      const tireChangeTagId = categories().find(c => c.rank === TIRE_CHANGE_TAG_RANK)?.id;
+      const tagBasedTireChange = !!tireChangeTagId && operations().some(op =>
+        op.tagIds.includes(tireChangeTagId) && selectedIds.includes(op.id)
+      );
+      const apiTireChange = jobTypes().some(jt => jt.category === 'tireChange' && selectedIds.includes(jt.id));
+      const legacyTireChange = selectedServices().some(s => s.serviceId === 'tire-change');
+      return tagBasedTireChange || apiTireChange || legacyTireChange ? 'tireChange' : 'default';
+    }),
+    /**
+     * REQ-025 (b) Iter. 3: Operations gruppiert nach Tag-IDs.
+     * Pro Card-Tag → Liste aller Operations mit diesem Tag, sortiert nach `order`.
+     *
+     * Sonderregeln (UX-Wünsche, Front-End-only):
+     * 1. Operations mit allen 7 Tags (Multi-Pflege in SoftNet) erscheinen NUR unter
+     *    "Inspektion" (rank=0) statt unter jeder Kategorie doppelt.
+     * 2. "Hol & Bringservice" bekommt eine eigene virtuelle Kategorie (rank=99,
+     *    siehe `categoriesWithVirtual` Computed).
+     */
+    operationsByCategory: computed<Record<string, ApiOperation[]>>(() => {
+      const INSPEKTION_ONLY_NAMES = new Set([
+        'Dialogannahme',
+        '1 Liter Notfallöl',
+        'Wischerblätter erneuern',
+        'Klimaanlagenreinigung (149.00 € inkl. MwSt.)'
+      ]);
+      const PICKUP_DELIVERY_NAME = 'Hol & Bringservice';
+      const PICKUP_VIRTUAL_TAG_ID = 'virtual-pickup-delivery';
+      const inspektionTagId = categories().find(c => c.rank === 0)?.id ?? null;
+      const result: Record<string, ApiOperation[]> = {};
+
+      // Reguläre Categories
+      for (const cat of categories()) {
+        result[cat.id] = operations()
+          .filter(op => {
+            if (!op.tagIds.includes(cat.id)) return false;
+            if (op.name === PICKUP_DELIVERY_NAME) return false; // hat eigene virtuelle Card
+            if (INSPEKTION_ONLY_NAMES.has(op.name) && cat.id !== inspektionTagId) {
+              return false;
+            }
+            return true;
+          })
+          .sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER));
+      }
+
+      // Virtuelle Pickup-Delivery-Kategorie
+      result[PICKUP_VIRTUAL_TAG_ID] = operations()
+        .filter(op => op.name === PICKUP_DELIVERY_NAME);
+
+      return result;
+    }),
+
+    /**
+     * REQ-025 (b) Iter. 3: Categories inkl. der virtuellen "Hol & Bringservice"-Card
+     * (rank=99 — wird ans Ende der Card-Liste sortiert).
+     */
+    categoriesWithVirtual: computed<ApiCategory[]>(() => {
+      const ops = operations();
+      const hasPickup = ops.some(op => op.name === 'Hol & Bringservice');
+      if (!hasPickup) return categories();
+      return [
+        ...categories(),
+        { id: 'virtual-pickup-delivery', name: 'Hol & Bringservice', rank: 99 }
+      ];
+    }),
     hasNotesExtras: computed(() => notesExtras() !== null),
     selectedAppointmentPreference: computed(() => notesExtras()?.appointmentPreference ?? 'anytime'),
-    selectedCallbackOption: computed(() => notesExtras()?.callbackOption ?? 'none'),
+    selectedCallbackOption: computed(() => notesExtras()?.callbackOption ?? 'no'),
     callbackRequested: computed(() => notesExtras()?.callbackOption === 'yes'),
     selectedRentCategoryName: computed<string | null>(() => {
       const id = selectedRentCategoryId();
       if (!id) return null;
       return rentCategories().find(c => c.id === id)?.name ?? null;
     }),
+    /** REQ-025 AC-15: Mietwagen-Kategorie + Preis-Info für den Notes-Preisblock. */
+    selectedRentCategoryPrice: computed<{ name: string; price: number; currency: string; priceUnit: string } | null>(() => {
+      const id = selectedRentCategoryId();
+      if (!id) return null;
+      const rc = rentCategories().find(c => c.id === id);
+      if (!rc?.price || !rc.currency || !rc.priceUnit) {
+        return null;
+      }
+      return { name: rc.name, price: rc.price, currency: rc.currency, priceUnit: rc.priceUnit };
+    }),
   })),
 
   withMethods((store, api = inject(BookingApiService), appointmentApi = inject(AppointmentApiService), workshopCalendarApi = inject(WorkshopCalendarApiService), rentCategoryApi = inject(RentCategoryApiService)) => ({
+    /**
+     * REQ-025 AC-6: lädt JobTypes der gewählten Branch einmal und cached sie im Store.
+     * Frontend-Components lesen aus `store.jobTypes()`.
+     */
+    loadJobTypesForBranch: rxMethod<string>(
+      pipe(
+        tap(() => { patchState(store, { isLoading: true, error: null }); }),
+        switchMap((branchId) =>
+          from(api.getJobTypesByBranch(branchId)).pipe(
+            tap((jobTypes) => { patchState(store, { jobTypes, isLoading: false }); }),
+            catchError((err: unknown) => {
+              const message = err instanceof Error ? err.message : 'Unknown error';
+              patchState(store, { error: message, isLoading: false });
+              return EMPTY;
+            })
+          )
+        )
+      )
+    ),
+
+    /**
+     * REQ-025 (b) Iter. 3: Lädt Service-Kategorien (Tags) für die gewählte Branch.
+     * Cards auf der Services-Page rendern aus diesem State.
+     */
+    loadCategoriesForBranch: rxMethod<string>(
+      pipe(
+        switchMap((branchId) =>
+          from(api.getCategoriesByBranch(branchId)).pipe(
+            tap((categories) => { patchState(store, { categories }); }),
+            catchError((err: unknown) => {
+              const message = err instanceof Error ? err.message : 'Unknown error';
+              patchState(store, { error: message });
+              return EMPTY;
+            })
+          )
+        )
+      )
+    ),
+
+    /**
+     * REQ-025 (b) Iter. 3: Lädt Operations (Services mit description) für die Branch.
+     * Sub-Options einer Card werden aus diesem State gefiltert (per `tagIds`).
+     */
+    loadOperationsForBranch: rxMethod<string>(
+      pipe(
+        switchMap((branchId) =>
+          from(api.getOperationsByBranch(branchId)).pipe(
+            tap((operations) => { patchState(store, { operations }); }),
+            catchError((err: unknown) => {
+              const message = err instanceof Error ? err.message : 'Unknown error';
+              patchState(store, { error: message });
+              return EMPTY;
+            })
+          )
+        )
+      )
+    ),
+
     loadBrands: rxMethod<string | void>(
       pipe(
         tap(() => { patchState(store, { isLoading: true, error: null }); }),

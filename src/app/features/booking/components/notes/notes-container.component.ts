@@ -13,12 +13,13 @@ import { BookingStore } from '../../stores/booking.store';
 
 import { NotesExtrasFormComponent } from './notes-extras-form.component';
 import { NotesFormComponent } from './notes-form.component';
+import { RentCategoryPriceBlockComponent } from './rent-category-price-block.component';
 import { ServiceHintsComponent } from './service-hints.component';
 
 @Component({
   selector: 'app-notes-container',
   standalone: true,
-  imports: [TranslatePipe, MatButtonModule, MatIconModule, WizardBreadcrumbComponent, NotesFormComponent, ServiceHintsComponent, NotesExtrasFormComponent],
+  imports: [TranslatePipe, MatButtonModule, MatIconModule, WizardBreadcrumbComponent, NotesFormComponent, ServiceHintsComponent, NotesExtrasFormComponent, RentCategoryPriceBlockComponent],
   templateUrl: './notes-container.component.html',
   styleUrl: './notes-container.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -31,6 +32,9 @@ export class NotesContainerComponent {
   protected readonly wizardSteps = WIZARD_STEPS;
   protected readonly activeStepIndex = 3;
   protected readonly selectedServices = this.store.selectedServices;
+  protected readonly jobTypes = this.store.jobTypes;
+  protected readonly operations = this.store.operations;
+  protected readonly categories = this.store.categories;
   protected readonly initialNote = this.store.bookingNote;
   protected readonly initialExtras = this.store.notesExtras;
   protected readonly rentCategories = this.store.rentCategories;

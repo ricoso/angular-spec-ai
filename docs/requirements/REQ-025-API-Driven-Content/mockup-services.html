@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REQ-025 Mockup — Services-Page (Tags + Operations + Description)</title>
+<style>
+  :root {
+    --color-primary: #00558e;
+    --color-primary-dark: #003d6b;
+    --color-text-primary: #1d1d1d;
+    --color-text-secondary: #5b5b5b;
+    --color-background-surface: #ffffff;
+    --color-background-page: #f4f6f8;
+    --color-background-hover: #f0f4f7;
+    --color-border: #d8dde1;
+    --color-focus-ring: #4d90fe;
+    --color-success: #2e7d32;
+
+    --spacing-xs: 0.4em;
+    --spacing-sm: 0.6em;
+    --spacing-md: 1em;
+    --spacing-lg: 1.6em;
+    --spacing-xl: 2.4em;
+    --spacing-2xl: 3.2em;
+
+    --radius-sm: 0.5em;
+    --radius-md: 0.75em;
+
+    --font-size-xs: 0.75em;
+    --font-size-sm: 0.875em;
+    --font-size-md: 1em;
+    --font-size-lg: 1.125em;
+    --font-size-xl: 1.5em;
+    --font-size-2xl: 2em;
+
+    --line-height-tight: 1.3;
+    --line-height-relaxed: 1.55;
+
+    --touch-target-min: 2.75em;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    background: var(--color-background-page);
+    color: var(--color-text-primary);
+    font-size: 16px;
+    line-height: var(--line-height-relaxed);
+  }
+
+  /* Wizard-Breadcrumb (vereinfacht für Mockup) */
+  .wizard {
+    background: var(--color-background-surface);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 0.0625em solid var(--color-border);
+    display: flex;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+  }
+  .wizard__step {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+  .wizard__step--active {
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
+  .container {
+    max-width: 70em;
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-lg);
+  }
+
+  .service-selection__title {
+    font-size: var(--font-size-2xl);
+    margin: 0 0 var(--spacing-sm);
+  }
+  .service-selection__subtitle {
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--spacing-xl);
+  }
+
+  /* Card Grid */
+  .service-selection__grid {
+    display: grid;
+    gap: var(--spacing-lg);
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 36em) {
+    .service-selection__grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 64em) {
+    .service-selection__grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* Service-Card (Kategorie) */
+  .service-card {
+    background: var(--color-background-surface);
+    border: 0.125em solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: border-color 0.15s, transform 0.1s;
+    position: relative;
+  }
+  .service-card:hover {
+    border-color: var(--color-primary);
+  }
+  .service-card--selected {
+    border-color: var(--color-primary);
+    background: var(--color-background-hover);
+  }
+  .service-card--expanded {
+    grid-column: 1 / -1;
+    text-align: left;
+    align-items: stretch;
+  }
+
+  .service-card__check {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    color: var(--color-success);
+    font-size: 1.5em;
+  }
+
+  .service-card__icon {
+    width: 4.5em;
+    height: 4.5em;
+    border-radius: 50%;
+    background: var(--color-background-hover);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--spacing-md);
+    font-size: 2em;
+    color: var(--color-primary);
+  }
+
+  .service-card__title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    margin: 0 0 var(--spacing-xs);
+  }
+  .service-card__count {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  /* Expanded options */
+  .service-card__options {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 0.0625em solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .service-card__option {
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .service-card__option:hover {
+    background: var(--color-background-hover);
+  }
+  .service-card__option-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  .service-card__checkbox {
+    margin-top: 0.15em;
+    flex-shrink: 0;
+    width: 1.15em;
+    height: 1.15em;
+  }
+  .service-card__option-name {
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  /* Description klein darunter — KERN von Punkt (b) Iter. 3 */
+  .service-card__option-desc {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    margin: 0.25em 0 0 1.85em;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .service-card__actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 0.65em 1.5em;
+    border-radius: var(--radius-sm);
+    border: 0.125em solid transparent;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: var(--touch-target-min);
+    font-size: var(--font-size-md);
+  }
+  .btn--primary {
+    background: var(--color-primary);
+    color: white;
+  }
+  .btn--primary:hover {
+    background: var(--color-primary-dark);
+  }
+  .btn--secondary {
+    background: white;
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  /* Mockup-Markierung */
+  .mockup-note {
+    margin: var(--spacing-2xl) auto 0;
+    max-width: 70em;
+    padding: var(--spacing-lg);
+    background: #fff8e1;
+    border-left: 0.25em solid #f9a825;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+  }
+  .mockup-note h3 {
+    margin: 0 0 var(--spacing-sm);
+    color: #e65100;
+  }
+  .mockup-note ul { margin: 0; padding-left: 1.5em; }
+  .mockup-note code {
+    background: #f5f5f5;
+    padding: 0.1em 0.4em;
+    border-radius: 0.2em;
+    font-size: 0.9em;
+  }
+
+  .demo-section-title {
+    font-size: var(--font-size-xl);
+    margin: var(--spacing-2xl) 0 var(--spacing-lg);
+    padding: 0 var(--spacing-lg);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<nav class="wizard" aria-label="Wizard-Schritte">
+  <span class="wizard__step">1. Filiale</span>
+  <span>→</span>
+  <span class="wizard__step">2. Marke</span>
+  <span>→</span>
+  <span class="wizard__step wizard__step--active">3. Service</span>
+  <span>→</span>
+  <span class="wizard__step">4. Hinweise</span>
+  <span>→</span>
+  <span class="wizard__step">5. Termin</span>
+</nav>
+
+<div class="demo-section-title">A) Service-Auswahl — Übersicht (alle 7 Kategorien aus SoftNet-Tags)</div>
+
+<main class="container">
+  <h1 class="service-selection__title">Welchen Service benötigen Sie?</h1>
+  <p class="service-selection__subtitle">Wählen Sie eine oder mehrere Kategorien.</p>
+
+  <div class="service-selection__grid" role="group" aria-label="Service-Kategorien">
+    <!-- Card 1: Inspektion (rank 0) -->
+    <article class="service-card" tabindex="0" aria-pressed="false">
+      <div class="service-card__icon" aria-hidden="true">🔧</div>
+      <h2 class="service-card__title">Inspektion</h2>
+      <p class="service-card__count">10 Services</p>
+    </article>
+
+    <!-- Card 2: TÜV (rank 1) -->
+    <article class="service-card" tabindex="0" aria-pressed="false">
+      <div class="service-card__icon" aria-hidden="true">📋</div>
+      <h2 class="service-card__title">TÜV</h2>
+      <p class="service-card__count">8 Services</p>
+    </article>
+
+    <!-- Card 3: Bremsflüssigkeit (rank 2) -->
+    <article class="service-card" tabindex="0" aria-pressed="false">
+      <div class="service-card__icon" aria-hidden="true">💧</div>
+      <h2 class="service-card__title">Bremsflüssigkeitswechsel</h2>
+      <p class="service-card__count">7 Services</p>
+    </article>
+
+    <!-- Card 4: Räderwechsel (rank 3) — TireChange-Marker -->
+    <article class="service-card" tabindex="0" aria-pressed="false">
+      <div class="service-card__icon" aria-hidden="true">🛞</div>
+      <h2 class="service-card__title">Räderwechsel</h2>
+      <p class="service-card__count">9 Services</p>
+    </article>
+
+    <!-- Card 5: Aktionen / Checks (rank 4) -->
+    <article class="service-card" tabindex="0" aria-pressed="false">
+      <div class="service-card__icon" aria-hidden="true">✅</div>
+      <h2 class="service-card__title">Aktionen / Checks</h2>
+      <p class="service-card__count">9 Services</p>
+    </article>
+
+    <!-- Card 6: Reparatur / Beanstandung (rank 5) -->
+    <article class="service-card" tabindex="0" aria-pressed="false">
+      <div class="service-card__icon" aria-hidden="true">🔍</div>
+      <h2 class="service-card__title">Reparatur / Beanstandung</h2>
+      <p class="service-card__count">6 Services</p>
+    </article>
+
+    <!-- Card 7: Karosserie / Frontscheibenwechsel (rank 6) -->
+    <article class="service-card" tabindex="0" aria-pressed="false">
+      <div class="service-card__icon" aria-hidden="true">🪟</div>
+      <h2 class="service-card__title">Karosserie / Frontscheibenwechsel</h2>
+      <p class="service-card__count">4 Services</p>
+    </article>
+  </div>
+</main>
+
+<div class="demo-section-title">B) Aufgeklappte Card mit Sub-Options + Description (Beispiel "Inspektion")</div>
+
+<main class="container">
+  <div class="service-selection__grid" role="group" aria-label="Service-Kategorien">
+    <article class="service-card service-card--selected service-card--expanded" aria-expanded="true">
+      <span class="service-card__check" aria-hidden="true">✓</span>
+      <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+        <div class="service-card__icon" aria-hidden="true">🔧</div>
+        <div>
+          <h2 class="service-card__title" style="text-align:left">Inspektion</h2>
+          <p class="service-card__count" style="text-align:left">10 Services verfügbar</p>
+        </div>
+      </div>
+
+      <div class="service-card__options">
+        <!-- Operation 1: Dialogannahme -->
+        <label class="service-card__option">
+          <span class="service-card__option-row">
+            <input class="service-card__checkbox" type="checkbox" />
+            <span class="service-card__option-name">Dialogannahme</span>
+          </span>
+          <span class="service-card__option-desc">
+            Sie besichtigen mit dem Serviceberater Ihr Fahrzeug von oben und unten und erfahren mehr über den Zustand. Bitte planen Sie hierfür 30 Minuten Zeit ein!
+          </span>
+        </label>
+
+        <!-- Operation 2: Inspektion (selected) -->
+        <label class="service-card__option" style="background: var(--color-background-hover);">
+          <span class="service-card__option-row">
+            <input class="service-card__checkbox" type="checkbox" checked />
+            <span class="service-card__option-name">Inspektion</span>
+          </span>
+          <span class="service-card__option-desc">
+            Servicearbeiten nach Wartungsplan des Herstellers. Beinhaltet einen umfassender Check nach Herstellervorgabe über den Zustand Ihres Fahrzeugs. Bitte bringen Sie Ihr Serviceheft mit. (Ausnahme: Digitaler Serviceplan)
+          </span>
+        </label>
+
+        <!-- Operation 3: Ölwechsel-Service -->
+        <label class="service-card__option">
+          <span class="service-card__option-row">
+            <input class="service-card__checkbox" type="checkbox" />
+            <span class="service-card__option-name">Ölwechsel-Service</span>
+          </span>
+          <span class="service-card__option-desc">
+            Ölservice nach Wartungsplan des Herstellers. Beinhaltet einen umfassenden Check nach Herstellervorgabe über den Zustand Ihres Fahrzeugs. Bitte bringen Sie Ihr Serviceheft mit.
+          </span>
+        </label>
+
+        <!-- Operation 4: Bremsen prüfen -->
+        <label class="service-card__option">
+          <span class="service-card__option-row">
+            <input class="service-card__checkbox" type="checkbox" />
+            <span class="service-card__option-name">Bremsen prüfen (kostenlos) und bei Bedarf erneuern</span>
+          </span>
+          <span class="service-card__option-desc">
+            Wir prüfen den Zustand Ihrer Bremsen und ersetzen bei Bedarf kostenpflichtig die erforderlichen Bremsbauteile.
+          </span>
+        </label>
+
+        <!-- Operation 5: Wartungsvertrag -->
+        <label class="service-card__option">
+          <span class="service-card__option-row">
+            <input class="service-card__checkbox" type="checkbox" />
+            <span class="service-card__option-name">Interesse an einem Wartungsvertrag</span>
+          </span>
+          <span class="service-card__option-desc">
+            Gerne setzen wir uns mit Ihnen in Verbindung und lassen Ihnen ein unverbindliches Angebot zukommen.
+          </span>
+        </label>
+
+        <!-- Operation 6: Klimaanlagenreinigung -->
+        <label class="service-card__option">
+          <span class="service-card__option-row">
+            <input class="service-card__checkbox" type="checkbox" />
+            <span class="service-card__option-name">Klimaanlagenreinigung (149,00 € inkl. MwSt.)</span>
+          </span>
+          <span class="service-card__option-desc">
+            Reinigung und Desinfizierung der Klimaanlage.
+          </span>
+        </label>
+
+        <!-- Beispiel ohne Description -->
+        <label class="service-card__option">
+          <span class="service-card__option-row">
+            <input class="service-card__checkbox" type="checkbox" />
+            <span class="service-card__option-name">Weitere Wünsche</span>
+          </span>
+          <!-- Wenn description leer/null → keine .option-desc gerendert -->
+        </label>
+
+        <div class="service-card__actions">
+          <button class="btn btn--primary" type="button">Bestätigen</button>
+          <button class="btn btn--secondary" type="button">Abwählen</button>
+        </div>
+      </div>
+    </article>
+  </div>
+</main>
+
+<div class="mockup-note" role="note">
+  <h3>📐 Mockup-Spezifikation für die Implementierung</h3>
+  <ul>
+    <li><strong>Cards:</strong> entsprechen Tags aus <code>/api/v1/branches/{id}/categories</code> (sortiert nach <code>rank</code>). Title = <code>tag.name</code>. Anzahl unter dem Title = Anzahl Operations mit diesem Tag.</li>
+    <li><strong>Sub-Options:</strong> Operations aus <code>/api/v1/branches/{id}/operations</code>, gefiltert auf <code>operation.tagIds.includes(tag.id)</code>, sortiert nach <code>operation.order</code>.</li>
+    <li><strong>Service-Beschreibung (Punkt b Iter. 3):</strong> <code>operation.description</code> direkt unter dem Operation-Namen, in der Klasse <code>service-card__option-desc</code> — Schriftgröße <code>var(--font-size-sm)</code>, Farbe <code>var(--color-text-secondary)</code>, mit <code>line-clamp: 3</code> und Einrückung links via <code>margin-left: 1.85em</code>. Wenn <code>description == null</code> → keine Description-Zeile.</li>
+    <li><strong>Multi-Tag-Operations:</strong> Operations können in mehreren Tags auftauchen (z.B. „Hol &amp; Bringservice" hat alle 7 Tags) und erscheinen daher in jeder zugehörigen Card. Spiegelt die SoftNet-Pflege wider.</li>
+    <li><strong>Variant-Detection (TireChange):</strong> Tag mit <code>rank === 3</code> (= „Räderwechsel"). Frontend markiert <code>selectedVariant === 'tireChange'</code>, sobald eine Operation mit diesem Tag selektiert wird.</li>
+    <li><strong>Icons:</strong> Aktuell Material-Icon-Fallback (Emoji-Platzhalter im Mockup). Wenn SoftNet später <code>imageId</code> nutzbar macht, via <code>/api/planning/images/{id}</code> auflösen.</li>
+    <li><strong>Responsive:</strong> 4 Spalten Desktop (≥ 64em), 2 Spalten Tablet (≥ 36em), 1 Spalte Mobile.</li>
+    <li><strong>BEM:</strong> Block <code>.service-card</code>, Modifier <code>--selected</code>/<code>--expanded</code>, Element <code>__icon</code>/<code>__title</code>/<code>__count</code>/<code>__options</code>/<code>__option</code>/<code>__option-row</code>/<code>__option-name</code>/<code>__option-desc</code>/<code>__actions</code>.</li>
+  </ul>
+</div>
+
+</body>
+</html>

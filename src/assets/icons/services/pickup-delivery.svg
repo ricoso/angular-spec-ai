@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="currentColor">
+  <!-- Pfeil oben: → -->
+  <g>
+    <rect x="35" y="22" width="105" height="14" rx="2"/>
+    <polygon points="135,12 165,29 135,46"/>
+  </g>
+
+  <!-- Auto: rechte Hälfte original, linke Hälfte gespiegelt aus rechter Hälfte -->
+  <image x="30" y="65" width="140" height="90" href="data:image/png;base64,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"/>
+
+  <!-- Pfeil unten: ← -->
+  <g>
+    <rect x="60" y="170" width="105" height="14" rx="2"/>
+    <polygon points="65,160 35,177 65,194"/>
+  </g>
+</svg>

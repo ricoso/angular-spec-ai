@@ -76,6 +76,7 @@ describe('errorFallbackInterceptor', () => {
     httpMock.expectOne('/api/test').flush('down', {
       status: 503,
       statusText: 'down',
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       headers: new HttpHeaders({ 'X-Request-Id': 'abc-123' })
     });
     expect(store.criticalError()?.requestId).toBe('abc-123');

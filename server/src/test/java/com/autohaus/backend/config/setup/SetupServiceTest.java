@@ -19,7 +19,7 @@ class SetupServiceTest {
             {
               "branchId": "branch-1",
               "name": "Filiale Eins",
-              "address": "Musterstr. 1",
+              "address": {"street": "Musterstr. 1", "zip": "12345", "city": "Berlin", "country": "DE"},
               "groups": [
                 { "variant": "default",    "groupId": "grp-1-default",    "fullName": "Filiale Eins" },
                 { "variant": "tireChange", "groupId": "grp-1-tireChange", "fullName": "Filiale Eins Radwechsel" }
@@ -28,7 +28,7 @@ class SetupServiceTest {
             {
               "branchId": "branch-2",
               "name": "Filiale Zwei",
-              "address": "Musterstr. 2",
+              "address": {"street": "Musterstr. 2", "zip": "12346", "city": "Berlin", "country": "DE"},
               "groups": [
                 { "variant": "default", "groupId": "grp-2-default", "fullName": "Filiale Zwei" }
               ]
@@ -77,7 +77,7 @@ class SetupServiceTest {
                 {
                   "branchId": "only-tire",
                   "name": "Nur Radwechsel",
-                  "address": "Str 1",
+                  "address": {"street": "Str 1", "zip": "10001", "city": "X", "country": "DE"},
                   "groups": [
                     { "variant": "tireChange", "groupId": "grp-tc", "fullName": "Nur Radwechsel" }
                   ]
@@ -85,7 +85,7 @@ class SetupServiceTest {
                 {
                   "branchId": "mixed",
                   "name": "Gemischt",
-                  "address": "Str 2",
+                  "address": {"street": "Str 2", "zip": "10002", "city": "X", "country": "DE"},
                   "groups": [
                     { "variant": "default", "groupId": "grp-d", "fullName": "Gemischt" }
                   ]
@@ -141,7 +141,7 @@ class SetupServiceTest {
                 {
                   "branchId": "only-tire",
                   "name": "Nur Radwechsel",
-                  "address": "Str 1",
+                  "address": {"street": "Str 1", "zip": "10001", "city": "X", "country": "DE"},
                   "groups": [
                     { "variant": "tireChange", "groupId": "grp-tc", "fullName": "Nur Radwechsel" }
                   ]
@@ -232,13 +232,13 @@ class SetupServiceTest {
                 {
                   "branchId": "b1",
                   "name": "Zebra",
-                  "address": "Str",
+                  "address": {"street": "Str", "zip": "10000", "city": "X", "country": "DE"},
                   "groups": [{ "variant": "default", "groupId": "g1", "fullName": "Zebra" }]
                 },
                 {
                   "branchId": "b2",
                   "name": "alpha",
-                  "address": "Str",
+                  "address": {"street": "Str", "zip": "10000", "city": "X", "country": "DE"},
                   "groups": [{ "variant": "default", "groupId": "g2", "fullName": "alpha" }]
                 }
               ]

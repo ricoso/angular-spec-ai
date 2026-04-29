@@ -30,7 +30,10 @@ describe('ServiceSelectionContainerComponent', () => {
             getBranchById: jest.fn().mockResolvedValue(null),
             getBrandLogoPath: jest.fn().mockReturnValue('assets/brands/default.svg'),
             getBranches: jest.fn().mockResolvedValue([]),
-            getServices: jest.fn().mockResolvedValue(AVAILABLE_SERVICES)
+            getServices: jest.fn().mockResolvedValue(AVAILABLE_SERVICES),
+            getJobTypesByBranch: jest.fn().mockResolvedValue([]),
+            getCategoriesByBranch: jest.fn().mockResolvedValue([]),
+            getOperationsByBranch: jest.fn().mockResolvedValue([])
           }
         },
         { provide: Router, useValue: router }
@@ -61,52 +64,28 @@ describe('ServiceSelectionContainerComponent', () => {
       expect(exposed.selectedServiceIds()).toEqual([]);
     });
 
-    it('should compute selectedServiceIds after selecting services', () => {
-      store.toggleService('inspection');
-      store.toggleService('tuv');
-      const exposed = component as unknown as { selectedServiceIds: () => string[] };
-      expect(exposed.selectedServiceIds()).toEqual(['inspection', 'tuv']);
-    });
-
-    it('should compute empty selectedOptionsMap initially', () => {
-      const exposed = component as unknown as { selectedOptionsMap: () => Record<string, string[]> };
-      expect(Object.keys(exposed.selectedOptionsMap()).length).toBe(0);
-    });
-
-    it('should compute selectedOptionsMap after confirming service options', () => {
-      store.confirmServiceOptions('tire-change', ['bring-own-tires']);
-      const exposed = component as unknown as { selectedOptionsMap: () => Record<string, string[]> };
-      expect(exposed.selectedOptionsMap()['tire-change']).toEqual(['bring-own-tires']);
-    });
-
-    it('should return empty options when service has no options selected', () => {
-      store.toggleService('inspection');
-      const exposed = component as unknown as { selectedOptionsMap: () => Record<string, string[]> };
-      expect(exposed.selectedOptionsMap().inspection).toEqual([]);
+    it('should expose categories and operationsByCategory', () => {
+      const exposed = component as unknown as {
+        categories: () => unknown[];
+        operationsByCategory: () => Record<string, unknown[]>;
+      };
+      expect(exposed.categories()).toEqual([]);
+      expect(exposed.operationsByCategory()).toEqual({});
     });
   });
 
-  describe('Service Click', () => {
+  describe('Service Click (no operations under category)', () => {
     it('should toggle service in store on click', () => {
       const exposed = component as unknown as {
-        onServiceClick: (serviceId: 'inspection' | 'tuv' | 'tire-change') => void;
+        onServiceClick: (serviceId: string) => void;
       };
       exposed.onServiceClick('inspection');
       expect(store.selectedServices()).toEqual([{ serviceId: 'inspection', selectedOptionIds: [] }]);
     });
 
-    it('should deselect service on second click', () => {
-      const exposed = component as unknown as {
-        onServiceClick: (serviceId: 'inspection' | 'tuv' | 'tire-change') => void;
-      };
-      exposed.onServiceClick('inspection');
-      exposed.onServiceClick('inspection');
-      expect(store.selectedServices()).toEqual([]);
-    });
-
     it('should support multi-select', () => {
       const exposed = component as unknown as {
-        onServiceClick: (serviceId: 'inspection' | 'tuv' | 'tire-change') => void;
+        onServiceClick: (serviceId: string) => void;
       };
       exposed.onServiceClick('inspection');
       exposed.onServiceClick('tuv');
@@ -114,35 +93,15 @@ describe('ServiceSelectionContainerComponent', () => {
     });
   });
 
-  describe('Service Confirm', () => {
-    it('should confirm service with options', () => {
+  describe('Service Confirm (REQ-025 b Iter. 3 — Category contains Operations)', () => {
+    it('should add Operation-IDs as selectedServices on confirm', () => {
       const exposed = component as unknown as {
-        onServiceConfirm: (event: { serviceId: 'tire-change'; optionIds: string[] }) => void;
+        onServiceConfirm: (event: { serviceId: string; optionIds: string[] }) => void;
       };
-      exposed.onServiceConfirm({ serviceId: 'tire-change', optionIds: ['bring-own-tires'] });
+      exposed.onServiceConfirm({ serviceId: 'cat-inspektion', optionIds: ['op-1', 'op-2'] });
       expect(store.selectedServices()).toEqual([
-        { serviceId: 'tire-change', selectedOptionIds: ['bring-own-tires'] }
-      ]);
-    });
-
-    it('should deselect service', () => {
-      const exposed = component as unknown as {
-        onServiceConfirm: (event: { serviceId: 'tire-change'; optionIds: string[] }) => void;
-        onServiceDeselect: (serviceId: 'tire-change') => void;
-      };
-      exposed.onServiceConfirm({ serviceId: 'tire-change', optionIds: ['bring-own-tires'] });
-      exposed.onServiceDeselect('tire-change');
-      expect(store.selectedServices()).toEqual([]);
-    });
-
-    it('should switch options on re-confirm', () => {
-      const exposed = component as unknown as {
-        onServiceConfirm: (event: { serviceId: 'tire-change'; optionIds: string[] }) => void;
-      };
-      exposed.onServiceConfirm({ serviceId: 'tire-change', optionIds: ['bring-own-tires'] });
-      exposed.onServiceConfirm({ serviceId: 'tire-change', optionIds: ['stored-tires'] });
-      expect(store.selectedServices()).toEqual([
-        { serviceId: 'tire-change', selectedOptionIds: ['stored-tires'] }
+        { serviceId: 'op-1', selectedOptionIds: [] },
+        { serviceId: 'op-2', selectedOptionIds: [] }
       ]);
     });
   });
@@ -156,20 +115,13 @@ describe('ServiceSelectionContainerComponent', () => {
 
     it('should navigate back and clear services on back', () => {
       const exposed = component as unknown as {
-        onServiceClick: (serviceId: 'inspection' | 'tuv' | 'tire-change') => void;
+        onServiceClick: (serviceId: string) => void;
         onBack: () => void;
       };
       exposed.onServiceClick('inspection');
       exposed.onBack();
       expect(store.selectedServices()).toEqual([]);
       expect(router.navigate).toHaveBeenCalledWith(['/home/brand']);
-    });
-
-    it('should call loadServices on retry', () => {
-      const loadSpy = jest.spyOn(store, 'loadServices');
-      const exposed = component as unknown as { onRetry: () => void };
-      exposed.onRetry();
-      expect(loadSpy).toHaveBeenCalled();
     });
 
     it('should expose isLoading and error signals', () => {

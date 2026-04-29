@@ -117,18 +117,28 @@
   }
 
   &__brand-logo {
+    display: inline-block;
     height: 1.5em;
-    width: auto;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
+    width: 1.5em;
+    /* REQ-025: SVG-Mask Trick — Brand-Logo via mask-image, Farbe via background-color. */
+    background-color: var(--color-text-muted);
+    mask-image: var(--brand-logo-url);
+    -webkit-mask-image: var(--brand-logo-url);
+    mask-size: contain;
+    -webkit-mask-size: contain;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-position: center;
+    transition: background-color 0.2s ease;
   }
 
   &:hover &__brand-logo {
-    opacity: 1;
+    background-color: var(--color-text-secondary);
   }
 
   .location-grid__radio:checked + & &__brand-logo {
-    opacity: 1;
+    background-color: var(--color-primary);
   }
 }
 

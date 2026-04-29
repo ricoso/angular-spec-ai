@@ -19,14 +19,42 @@ At the same time, six small UX adjustments are bundled in:
 
 - (a) Notes textarea placeholder + hint reads "Bitte tragen Sie hier Ihre
   Nachricht an uns ein."
-- (b) Services + sub-options come from `/branches/{id}/jobtypes`, no local
-  `AVAILABLE_SERVICES` table any more.
-- (c) Branch info banner shows full address: `<Street>, <ZIP> <City>` —
-  driven by API fields, not concatenated strings.
+- (b) **REVIDIERT (Iter. 3):** Services + sub-options come from the SoftNet
+  *Tags + Operations* model (live-verified via debug endpoint):
+  - **Cards = Tags** from `/api/planning/tags` (7 categories like
+    "Inspektion", "TÜV", "Räderwechsel"). Each Tag has `id`, `name`, `rank`.
+  - **Sub-options of a Card = Operations** from `/api/planning/operations`,
+    filtered by `tags[]` array.
+  - **Each Operation shows `name` (large) and `description` (small,
+    line-clamped to 3 lines underneath)** — replacing the old separate
+    Service-Hints section on the Notes page.
+  - **Variant detection (`tireChange`)** uses Tag `rank === 3` (stable
+    marker — name "Räderwechsel" is German display only).
+  - **Operations can belong to multiple Tags** — they appear under every
+    matching Card (mirrors current SoftNet master-data state).
+  - **Operations are sorted by `order`** field within a Card.
+  - **JobTypes** (`normal` / `client waiting`) are appointment modes, not
+    service categories — UI uses them only for booking-mode selection.
+  - The legacy `AVAILABLE_SERVICES` table is removed.
+- (c) **REVIDIERT (Iter. 3):** Branch info banner shows full address
+  `<Street>, <ZIP> <City>` — driven by `setup.json` (NOT SoftNet API).
+  Live-Test 2026-04-27 verified: SoftNet `/branches/{id}` returns only
+  `city`, no street or zip. SoftNet `/groups/{id}` returns `supportPhone`,
+  `supportEmail`, `webPage`, `slogan`, `welcome`, `logoImage` — but
+  also no street/zip/city. Therefore: `setup.json` is extended with a
+  structured address record (`street`, `zip`, `city`, `country`) and is
+  the single source of truth for branch addresses. Branch **name** still
+  comes from SoftNet API (`branch.name`).
 - (d) Callback dropdown defaults to **"Nein"** with options `Ja` / `Nein`
   (no more "Keine Auswahl").
-- (e) Per-service hint text is delivered by the API (`hint` field on each
-  JobType), not from `notes-hints.constants.ts`.
+- (e) **REVIDIERT (Iter. 3):** Per-service hint text is delivered by
+  `Operation.description` from `/api/planning/operations` (live-verified
+  data). The Description is shown directly under each Service-name on the
+  **Services-Page** (under each checkbox in the expanded Card).
+  The Notes page Service-Hints section is **kept** (mirrors the
+  Description for already selected services as a recap before booking).
+  The legacy `notes-hints.constants.ts` constant is deleted in either
+  case.
 - (f) When the user picks a rental car category, the notes page shows a
   price block with `Mietwagen-Kategorie: <Name> — <Price> <Currency>
   pro <Unit>` underneath the service hints — only when an API price is
@@ -39,6 +67,25 @@ At the same time, six small UX adjustments are bundled in:
   Rationale: there is no single dealership phone number — phone numbers
   are per-branch and live in SoftNet master data; rendering a static
   Düsseldorf number when the API is down is misleading.
+
+- (i) Branch addresses come from `setup.json` (single source of truth);
+  setup.json schema is extended from a flat `address` string to a
+  structured `BranchAddressSetup` record `{street, zip, city, country}`.
+  Frontend banner shows `<Street>, <ZIP> <City>` — PLZ becomes visible.
+
+- (j) **NEU (Iter. 3):** SoftNet Group response delivers branch-specific
+  fields that supplement setup.json:
+  - `supportPhone`, `supportEmail` — branch-specific contact data
+  - `webPage` — link to the branch's website
+  - `branchLabel` — clean display name (e.g. "Audi Mettmann" instead of
+    technical group name "Audi Mettmann soft-planning+")
+  - `slogan`, `welcome` — HTML banner texts (rich text, currently unused)
+  - `logoImage`, `logoMobile` — branch-specific logo asset IDs
+  These fields are lazy-fetched once per branch session via a new backend
+  endpoint `GET /api/v1/branches/{branchId}/details` which proxies
+  `softnetApi.getGroup(defaultGroupId)`. Frontend uses these for the
+  Brand-Banner subtitle, optional support-phone display, and
+  branch-specific logo (post-MVP).
 
 The implementation deletes / drastically simplifies several frontend files
 (`service.model.ts`, `notes-hints.constants.ts`) and extends three backend

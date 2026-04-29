@@ -36,7 +36,7 @@ describe('NotesExtrasFormComponent', () => {
 
     it('should have default callback option', () => {
       const exposed = component as unknown as { callbackOption: () => string };
-      expect(exposed.callbackOption()).toBe('none');
+      expect(exposed.callbackOption()).toBe('no');
     });
 
     it('should have no selected rent category initially', () => {
@@ -77,7 +77,7 @@ describe('NotesExtrasFormComponent', () => {
         callbackOption: () => string;
       };
       expect(exposed.appointmentPreference()).toBe('anytime');
-      expect(exposed.callbackOption()).toBe('none');
+      expect(exposed.callbackOption()).toBe('no');
     });
   });
 
@@ -124,7 +124,7 @@ describe('NotesExtrasFormComponent', () => {
       expect(exposed.appointmentPreference()).toBe('afternoon');
       expect(spy).toHaveBeenCalledWith({
         appointmentPreference: 'afternoon',
-        callbackOption: 'none'
+        callbackOption: 'no'
       });
     });
   });
@@ -170,7 +170,7 @@ describe('NotesExtrasFormComponent', () => {
     it('should have 2 callback option items', () => {
       const exposed = component as unknown as { callbackOptionItems: () => { value: string; label: string }[] };
       expect(exposed.callbackOptionItems()).toHaveLength(2);
-      expect(exposed.callbackOptionItems().map(i => i.value)).toEqual(['none', 'yes']);
+      expect(exposed.callbackOptionItems().map(i => i.value)).toEqual(['no', 'yes']);
     });
   });
 });

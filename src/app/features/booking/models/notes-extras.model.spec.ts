@@ -6,7 +6,7 @@ describe('NotesExtras Model', () => {
     it('should have correct default values', () => {
       expect(DEFAULT_NOTES_EXTRAS).toEqual({
         appointmentPreference: 'anytime',
-        callbackOption: 'none'
+        callbackOption: 'no'
       });
     });
   });
@@ -18,7 +18,7 @@ describe('NotesExtras Model', () => {
     });
 
     it('should allow valid CallbackOption values', () => {
-      const values: CallbackOption[] = ['none', 'yes'];
+      const values: CallbackOption[] = ['no', 'yes'];
       expect(values).toHaveLength(2);
     });
 

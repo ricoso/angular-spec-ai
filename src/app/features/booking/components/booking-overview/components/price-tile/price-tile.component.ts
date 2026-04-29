@@ -39,7 +39,7 @@ export class PriceTileComponent {
 
   protected readonly callbackOptionLabel = computed(() => {
     const map = {
-      'none': this.notes.callback.none,
+      'no': this.notes.callback.no,
       'yes': this.notes.callback.yes
     } as const;
     return this.translateService.instant(map[this.callbackOption()]);

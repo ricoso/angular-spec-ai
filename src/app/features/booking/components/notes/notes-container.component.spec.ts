@@ -80,7 +80,7 @@ describe('NotesContainerComponent', () => {
       expect(exposed.currentExtras()).toEqual({
         
         appointmentPreference: 'anytime',
-        callbackOption: 'none'
+        callbackOption: 'no'
       });
     });
   });
@@ -177,7 +177,7 @@ describe('NotesContainerComponent', () => {
       expect(store.notesExtras()).toEqual({
         
         appointmentPreference: 'anytime',
-        callbackOption: 'none'
+        callbackOption: 'no'
       });
       expect(router.navigate).toHaveBeenCalledWith(['/home/appointment']);
     });

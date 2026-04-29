@@ -35,18 +35,6 @@
     </button>
   </div>
 
-  <aside class="error-fallback__phone" role="note">
-    <mat-icon class="error-fallback__phone-icon" aria-hidden="true">phone_in_talk</mat-icon>
-    <p class="error-fallback__phone-text">
-      {{ error.phoneIntro | translate }}
-      <a
-        class="error-fallback__phone-link"
-        [href]="phoneTelHref()"
-        [attr.aria-label]="(error.phoneAriaLabel | translate) + ' ' + phoneNumber()"
-      >{{ phoneNumber() }}</a>
-    </p>
-  </aside>
-
   @if (criticalError(); as err) {
     <details class="error-fallback__details">
       <summary class="error-fallback__summary">

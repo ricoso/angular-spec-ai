@@ -503,15 +503,16 @@ test.describe.skip('REQ-005: Notes Page (Hinweisfenster)', () => {
       const ariaLabel = await textarea.getAttribute('aria-label');
       expect(ariaLabel).toBeTruthy();
 
-      // Angular Material adds its own hint ID alongside our custom one
+      // REQ-025 (a): aria-describedby links to both notes-hint (top) and notes-counter (bottom)
       const ariaDescribedBy = await textarea.getAttribute('aria-describedby');
-      expect(ariaDescribedBy).toContain('char-counter');
+      expect(ariaDescribedBy).toContain('notes-hint');
+      expect(ariaDescribedBy).toContain('notes-counter');
     });
 
     test('char counter has aria-live="polite"', async ({ page }) => {
       await goToNotesPage(page);
 
-      const counter = page.locator('#char-counter');
+      const counter = page.locator('#notes-counter');
       const ariaLive = await counter.getAttribute('aria-live');
       expect(ariaLive).toBe('polite');
     });

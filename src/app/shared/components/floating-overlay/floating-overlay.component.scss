@@ -113,10 +113,14 @@
     color: var(--color-text-secondary);
 
     mat-icon {
-      font-size: 1.125em;
-      width: 1.125em;
-      height: 1.125em;
+      /* font-size MUSS == width/height sein, sonst wird das Material-Font-Icon abgeschnitten. */
+      font-size: 1.25em !important;
+      width: 1.25em !important;
+      height: 1.25em !important;
+      line-height: 1.25em !important;
       color: var(--color-text-muted);
+      flex-shrink: 0;
+      overflow: visible;
     }
   }
 

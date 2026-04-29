@@ -35,6 +35,21 @@
     filter: invert(48%) sepia(79%) saturate(1564%) hue-rotate(212deg) brightness(97%) contrast(88%);
   }
 
+  &__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+  }
+
+  &__service-name {
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+    line-height: var(--line-height-tight);
+  }
+
   &__text {
     font-size: var(--font-size-sm);
     line-height: var(--line-height-relaxed);

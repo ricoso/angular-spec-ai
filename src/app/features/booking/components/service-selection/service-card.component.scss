@@ -92,6 +92,32 @@
     padding: var(--spacing-xs) 0;
   }
 
+  /* REQ-025 (b) Iter. 3: Operation-Wrapper mit Description darunter */
+  &__option {
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-xs) 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  &__option-row {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  /* Description klein direkt unter dem Operation-Namen */
+  &__option-desc {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-tight);
+    margin: 0.15em 0 0 2.25em;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
   &__actions {
     display: flex;
     justify-content: center;

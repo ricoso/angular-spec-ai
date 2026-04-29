@@ -25,11 +25,12 @@
     </div>
   } @else {
     <div class="service-selection__grid" role="group" [attr.aria-label]="booking.services.ariaGroupLabel | translate">
-      @for (service of services(); track service.id) {
+      @for (cat of categories(); track cat.id) {
         <app-service-card
-          [service]="service"
-          [isSelected]="selectedServiceIds().includes(service.id)"
-          [selectedOptionIds]="selectedOptionsMap()[service.id] ?? []"
+          [category]="cat"
+          [operations]="operationsByCategory()[cat.id] ?? []"
+          [isSelected]="categorySelectedMap()[cat.id] ?? false"
+          [selectedOperationIds]="selectedOptionsMap()[cat.id] ?? []"
           (serviceClicked)="onServiceClick($event)"
           (serviceConfirmed)="onServiceConfirm($event)"
           (serviceDeselected)="onServiceDeselect($event)"

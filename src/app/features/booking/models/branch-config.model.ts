@@ -2,6 +2,8 @@ export interface BranchAddress {
   street: string;
   zip: string;
   city: string;
+  /** REQ-025 (c): optional, falls API ein Land mitliefert. */
+  country?: string;
 }
 
 export interface BranchConfig {

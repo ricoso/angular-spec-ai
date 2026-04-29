@@ -4,9 +4,9 @@
 export type AppointmentPreference = 'anytime' | 'morning' | 'afternoon';
 
 /**
- * Callback option
+ * Callback option (REQ-025 AC-12: nur noch 'no' | 'yes', kein 'none' mehr).
  */
-export type CallbackOption = 'none' | 'yes';
+export type CallbackOption = 'no' | 'yes';
 
 /**
  * Extended notes extras — dropdown selections on notes page.
@@ -19,5 +19,5 @@ export interface NotesExtras {
 
 export const DEFAULT_NOTES_EXTRAS: NotesExtras = {
   appointmentPreference: 'anytime',
-  callbackOption: 'none'
+  callbackOption: 'no'
 };

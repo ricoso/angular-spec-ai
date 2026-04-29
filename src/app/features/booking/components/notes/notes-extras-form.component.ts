@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -15,7 +16,7 @@ import type { RentCategory } from '../../models/rent-category.model';
 @Component({
   selector: 'app-notes-extras-form',
   standalone: true,
-  imports: [MatFormFieldModule, MatSelectModule, TranslatePipe],
+  imports: [MatFormFieldModule, MatSelectModule, MatIconModule, TranslatePipe],
   templateUrl: './notes-extras-form.component.html',
   styleUrl: './notes-extras-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -40,9 +41,17 @@ export class NotesExtrasFormComponent {
   ]);
 
   protected readonly callbackOptionItems = computed(() => [
-    { value: 'none' as CallbackOption, label: this.notes.callback.none },
+    { value: 'no' as CallbackOption, label: this.notes.callback.no },
     { value: 'yes' as CallbackOption, label: this.notes.callback.yes }
   ]);
+
+  /** REQ-025: Description (inkl. Preis) der gewählten Mietwagen-Kategorie aus SoftNet. */
+  protected readonly selectedRentCategoryDescription = computed<string | null>(() => {
+    const id = this.selectedRentCategoryId();
+    if (!id) return null;
+    const cat = this.rentCategories().find(c => c.id === id);
+    return cat?.description?.trim() ? cat.description : null;
+  });
 
   constructor() {
     effect(() => {
