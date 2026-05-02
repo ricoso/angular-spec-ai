@@ -1,7 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -16,7 +13,7 @@ import { LocationCardsComponent } from './location-cards.component';
 @Component({
   selector: 'app-location-selection-container',
   standalone: true,
-  imports: [LocationCardsComponent, WizardBreadcrumbComponent, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslatePipe],
+  imports: [LocationCardsComponent, WizardBreadcrumbComponent, TranslatePipe],
   templateUrl: './location-selection-container.component.html',
   styleUrl: './location-selection-container.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

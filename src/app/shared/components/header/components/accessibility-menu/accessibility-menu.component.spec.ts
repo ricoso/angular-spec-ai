@@ -112,10 +112,10 @@ describe('AccessibilityMenuComponent', () => {
       expect(emitSpy).toHaveBeenCalledWith('en');
     });
 
-    it('should expose only DE + EN as visible languages (REQ-025 point h)', () => {
+    it('should expose only DE as visible language (UI-Migration: nur Deutsch sichtbar; EN/UK/FR/AR-Translations bleiben im Code)', () => {
       const exposed = component as unknown as { languages: { code: string; label: string }[] };
-      expect(exposed.languages).toHaveLength(2);
-      expect(exposed.languages.map(l => l.code)).toEqual(['de', 'en']);
+      expect(exposed.languages).toHaveLength(1);
+      expect(exposed.languages.map(l => l.code)).toEqual(['de']);
     });
   });
 });

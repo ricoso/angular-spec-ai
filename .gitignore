@@ -125,3 +125,4 @@ server/.DS_Store
 server/bin/
 server/Autohaus-Terminbuchung.zip
 Names_and_IDs.xlsx
+dist/

@@ -1,7 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -16,7 +13,7 @@ import { BrandCardsComponent } from './brand-cards.component';
 @Component({
   selector: 'app-brand-selection-container',
   standalone: true,
-  imports: [BrandCardsComponent, WizardBreadcrumbComponent, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslatePipe],
+  imports: [BrandCardsComponent, WizardBreadcrumbComponent, TranslatePipe],
   templateUrl: './brand-selection-container.component.html',
   styleUrl: './brand-selection-container.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

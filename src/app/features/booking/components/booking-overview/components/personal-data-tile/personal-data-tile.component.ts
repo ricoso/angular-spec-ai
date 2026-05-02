@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 
@@ -7,7 +8,7 @@ import type { CustomerInfo, VehicleInfo } from '../../../../models/customer.mode
 @Component({
   selector: 'app-personal-data-tile',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [RouterLink, TranslatePipe],
   templateUrl: './personal-data-tile.component.html',
   styleUrl: './personal-data-tile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

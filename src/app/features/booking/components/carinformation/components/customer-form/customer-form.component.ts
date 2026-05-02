@@ -2,9 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import type { FormGroup } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 import { merge, startWith, switchMap } from 'rxjs';
@@ -14,9 +11,6 @@ import { merge, startWith, switchMap } from 'rxjs';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
     TranslatePipe
   ],
   templateUrl: './customer-form.component.html',

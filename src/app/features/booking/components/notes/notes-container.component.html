@@ -1,8 +1,8 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="notes">
-  <h1 class="notes__title">{{ booking.notes.pageTitle | translate }}</h1>
-  <p class="notes__subtitle">{{ booking.notes.sectionTitle | translate }}</p>
+<main class="page-wrap notes">
+  <h1 class="page-title notes__title">{{ booking.notes.pageTitle | translate }}</h1>
+  <p class="page-subtitle notes__subtitle">{{ booking.notes.sectionTitle | translate }}</p>
 
   <app-notes-extras-form
     [initialExtras]="initialExtras()"
@@ -11,6 +11,8 @@
     (extrasChanged)="onExtrasChanged($event)"
     (rentCategoryChanged)="onRentCategoryChanged($event)"
   />
+
+  <app-rent-category-price-block />
 
   <app-notes-form
     [initialNote]="initialNote()"
@@ -26,30 +28,24 @@
     />
   }
 
-  <app-rent-category-price-block />
-
-
-  <div class="notes__actions">
+  <nav class="wizard-nav notes__actions" [attr.aria-label]="booking.notes.sectionTitle | translate">
     <button
-      mat-flat-button
-      class="notes__back-button"
       type="button"
+      class="btn btn-outline-secondary notes__back-button"
       [attr.aria-label]="booking.notes.backButton | translate"
       (click)="onBack()"
     >
-      <mat-icon class="icon-framed" aria-hidden="true">arrow_back</mat-icon>
+      <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
       {{ booking.notes.backButton | translate }}
     </button>
     <button
-      mat-flat-button
-      color="primary"
-      class="notes__continue-button"
       type="button"
+      class="btn btn-primary btn-lg notes__continue-button"
       [attr.aria-label]="booking.notes.continueButton | translate"
       (click)="onContinue()"
     >
       {{ booking.notes.continueButton | translate }}
-      <mat-icon class="icon-framed" aria-hidden="true">arrow_forward</mat-icon>
+      <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
     </button>
-  </div>
-</section>
+  </nav>
+</main>

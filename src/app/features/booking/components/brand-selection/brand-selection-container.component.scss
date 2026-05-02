@@ -21,45 +21,14 @@
     margin: 0 0 var(--spacing-xl);
   }
 
+  // Branch-Banner uses .branch-banner from _bootstrap-theme.scss for visuals.
+  // BEM hooks below remain for E2E selectors.
   &__info-banner {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md) var(--spacing-lg);
-    background-color: var(--color-info-bg);
-    border: 0.0625em solid var(--color-info-border);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-xl);
     text-align: left;
   }
 
-  &__info-icon {
-    flex-shrink: 0;
-    color: var(--color-info);
-
-    mat-icon {
-      font-size: 1.5em;
-      width: 1.5em;
-      height: 1.5em;
-    }
-  }
-
   &__info-text {
-    font-size: var(--font-size-sm);
-    color: var(--color-info);
-    font-weight: 500;
-
-    strong {
-      font-weight: 700;
-    }
-  }
-
-  &__loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-2xl) 0;
+    flex: 1;
   }
 
   &__loading-text {
@@ -68,39 +37,25 @@
     margin: 0;
   }
 
-  &__error {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-2xl) var(--spacing-md);
-  }
-
   &__error-icon {
     font-size: 3em;
-    width: 3em;
-    height: 3em;
     color: var(--color-error);
+    display: block;
+    margin-bottom: var(--spacing-sm);
   }
 
   &__error-title {
     font-size: var(--font-size-lg);
     font-weight: 700;
     color: var(--color-text-primary);
-    margin: 0;
+    margin: 0 0 var(--spacing-xs);
   }
 
   &__error-message {
     font-size: var(--font-size-md);
     color: var(--color-text-secondary);
-    margin: 0 0 var(--spacing-md);
+    margin: 0 auto var(--spacing-md);
     max-width: 30em;
-  }
-
-  &__retry-button {
-    mat-icon {
-      margin-right: var(--spacing-xs);
-    }
   }
 
   &__empty {
@@ -110,22 +65,7 @@
   }
 
   &__nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-md) 0;
-  }
-
-  &__back-button {
-    background-color: transparent !important;
-    color: var(--color-text-secondary) !important;
-    border: 0.0625em solid var(--color-border) !important;
-
-    &:hover {
-      background-color: var(--color-background-hover) !important;
-      color: var(--color-text-primary) !important;
-    }
+    margin-top: var(--spacing-xl);
   }
 }
 

@@ -1,7 +1,6 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import type { ApplicationConfig} from '@angular/core';
 import { provideZoneChangeDetection } from '@angular/core';
-import { MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 
@@ -18,8 +17,8 @@ export const appConfig: ApplicationConfig = {
       circuitBreakerInterceptor,
       errorFallbackInterceptor
     ])),
-    provideAnimations(),
-    provideNativeDateAdapter(),
-    { provide: MAT_DATE_LOCALE, useValue: 'de-DE' }
+    provideAnimations()
+    // mat-datepicker durch NgbDatepicker (ng-bootstrap) ersetzt — siehe workshop-calendar.
+    // NgbDateNativeAdapter wird pro Component-providers konfiguriert.
   ]
 };

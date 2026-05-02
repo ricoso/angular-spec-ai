@@ -21,7 +21,7 @@ import {
 /** Helper: get the mat-select trigger text for a given dropdown */
 async function getDropdownValue(page: import('@playwright/test').Page, index: number): Promise<string> {
   const selects = page.locator('app-notes-extras-form mat-select');
-  const trigger = selects.nth(index).locator('.mat-mdc-select-value-text');
+  const trigger = selects.nth(index).locator('select.form-select');
   return (await trigger.textContent())?.trim() ?? '';
 }
 

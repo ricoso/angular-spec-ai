@@ -1,21 +1,18 @@
 .notes-form {
-  &__field {
-    width: 100%;
-  }
+  margin-bottom: var(--spacing-md);
 
   &__textarea {
     resize: vertical;
     line-height: var(--line-height-normal);
-    font-size: var(--font-size-sm);
 
     &:focus-visible {
-      outline: 0.125em solid var(--color-focus-ring);
+      outline: 0.125em solid var(--bs-primary);
       outline-offset: 0.125em;
     }
   }
 
   &__counter {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
+    font-size: 0.85em;
+    color: var(--color-text-muted, #6c757d);
   }
 }

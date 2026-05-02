@@ -1,19 +1,22 @@
-<div class="notes-form">
-  <mat-form-field class="notes-form__field" appearance="outline">
+<div class="notes-form card">
+  <div class="card-body">
+    <p class="switch-card__title mb-1">
+      <i class="bi bi-chat-text me-2 text-primary" aria-hidden="true"></i>
+      {{ booking.notes.sectionTitle | translate }}
+    </p>
+    <p class="switch-card__hint mb-2" id="notes-hint">
+      {{ booking.notes.textareaHint | translate }}
+    </p>
     <textarea
-      matInput
       [formControl]="noteControl"
       [placeholder]="booking.notes.textareaPlaceholder | translate"
       [maxlength]="maxLength"
       [attr.aria-label]="booking.notes.sectionTitle | translate"
       [attr.aria-describedby]="'notes-hint notes-counter'"
-      rows="6"
-      class="notes-form__textarea"
+      rows="4"
+      class="form-control notes-form__textarea"
     ></textarea>
-    <mat-hint id="notes-hint" align="start" class="notes-form__hint">
-      {{ booking.notes.textareaHint | translate }}
-    </mat-hint>
-    <mat-hint align="end">
+    <div class="form-text d-flex justify-content-end">
       <span
         id="notes-counter"
         aria-live="polite"
@@ -21,6 +24,6 @@
       >
         {{ currentLength() }} / {{ maxLength }}
       </span>
-    </mat-hint>
-  </mat-form-field>
+    </div>
+  </div>
 </div>

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { i18nKeys, TranslatePipe, TranslateService } from '@core/i18n';
 
@@ -7,7 +8,7 @@ import type { AppointmentPreference, CallbackOption } from '../../../../models/n
 @Component({
   selector: 'app-price-tile',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [RouterLink, TranslatePipe],
   templateUrl: './price-tile.component.html',
   styleUrl: './price-tile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

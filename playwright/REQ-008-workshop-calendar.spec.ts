@@ -96,7 +96,7 @@ test.describe.skip('REQ-008: Workshop Calendar (Werkstattkalender)', () => {
       await goToWorkshopCalendarPage(page);
 
       // Click datepicker toggle
-      const toggle = page.locator('mat-datepicker-toggle button');
+      const toggle = page.locator('.date-picker-card__toggle');
       await expect(toggle).toBeVisible();
       await toggle.click();
       await waitForAngular(page);
@@ -106,7 +106,7 @@ test.describe.skip('REQ-008: Workshop Calendar (Werkstattkalender)', () => {
       await expect(calendar).toBeVisible();
 
       // Today cell should be highlighted
-      const todayCell = page.locator('.mat-calendar-body-today');
+      const todayCell = page.locator('.ngb-dp-day:not(.disabled):not(.outside)');
       await expect(todayCell).toBeVisible();
     });
 

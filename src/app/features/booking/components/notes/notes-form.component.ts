@@ -10,8 +10,6 @@ import {
   signal
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 import { type Subscription } from 'rxjs';
@@ -21,7 +19,7 @@ const MAX_NOTE_LENGTH = 1000;
 @Component({
   selector: 'app-notes-form',
   standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, TranslatePipe],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './notes-form.component.html',
   styleUrl: './notes-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

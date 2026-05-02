@@ -1,6 +1,6 @@
-<div class="location-grid" role="radiogroup" [attr.aria-label]="booking.location.ariaGroupLabel | translate">
+<div class="row g-3 location-grid" role="radiogroup" [attr.aria-label]="booking.location.ariaGroupLabel | translate">
   @for (branch of enrichedBranches(); track branch.branchId) {
-    <div class="location-grid__item">
+    <div class="col-12 col-md-6 col-lg-4 location-grid__item">
       <input
         type="radio"
         name="location"
@@ -11,21 +11,24 @@
         [attr.aria-label]="branch.name + ', ' + branch.formattedAddress"
         (change)="onSelect(branch)"
       />
-      <label [for]="'location-' + branch.branchId" class="location-card">
-        <span class="location-card__check" aria-hidden="true">
-          <mat-icon>check</mat-icon>
+      <label
+        [for]="'location-' + branch.branchId"
+        class="card card-pickable h-100 p-3 location-card"
+        [class.selected]="branch.branchId === selectedBranch()?.branchId"
+      >
+        <span class="badge-selected" aria-hidden="true">
+          <i class="bi bi-check-lg"></i>
         </span>
-        <span class="location-card__name">{{ branch.name }}</span>
-        <span class="location-card__address">
-          <mat-icon aria-hidden="true">location_on</mat-icon>
-          {{ branch.formattedAddress }}
-        </span>
-        <span class="location-card__brands">
+        <h5 class="mb-2 location-card__name">{{ branch.name }}</h5>
+        <p class="small text-muted mb-2 location-card__address">
+          <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ branch.formattedAddress }}
+        </p>
+        <span class="d-flex gap-2 align-items-center mt-auto location-card__brands">
           @for (logo of branch.brandLogos; track logo.name) {
             <span
               [attr.aria-label]="logo.name"
               role="img"
-              class="location-card__brand-logo"
+              class="brand-logo brand-logo--sm location-card__brand-logo"
               [style.--brand-logo-url]="'url(' + logo.path + ')'"
             ></span>
           }

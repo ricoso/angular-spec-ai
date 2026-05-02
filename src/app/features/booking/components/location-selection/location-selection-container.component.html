@@ -1,25 +1,26 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="location-selection">
-  <h1 class="location-selection__title">{{ booking.location.title | translate }}</h1>
-  <p class="location-selection__subtitle">{{ booking.location.subtitle | translate }}</p>
+<section class="page-wrap location-selection">
+  <h1 class="page-title">{{ booking.location.title | translate }}</h1>
+  <p class="page-subtitle">{{ booking.location.subtitle | translate }}</p>
 
   @if (isLoading()) {
-    <div class="location-selection__loading" role="status" aria-live="polite">
-      <mat-spinner diameter="48" />
-      <p class="location-selection__loading-text">{{ booking.api.loading | translate }}</p>
+    <div class="location-selection__loading text-center py-5" role="status" aria-live="polite">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ booking.api.loading | translate }}</span>
+      </div>
+      <p class="location-selection__loading-text mt-3 mb-0">{{ booking.api.loading | translate }}</p>
     </div>
   } @else if (error()) {
-    <div class="location-selection__error" role="alert" aria-live="assertive">
-      <mat-icon class="location-selection__error-icon" aria-hidden="true">error_outline</mat-icon>
+    <div class="location-selection__error text-center py-5" role="alert" aria-live="assertive">
+      <i class="bi bi-exclamation-circle location-selection__error-icon" aria-hidden="true"></i>
       <h2 class="location-selection__error-title">{{ booking.api.errorTitle | translate }}</h2>
       <p class="location-selection__error-message">{{ booking.api.errorUnknown | translate }}</p>
       <button
-        mat-flat-button
-        color="primary"
-        class="location-selection__retry-button"
+        type="button"
+        class="btn btn-primary location-selection__retry-button"
         (click)="onRetry()">
-        <mat-icon aria-hidden="true">refresh</mat-icon>
+        <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>
         {{ booking.api.retryButton | translate }}
       </button>
     </div>

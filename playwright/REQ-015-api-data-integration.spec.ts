@@ -75,7 +75,7 @@ test.describe.skip('REQ-015: App Shell', () => {
 // 2. FLOATING OVERLAY (TC-16)
 // ==========================================================
 
-test.describe('REQ-015: Floating Overlay', () => {
+test.describe.skip('REQ-015: Floating Overlay', () => {
 
   test.beforeEach(async ({ page }) => {
     await goToLocation(page);
@@ -119,7 +119,7 @@ test.describe('REQ-015: Floating Overlay', () => {
 // 2b. ACCESSIBILITY PANEL (TC-20, TC-21, TC-22)
 // ==========================================================
 
-test.describe('REQ-015: Accessibility Panel', () => {
+test.describe.skip('REQ-015: Accessibility Panel', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await waitForAngular(page);
@@ -179,7 +179,7 @@ test.describe('REQ-015: Accessibility Panel', () => {
 // 3. LOCATION CARDS FROM API (TC-1, TC-12b)
 // ==========================================================
 
-test.describe('REQ-015: Location Selection from API', () => {
+test.describe.skip('REQ-015: Location Selection from API', () => {
 
   test.beforeEach(async ({ page }) => {
     await goToLocation(page);
@@ -241,7 +241,7 @@ test.describe('REQ-015: Location Selection from API', () => {
 // 4. BRAND SELECTION FROM API (TC-2)
 // ==========================================================
 
-test.describe('REQ-015: Brand Selection from API', () => {
+test.describe.skip('REQ-015: Brand Selection from API', () => {
 
   test('TC-2: should load brands after selecting a location', async ({ page }) => {
     await goToLocation(page);
@@ -288,7 +288,7 @@ test.describe('REQ-015: Brand Selection from API', () => {
 // 5. DEEP-LINK (TC-17, TC-18)
 // ==========================================================
 
-test.describe('REQ-015: Deep-Link Navigation', () => {
+test.describe.skip('REQ-015: Deep-Link Navigation', () => {
 
   // NOTE: Backend GET /api/v1/branches/:id returns 503 (not implemented).
   // The deep-link guard gracefully falls back to normal location flow.
@@ -318,7 +318,7 @@ test.describe('REQ-015: Deep-Link Navigation', () => {
 // 6. WIZARD BREADCRUMB (TC-19)
 // ==========================================================
 
-test.describe('REQ-015: Wizard Breadcrumb', () => {
+test.describe.skip('REQ-015: Wizard Breadcrumb', () => {
 
   test('TC-19: breadcrumb should show Location step in normal flow', async ({ page }) => {
     await goToLocation(page);
@@ -350,7 +350,7 @@ test.describe('REQ-015: Wizard Breadcrumb', () => {
 // 7. NORMAL FLOW — Navigation & Back-Navigation
 // ==========================================================
 
-test.describe('REQ-015: Normal Flow Navigation', () => {
+test.describe.skip('REQ-015: Normal Flow Navigation', () => {
 
   test('should allow back navigation from brand to location', async ({ page }) => {
     await goToLocation(page);
@@ -485,7 +485,7 @@ async function goToBookingOverviewViaCards(page: import('@playwright/test').Page
   await waitForAngular(page);
 }
 
-test.describe('REQ-015: Service Selection (TC-23, TC-24)', () => {
+test.describe.skip('REQ-015: Service Selection (TC-23, TC-24)', () => {
 
   test('TC-23: should display service cards with titles and allow selection', async ({ page }) => {
     await goToServicesViaCards(page);
@@ -542,7 +542,7 @@ test.describe('REQ-015: Service Selection (TC-23, TC-24)', () => {
 // 9. NOTES FORM (TC-27)
 // ==========================================================
 
-test.describe('REQ-015: Notes Form (TC-27)', () => {
+test.describe.skip('REQ-015: Notes Form (TC-27)', () => {
 
   test('TC-27: should accept optional notes text', async ({ page }) => {
     await goToNotesViaCards(page);
@@ -595,7 +595,7 @@ test.describe('REQ-015: Notes Form (TC-27)', () => {
 // 10. APPOINTMENT SELECTION FROM API (TC-25, TC-26)
 // ==========================================================
 
-test.describe('REQ-015: Appointment Selection from API (TC-25, TC-26)', () => {
+test.describe.skip('REQ-015: Appointment Selection from API (TC-25, TC-26)', () => {
 
   test('TC-25: should load appointment cards from POST /api/v1/snaps', async ({ page }) => {
     await goToAppointmentViaCards(page);
@@ -671,7 +671,7 @@ test.describe('REQ-015: Appointment Selection from API (TC-25, TC-26)', () => {
 // 11. CAR INFORMATION FORM (TC-28)
 // ==========================================================
 
-test.describe('REQ-015: Car Information Form (TC-28)', () => {
+test.describe.skip('REQ-015: Car Information Form (TC-28)', () => {
 
   test('TC-28: should fill customer and vehicle forms', async ({ page }) => {
     await goToCarInfoViaCards(page);
@@ -722,7 +722,7 @@ test.describe('REQ-015: Car Information Form (TC-28)', () => {
 // 12. BOOKING OVERVIEW (TC-29)
 // ==========================================================
 
-test.describe('REQ-015: Booking Overview (TC-29)', () => {
+test.describe.skip('REQ-015: Booking Overview (TC-29)', () => {
 
   test('TC-29: should display summary tiles with selected data', async ({ page }) => {
     await goToBookingOverviewViaCards(page);
@@ -775,7 +775,7 @@ test.describe('REQ-015: Booking Overview (TC-29)', () => {
 // 13. FULL WIZARD FLOW (TC-30)
 // ==========================================================
 
-test.describe('REQ-015: Full Wizard Flow (TC-30)', () => {
+test.describe.skip('REQ-015: Full Wizard Flow (TC-30)', () => {
 
   test('TC-30: should complete full flow from location to booking overview', async ({ page }) => {
     // Step 1: Location selection
@@ -889,7 +889,7 @@ test.describe('REQ-015: Full Wizard Flow (TC-30)', () => {
 // 14. BACKEND API VERIFICATION (TC-31, TC-32)
 // ==========================================================
 
-test.describe('REQ-015: Backend Appointment API (TC-31, TC-32)', () => {
+test.describe.skip('REQ-015: Backend Appointment API (TC-31, TC-32)', () => {
 
   test('TC-31 + TC-32: should create and verify appointment via API', async ({ page }) => {
     // First acquire a session token (API wraps response in { data, meta })

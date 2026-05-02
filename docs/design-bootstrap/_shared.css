@@ -193,7 +193,7 @@ body {
 /* Sidebar Cart-Overlay (Floating) */
 .cart-fab {
   position: fixed;
-  bottom: 1.5em; right: 1.5em;
+  bottom: 5em; right: 1.5em;
   background: var(--autohaus-accent);
   color: white;
   width: 3.5em; height: 3.5em;
@@ -218,7 +218,7 @@ body {
    ============================================================ */
 .a11y-fab {
   position: fixed;
-  bottom: 1.5em; left: 1.5em;
+  bottom: 5em; left: 1.5em;
   background: white;
   color: var(--bs-primary);
   border: 2px solid var(--bs-primary);
@@ -324,6 +324,61 @@ body {
   font-size: 0.8em;
   color: #6c757d;
   margin: 0.15em 0 0;
+}
+
+/* ============================================================
+   Wizard-Navigation (Zurueck / Weiter Buttons unten)
+   ============================================================ */
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75em;
+  margin-top: 2rem;
+}
+.wizard-nav.justify-content-end {
+  justify-content: flex-end;
+}
+
+@media (max-width: 48em) {
+  .wizard-nav,
+  .wizard-nav.justify-content-end {
+    flex-direction: column-reverse;   /* "Weiter" landet oben — Daumen-Zone */
+    align-items: stretch;
+    gap: 0.5em;
+  }
+  .wizard-nav .btn,
+  .wizard-nav > a.btn {
+    width: 100%;
+  }
+}
+
+/* Services-Page Bottom-Bar — Counter + Nav nebeneinander auf Desktop, gestapelt auf Mobile */
+.services-bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e3e6e9;
+  border-radius: 0.5rem;
+}
+@media (max-width: 48em) {
+  .services-bottom-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75em;
+  }
+  .services-bottom-bar > div:last-child {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.5em;
+  }
+  .services-bottom-bar > div:last-child .btn {
+    width: 100%;
+    margin: 0 !important;
+  }
 }
 
 /* ============================================================

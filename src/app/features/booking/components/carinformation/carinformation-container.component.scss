@@ -5,18 +5,11 @@
   margin: 0 auto;
   padding: var(--spacing-xl) var(--spacing-md);
 
-  &__title {
+  > .page-title {
     font-size: var(--font-size-2xl);
+    font-weight: 700;
     line-height: var(--line-height-tight);
     color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-sm);
-    text-align: center;
-  }
-
-  &__subtitle {
-    font-size: var(--font-size-md);
-    line-height: var(--line-height-normal);
-    color: var(--color-text-secondary);
     margin: 0 0 var(--spacing-xl);
     text-align: center;
   }
@@ -24,24 +17,31 @@
   &__form {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xl);
+    gap: var(--spacing-lg);
+  }
+
+  &__card {
+    background: var(--color-background-surface);
   }
 
   &__privacy {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
+    padding-left: 1.75em;
   }
 
-  &__privacy-checkbox {
+  &__privacy-label {
     line-height: var(--line-height-normal);
+    cursor: pointer;
   }
 
-  &__privacy-error {
-    font-size: var(--font-size-xs);
-    color: var(--color-error);
-    margin: 0;
-    padding-left: 2.5em;
+  &__privacy-link {
+    color: var(--color-primary);
+    text-decoration: underline;
+
+    &:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+      border-radius: var(--radius-sm);
+    }
   }
 
   &__required-hint {
@@ -65,9 +65,9 @@
   &__back-button,
   &__continue-button {
     min-height: var(--touch-target-min);
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: var(--spacing-xs);
+    justify-content: center;
 
     &:focus-visible {
       outline: 0.125em solid var(--color-focus-ring);
@@ -88,6 +88,16 @@
 
     @include tablet {
       order: 2;
+    }
+  }
+}
+
+@media (max-width: 47.9375em) {
+  .carinformation {
+    padding: var(--spacing-lg) var(--spacing-sm);
+
+    > .page-title {
+      font-size: var(--font-size-xl);
     }
   }
 }

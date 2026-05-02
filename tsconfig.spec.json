@@ -10,7 +10,8 @@
     "paths": {
       "@angular/common/http/testing": ["node_modules/@angular/common/types/http-testing.d.ts"],
       "@angular/common/http": ["node_modules/@angular/common/types/http.d.ts"],
-      "@angular/material/*": ["node_modules/@angular/material/types/*"],
+      "@ng-bootstrap/ng-bootstrap": ["node_modules/@ng-bootstrap/ng-bootstrap/types/ng-bootstrap.d.ts"],
+      "@ng-bootstrap/ng-bootstrap/*": ["node_modules/@ng-bootstrap/ng-bootstrap/types/ng-bootstrap-ng-bootstrap-*.d.ts"],
       "@app/*": ["src/app/*"],
       "@core/*": ["src/app/core/*"],
       "@shared/*": ["src/app/shared/*"],

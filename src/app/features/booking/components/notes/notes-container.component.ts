@@ -1,6 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -19,7 +17,7 @@ import { ServiceHintsComponent } from './service-hints.component';
 @Component({
   selector: 'app-notes-container',
   standalone: true,
-  imports: [TranslatePipe, MatButtonModule, MatIconModule, WizardBreadcrumbComponent, NotesFormComponent, ServiceHintsComponent, NotesExtrasFormComponent, RentCategoryPriceBlockComponent],
+  imports: [TranslatePipe, WizardBreadcrumbComponent, NotesFormComponent, ServiceHintsComponent, NotesExtrasFormComponent, RentCategoryPriceBlockComponent],
   templateUrl: './notes-container.component.html',
   styleUrl: './notes-container.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

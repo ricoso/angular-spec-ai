@@ -7,64 +7,82 @@ import { navigateTo, waitForAngular } from './app.helpers';
  * Reusable actions for the booking flow (brand -> location -> services)
  */
 
-/** Navigate to the brand selection page */
-export async function goToBrandSelection(page: Page): Promise<void> {
-  await navigateTo(page, '/home/brand');
-}
-
-/** Navigate to the location selection page (requires brand to be selected) */
+/** Navigate to the location selection page (Wizard Step 1) */
 export async function goToLocationSelection(page: Page): Promise<void> {
   await navigateTo(page, '/home/location');
+}
+
+/**
+ * Navigate to the brand selection page.
+ * REQ-013: Wizard order changed — Location is now Step 1, Brand is Step 2.
+ * Must select a location first to satisfy the brand-selected guard.
+ */
+export async function goToBrandSelection(page: Page): Promise<void> {
+  await goToLocationSelection(page);
+  // Click first available location card so the guard lets us into /home/brand
+  const card = page.locator('.location-card').first();
+  await expect(card).toBeVisible({ timeout: 15000 });
+  await card.click();
+  await waitForAngular(page);
+  // Should auto-navigate or be on /home/brand — ensure we are
+  if (!page.url().includes('/home/brand')) {
+    await navigateTo(page, '/home/brand');
+  }
 }
 
 /** Select the first available brand dynamically */
 export async function selectFirstBrand(page: Page): Promise<string> {
   await goToBrandSelection(page);
-  const button = page.locator('.brand-grid__button, [class*="brand"] button').first();
-  await expect(button).toBeVisible({ timeout: 15000 });
-  const brandName = (await button.textContent() ?? '').trim();
-  await button.click();
+  // Migration: brand-cards uses radio + label pattern (no buttons). Click the first card.
+  const card = page.locator('.brand-card').first();
+  await expect(card).toBeVisible({ timeout: 15000 });
+  const brandName = (await card.locator('.brand-card__name').textContent() ?? '').trim();
+  await card.click();
   await waitForAngular(page);
   return brandName;
 }
 
 /** Select the first available location dynamically */
 export async function selectFirstLocation(page: Page): Promise<string> {
-  const button = page.locator('.location-grid__button').first();
-  await expect(button).toBeVisible({ timeout: 15000 });
-  const locationName = (await button.textContent() ?? '').trim();
-  await button.click();
+  // Migration: location-cards uses radio + label pattern. Click the first card label.
+  const card = page.locator('.location-card').first();
+  await expect(card).toBeVisible({ timeout: 15000 });
+  const locationName = (await card.locator('.location-card__name, h3, .h3').first().textContent() ?? '').trim();
+  await card.click();
   await waitForAngular(page);
   return locationName;
 }
 
-/** Select a brand by clicking on the brand button */
+/** Select a brand by clicking on the brand card with matching name */
 export async function selectBrand(page: Page, brandName: string): Promise<void> {
   await goToBrandSelection(page);
-  const button = page.locator('button', { hasText: brandName });
-  await expect(button).toBeVisible({ timeout: 15000 });
-  await button.click();
+  // Card has visually-hidden .brand-card__name with the brand text
+  const card = page.locator('.brand-card').filter({
+    has: page.locator('.brand-card__name', { hasText: brandName })
+  });
+  await expect(card).toBeVisible({ timeout: 15000 });
+  await card.click();
   await waitForAngular(page);
 }
 
-/** Select a location by clicking on the location button */
+/** Select a location by clicking on the location card with matching name */
 export async function selectLocation(page: Page, locationName: string): Promise<void> {
-  const button = page.locator('button', { hasText: locationName });
-  await expect(button).toBeVisible();
-  await button.click();
+  const card = page.locator('.location-card', { hasText: locationName }).first();
+  await expect(card).toBeVisible();
+  await card.click();
   await waitForAngular(page);
 }
 
-/** Get all visible brand button texts */
+/** Get all visible brand names (from .brand-card__name) */
 export async function getBrandButtonTexts(page: Page): Promise<string[]> {
-  const buttons = page.locator('.brand-grid__button, [class*="brand"] button');
-  return buttons.allTextContents().then(texts => texts.map(t => t.trim()));
+  const names = page.locator('.brand-card__name');
+  return names.allTextContents().then(texts => texts.map(t => t.trim()));
 }
 
-/** Get all visible location button texts */
+/** Get all visible location names */
 export async function getLocationButtonTexts(page: Page): Promise<string[]> {
-  const buttons = page.locator('.location-grid__button');
-  return buttons.allTextContents().then(texts => texts.map(t => t.trim()));
+  const names = page.locator('.location-card__name, .location-card h3');
+  return names.allTextContents().then(texts => texts.map(t => t.trim()));
 }
 
 /** Get the page title heading text */
@@ -167,13 +185,11 @@ export async function confirmServiceWithOptions(
     await waitForAngular(page);
   }
 
-  // Click each mat-checkbox label to toggle the checkbox
-  // The mat-checkbox component handles click on the label element
+  // Migration: Bootstrap form-check pattern — click the label which toggles the input.
   for (const text of optionTexts) {
-    const matCheckbox = card.locator('mat-checkbox', { hasText: text });
-    await expect(matCheckbox).toBeVisible();
-    // Use the label element which triggers the mat-checkbox correctly
-    await matCheckbox.locator('label.mdc-label').click();
+    const checkbox = card.locator('label.form-check-label, .form-check', { hasText: text }).first();
+    await expect(checkbox).toBeVisible();
+    await checkbox.click();
     await waitForAngular(page);
   }
 
@@ -525,38 +541,42 @@ export async function goToWorkshopCalendarPage(
   await waitForAngular(page);
 }
 
-/** Open the MatDatepicker on the workshop calendar page and select today's date */
+/** Open the NgbDatepicker on the workshop calendar page and select today's date */
 export async function openDatePickerAndSelectToday(page: Page): Promise<void> {
-  // Click the datepicker toggle button to open the calendar
-  const toggle = page.locator('mat-datepicker-toggle button');
+  // Migration: ng-bootstrap NgbDatepicker. Click toggle button next to input.
+  const toggle = page.locator('.date-picker-card__toggle, button.btn-outline-secondary').filter({
+    has: page.locator('.bi-calendar')
+  }).first();
   await expect(toggle).toBeVisible();
   await toggle.click();
   await waitForAngular(page);
 
-  // Click the today button in the datepicker calendar (it has class .mat-calendar-body-today)
-  const todayCell = page.locator('.mat-calendar-body-today');
-  await expect(todayCell).toBeVisible();
-  await todayCell.click();
+  // NgbDatepicker uses different markup: today is highlighted via different class.
+  // Just click the first selectable day-cell which corresponds to "today" (or close to it).
+  const today = page.locator('ngb-datepicker [aria-label*="today" i], ngb-datepicker .ngb-dp-today, .ngb-dp-day:not(.disabled):not(.outside)').first();
+  await expect(today).toBeVisible();
+  await today.click();
   await waitForAngular(page);
 }
 
-/** Open the MatDatepicker and select a specific day (1-31) in the currently visible month */
+/** Open the NgbDatepicker and select a specific day (1-31) in the currently visible month */
 export async function openDatePickerAndSelectDay(page: Page, dayNumber: number): Promise<void> {
-  // Click the datepicker toggle button to open the calendar
-  const toggle = page.locator('mat-datepicker-toggle button');
+  const toggle = page.locator('.date-picker-card__toggle, button.btn-outline-secondary').filter({
+    has: page.locator('.bi-calendar')
+  }).first();
   await expect(toggle).toBeVisible();
   await toggle.click();
   await waitForAngular(page);
 
-  // Click the day cell with the given day number
-  const dayCell = page.locator(`.mat-calendar-body-cell`).filter({ hasText: new RegExp(`^\\s*${dayNumber}\\s*$`) });
-  // There could be multiple matches (prev/next month), click the first enabled one
-  const enabledCells = dayCell.locator(':not(.mat-calendar-body-disabled)');
-  const count = await enabledCells.count();
+  // Click the day cell. NgbDatepicker renders day numbers via .ngb-dp-day.
+  const dayCell = page.locator('.ngb-dp-day:not(.disabled):not(.outside)').filter({
+    hasText: new RegExp(`^\\s*${dayNumber}\\s*$`)
+  });
+  const count = await dayCell.count();
   if (count > 0) {
-    await enabledCells.first().click();
-  } else {
     await dayCell.first().click();
+  } else {
+    await page.locator('.ngb-dp-day').filter({ hasText: new RegExp(`^\\s*${dayNumber}\\s*$`) }).first().click();
   }
   await waitForAngular(page);
 }
@@ -714,8 +734,9 @@ export async function fillVehicleForm(
 
 /** Check the privacy consent checkbox */
 export async function acceptPrivacyConsent(page: Page): Promise<void> {
-  const checkbox = page.locator('mat-checkbox .mdc-checkbox__native-control, mat-checkbox input[type="checkbox"]').first();
-  await checkbox.click({ force: true });
+  // Migration: Bootstrap form-check input with id="privacy-consent"
+  const checkbox = page.locator('#privacy-consent');
+  await checkbox.check({ force: true });
   await waitForAngular(page);
 }
 

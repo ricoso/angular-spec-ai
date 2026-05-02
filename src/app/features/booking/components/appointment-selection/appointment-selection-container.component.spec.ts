@@ -159,4 +159,113 @@ describe('AppointmentSelectionContainerComponent', () => {
     exposed.onRetry();
     expect(loadSpy).toHaveBeenCalled();
   });
+
+  describe('Date-Strip Computed Signals', () => {
+    beforeEach(() => {
+      // Push appointments into store
+      MOCK_APPOINTMENTS.forEach(a => store.selectAppointment(a));
+      store.clearSelectedAppointment();
+    });
+
+    it('should derive availableDates uniquely from appointments', () => {
+      const exposed = component as unknown as { availableDates: () => Array<{ date: string; day: string; month: string; dayAbbreviation: string }> };
+      const dates = exposed.availableDates();
+      // store.appointments may be empty or hold MOCK_APPOINTMENTS — function shouldn't throw
+      expect(Array.isArray(dates)).toBe(true);
+    });
+
+    it('should expose selectedDate signal', () => {
+      const exposed = component as unknown as { selectedDate: () => string | null };
+      const date = exposed.selectedDate();
+      expect(date === null || typeof date === 'string').toBe(true);
+    });
+
+    it('should expose selectedDateLabel signal', () => {
+      const exposed = component as unknown as { selectedDateLabel: () => string };
+      expect(typeof exposed.selectedDateLabel()).toBe('string');
+    });
+
+    it('should expose stripMonthLabel signal', () => {
+      const exposed = component as unknown as { stripMonthLabel: () => string };
+      expect(typeof exposed.stripMonthLabel()).toBe('string');
+    });
+
+    it('should split slots into morning and afternoon arrays', () => {
+      const exposed = component as unknown as {
+        morningSlots: () => AppointmentSlot[]; afternoonSlots: () => AppointmentSlot[];
+      };
+      expect(Array.isArray(exposed.morningSlots())).toBe(true);
+      expect(Array.isArray(exposed.afternoonSlots())).toBe(true);
+    });
+
+    it('should expose selectedSummary signal', () => {
+      const exposed = component as unknown as { selectedSummary: () => string };
+      expect(typeof exposed.selectedSummary()).toBe('string');
+    });
+
+    it('should switch viewedDate via onDateSelect', () => {
+      const exposed = component as unknown as {
+        onDateSelect: (date: string) => void; selectedDate: () => string | null;
+      };
+      exposed.onDateSelect('2026-12-31');
+      expect(exposed.selectedDate()).toBe('2026-12-31');
+    });
+  });
+
+  describe('Date-Strip with seeded appointments', () => {
+    beforeEach(async () => {
+      // Push appointments into store via API mock — call loadAppointments
+      mockAppointmentApiService.getAppointments.mockResolvedValue(MOCK_APPOINTMENTS);
+      store.loadAppointments();
+      // Wait a tick for async store-update
+      await new Promise(r => setTimeout(r, 0));
+    });
+
+    it('should compute availableDates with month and day', () => {
+      const exposed = component as unknown as {
+        availableDates: () => Array<{ date: string; day: string; month: string }>;
+      };
+      const dates = exposed.availableDates();
+      expect(dates.length).toBeGreaterThan(0);
+      expect(dates[0]).toEqual(expect.objectContaining({ day: '25', month: 'Feb' }));
+    });
+
+    it('should fallback selectedDate to first availableDate when no viewedDate set', () => {
+      const exposed = component as unknown as { selectedDate: () => string | null };
+      expect(exposed.selectedDate()).toBe('2026-02-25');
+    });
+
+    it('should derive selectedDateLabel with full weekday name', () => {
+      const exposed = component as unknown as { selectedDateLabel: () => string };
+      const label = exposed.selectedDateLabel();
+      expect(label).toContain('Mittwoch');
+      expect(label).toContain('25.02.2026');
+    });
+
+    it('should derive stripMonthLabel with year', () => {
+      const exposed = component as unknown as { stripMonthLabel: () => string };
+      const label = exposed.stripMonthLabel();
+      expect(label).toContain('Feb');
+      expect(label).toContain('2026');
+    });
+
+    it('should split slots into morning (< 12) and afternoon (>= 12)', () => {
+      const exposed = component as unknown as {
+        morningSlots: () => Array<{ time: string }>;
+        afternoonSlots: () => Array<{ time: string }>;
+      };
+      // Selected date is 2026-02-25 with 09:00 slot → morning
+      expect(exposed.morningSlots()[0]?.time).toBe('09:00');
+      expect(exposed.afternoonSlots()).toEqual([]);
+    });
+
+    it('should compute selectedSummary when appointment is selected', () => {
+      store.selectAppointment(MOCK_APPOINTMENTS[1]); // 2026-02-26, 14:00
+      const exposed = component as unknown as { selectedSummary: () => string };
+      const summary = exposed.selectedSummary();
+      expect(summary).toContain('Donnerstag');
+      expect(summary).toContain('26.02.2026');
+      expect(summary).toContain('14:00 Uhr');
+    });
+  });
 });

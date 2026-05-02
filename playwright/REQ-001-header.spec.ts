@@ -56,12 +56,12 @@ test.describe.skip('REQ-001: Header', () => {
     });
 
     test('AC-3: should display shopping cart icon button', async ({ page }) => {
-      const cartButton = page.locator('.cart-icon__button');
+      const cartButton = page.locator('.cart-fab');
       await expect(cartButton).toBeVisible();
     });
 
     test('AC-2: should display accessibility button', async ({ page }) => {
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       await expect(a11yButton).toBeVisible();
     });
 
@@ -74,7 +74,7 @@ test.describe.skip('REQ-001: Header', () => {
   test.describe('Accessibility Menu', () => {
 
     test('AC-2: should open accessibility menu on button click', async ({ page }) => {
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       await a11yButton.click();
       await waitForAngular(page);
 
@@ -83,20 +83,21 @@ test.describe.skip('REQ-001: Header', () => {
     });
 
     test('AC-2b: should show font size radio buttons', async ({ page }) => {
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       await a11yButton.click();
       await waitForAngular(page);
 
       const fontSizeLabel = page.locator('#font-size-label');
       await expect(fontSizeLabel).toBeVisible();
 
-      const radioButtons = page.locator('.accessibility-menu__radio');
+      // Filter to font-size labels (a11y-menu also has language radios)
+      const radioButtons = page.locator('.accessibility-menu__radio[for*="a11y-font-"]');
       const count = await radioButtons.count();
       expect(count).toBe(4); // small, normal, large, x-large
     });
 
     test('AC-2c: should show high contrast toggle', async ({ page }) => {
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       await a11yButton.click();
       await waitForAngular(page);
 
@@ -106,13 +107,13 @@ test.describe.skip('REQ-001: Header', () => {
     });
 
     test('AC-2d: should change font size when radio button clicked', async ({ page }) => {
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       await a11yButton.click();
       await waitForAngular(page);
 
-      // Click "Large" radio button label (3rd option)
-      const radioLabels = page.locator('.accessibility-menu__radio label');
-      await radioLabels.nth(2).click();
+      // Click the "Large" font-size pill-label (3rd font option, idx 2)
+      const fontLabels = page.locator('.accessibility-menu__radio[for*="a11y-font-"]');
+      await fontLabels.nth(2).click();
       await waitForAngular(page);
 
       // Accessibility settings stored as JSON under 'accessibility-settings'
@@ -129,25 +130,25 @@ test.describe.skip('REQ-001: Header', () => {
   test.describe('Shopping Cart', () => {
 
     test('AC-3: should open cart dropdown on click', async ({ page }) => {
-      const cartButton = page.locator('.cart-icon__button');
+      const cartButton = page.locator('.cart-fab');
       await cartButton.click();
       await waitForAngular(page);
 
-      const cartTitle = page.locator('.header__cart-title');
+      const cartTitle = page.locator('.floating-overlay__panel-title');
       await expect(cartTitle).toBeVisible();
     });
 
     test('AC-3b: cart should show empty message when no items', async ({ page }) => {
-      const cartButton = page.locator('.cart-icon__button');
+      const cartButton = page.locator('.cart-fab');
       await cartButton.click();
       await waitForAngular(page);
 
-      const emptyMessage = page.locator('.header__cart-empty');
+      const emptyMessage = page.locator('.floating-overlay__empty');
       await expect(emptyMessage).toBeVisible();
     });
 
     test('AC-3c: cart button should have aria-label', async ({ page }) => {
-      const cartButton = page.locator('.cart-icon__button');
+      const cartButton = page.locator('.cart-fab');
       const ariaLabel = await cartButton.getAttribute('aria-label');
       expect(ariaLabel).toBeTruthy();
     });
@@ -168,39 +169,39 @@ test.describe.skip('REQ-001: Header', () => {
     test('should show EN cart title', async ({ page }) => {
       await setLanguage(page, 'en');
 
-      const cartButton = page.locator('.cart-icon__button');
+      const cartButton = page.locator('.cart-fab');
       await cartButton.click();
       await waitForAngular(page);
 
-      const cartTitle = page.locator('.header__cart-title');
-      await expect(cartTitle).toContainText('Shopping Cart');
+      const cartTitle = page.locator('.floating-overlay__panel-title');
+      await expect(cartTitle).toContainText('selection');
     });
 
     test('should show DE cart title', async ({ page }) => {
       await setLanguage(page, 'de');
 
-      const cartButton = page.locator('.cart-icon__button');
+      const cartButton = page.locator('.cart-fab');
       await cartButton.click();
       await waitForAngular(page);
 
-      const cartTitle = page.locator('.header__cart-title');
-      await expect(cartTitle).toContainText('Warenkorb');
+      const cartTitle = page.locator('.floating-overlay__panel-title');
+      await expect(cartTitle).toContainText('Auswahl');
     });
 
     test('should show EN accessibility label', async ({ page }) => {
       await setLanguage(page, 'en');
 
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       const ariaLabel = await a11yButton.getAttribute('aria-label');
-      expect(ariaLabel).toBe('Accessibility Settings');
+      expect(ariaLabel).toBe('Accessibility');
     });
 
     test('should show DE accessibility label', async ({ page }) => {
       await setLanguage(page, 'de');
 
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       const ariaLabel = await a11yButton.getAttribute('aria-label');
-      expect(ariaLabel).toBe('Barrierefreiheit Einstellungen');
+      expect(ariaLabel).toBe('Barrierefreiheit');
     });
 
   });
@@ -217,7 +218,7 @@ test.describe.skip('REQ-001: Header', () => {
     });
 
     test('AC-5b: accessibility button should have aria-label', async ({ page }) => {
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       const ariaLabel = await a11yButton.getAttribute('aria-label');
       expect(ariaLabel).toBeTruthy();
     });

@@ -274,6 +274,7 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
         subtitle: 'Bitte prüfen Sie Ihre Angaben bevor Sie den Termin versenden.',
         ariaGridLabel: 'Buchungsübersicht',
         ariaNavLabel: 'Seitennavigation',
+        edit: 'Ändern',
         tiles: {
           appointment: {
             title: 'Wunschtermin',
@@ -605,6 +606,7 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
         subtitle: 'Please review your details before submitting the appointment.',
         ariaGridLabel: 'Booking summary',
         ariaNavLabel: 'Page navigation',
+        edit: 'Edit',
         tiles: {
           appointment: {
             title: 'Desired Appointment',
@@ -936,6 +938,7 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
         subtitle: 'Будь ласка, перевірте свої дані перед відправленням запису.',
         ariaGridLabel: 'Огляд бронювання',
         ariaNavLabel: 'Навігація сторінки',
+        edit: 'Редагувати',
         tiles: {
           appointment: {
             title: 'Бажаний термін',
@@ -1265,6 +1268,7 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
         subtitle: 'Veuillez vérifier vos informations avant d\'envoyer le rendez-vous.',
         ariaGridLabel: 'Récapitulatif de la réservation',
         ariaNavLabel: 'Navigation de la page',
+        edit: 'Modifier',
         tiles: {
           appointment: {
             title: 'Rendez-vous souhaité',
@@ -1594,6 +1598,7 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم 
         subtitle: 'يرجى مراجعة بياناتك قبل إرسال الموعد.',
         ariaGridLabel: 'ملخص الحجز',
         ariaNavLabel: 'التنقل في الصفحة',
+        edit: 'تعديل',
         tiles: {
           appointment: {
             title: 'الموعد المطلوب',
@@ -1681,8 +1686,9 @@ export interface LanguageOption {
 }
 
 export const AVAILABLE_LANGUAGES: LanguageOption[] = [
-  { code: 'de', label: 'Deutsch' },
-  { code: 'en', label: 'English' }
+  { code: 'de', label: 'Deutsch' }
+  // EN-Auswahl entfernt — Translation-Daten unten bleiben erhalten,
+  // koennen via 1-Zeilen-Change wieder aktiviert werden.
 ];
 
 /**

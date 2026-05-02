@@ -444,4 +444,94 @@ describe('BookingStore', () => {
     });
   });
 
+  describe('REQ-025 Tag/Operation Loaders', () => {
+    it('loadJobTypesForBranch sets jobTypes on success', async () => {
+      const jts = [{ id: 'jt1', name: 'Test', operations: [] }];
+      apiSpy.getJobTypesByBranch = jest.fn().mockResolvedValue(jts);
+      store.loadJobTypesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.jobTypes()).toEqual(jts);
+    });
+
+    it('loadJobTypesForBranch handles Error rejection', async () => {
+      apiSpy.getJobTypesByBranch = jest.fn().mockRejectedValue(new Error('boom'));
+      store.loadJobTypesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBe('boom');
+    });
+
+    it('loadJobTypesForBranch handles non-Error rejection', async () => {
+      apiSpy.getJobTypesByBranch = jest.fn().mockRejectedValue('string-error');
+      store.loadJobTypesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBeTruthy();
+    });
+
+    it('loadCategoriesForBranch sets categories on success', async () => {
+      const cats = [{ id: 'c1', name: 'Test', rank: 0 }];
+      apiSpy.getCategoriesByBranch = jest.fn().mockResolvedValue(cats);
+      store.loadCategoriesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.categories()).toEqual(cats);
+    });
+
+    it('loadCategoriesForBranch handles error', async () => {
+      apiSpy.getCategoriesByBranch = jest.fn().mockRejectedValue(new Error('cat-fail'));
+      store.loadCategoriesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBe('cat-fail');
+    });
+
+    it('loadCategoriesForBranch handles non-Error rejection', async () => {
+      apiSpy.getCategoriesByBranch = jest.fn().mockRejectedValue('boom');
+      store.loadCategoriesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBeTruthy();
+    });
+
+    it('loadOperationsForBranch sets operations on success', async () => {
+      const ops = [{ id: 'op1', name: 'X', description: null, tagIds: ['c1'], order: 1, imageId: null }];
+      apiSpy.getOperationsByBranch = jest.fn().mockResolvedValue(ops);
+      store.loadOperationsForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.operations()).toEqual(ops);
+    });
+
+    it('loadOperationsForBranch handles Error rejection', async () => {
+      apiSpy.getOperationsByBranch = jest.fn().mockRejectedValue(new Error('op-fail'));
+      store.loadOperationsForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBe('op-fail');
+    });
+
+    it('loadOperationsForBranch handles non-Error rejection', async () => {
+      apiSpy.getOperationsByBranch = jest.fn().mockRejectedValue(undefined);
+      store.loadOperationsForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBeTruthy();
+    });
+  });
+
+  describe('Service Toggle / Confirm / Deselect', () => {
+    it('toggleService adds and removes a service', () => {
+      store.toggleService('inspection');
+      expect(store.selectedServices().some(s => s.serviceId === 'inspection')).toBe(true);
+      store.toggleService('inspection');
+      expect(store.selectedServices().some(s => s.serviceId === 'inspection')).toBe(false);
+    });
+
+    it('confirmServiceOptions sets selectedOptionIds for a service', () => {
+      store.toggleService('inspection');
+      store.confirmServiceOptions('inspection', ['opt-a']);
+      const entry = store.selectedServices().find(s => s.serviceId === 'inspection');
+      expect(entry?.selectedOptionIds).toEqual(['opt-a']);
+    });
+
+    it('deselectService removes from selectedServices', () => {
+      store.toggleService('inspection');
+      store.deselectService('inspection');
+      expect(store.selectedServices().some(s => s.serviceId === 'inspection')).toBe(false);
+    });
+  });
+
 });

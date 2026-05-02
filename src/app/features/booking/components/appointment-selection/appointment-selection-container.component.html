@@ -1,44 +1,135 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="appointment-selection" aria-labelledby="appointment-title">
+<section class="appointment-selection page-wrap" aria-labelledby="appointment-title">
 
-  <h1 class="appointment-selection__title" id="appointment-title">
+  <h1 class="appointment-selection__title page-title" id="appointment-title">
     {{ booking.appointment.title | translate }}
   </h1>
 
   @if (isLoading()) {
-    <div class="appointment-selection__loading" role="status" aria-live="polite">
-      <mat-spinner diameter="48" />
-      <p class="appointment-selection__loading-text">{{ booking.api.loading | translate }}</p>
+    <div class="appointment-selection__loading text-center py-5" role="status" aria-live="polite">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ booking.api.loading | translate }}</span>
+      </div>
+      <p class="appointment-selection__loading-text mt-3">{{ booking.api.loading | translate }}</p>
     </div>
   } @else if (error()) {
-    <div class="appointment-selection__error" role="alert" aria-live="assertive">
-      <mat-icon class="appointment-selection__error-icon" aria-hidden="true">error_outline</mat-icon>
+    <div class="appointment-selection__error text-center py-5" role="alert" aria-live="assertive">
+      <i class="bi bi-exclamation-circle appointment-selection__error-icon" aria-hidden="true"></i>
       <h2 class="appointment-selection__error-title">{{ booking.api.errorTitle | translate }}</h2>
       <p class="appointment-selection__error-message">{{ booking.api.errorUnknown | translate }}</p>
       <button
-        mat-flat-button
-        color="primary"
-        class="appointment-selection__retry-button"
+        type="button"
+        class="btn btn-primary appointment-selection__retry-button"
         (click)="onRetry()">
-        <mat-icon aria-hidden="true">refresh</mat-icon>
+        <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>
         {{ booking.api.retryButton | translate }}
       </button>
     </div>
   } @else {
-    <div
-      class="appointment-selection__grid"
-      role="radiogroup"
-      [attr.aria-label]="booking.appointment.ariaGroupLabel | translate"
-    >
-      @for (appointment of appointments(); track appointment.id) {
-        <app-appointment-card
-          [appointment]="appointment"
-          [isSelected]="selectedAppointment()?.id === appointment.id"
-          (appointmentSelected)="onAppointmentSelect($event)"
-        />
-      }
+    <!-- Datum-Strip -->
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="m-0">
+            <i class="bi bi-calendar-week me-2 text-primary" aria-hidden="true"></i>{{ stripMonthLabel() }}
+          </h6>
+        </div>
+        <div
+          class="date-strip"
+          role="radiogroup"
+          [attr.aria-label]="booking.appointment.ariaGroupLabel | translate"
+        >
+          @for (entry of availableDates(); track entry.date) {
+            <div
+              class="date-tile"
+              [class.selected]="entry.date === selectedDate()"
+              role="radio"
+              tabindex="0"
+              [attr.aria-checked]="entry.date === selectedDate()"
+              [attr.aria-label]="entry.dayAbbreviation + ', ' + entry.day + '. ' + entry.month"
+              (click)="onDateSelect(entry.date)"
+              (keydown.enter)="onDateSelect(entry.date); $event.preventDefault()"
+              (keydown.space)="onDateSelect(entry.date); $event.preventDefault()"
+            >
+              <div class="date-tile__weekday">{{ entry.dayAbbreviation }}</div>
+              <div class="date-tile__day">{{ entry.day }}</div>
+              <div class="date-tile__month">{{ entry.month }}</div>
+            </div>
+          } @empty {
+            <div class="alert alert-warning d-flex align-items-center gap-3 w-100 m-0" role="status">
+              <i class="bi bi-info-circle-fill fs-4" aria-hidden="true"></i>
+              <div class="flex-grow-1">
+                <strong>Keine Termine verfügbar.</strong>
+                Bitte versuchen Sie es erneut oder waehlen Sie eine andere Filiale/Service.
+              </div>
+              <button type="button" class="btn btn-sm btn-primary" (click)="onRetry()">
+                <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i> Neu laden
+              </button>
+            </div>
+          }
+        </div>
+      </div>
     </div>
+
+    <!-- Zeitslots -->
+    @if (selectedDate()) {
+      <div class="card mt-3">
+        <div class="card-body">
+          <h6 class="mb-3">
+            <i class="bi bi-clock me-2 text-primary" aria-hidden="true"></i>{{ selectedDateLabel() }}
+          </h6>
+
+          @if (morningSlots().length > 0) {
+            <div class="slot-section">
+              <div class="slot-section__head">
+                <i class="bi bi-sunrise" aria-hidden="true"></i> Vormittag
+              </div>
+              <div class="slot-grid">
+                @for (slot of morningSlots(); track slot.id) {
+                  <app-appointment-card
+                    [appointment]="slot"
+                    [isSelected]="selectedAppointment()?.id === slot.id"
+                    (appointmentSelected)="onAppointmentSelect($event)"
+                  />
+                }
+              </div>
+            </div>
+          }
+
+          @if (afternoonSlots().length > 0) {
+            <div class="slot-section">
+              <div class="slot-section__head">
+                <i class="bi bi-sunset" aria-hidden="true"></i> Nachmittag
+              </div>
+              <div class="slot-grid">
+                @for (slot of afternoonSlots(); track slot.id) {
+                  <app-appointment-card
+                    [appointment]="slot"
+                    [isSelected]="selectedAppointment()?.id === slot.id"
+                    (appointmentSelected)="onAppointmentSelect($event)"
+                  />
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Auswahl-Banner -->
+    @if (hasAppointmentSelected()) {
+      <div
+        class="alert alert-success mt-3 d-flex align-items-center gap-3 appointment-selection__summary"
+        role="status"
+        aria-live="polite"
+      >
+        <i class="bi bi-check-circle-fill fs-4" aria-hidden="true"></i>
+        <div>
+          <strong>Termin gewählt:</strong> {{ selectedSummary() }}
+        </div>
+      </div>
+    }
 
     <button
       class="appointment-selection__calendar-link"
@@ -48,29 +139,26 @@
       {{ booking.appointment.calendarLink | translate }}
     </button>
 
-    <nav class="appointment-selection__nav" [attr.aria-label]="booking.appointment.navAriaLabel | translate">
+    <nav class="appointment-selection__nav wizard-nav" [attr.aria-label]="booking.appointment.navAriaLabel | translate">
       <button
-        mat-flat-button
-        class="appointment-selection__back-button"
         type="button"
+        class="btn btn-outline-secondary appointment-selection__back-button"
         [attr.aria-label]="booking.appointment.backButton | translate"
         (click)="onBack()"
       >
-        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+        <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
         {{ booking.appointment.backButton | translate }}
       </button>
 
       <button
-        mat-flat-button
-        color="primary"
-        class="appointment-selection__continue-button"
         type="button"
+        class="btn btn-primary btn-lg appointment-selection__continue-button"
         [disabled]="!hasAppointmentSelected()"
         [attr.aria-label]="booking.appointment.continueButton | translate"
         (click)="onContinue()"
       >
         {{ booking.appointment.continueButton | translate }}
-        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+        <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
       </button>
     </nav>
   }

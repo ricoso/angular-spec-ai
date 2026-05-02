@@ -113,7 +113,7 @@
 // ICON FRAMED - Icons IMMER mit Rahmen!
 // =============================================================================
 // Standard: Abgerundetes Quadrat mit leichtem Schatten
-// Usage: <span class="icon-framed"><mat-icon>settings</mat-icon></span>
+// Usage: <span class="icon-framed"><i class="bi bi-gear"></i></span>
 
 .icon-framed {
   display: inline-flex;
@@ -150,13 +150,8 @@
     height: 2em;
   }
 
-  // Inside Material Buttons: transparent background, no border/shadow
-  // Prevents white-on-white icon issue on primary buttons
-  [mat-flat-button] &,
-  [mat-raised-button] &,
-  [mat-fab] &,
-  [mat-mini-fab] &,
-  [mat-icon-button] & {
+  // Inside Bootstrap-Buttons: transparenter Frame (kein doppeltes Border/Shadow auf farbigen btn)
+  .btn & {
     background: transparent;
     border: none;
     box-shadow: none;

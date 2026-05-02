@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatRadioModule } from '@angular/material/radio';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import type { Language, LanguageOption } from '@app/core/i18n';
 import { AVAILABLE_LANGUAGES, i18nKeys, TranslatePipe } from '@app/core/i18n';
@@ -9,15 +7,13 @@ import type { FontSize } from '@app/shared/models/accessibility.model';
 
 /**
  * Presentational Component for Accessibility Menu
- * Shows font-size radio buttons, toggles for high contrast / reduced motion,
- * and a language selector (DE, EN, UK, FR)
+ * Shows font-size pill-group, switches for high contrast / reduced motion,
+ * and a language selector (currently only DE — translations EN/UK/FR/AR remain in code).
  */
 @Component({
   selector: 'app-accessibility-menu',
   standalone: true,
   imports: [
-    MatRadioModule,
-    MatSlideToggleModule,
     FormsModule,
     TranslatePipe
   ],

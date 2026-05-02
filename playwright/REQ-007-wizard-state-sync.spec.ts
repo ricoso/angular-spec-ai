@@ -203,7 +203,7 @@ test.describe.skip('REQ-007: Wizard State Sync (Back Navigation)', () => {
       await selectService(page, 'Inspektion');
 
       // Verify badge shows 2 services
-      const badge = page.locator('.cart-icon__button .mat-badge-content');
+      const badge = page.locator('.cart-fab .mat-badge-content');
       await expect(badge).toBeVisible();
       await expect(badge).toHaveText('2');
 
@@ -294,7 +294,7 @@ test.describe.skip('REQ-007: Wizard State Sync (Back Navigation)', () => {
       await selectService(page, 'HU/AU');
 
       // Verify badge shows 1 service
-      const badge = page.locator('.cart-icon__button .mat-badge-content');
+      const badge = page.locator('.cart-fab .mat-badge-content');
       await expect(badge).toBeVisible();
       await expect(badge).toHaveText('1');
 
@@ -322,7 +322,7 @@ test.describe.skip('REQ-007: Wizard State Sync (Back Navigation)', () => {
       await enterNote(page, 'Testnotiz');
 
       // Badge should show 2 services
-      const badge = page.locator('.cart-icon__button .mat-badge-content');
+      const badge = page.locator('.cart-fab .mat-badge-content');
       await expect(badge).toBeVisible();
       await expect(badge).toHaveText('2');
 

@@ -364,7 +364,7 @@ test.describe.skip('REQ-006: Appointment Selection (Terminauswahl)', () => {
       const expectedTime = times[0];
 
       // Open cart dropdown in header via the cart icon button
-      const cartButton = page.locator('.cart-icon__button');
+      const cartButton = page.locator('.cart-fab');
       await expect(cartButton).toBeVisible();
       await cartButton.click();
       await waitForAngular(page);
@@ -397,7 +397,7 @@ test.describe.skip('REQ-006: Appointment Selection (Terminauswahl)', () => {
       const expectedTime = timesSecond[1];
 
       // Open cart dropdown
-      const cartButton = page.locator('.cart-icon__button');
+      const cartButton = page.locator('.cart-fab');
       await cartButton.click();
       await waitForAngular(page);
 

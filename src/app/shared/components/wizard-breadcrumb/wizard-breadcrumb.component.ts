@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, ViewEncapsulation } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 
 import { TranslatePipe } from '@core/i18n';
@@ -11,7 +10,7 @@ import type { WizardStep, WizardStepStatus } from './wizard-breadcrumb.model';
 @Component({
   selector: 'app-wizard-breadcrumb',
   standalone: true,
-  imports: [MatIconModule, TranslatePipe],
+  imports: [TranslatePipe],
   templateUrl: './wizard-breadcrumb.component.html',
   styleUrl: './wizard-breadcrumb.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

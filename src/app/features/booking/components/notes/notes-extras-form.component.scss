@@ -1,66 +1,17 @@
 @use 'breakpoints' as *;
 
 .notes-extras {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
   margin-bottom: var(--spacing-xl);
 
-  @include tablet {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @include desktop {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  &__section {
-    display: flex;
-    flex-direction: column;
-  }
-
-  &__heading {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    text-align: center;
-    margin: 0 0 var(--spacing-md);
-    min-height: 3em;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-
-  &__card {
+  &__switch-card {
     background-color: var(--color-background-surface);
-    border: 0.0625em solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-small);
-    padding: var(--spacing-lg);
-    flex: 1;
   }
 
-  &__field {
-    width: 100%;
-  }
-
-  /* REQ-025: Mietwagen-Description (mit Preis) unter dem Dropdown */
-  &__rent-category-info {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin: var(--spacing-sm) 0 0;
-    background-color: var(--color-background-hover);
-    border-left: 0.25em solid var(--color-primary);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-    color: var(--color-text-primary);
-
-    mat-icon {
-      color: var(--color-primary);
-      flex-shrink: 0;
-    }
+  /* REQ-025: Mietwagen-Description (mit Preis) — Bootstrap-Alert wrapper */
+  &__rent-info {
+    border-left: 0.25em solid var(--bs-primary);
   }
 }

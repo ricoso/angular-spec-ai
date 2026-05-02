@@ -1,6 +1,6 @@
 <div
-  class="appointment-card"
-  [class.appointment-card--selected]="isSelected()"
+  class="slot"
+  [class.selected]="isSelected()"
   role="radio"
   [attr.aria-checked]="isSelected()"
   [attr.aria-label]="appointment().dayAbbreviation + ', ' + appointment().displayDate + ', ' + appointment().displayTime"
@@ -8,11 +8,5 @@
   (click)="onSelect()"
   (keydown)="onKeydown($event)"
 >
-  <div class="appointment-card__day" aria-hidden="true">
-    {{ appointment().dayAbbreviation }}
-  </div>
-  <div class="appointment-card__info">
-    <span class="appointment-card__date">{{ appointment().displayDate }}</span>
-    <span class="appointment-card__time">{{ appointment().displayTime }}</span>
-  </div>
+  {{ appointment().displayTime }}
 </div>

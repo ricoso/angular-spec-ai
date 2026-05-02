@@ -1,27 +1,17 @@
 .rent-category-price {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md) var(--spacing-lg);
-  margin-top: var(--spacing-lg);
-  background-color: var(--color-background-surface);
-  border-left: 0.25em solid var(--color-primary);
-  border-radius: var(--radius-sm);
+  border-left: 0.25em solid var(--bs-primary);
   max-width: 32em;
 
   &__icon {
-    color: var(--color-primary);
     flex-shrink: 0;
   }
 
   &__text {
-    margin: 0;
-    font-size: var(--font-size-md);
-    color: var(--color-text-primary);
     display: flex;
     flex-wrap: wrap;
     gap: 0.4em;
     align-items: baseline;
+    color: var(--color-text-primary);
   }
 
   &__label {
@@ -38,7 +28,7 @@
   }
 
   &__amount {
-    color: var(--color-primary);
+    color: var(--bs-primary);
     font-weight: 700;
   }
 
@@ -51,7 +41,6 @@
   .rent-category-price {
     flex-direction: column;
     align-items: flex-start;
-    text-align: left;
 
     &__text {
       flex-direction: row;

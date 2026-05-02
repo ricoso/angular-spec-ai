@@ -1,22 +1,21 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatIconModule } from '@angular/material/icon';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 
 import type { ApiCategory, ApiOperation } from '../../models/service.model';
 
 /**
- * REQ-025 (b) Iter. 3: ServiceCardComponent rendert eine Service-Kategorie (Tag aus SoftNet).
- * Sub-Options sind Operations mit dem entsprechenden Tag, ihre `description` wird klein
- * direkt unter dem Operation-Namen angezeigt.
+ * Mini-Card im Service-Karussell. Zeigt pro Kategorie ein Icon, Titel und einen
+ * Counter (entweder selected/total oder nur total). Klick aktiviert die Kategorie.
+ *
+ * Public API (inputs/outputs) bleibt rueckwaertskompatibel mit der vorherigen
+ * Material-basierten Implementierung — die Detail-Sicht (Operations + Confirm)
+ * lebt jetzt im Container.
  */
 @Component({
   selector: 'app-service-card',
   standalone: true,
-  imports: [MatCardModule, MatIconModule, MatButtonModule, MatCheckboxModule, TranslatePipe],
+  imports: [TranslatePipe],
   templateUrl: './service-card.component.html',
   styleUrl: './service-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -27,7 +26,7 @@ export class ServiceCardComponent {
   public readonly isSelected = input<boolean>(false);
   public readonly selectedOperationIds = input<string[]>([]);
 
-  /** Emittet die Operation-ID beim Klick (wenn Card keine Operations hat). */
+  /** Emittet die Category-ID beim Klick auf die Mini-Card. */
   public readonly serviceClicked = output<string>();
   public readonly serviceConfirmed = output<{ serviceId: string; optionIds: string[] }>();
   public readonly serviceDeselected = output<string>();
@@ -38,25 +37,25 @@ export class ServiceCardComponent {
 
   protected readonly hasOptions = computed(() => this.operations().length > 0);
   protected readonly operationCount = computed(() => this.operations().length);
+  protected readonly selectedCount = computed(() => this.selectedOperationIds().length);
 
   /**
-   * REQ-025 (b) Iter. 3: SVG-Icon-Pfad pro Kategorie, gemappt auf Tag-Rank.
-   * SoftNet liefert keine iconUrl für Tags → lokales Mapping als Übergangslösung.
+   * Bootstrap-Icon-Klasse pro Kategorie, gemappt auf Tag-Rank.
+   * SoftNet liefert keine iconUrl fuer Tags → lokales Mapping als Uebergangsloesung.
    */
-  private static readonly ICON_BY_RANK: Record<number, string> = {
-    0: 'assets/icons/services/inspection.svg',
-    1: 'assets/icons/services/tuv.svg',
-    2: 'assets/icons/services/brake-fluid.svg',
-    3: 'assets/icons/services/tire-change.svg',
-    4: 'assets/icons/services/actions-checks.svg',
-    5: 'assets/icons/services/repair.svg',
-    6: 'assets/icons/services/bodywork.svg',
-    99: 'assets/icons/services/pickup-delivery.svg'  // virtuelle Hol-&-Bringservice-Card
-  };
-
-  protected readonly iconPath = computed<string | null>(() =>
-    ServiceCardComponent.ICON_BY_RANK[this.category().rank] ?? null
-  );
+  protected readonly iconClass = computed<string>(() => {
+    switch (this.category().rank) {
+      case 0: return 'bi-tools';
+      case 1: return 'bi-clipboard-check';
+      case 2: return 'bi-droplet-half';
+      case 3: return 'bi-record-circle';
+      case 4: return 'bi-check2-circle';
+      case 5: return 'bi-search';
+      case 6: return 'bi-car-front';
+      case 99: return 'bi-arrow-left-right';
+      default: return 'bi-tools';
+    }
+  });
 
   protected readonly hasOptionsChanged = computed(() => {
     const confirmed = this.selectedOperationIds();
@@ -89,9 +88,8 @@ export class ServiceCardComponent {
   protected onCardClick(): void {
     if (this.hasOptions()) {
       this.isExpanded.set(!this.isExpanded());
-      return;
     }
-    // Keine Operations → Card direkt auswählen via Category-ID
+    // Emittet immer die Category-ID — der Container setzt damit die aktive Kategorie.
     this.serviceClicked.emit(this.category().id);
   }
 

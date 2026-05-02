@@ -1,37 +1,33 @@
 @use 'breakpoints' as *;
 
+// Container fuer die Services-Page. Karussell- und Detail-Styles kommen aus
+// `_bootstrap-theme.scss`. Hier nur Page-Header + Loading/Error + dezente
+// Anpassungen am Karussell-Wrapper.
 .service-selection {
   max-width: 70em;
   margin: 0 auto;
   padding: var(--spacing-xl) var(--spacing-md);
-  text-align: center;
 
-  &__title {
+  > .page-title {
     font-size: var(--font-size-2xl);
+    font-weight: 700;
     line-height: var(--line-height-tight);
     color: var(--color-text-primary);
     margin: 0 0 var(--spacing-sm);
+    text-align: center;
   }
 
-  &__subtitle {
+  > .page-subtitle {
     font-size: var(--font-size-md);
     line-height: var(--line-height-normal);
     color: var(--color-text-secondary);
     margin: 0 0 var(--spacing-xl);
-  }
-
-  &__loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-2xl) 0;
+    text-align: center;
   }
 
   &__loading-text {
     font-size: var(--font-size-md);
     color: var(--color-text-secondary);
-    margin: 0;
   }
 
   &__error {
@@ -39,14 +35,12 @@
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-sm);
-    padding: var(--spacing-2xl) var(--spacing-md);
   }
 
   &__error-icon {
     font-size: 3em;
-    width: 3em;
-    height: 3em;
     color: var(--color-error);
+    line-height: 1;
   }
 
   &__error-title {
@@ -63,24 +57,19 @@
     max-width: 30em;
   }
 
-  &__retry-button {
-    mat-icon {
-      margin-right: var(--spacing-xs);
-    }
+  // Pfeil-Buttons fokussierbar machen (WCAG)
+  .service-carousel__btn:focus-visible {
+    outline: 0.1875em solid var(--color-focus-ring, #4a90e2);
+    outline-offset: 0.125em;
   }
+}
 
-  &__grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-lg);
-    padding: var(--spacing-sm);
+@media (max-width: 47.9375em) {
+  .service-selection {
+    padding: var(--spacing-lg) var(--spacing-sm);
 
-    @include tablet {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    @include desktop {
-      grid-template-columns: repeat(3, 1fr);
+    > .page-title {
+      font-size: var(--font-size-xl);
     }
   }
 }

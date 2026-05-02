@@ -1,23 +1,20 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import type { ElementRef} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 import { WizardBreadcrumbComponent } from '@shared/components/wizard-breadcrumb/wizard-breadcrumb.component';
 import { WIZARD_STEPS } from '@shared/components/wizard-breadcrumb/wizard-steps.config';
 
-import type { ServiceType } from '../../models/service.model';
+import type { ApiCategory, ApiOperation, ServiceType } from '../../models/service.model';
 import { BookingStore } from '../../stores/booking.store';
 
 import { ServiceCardComponent } from './service-card.component';
-import { ServiceSummaryBarComponent } from './service-summary-bar.component';
 
 @Component({
   selector: 'app-service-selection-container',
   standalone: true,
-  imports: [TranslatePipe, MatButtonModule, MatIconModule, MatProgressSpinnerModule, WizardBreadcrumbComponent, ServiceCardComponent, ServiceSummaryBarComponent],
+  imports: [TranslatePipe, WizardBreadcrumbComponent, ServiceCardComponent],
   templateUrl: './service-selection-container.component.html',
   styleUrl: './service-selection-container.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -71,6 +68,77 @@ export class ServiceSelectionContainerComponent {
     return result;
   });
 
+  // --- Karussell-State (Detail-Panel + Scroll) ---------------------------------
+
+  /** Aktive Kategorie im Karussell — initial die erste Kategorie. */
+  protected readonly activeCategoryId = signal<string | null>(null);
+
+  /** Referenz auf den Track-Container fuer programmatisches Scrollen. */
+  private readonly trackEl = viewChild<ElementRef<HTMLDivElement>>('carTrack');
+
+  protected readonly activeCategory = computed<ApiCategory | null>(() => {
+    const id = this.activeCategoryId();
+    if (!id) return null;
+    return this.categories().find(c => c.id === id) ?? null;
+  });
+
+  protected readonly activeOperations = computed<ApiOperation[]>(() => {
+    const id = this.activeCategoryId();
+    if (!id) return [];
+    return this.operationsByCategory()[id] ?? [];
+  });
+
+  protected readonly activeSelectedIds = computed<string[]>(() => {
+    const id = this.activeCategoryId();
+    if (!id) return [];
+    return this.selectedOptionsMap()[id] ?? [];
+  });
+
+  protected readonly activeSelectedSet = computed<Set<string>>(() =>
+    new Set(this.activeSelectedIds())
+  );
+
+  /** Anzahl Slides fuer Indikator-Dots (4 Mini-Cards pro Slide laut Mockup). */
+  protected readonly slideCount = computed<number>(() => {
+    const total = this.categories().length;
+    return total === 0 ? 0 : Math.ceil(total / 4);
+  });
+
+  /** Aktiver Indikator-Dot — abgeleitet vom Scroll-Offset. */
+  protected readonly activeSlideIndex = signal<number>(0);
+
+  /** Bootstrap-Icon-Klasse fuer den Detail-Panel-Header (gemappt auf Tag-Rank). */
+  protected readonly activeIconClass = computed<string>(() => {
+    const cat = this.activeCategory();
+    if (!cat) return 'bi-tools';
+    switch (cat.rank) {
+      case 0: return 'bi-tools';
+      case 1: return 'bi-clipboard-check';
+      case 2: return 'bi-droplet-half';
+      case 3: return 'bi-record-circle';
+      case 4: return 'bi-check2-circle';
+      case 5: return 'bi-search';
+      case 6: return 'bi-car-front';
+      case 99: return 'bi-arrow-left-right';
+      default: return 'bi-tools';
+    }
+  });
+
+  /** Komma-getrennte Liste der Namen aller aktuell selektierten Operations (alle Kategorien). */
+  protected readonly selectedNamesList = computed<string>(() => {
+    const selectedIds = new Set<string>(this.selectedServiceIds() as string[]);
+    const opsByCat = this.operationsByCategory();
+    const names: string[] = [];
+    for (const catId of Object.keys(opsByCat)) {
+      for (const op of opsByCat[catId]) {
+        if (selectedIds.has(op.id)) {
+          names.push(op.name);
+        }
+      }
+    }
+    return names.join(' · ');
+  });
+
   constructor() {
     // REQ-025 (b) Iter. 3: Categories + Operations parallel laden, sobald Branch da ist.
     effect(() => {
@@ -83,6 +151,21 @@ export class ServiceSelectionContainerComponent {
       if (branch && ops.length === 0) {
         this.store.loadOperationsForBranch(branch.branchId);
       }
+    });
+
+    // Auto-Auswahl: bevorzugt Inspektion (rank=0), Fallback erste echte Kategorie.
+    // Hol & Bringservice (rank=99, virtual) wird NIE auto-aktiviert.
+    // Wichtig: erst feuern wenn echte (nicht-virtuelle) Categories da sind —
+    // sonst gewinnt das virtuelle Pickup-Tile bei Race (Operations vor Categories).
+    effect(() => {
+      const cats = this.categories();
+      const realCats = cats.filter(c => c.rank !== 99);
+      if (realCats.length === 0) { return; }
+      const current = this.activeCategoryId();
+      if (current !== null && current !== 'virtual-pickup-delivery') { return; }
+      const inspektion = realCats.find(c => c.rank === 0);
+      const target = inspektion ?? realCats[0];
+      this.activeCategoryId.set(target.id);
     });
   }
 
@@ -108,6 +191,42 @@ export class ServiceSelectionContainerComponent {
     for (const op of opsToRemove) {
       this.store.deselectService(op.id as ServiceType);
     }
+  }
+
+  /** Aktiviert die Kategorie im Detail-Panel — keine Store-Mutation. */
+  protected onMiniCardClick(categoryId: string): void {
+    this.activeCategoryId.set(categoryId);
+  }
+
+  /** Toggle einer Operation im Detail-Panel. */
+  protected onOperationToggle(operationId: string, checked: boolean): void {
+    if (checked) {
+      this.store.confirmServiceOptions(operationId as ServiceType, []);
+    } else {
+      this.store.deselectService(operationId as ServiceType);
+    }
+  }
+
+  // --- Karussell Scroll --------------------------------------------------------
+
+  protected onCarouselPrev(): void {
+    const el = this.trackEl()?.nativeElement;
+    if (!el) return;
+    el.scrollBy({ left: -(el.clientWidth - 16), behavior: 'smooth' });
+  }
+
+  protected onCarouselNext(): void {
+    const el = this.trackEl()?.nativeElement;
+    if (!el) return;
+    el.scrollBy({ left: el.clientWidth - 16, behavior: 'smooth' });
+  }
+
+  protected onTrackScroll(): void {
+    const el = this.trackEl()?.nativeElement;
+    if (!el) return;
+    const denom = Math.max(el.clientWidth - 16, 1);
+    const idx = Math.round(el.scrollLeft / denom);
+    this.activeSlideIndex.set(idx);
   }
 
   protected onContinue(): void {

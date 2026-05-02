@@ -1,28 +1,33 @@
-<div class="brand-grid" role="radiogroup" [attr.aria-label]="booking.brand.ariaGroupLabel | translate">
+<div class="brand-grid row g-3" role="radiogroup" [attr.aria-label]="booking.brand.ariaGroupLabel | translate">
   @for (brand of enrichedBrands(); track brand.id) {
-    <div class="brand-grid__item">
+    <div class="brand-grid__item col-6 col-md-4 col-lg-3">
       <input
         type="radio"
         name="brand"
         [id]="'brand-' + brand.id"
-        class="brand-grid__radio"
+        class="brand-grid__radio visually-hidden"
         [value]="brand.id"
         [checked]="brand.id === selectedBrand()"
         [attr.aria-label]="brand.name"
         (change)="onSelect(brand)"
       />
-      <label [for]="'brand-' + brand.id" class="brand-card">
-        <span class="brand-card__check" aria-hidden="true">
-          <mat-icon>check</mat-icon>
+      <label
+        [for]="'brand-' + brand.id"
+        class="brand-card card card-pickable h-100 p-4 d-flex flex-column align-items-center justify-content-center"
+        [class.selected]="brand.id === selectedBrand()"
+      >
+        <span class="brand-card__check badge-selected" aria-hidden="true">
+          <i class="bi bi-check-lg"></i>
         </span>
         @if (brand.logoPath) {
           <img
             [src]="brand.logoPath"
             [alt]="brand.name"
-            class="brand-card__logo"
+            class="brand-card__logo brand-logo"
             aria-hidden="true"
           />
         }
+        <span class="brand-card__name visually-hidden">{{ brand.name }}</span>
       </label>
     </div>
   }

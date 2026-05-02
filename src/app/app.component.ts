@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject, OnInit } from '@angular/core';
+import type { OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 
 import { AppErrorStore } from '@app/core/error-handling/app-error.store';

@@ -570,7 +570,7 @@ test.describe.skip('Complete Booking Workflow', () => {
       expect(locationTitle).toBe('At which location may we welcome you?');
 
       // Header should also be in EN now
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       const ariaLabel = await a11yButton.getAttribute('aria-label');
       expect(ariaLabel).toBe('Accessibility Settings');
     });
@@ -657,7 +657,7 @@ test.describe.skip('Complete Booking Workflow', () => {
       await navigateTo(page, '/home/brand');
 
       // Open accessibility menu and change font size
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       await a11yButton.click();
       await waitForAngular(page);
 
@@ -673,7 +673,7 @@ test.describe.skip('Complete Booking Workflow', () => {
 
     test('cart icon visible on all pages including services and notes', async ({ page }) => {
       await setLanguage(page, 'de');
-      const cartButton = page.locator('.cart-icon__button');
+      const cartButton = page.locator('.cart-fab');
 
       await navigateTo(page, '/home/brand');
       await expect(cartButton).toBeVisible();
@@ -782,7 +782,7 @@ test.describe.skip('Complete Booking Workflow', () => {
       await confirmServiceWithOptions(page, 'Inspektion', ['Dialogannahme']);
       await selectService(page, 'Wechsel Bremsflüssigkeit');
 
-      const badge = page.locator('.cart-icon__button .mat-badge-content');
+      const badge = page.locator('.cart-fab .mat-badge-content');
       await expect(badge).toHaveText('2');
 
       // Continue to notes

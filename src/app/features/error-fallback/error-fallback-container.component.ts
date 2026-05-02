@@ -1,7 +1,5 @@
 import type { ElementRef} from '@angular/core';
 import { afterNextRender,ChangeDetectionStrategy, Component, computed, inject, viewChild  } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 
 import { AppErrorStore } from '@app/core/error-handling/app-error.store';
@@ -10,7 +8,7 @@ import { i18nKeys, TranslatePipe } from '@core/i18n';
 @Component({
   selector: 'app-error-fallback-container',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [TranslatePipe],
   templateUrl: './error-fallback-container.component.html',
   styleUrl: './error-fallback-container.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

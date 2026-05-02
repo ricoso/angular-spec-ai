@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
 
 import { i18nKeys, TranslatePipe, TranslateService } from '@core/i18n';
 
@@ -8,7 +7,7 @@ import { BookingStore } from '../../stores/booking.store';
 @Component({
   selector: 'app-rent-category-price-block',
   standalone: true,
-  imports: [TranslatePipe, MatIconModule],
+  imports: [TranslatePipe],
   templateUrl: './rent-category-price-block.component.html',
   styleUrl: './rent-category-price-block.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

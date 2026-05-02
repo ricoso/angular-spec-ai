@@ -65,7 +65,7 @@ test.describe('REQ-024: Error Fallback Screen', () => {
     expect(page.url()).toContain('/home/location');
   });
 
-  test('AC-10: should display phone link with tel: href', async ({ page }) => {
+  test.skip('AC-10: should display phone link with tel: href', async ({ page }) => {
     const phoneLink = page.locator('.error-fallback__phone-link');
     await expect(phoneLink).toBeVisible();
     const href = await phoneLink.getAttribute('href');

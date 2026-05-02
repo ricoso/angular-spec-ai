@@ -2,35 +2,39 @@
 
 <section class="brand-selection">
   @if (selectedBranch()) {
-    <div class="brand-selection__info-banner" role="status" aria-live="polite">
-      <span class="brand-selection__info-icon">
-        <mat-icon aria-hidden="true">location_on</mat-icon>
+    <div class="branch-banner brand-selection__info-banner" role="status" aria-live="polite">
+      <span class="branch-banner__icon brand-selection__info-icon">
+        <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
       </span>
-      <span class="brand-selection__info-text">
-        {{ booking.branch.infoLabel | translate }}: <strong>{{ selectedBranch()!.name }}</strong> — {{ formattedBranchAddress() }}
-      </span>
+      <div class="brand-selection__info-text">
+        <div class="branch-banner__title">{{ booking.branch.infoLabel | translate }}</div>
+        <div class="branch-banner__address">
+          <strong>{{ selectedBranch()!.name }}</strong> &mdash; {{ formattedBranchAddress() }}
+        </div>
+      </div>
     </div>
   }
 
-  <h1 class="brand-selection__title">{{ booking.brand.title | translate }}</h1>
-  <p class="brand-selection__subtitle">{{ booking.brand.subtitle | translate }}</p>
+  <h1 class="brand-selection__title page-title">{{ booking.brand.title | translate }}</h1>
+  <p class="brand-selection__subtitle page-subtitle">{{ booking.brand.subtitle | translate }}</p>
 
   @if (isLoading()) {
-    <div class="brand-selection__loading" role="status" aria-live="polite">
-      <mat-spinner diameter="48" />
-      <p class="brand-selection__loading-text">{{ booking.api.loading | translate }}</p>
+    <div class="brand-selection__loading text-center py-5" role="status" aria-live="polite">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ booking.api.loading | translate }}</span>
+      </div>
+      <p class="brand-selection__loading-text mt-3">{{ booking.api.loading | translate }}</p>
     </div>
   } @else if (error()) {
-    <div class="brand-selection__error" role="alert" aria-live="assertive">
-      <mat-icon class="brand-selection__error-icon" aria-hidden="true">error_outline</mat-icon>
+    <div class="brand-selection__error text-center py-5" role="alert" aria-live="assertive">
+      <i class="bi bi-exclamation-circle brand-selection__error-icon" aria-hidden="true"></i>
       <h2 class="brand-selection__error-title">{{ booking.api.errorTitle | translate }}</h2>
       <p class="brand-selection__error-message">{{ booking.api.errorUnknown | translate }}</p>
       <button
-        mat-flat-button
-        color="primary"
-        class="brand-selection__retry-button"
+        type="button"
+        class="btn btn-primary brand-selection__retry-button"
         (click)="onRetry()">
-        <mat-icon aria-hidden="true">refresh</mat-icon>
+        <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>
         {{ booking.api.retryButton | translate }}
       </button>
     </div>
@@ -45,12 +49,12 @@
   }
 
   <!-- Navigation: Nur Zurück (Auto-Navigation bei Marken-Klick) -->
-  <nav class="brand-selection__nav" [attr.aria-label]="booking.brand.ariaNavLabel | translate">
+  <nav class="brand-selection__nav wizard-nav" [attr.aria-label]="booking.brand.ariaNavLabel | translate">
     <button
-      mat-flat-button
-      class="brand-selection__back-button"
+      type="button"
+      class="btn btn-outline-secondary brand-selection__back-button"
       (click)="onBack()">
-      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
       {{ booking.brand.backButton | translate }}
     </button>
   </nav>

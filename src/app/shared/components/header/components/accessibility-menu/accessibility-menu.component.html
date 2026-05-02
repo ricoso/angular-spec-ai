@@ -4,19 +4,22 @@
     <h3 class="accessibility-menu__heading" id="language-label">
       {{ a11y.language.label | translate }}
     </h3>
-    <mat-radio-group
-      class="accessibility-menu__radio-group"
-      [value]="currentLanguage()"
-      (change)="onLanguageChange($event.value)"
-      aria-labelledby="language-label">
+    <div class="pill-group accessibility-menu__radio-group" role="radiogroup" aria-labelledby="language-label">
       @for (lang of languages; track lang.code) {
-        <mat-radio-button
+        <input
+          type="radio"
+          name="a11yLang"
+          [id]="'a11y-lang-' + lang.code"
+          [value]="lang.code"
+          [checked]="currentLanguage() === lang.code"
+          (change)="onLanguageChange(lang.code)" />
+        <label
           class="accessibility-menu__radio"
-          [value]="lang.code">
+          [for]="'a11y-lang-' + lang.code">
           {{ lang.label }}
-        </mat-radio-button>
+        </label>
       }
-    </mat-radio-group>
+    </div>
   </section>
 
   <!-- Font Size -->
@@ -24,51 +27,58 @@
     <h3 class="accessibility-menu__heading" id="font-size-label">
       {{ a11y.fontSize.label | translate }}
     </h3>
-    <mat-radio-group
-      class="accessibility-menu__radio-group"
-      [value]="fontSize()"
-      (change)="onFontSizeChange($event.value)"
-      aria-labelledby="font-size-label">
+    <div class="pill-group accessibility-menu__radio-group" role="radiogroup" aria-labelledby="font-size-label">
       @for (size of fontSizes; track size) {
-        <mat-radio-button
+        <input
+          type="radio"
+          name="a11yFontSize"
+          [id]="'a11y-font-' + size"
+          [value]="size"
+          [checked]="fontSize() === size"
+          (change)="onFontSizeChange(size)" />
+        <label
           class="accessibility-menu__radio"
-          [value]="size">
+          [for]="'a11y-font-' + size">
           @switch (size) {
-            @case ('small') {
-              {{ a11y.fontSize.small | translate }}
-            }
-            @case ('normal') {
-              {{ a11y.fontSize.normal | translate }}
-            }
-            @case ('large') {
-              {{ a11y.fontSize.large | translate }}
-            }
-            @case ('x-large') {
-              {{ a11y.fontSize.xLarge | translate }}
-            }
+            @case ('small')   { {{ a11y.fontSize.small | translate }} }
+            @case ('normal')  { {{ a11y.fontSize.normal | translate }} }
+            @case ('large')   { {{ a11y.fontSize.large | translate }} }
+            @case ('x-large') { {{ a11y.fontSize.xLarge | translate }} }
           }
-        </mat-radio-button>
+        </label>
       }
-    </mat-radio-group>
+    </div>
   </section>
 
   <!-- High Contrast -->
   <section class="accessibility-menu__section">
-    <mat-slide-toggle
-      class="accessibility-menu__toggle"
-      [checked]="highContrast()"
-      (change)="onHighContrastChange($event.checked)">
-      {{ a11y.highContrast | translate }}
-    </mat-slide-toggle>
+    <div class="form-check form-switch accessibility-menu__toggle">
+      <input
+        class="form-check-input"
+        type="checkbox"
+        role="switch"
+        id="a11y-high-contrast"
+        [checked]="highContrast()"
+        (change)="onHighContrastChange($any($event.target).checked)" />
+      <label class="form-check-label" for="a11y-high-contrast">
+        {{ a11y.highContrast | translate }}
+      </label>
+    </div>
   </section>
 
   <!-- Reduced Motion -->
   <section class="accessibility-menu__section">
-    <mat-slide-toggle
-      class="accessibility-menu__toggle"
-      [checked]="reducedMotion()"
-      (change)="onReducedMotionChange($event.checked)">
-      {{ a11y.reducedMotion | translate }}
-    </mat-slide-toggle>
+    <div class="form-check form-switch accessibility-menu__toggle">
+      <input
+        class="form-check-input"
+        type="checkbox"
+        role="switch"
+        id="a11y-reduced-motion"
+        [checked]="reducedMotion()"
+        (change)="onReducedMotionChange($any($event.target).checked)" />
+      <label class="form-check-label" for="a11y-reduced-motion">
+        {{ a11y.reducedMotion | translate }}
+      </label>
+    </div>
   </section>
 </div>

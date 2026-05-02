@@ -7,8 +7,8 @@
 // 2. Accessibility
 @use 'styles/accessibility';
 
-// 3. Material Overrides
-@use 'styles/material-overrides';
+// 3. Bootstrap Theme (Bootstrap CSS via CDN; Custom-Properties + Component-Klassen hier)
+@use 'styles/bootstrap-theme';
 
 // 4. Utilities
 @use 'styles/utilities';
@@ -117,7 +117,7 @@ img {
 
   // Mobile: Buttons ueber die gesamte Breite
   > button,
-  > a.mat-mdc-button-base {
+  > a.btn {
     width: 100%;
 
     @include tablet {

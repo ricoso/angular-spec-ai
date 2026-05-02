@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 
@@ -14,7 +13,7 @@ export interface EnrichedBranch extends BranchConfig {
 @Component({
   selector: 'app-location-cards',
   standalone: true,
-  imports: [MatIconModule, TranslatePipe],
+  imports: [TranslatePipe],
   templateUrl: './location-cards.component.html',
   styleUrl: './location-cards.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
