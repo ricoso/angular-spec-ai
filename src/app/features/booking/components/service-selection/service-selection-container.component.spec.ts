@@ -181,9 +181,9 @@ describe('ServiceSelectionContainerComponent', () => {
         onCarouselNext: () => void;
         onTrackScroll: () => void;
       };
-      expect(() => exposed.onCarouselPrev()).not.toThrow();
-      expect(() => exposed.onCarouselNext()).not.toThrow();
-      expect(() => exposed.onTrackScroll()).not.toThrow();
+      expect(() => { exposed.onCarouselPrev(); }).not.toThrow();
+      expect(() => { exposed.onCarouselNext(); }).not.toThrow();
+      expect(() => { exposed.onTrackScroll(); }).not.toThrow();
     });
 
     it('should compute activeSelectedIds as empty when no category active', () => {
@@ -210,7 +210,7 @@ describe('ServiceSelectionContainerComponent', () => {
       };
       exposed.onServiceClick('inspection');
       // Even with no real category mapping, should not throw
-      expect(() => exposed.onServiceDeselect('cat-X')).not.toThrow();
+      expect(() => { exposed.onServiceDeselect('cat-X'); }).not.toThrow();
     });
 
     it('should rebuild category selection on confirm', () => {
@@ -247,7 +247,7 @@ describe('ServiceSelectionContainerComponent', () => {
       };
       const map = exposed.operationsByCategory();
       // map could include c1 + virtual-pickup-delivery
-      expect(map['c1']?.length ?? 0).toBeGreaterThanOrEqual(0);
+      expect(map.c1?.length ?? 0).toBeGreaterThanOrEqual(0);
     });
 
     it('should auto-pick first category as activeCategoryId via effect', async () => {

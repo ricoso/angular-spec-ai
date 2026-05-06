@@ -123,6 +123,42 @@ class JobTypesServiceTest {
         assertNull(result.get(1).description());
     }
 
+    /**
+     * Deep-Link-Override: wenn das Frontend die `tireChange`-groupId mitgibt,
+     * wird {@link SetupService#validateGroupIdForBranch} verwendet (statt
+     * resolveGroupId default), und SoftNet wird mit der Override-Group abgefragt.
+     */
+    @Test
+    void getCategoriesByBranch_usesGroupIdOverrideViaValidation() {
+        when(setupService.validateGroupIdForBranch("any-branch", "tirechange-grp"))
+            .thenReturn("tirechange-grp");
+        when(softnetApi.getList("/api/planning/tags", "tirechange-grp"))
+            .thenReturn(List.of());
+
+        var result = service.getCategoriesByBranch("any-branch", "tirechange-grp");
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getOperationsByBranch_usesGroupIdOverrideViaValidation() {
+        when(setupService.validateGroupIdForBranch("any-branch", "tirechange-grp"))
+            .thenReturn("tirechange-grp");
+        when(softnetApi.getOperations("tirechange-grp"))
+            .thenReturn(List.of());
+
+        var result = service.getOperationsByBranch("any-branch", "tirechange-grp");
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getCategoriesByBranch_blankGroupIdOverrideUsesDefault() {
+        when(softnetApi.getList("/api/planning/tags", "mock-group-id"))
+            .thenReturn(List.of());
+
+        var result = service.getCategoriesByBranch("any-branch", "");
+        assertTrue(result.isEmpty());
+    }
+
     /** REQ-025 (b) Iter. 3: Operations ohne order-Feld landen am Ende. */
     @Test
     void getOperationsByBranch_handlesMissingOrder() {

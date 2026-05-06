@@ -5,9 +5,9 @@ import { i18nKeys, TranslatePipe } from '@core/i18n';
 import { WizardBreadcrumbComponent } from '@shared/components/wizard-breadcrumb/wizard-breadcrumb.component';
 import { WIZARD_STEPS } from '@shared/components/wizard-breadcrumb/wizard-steps.config';
 
-import type { BranchConfig } from '../../models/branch-config.model';
 import { BookingStore } from '../../stores/booking.store';
 
+import type { BranchSelection } from './location-cards.component';
 import { LocationCardsComponent } from './location-cards.component';
 
 @Component({
@@ -27,11 +27,13 @@ export class LocationSelectionContainerComponent {
   protected readonly activeStepIndex = 0;
   protected readonly branches = this.store.branches;
   protected readonly selectedBranch = this.store.selectedBranch;
+  protected readonly selectedGroupIdOverride = this.store.deepLinkGroupId;
   protected readonly isLoading = this.store.isLoading;
   protected readonly error = this.store.error;
 
-  protected onBranchSelect(branch: BranchConfig): void {
-    this.store.selectBranch(branch);
+  protected onBranchSelect(selection: BranchSelection): void {
+    this.store.selectBranch(selection.branch);
+    this.store.setDeepLinkGroupId(selection.groupIdOverride);
     void this.router.navigate(['/home/brand']);
   }
 

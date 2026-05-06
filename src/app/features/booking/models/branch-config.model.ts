@@ -11,6 +11,8 @@ export interface BranchConfig {
   name: string;
   address: BranchAddress;
   brands: string[];
+  /** SoftNet-Group-ID der tireChange-Variante (Boxenstopp), null/undefined wenn keine konfiguriert. */
+  tireChangeGroupId?: string | null;
 }
 
 export interface BranchConfigFile {

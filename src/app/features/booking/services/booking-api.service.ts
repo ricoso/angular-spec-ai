@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 
 import { environment } from '@environments/environment';
@@ -39,6 +39,8 @@ interface BranchDto {
   description: string | null;
   address: BranchAddressDto | null;
   brands: string[];
+  /** SoftNet-Group-ID der tireChange-Variante (Boxenstopp), null wenn keine konfiguriert. */
+  tireChangeGroupId?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -131,21 +133,33 @@ export class BookingApiService {
     }));
   }
 
-  /** REQ-025 (b) Iter. 3: Service-Kategorien (Tags aus SoftNet) — sortiert nach rank. */
-  public async getCategoriesByBranch(branchId: string): Promise<import('../models/service.model').ApiCategory[]> {
+  /** REQ-025 (b) Iter. 3: Service-Kategorien (Tags aus SoftNet) — sortiert nach rank.
+   *  Optional `groupId` (Deep-Link, z. B. tireChange-Group) wird ans Backend durchgereicht. */
+  public async getCategoriesByBranch(
+    branchId: string,
+    groupId?: string | null
+  ): Promise<import('../models/service.model').ApiCategory[]> {
+    const params = groupId ? new HttpParams().set('groupId', groupId) : undefined;
     const response = await firstValueFrom(
       this.http.get<ApiResponse<import('../models/service.model').ApiCategory[]>>(
-        `${this.apiUrl}/branches/${branchId}/categories`
+        `${this.apiUrl}/branches/${branchId}/categories`,
+        { params }
       )
     );
     return response.data;
   }
 
-  /** REQ-025 (b) Iter. 3: Operations (Services) inkl. description, tagIds, order, imageId. */
-  public async getOperationsByBranch(branchId: string): Promise<import('../models/service.model').ApiOperation[]> {
+  /** REQ-025 (b) Iter. 3: Operations (Services) inkl. description, tagIds, order, imageId.
+   *  Optional `groupId` wird ans Backend durchgereicht (Boxenstopp-Modus). */
+  public async getOperationsByBranch(
+    branchId: string,
+    groupId?: string | null
+  ): Promise<import('../models/service.model').ApiOperation[]> {
+    const params = groupId ? new HttpParams().set('groupId', groupId) : undefined;
     const response = await firstValueFrom(
       this.http.get<ApiResponse<import('../models/service.model').ApiOperation[]>>(
-        `${this.apiUrl}/branches/${branchId}/operations`
+        `${this.apiUrl}/branches/${branchId}/operations`,
+        { params }
       )
     );
     return response.data;
@@ -181,6 +195,7 @@ export class BookingApiService {
         country: dto.address?.country ?? undefined,
       },
       brands: dto.brands,
+      tireChangeGroupId: dto.tireChangeGroupId ?? null,
     };
   }
 }

@@ -242,6 +242,24 @@
   border-color: var(--bs-primary);
 }
 
+// Standard-Checkbox / Radio (Service-Auswahl etc.) — kräftiger Rand für bessere Sichtbarkeit
+.form-check-input[type="checkbox"],
+.form-check-input[type="radio"] {
+  border-width: 0.1875em;            // 3px bei 16px Basis-Font
+  border-color: var(--color-text-primary);  // dunkler Rand statt Bootstrap-Default-Grau
+}
+// Switches behalten dünneren Rand
+.form-switch .form-check-input {
+  border-width: 1px;
+}
+
+// NgbDatepicker — Wochentag-Header (M T W T F S S) schwarz statt grau
+.ngb-dp-weekday {
+  color: var(--color-text-primary) !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+}
+
 // ============================================================
 // Service-Card (Karussell-Mini-Tiles + Detail-Panel)
 // ============================================================

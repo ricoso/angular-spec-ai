@@ -14,7 +14,7 @@ import type { LocationDisplay } from '../models/location.model';
 import type { AppointmentPreference, NotesExtras } from '../models/notes-extras.model';
 import type { RentCategory } from '../models/rent-category.model';
 import type { ApiCategory, ApiJobType, ApiOperation, SelectedService, ServiceDisplay, ServiceType } from '../models/service.model';
-import { AVAILABLE_SERVICES, TIRE_CHANGE_TAG_RANK } from '../models/service.model';
+import { AVAILABLE_SERVICES } from '../models/service.model';
 import type { WorkshopCalendarDay } from '../models/workshop-calendar.model';
 import { AppointmentApiService } from '../services/appointment-api.service';
 import { BookingApiService } from '../services/booking-api.service';
@@ -54,6 +54,8 @@ interface BookingState {
   isLoading: boolean;
   error: string | null;
   isDeepLinked: boolean;
+  /** Optionaler Deep-Link-Override: SoftNet-`groupId` aus der URL (z. B. tireChange-Group). */
+  deepLinkGroupId: string | null;
 }
 
 const INITIAL_STATE: BookingState = {
@@ -85,7 +87,8 @@ const INITIAL_STATE: BookingState = {
   operations: [],
   isLoading: false,
   error: null,
-  isDeepLinked: false
+  isDeepLinked: false,
+  deepLinkGroupId: null
 };
 
 /**
@@ -109,7 +112,7 @@ export const BookingStore = signalStore(
 
   withState<BookingState>(INITIAL_STATE),
 
-  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, appointmentId, notesExtras, rentCategories, selectedRentCategoryId, jobTypes, categories, operations }) => ({
+  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, appointmentId, notesExtras, rentCategories, selectedRentCategoryId, categories, operations, deepLinkGroupId }) => ({
     hasBranchSelected: computed(() => selectedBranch() !== null),
     selectedBranchBrands: computed(() => {
       const branch = selectedBranch();
@@ -165,17 +168,19 @@ export const BookingStore = signalStore(
     hasBookingError: computed(() => bookingError() !== null),
     submittedAppointmentId: computed(() => appointmentId()),
     selectedVariant: computed<'default' | 'tireChange'>(() => {
-      // REQ-025 AC-7 + (b) Iter. 3: prüft Tag rank=3 (TireChange), fällt auf API-jobType.category
-      // und alte Service-ID-Heuristik zurück.
-      const selectedIds = selectedServices().map(s => s.serviceId as string);
-      // Neuer Pfad: Tag mit rank=TIRE_CHANGE_TAG_RANK + selektierte Operation hat diesen tagId
-      const tireChangeTagId = categories().find(c => c.rank === TIRE_CHANGE_TAG_RANK)?.id;
-      const tagBasedTireChange = !!tireChangeTagId && operations().some(op =>
-        op.tagIds.includes(tireChangeTagId) && selectedIds.includes(op.id)
-      );
-      const apiTireChange = jobTypes().some(jt => jt.category === 'tireChange' && selectedIds.includes(jt.id));
-      const legacyTireChange = selectedServices().some(s => s.serviceId === 'tire-change');
-      return tagBasedTireChange || apiTireChange || legacyTireChange ? 'tireChange' : 'default';
+      // Variant = `'tireChange'` NUR wenn Boxenstopp-Deep-Link aktiv ist (deepLinkGroupId
+      // entspricht der tireChange-Group der Branch). Sonst immer `'default'`.
+      //
+      // Hintergrund: Im default-Modus sind Inspektion (rank=0), TÜV (rank=1) UND Räderwechsel
+      // (rank=3) alle in derselben SoftNet-default-Group registriert. Räderwechsel-Auswahl
+      // soll daher NICHT zur tireChange-SoftNet-Group umgeschaltet werden — das war der alte
+      // REQ-025-AC-7-Fehler, der Mischauswahl (Inspektion + Räderwechsel) blockiert hat.
+      const groupId = deepLinkGroupId();
+      const branch = selectedBranch();
+      if (groupId && branch?.tireChangeGroupId && groupId === branch.tireChangeGroupId) {
+        return 'tireChange';
+      }
+      return 'default';
     }),
     /**
      * REQ-025 (b) Iter. 3: Operations gruppiert nach Tag-IDs.
@@ -199,12 +204,25 @@ export const BookingStore = signalStore(
       const inspektionTagId = categories().find(c => c.rank === 0)?.id ?? null;
       const result: Record<string, ApiOperation[]> = {};
 
+      // De-duplizierte Pickup-Operations (eindeutig per ID) — ausschließlich Operations
+      // mit Name "Hol & Bringservice", egal welche tagIds sie haben.
+      const seenPickupIds = new Set<string>();
+      const pickupOps = operations()
+        .filter(op => op.name === PICKUP_DELIVERY_NAME)
+        .filter(op => { if (seenPickupIds.has(op.id)) return false; seenPickupIds.add(op.id); return true; });
+
       // Reguläre Categories
       for (const cat of categories()) {
+        // Falls SoftNet eine Tag namens "Hol & Bringservice" mitliefert, soll diese
+        // Karte exakt dieselben Pickup-Operations zeigen — kein Inspektion-/TÜV-Inhalt.
+        if (cat.name === PICKUP_DELIVERY_NAME) {
+          result[cat.id] = pickupOps;
+          continue;
+        }
         result[cat.id] = operations()
           .filter(op => {
             if (!op.tagIds.includes(cat.id)) return false;
-            if (op.name === PICKUP_DELIVERY_NAME) return false; // hat eigene virtuelle Card
+            if (op.name === PICKUP_DELIVERY_NAME) return false; // hat eigene Pickup-Card
             if (INSPEKTION_ONLY_NAMES.has(op.name) && cat.id !== inspektionTagId) {
               return false;
             }
@@ -213,9 +231,13 @@ export const BookingStore = signalStore(
           .sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER));
       }
 
-      // Virtuelle Pickup-Delivery-Kategorie
-      result[PICKUP_VIRTUAL_TAG_ID] = operations()
-        .filter(op => op.name === PICKUP_DELIVERY_NAME);
+      // Virtuelle Pickup-Delivery-Kategorie (immer nur Pickup-Operations)
+      result[PICKUP_VIRTUAL_TAG_ID] = pickupOps;
+
+      // Virtuelle Räderwechsel-Card für tireChange-Group (Boxenstopp), wenn SoftNet
+      // dort keine Tags konfiguriert hat — alle Operations dieser Group landen darunter.
+      result['virtual-tire-change'] = operations()
+        .sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER));
 
       return result;
     }),
@@ -226,10 +248,53 @@ export const BookingStore = signalStore(
      */
     categoriesWithVirtual: computed<ApiCategory[]>(() => {
       const ops = operations();
-      const hasPickup = ops.some(op => op.name === 'Hol & Bringservice');
-      if (!hasPickup) return categories();
+      const cats = categories();
+      const hasPickupOp = ops.some(op => op.name === 'Hol & Bringservice');
+      // Wenn SoftNet schon eine echte Tag namens "Hol & Bringservice" liefert, keine
+      // virtuelle Doppelung anhängen — die echte Tag wird in operationsByCategory
+      // ohnehin auf Pickup-Operations gefiltert.
+      const hasRealPickupCat = cats.some(c => c.name === 'Hol & Bringservice');
+      if (!hasPickupOp || hasRealPickupCat) return cats;
       return [
-        ...categories(),
+        ...cats,
+        { id: 'virtual-pickup-delivery', name: 'Hol & Bringservice', rank: 99 }
+      ];
+    }),
+    /**
+     * `true`, wenn die App per Deep-Link mit der `tireChange`-Group-ID der
+     * aktuellen Branch geöffnet wurde (Boxenstopp-Tag).
+     */
+    isTireChangeMode: computed<boolean>(() => {
+      const groupId = deepLinkGroupId();
+      const branch = selectedBranch();
+      if (!groupId || !branch?.tireChangeGroupId) return false;
+      return groupId === branch.tireChangeGroupId;
+    }),
+    /**
+     * Im tireChange-Modus (Boxenstopp): zeigt was SoftNet für die tireChange-Group
+     * ausliefert. Falls SoftNet dort keine Tags konfiguriert hat (häufig der Fall —
+     * Boxenstopp-Group ist auf Operations-Ebene konfiguriert), wird eine virtuelle
+     * "Räderwechsel"-Card erzeugt, unter der alle Operations dieser Group landen.
+     * Sonst: alle Kategorien inkl. virtueller Hol-und-Bring-Card.
+     */
+    visibleCategories: computed<ApiCategory[]>(() => {
+      const groupId = deepLinkGroupId();
+      const branch = selectedBranch();
+      const tireChangeMode = !!groupId && !!branch?.tireChangeGroupId && groupId === branch.tireChangeGroupId;
+      const cats = categories();
+      const ops = operations();
+      if (tireChangeMode) {
+        if (cats.length > 0) return cats;
+        // Fallback: SoftNet liefert keine Tags für die tireChange-Group → virtuelle Card.
+        if (ops.length === 0) return [];
+        return [{ id: 'virtual-tire-change', name: 'Räderwechsel+', rank: 0 }];
+      }
+      // Default-Mode: cats + virtuelle Pickup-Card (falls passende Operations).
+      const hasPickupOp = ops.some(op => op.name === 'Hol & Bringservice');
+      const hasRealPickupCat = cats.some(c => c.name === 'Hol & Bringservice');
+      if (!hasPickupOp || hasRealPickupCat) return cats;
+      return [
+        ...cats,
         { id: 'virtual-pickup-delivery', name: 'Hol & Bringservice', rank: 99 }
       ];
     }),
@@ -282,7 +347,7 @@ export const BookingStore = signalStore(
     loadCategoriesForBranch: rxMethod<string>(
       pipe(
         switchMap((branchId) =>
-          from(api.getCategoriesByBranch(branchId)).pipe(
+          from(api.getCategoriesByBranch(branchId, store.deepLinkGroupId())).pipe(
             tap((categories) => { patchState(store, { categories }); }),
             catchError((err: unknown) => {
               const message = err instanceof Error ? err.message : 'Unknown error';
@@ -301,7 +366,7 @@ export const BookingStore = signalStore(
     loadOperationsForBranch: rxMethod<string>(
       pipe(
         switchMap((branchId) =>
-          from(api.getOperationsByBranch(branchId)).pipe(
+          from(api.getOperationsByBranch(branchId, store.deepLinkGroupId())).pipe(
             tap((operations) => { patchState(store, { operations }); }),
             catchError((err: unknown) => {
               const message = err instanceof Error ? err.message : 'Unknown error';
@@ -415,10 +480,12 @@ export const BookingStore = signalStore(
     selectBranch(branch: BranchConfig): void {
       const currentBranch = store.selectedBranch();
       const branchChanged = currentBranch?.branchId !== branch.branchId;
-      const address = branch.address.street || branch.name;
+      const street = branch.address.street ?? '';
+      const zipCity = [branch.address.zip, branch.address.city].filter(Boolean).join(' ');
+      const formattedAddress = [street, zipCity].filter(Boolean).join(', ') || branch.name;
       patchState(store, {
         selectedBranch: branch,
-        selectedLocation: { id: branch.branchId, name: branch.name, city: address, formattedAddress: address }
+        selectedLocation: { id: branch.branchId, name: branch.name, city: branch.address.city ?? '', formattedAddress }
       });
       if (branchChanged) {
         patchState(store, {
@@ -650,6 +717,10 @@ export const BookingStore = signalStore(
       if (targetIndex <= 2) { patchState(store, { selectedServices: [] }); }
       if (targetIndex <= 3) { patchState(store, { notesExtras: null }); }
       if (targetIndex <= 4) { patchState(store, { selectedAppointment: null, workshopCalendarDate: null, workshopCalendarDays: [] }); }
+    },
+
+    setDeepLinkGroupId(deepLinkGroupId: string | null): void {
+      patchState(store, { deepLinkGroupId });
     },
 
     setDeepLinked(isDeepLinked: boolean): void {

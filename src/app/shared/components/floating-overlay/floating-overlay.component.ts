@@ -30,7 +30,7 @@ export class FloatingOverlayComponent {
   protected readonly badgeText = this.cartStore.badgeText;
   protected readonly hasItems = this.cartStore.hasItems;
 
-  protected readonly selectedLocationName = computed(() => this.bookingStore.selectedLocation()?.name ?? '');
+  protected readonly selectedLocationName = computed(() => this.bookingStore.selectedLocation()?.formattedAddress ?? '');
   protected readonly selectedBrandName = computed(() => this.bookingStore.selectedBrand() ?? '');
   protected readonly selectedServiceCount = computed(() => this.bookingStore.selectedServiceCount());
   protected readonly selectedServiceLabels = computed(() => this.bookingStore.selectedServiceLabels());

@@ -44,7 +44,11 @@ export class ServiceCardComponent {
    * SoftNet liefert keine iconUrl fuer Tags → lokales Mapping als Uebergangsloesung.
    */
   protected readonly iconClass = computed<string>(() => {
-    switch (this.category().rank) {
+    const cat = this.category();
+    if (cat.id === 'virtual-pickup-delivery' || cat.name === 'Hol & Bringservice') {
+      return 'bi-arrow-left-right';
+    }
+    switch (cat.rank) {
       case 0: return 'bi-tools';
       case 1: return 'bi-clipboard-check';
       case 2: return 'bi-droplet-half';

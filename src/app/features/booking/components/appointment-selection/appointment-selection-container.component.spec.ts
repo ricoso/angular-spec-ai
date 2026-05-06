@@ -163,12 +163,12 @@ describe('AppointmentSelectionContainerComponent', () => {
   describe('Date-Strip Computed Signals', () => {
     beforeEach(() => {
       // Push appointments into store
-      MOCK_APPOINTMENTS.forEach(a => store.selectAppointment(a));
+      MOCK_APPOINTMENTS.forEach(a => { store.selectAppointment(a); });
       store.clearSelectedAppointment();
     });
 
     it('should derive availableDates uniquely from appointments', () => {
-      const exposed = component as unknown as { availableDates: () => Array<{ date: string; day: string; month: string; dayAbbreviation: string }> };
+      const exposed = component as unknown as { availableDates: () => { date: string; day: string; month: string; dayAbbreviation: string }[] };
       const dates = exposed.availableDates();
       // store.appointments may be empty or hold MOCK_APPOINTMENTS — function shouldn't throw
       expect(Array.isArray(dates)).toBe(true);
@@ -223,7 +223,7 @@ describe('AppointmentSelectionContainerComponent', () => {
 
     it('should compute availableDates with month and day', () => {
       const exposed = component as unknown as {
-        availableDates: () => Array<{ date: string; day: string; month: string }>;
+        availableDates: () => { date: string; day: string; month: string }[];
       };
       const dates = exposed.availableDates();
       expect(dates.length).toBeGreaterThan(0);
@@ -251,8 +251,8 @@ describe('AppointmentSelectionContainerComponent', () => {
 
     it('should split slots into morning (< 12) and afternoon (>= 12)', () => {
       const exposed = component as unknown as {
-        morningSlots: () => Array<{ time: string }>;
-        afternoonSlots: () => Array<{ time: string }>;
+        morningSlots: () => { time: string }[];
+        afternoonSlots: () => { time: string }[];
       };
       // Selected date is 2026-02-25 with 09:00 slot → morning
       expect(exposed.morningSlots()[0]?.time).toBe('09:00');

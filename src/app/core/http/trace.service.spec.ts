@@ -24,12 +24,12 @@ describe('TraceService', () => {
   });
 
   it('log() does not throw, with and without data', () => {
-    expect(() => service.log('Component', 'msg')).not.toThrow();
-    expect(() => service.log('Component', 'msg', { foo: 'bar' })).not.toThrow();
+    expect(() => { service.log('Component', 'msg'); }).not.toThrow();
+    expect(() => { service.log('Component', 'msg', { foo: 'bar' }); }).not.toThrow();
   });
 
   it('error() does not throw, with and without error', () => {
-    expect(() => service.error('Component', 'msg')).not.toThrow();
-    expect(() => service.error('Component', 'msg', new Error('x'))).not.toThrow();
+    expect(() => { service.error('Component', 'msg'); }).not.toThrow();
+    expect(() => { service.error('Component', 'msg', new Error('x')); }).not.toThrow();
   });
 });

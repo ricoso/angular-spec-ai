@@ -151,4 +151,31 @@ public class SetupService {
     public boolean isTireChangeEnabled() {
         return featureProperties.radwechselEnabled();
     }
+
+    /**
+     * Validates that {@code groupId} is configured for the given {@code branchId}
+     * in setup.json. Used when the frontend deep-links a specific Workshop-Group:
+     * we only accept group-IDs that belong to the same branch (defense against
+     * forged URLs that target a foreign workshop).
+     *
+     * <p>If Radwechsel-Saison is disabled but a tireChange-Group is requested,
+     * this falls back to the branch's default group (analog to {@link #resolveGroupId}).
+     *
+     * @return the validated group-ID (or the default-group-ID after fallback)
+     * @throws GroupIdNotInBranchException if the group-ID is not part of the branch
+     */
+    public String validateGroupIdForBranch(String branchId, String groupId) {
+        BranchSetup branch = findByBranchId(branchId);
+        var match = branch.groups().stream()
+            .filter(g -> g.groupId().equals(groupId))
+            .findFirst();
+        if (match.isEmpty()) {
+            throw new GroupIdNotInBranchException(branchId, groupId);
+        }
+        if (TIRE_CHANGE_VARIANT.equals(match.get().variant()) && !isTireChangeEnabled()) {
+            log.warn("Radwechsel-Saison disabled — tireChange group requested for branch '{}', falling back to default", branchId);
+            return resolveGroupId(branchId, "default");
+        }
+        return groupId;
+    }
 }

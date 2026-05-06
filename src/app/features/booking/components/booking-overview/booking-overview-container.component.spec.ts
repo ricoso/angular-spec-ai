@@ -133,7 +133,7 @@ describe('BookingOverviewContainerComponent', () => {
     expect(exposed.resolvedLocationName()).toBe('');
 
     store.setLocation(MOCK_LOCATION);
-    expect(exposed.resolvedLocationName()).toBe('Autohaus München');
+    expect(exposed.resolvedLocationName()).toBe('München');
   });
 
   it('should compute resolved service labels', () => {

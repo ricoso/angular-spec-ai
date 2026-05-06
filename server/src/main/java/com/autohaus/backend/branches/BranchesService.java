@@ -63,6 +63,12 @@ public class BranchesService {
             .map(GroupEntry::groupId)
             .orElse(branch.groups().isEmpty() ? null : branch.groups().get(0).groupId());
 
+        String tireChangeGroupId = branch.groups().stream()
+            .filter(g -> "tireChange".equals(g.variant()))
+            .findFirst()
+            .map(GroupEntry::groupId)
+            .orElse(null);
+
         JsonNode group = defaultGroupId != null ? groupsById.get(defaultGroupId) : null;
         List<String> brands = group != null ? extractBrands(group) : List.of();
 
@@ -76,7 +82,8 @@ public class BranchesService {
             branch.name(),
             composeDisplayAddress(address),
             address,
-            brands
+            brands,
+            tireChangeGroupId
         );
     }
 

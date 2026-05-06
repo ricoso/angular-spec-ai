@@ -1,28 +1,32 @@
 <div class="row g-3 location-grid" role="radiogroup" [attr.aria-label]="booking.location.ariaGroupLabel | translate">
-  @for (branch of enrichedBranches(); track branch.branchId) {
+  @for (branch of enrichedBranches(); track branch.cardId) {
     <div class="col-12 col-md-6 col-lg-4 location-grid__item">
       <input
         type="radio"
         name="location"
-        [id]="'location-' + branch.branchId"
+        [id]="'location-' + branch.cardId"
         class="location-grid__radio"
-        [value]="branch.branchId"
-        [checked]="branch.branchId === selectedBranch()?.branchId"
-        [attr.aria-label]="branch.name + ', ' + branch.formattedAddress"
+        [value]="branch.cardId"
+        [checked]="branch.branchId === selectedBranch()?.branchId && branch.groupIdOverride === selectedGroupIdOverride()"
+        [attr.aria-label]="branch.displayName + ', ' + branch.formattedAddress"
         (change)="onSelect(branch)"
       />
       <label
-        [for]="'location-' + branch.branchId"
+        [for]="'location-' + branch.cardId"
         class="card card-pickable h-100 p-3 location-card"
-        [class.selected]="branch.branchId === selectedBranch()?.branchId"
+        [class.selected]="branch.branchId === selectedBranch()?.branchId && branch.groupIdOverride === selectedGroupIdOverride()"
       >
         <span class="badge-selected" aria-hidden="true">
           <i class="bi bi-check-lg"></i>
         </span>
-        <h5 class="mb-2 location-card__name">{{ branch.name }}</h5>
-        <p class="small text-muted mb-2 location-card__address">
+        @if (branch.groupIdOverride) {
+          <span class="badge bg-warning text-dark mb-2 align-self-start">
+            <i class="bi bi-tools me-1" aria-hidden="true"></i>Radwechsel+ (Boxenstopp)
+          </span>
+        }
+        <h5 class="mb-2 location-card__address">
           <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ branch.formattedAddress }}
-        </p>
+        </h5>
         <span class="d-flex gap-2 align-items-center mt-auto location-card__brands">
           @for (logo of branch.brandLogos; track logo.name) {
             <span

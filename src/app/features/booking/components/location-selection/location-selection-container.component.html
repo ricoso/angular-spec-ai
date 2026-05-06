@@ -28,6 +28,7 @@
     <app-location-cards
       [branches]="branches()"
       [selectedBranch]="selectedBranch()"
+      [selectedGroupIdOverride]="selectedGroupIdOverride()"
       (branchSelected)="onBranchSelect($event)"
     />
   }

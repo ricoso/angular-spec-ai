@@ -15,7 +15,9 @@ public record BranchResponseDto(
     String name,
     String description,
     AddressDto address,
-    List<String> brands
+    List<String> brands,
+    /** SoftNet-Group-ID der "tireChange"-Variante (Boxenstopp-Tage), null falls nicht konfiguriert. */
+    String tireChangeGroupId
 ) {
     public record AddressDto(String street, String zip, String city, String country) {}
 }

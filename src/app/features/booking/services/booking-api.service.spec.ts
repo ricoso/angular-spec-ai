@@ -220,4 +220,40 @@ describe('BookingApiService', () => {
       expect(result[0].formattedAddress).toBe('Real Address');
     });
   });
+
+  describe('getCategoriesByBranch / getOperationsByBranch — Deep-Link groupId', () => {
+    it('should NOT add groupId param when not provided', async () => {
+      const promise = service.getCategoriesByBranch('branch-1');
+      const req = httpMock.expectOne(`${environment.apiUrl}/branches/branch-1/categories`);
+      expect(req.request.params.has('groupId')).toBe(false);
+      req.flush({ data: [] });
+      await promise;
+    });
+
+    it('should add ?groupId=… when provided (categories)', async () => {
+      const promise = service.getCategoriesByBranch('branch-1', 'tireChange-grp-1');
+      const req = httpMock.expectOne(
+        r => r.url === `${environment.apiUrl}/branches/branch-1/categories` && r.params.get('groupId') === 'tireChange-grp-1'
+      );
+      req.flush({ data: [] });
+      await promise;
+    });
+
+    it('should add ?groupId=… when provided (operations)', async () => {
+      const promise = service.getOperationsByBranch('branch-1', 'tireChange-grp-1');
+      const req = httpMock.expectOne(
+        r => r.url === `${environment.apiUrl}/branches/branch-1/operations` && r.params.get('groupId') === 'tireChange-grp-1'
+      );
+      req.flush({ data: [] });
+      await promise;
+    });
+
+    it('should NOT add groupId param when null', async () => {
+      const promise = service.getOperationsByBranch('branch-1', null);
+      const req = httpMock.expectOne(`${environment.apiUrl}/branches/branch-1/operations`);
+      expect(req.request.params.has('groupId')).toBe(false);
+      req.flush({ data: [] });
+      await promise;
+    });
+  });
 });

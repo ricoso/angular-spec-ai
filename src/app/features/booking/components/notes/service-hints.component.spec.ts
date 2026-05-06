@@ -90,7 +90,7 @@ describe('ServiceHintsComponent', () => {
         { id: 'op-1', name: 'Inspektion', description: 'Bitte bringen Sie Serviceheft', tagIds: ['c1'], order: 1, imageId: null }
       ]);
       fixture.detectChanges();
-      const exposed = component as unknown as { visibleHints: () => Array<{ hint: string; iconUrl: string | null }> };
+      const exposed = component as unknown as { visibleHints: () => { hint: string; iconUrl: string | null }[] };
       const hints = exposed.visibleHints();
       expect(hints).toHaveLength(1);
       expect(hints[0].hint).toContain('Serviceheft');
@@ -104,7 +104,7 @@ describe('ServiceHintsComponent', () => {
         { id: 'op-pickup', name: 'Hol & Bringservice', description: 'Wir holen ab.', tagIds: ['c1'], order: 99, imageId: null }
       ]);
       fixture.detectChanges();
-      const exposed = component as unknown as { visibleHints: () => Array<{ iconUrl: string | null }> };
+      const exposed = component as unknown as { visibleHints: () => { iconUrl: string | null }[] };
       expect(exposed.visibleHints()[0].iconUrl).toBe('assets/icons/services/pickup-delivery.svg');
     });
 
@@ -115,7 +115,7 @@ describe('ServiceHintsComponent', () => {
         { id: 'op-1', name: 'X', description: null, tagIds: ['c1'], order: 1, imageId: null }
       ]);
       fixture.detectChanges();
-      const exposed = component as unknown as { visibleHints: () => Array<{ hint: string }> };
+      const exposed = component as unknown as { visibleHints: () => { hint: string }[] };
       expect(exposed.visibleHints()[0].hint).toBe('');
     });
 
@@ -127,7 +127,7 @@ describe('ServiceHintsComponent', () => {
         { id: 'jt-x', name: 'X', description: '', hint: 'hint', category: null, categoryName: null, iconUrl: null, operations: [] }
       ]);
       fixture.detectChanges();
-      const exposed = component as unknown as { visibleHints: () => Array<{ hint: string }> };
+      const exposed = component as unknown as { visibleHints: () => { hint: string }[] };
       expect(exposed.visibleHints()).toHaveLength(1);
       expect(exposed.visibleHints()[0].hint).toBe('hint');
     });
@@ -139,7 +139,7 @@ describe('ServiceHintsComponent', () => {
         { id: 'op-orphan', name: 'Y', description: '', tagIds: [], order: 1, imageId: null }
       ]);
       fixture.detectChanges();
-      const exposed = component as unknown as { visibleHints: () => Array<{ iconUrl: string | null }> };
+      const exposed = component as unknown as { visibleHints: () => { iconUrl: string | null }[] };
       expect(exposed.visibleHints()[0].iconUrl).toBe('assets/icons/services/inspection.svg');
     });
   });

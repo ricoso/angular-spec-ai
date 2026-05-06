@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import type { HttpTestingController } from '@angular/common/http/testing';
-import { provideHttpClientTesting, HttpTestingController as Controller } from '@angular/common/http/testing';
+import { HttpTestingController as Controller,provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { SessionTokenService } from './session-token.service';
@@ -21,7 +21,7 @@ describe('SessionTokenService', () => {
     httpMock = TestBed.inject(Controller);
   });
 
-  afterEach(() => httpMock.verify());
+  afterEach(() => { httpMock.verify(); });
 
   it('should be created', () => {
     expect(service).toBeTruthy();

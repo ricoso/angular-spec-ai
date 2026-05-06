@@ -26,8 +26,10 @@ export class ServiceSelectionContainerComponent {
   protected readonly booking = i18nKeys.booking;
   protected readonly wizardSteps = WIZARD_STEPS;
   protected readonly activeStepIndex = 2;
-  /** REQ-025 (b) Iter. 3: Tags + virtuelle „Hol & Bringservice"-Card als Cards. */
-  protected readonly categories = this.store.categoriesWithVirtual;
+  /** REQ-025 (b) Iter. 3: Tags + virtuelle „Hol & Bringservice"-Card als Cards.
+   *  Im tireChange-Boxenstopp-Modus (Deep-Link mit Radwechsel-groupId) zeigt der
+   *  Store nur noch die "Räderwechsel"-Kategorie. */
+  protected readonly categories = this.store.visibleCategories;
   /** REQ-025 (b) Iter. 3: Operations gruppiert nach Tag-ID. */
   protected readonly operationsByCategory = this.store.operationsByCategory;
   protected readonly hasServicesSelected = this.store.hasServicesSelected;
@@ -111,6 +113,9 @@ export class ServiceSelectionContainerComponent {
   protected readonly activeIconClass = computed<string>(() => {
     const cat = this.activeCategory();
     if (!cat) return 'bi-tools';
+    if (cat.id === 'virtual-pickup-delivery' || cat.name === 'Hol & Bringservice') {
+      return 'bi-arrow-left-right';
+    }
     switch (cat.rank) {
       case 0: return 'bi-tools';
       case 1: return 'bi-clipboard-check';
@@ -139,33 +144,44 @@ export class ServiceSelectionContainerComponent {
     return names.join(' · ');
   });
 
+  /** Tracked Kombination aus branchId + deepLinkGroupId, um Categories+Operations
+   *  nur einmal pro (Branch × Group) zu laden — verhindert Endlos-Loop, wenn das
+   *  Backend ein leeres Array zurückgibt (z. B. tireChange-Group ohne Tags). */
+  private loadedKey: string | null = null;
+
   constructor() {
-    // REQ-025 (b) Iter. 3: Categories + Operations parallel laden, sobald Branch da ist.
+    // REQ-025 (b) Iter. 3: Categories + Operations laden, sobald Branch gewählt ist;
+    // Re-Load nur bei Wechsel von Branch ODER tireChange-Variante.
     effect(() => {
       const branch = this.store.selectedBranch();
-      const cats = this.store.categories();
-      const ops = this.store.operations();
-      if (branch && cats.length === 0) {
-        this.store.loadCategoriesForBranch(branch.branchId);
-      }
-      if (branch && ops.length === 0) {
-        this.store.loadOperationsForBranch(branch.branchId);
-      }
+      const groupId = this.store.deepLinkGroupId();
+      if (!branch) { return; }
+      const key = `${branch.branchId}#${groupId ?? ''}`;
+      if (this.loadedKey === key) { return; }
+      this.loadedKey = key;
+      this.store.loadCategoriesForBranch(branch.branchId);
+      this.store.loadOperationsForBranch(branch.branchId);
     });
 
-    // Auto-Auswahl: bevorzugt Inspektion (rank=0), Fallback erste echte Kategorie.
-    // Hol & Bringservice (rank=99, virtual) wird NIE auto-aktiviert.
-    // Wichtig: erst feuern wenn echte (nicht-virtuelle) Categories da sind —
-    // sonst gewinnt das virtuelle Pickup-Tile bei Race (Operations vor Categories).
+    // Default-Auswahl: bevorzugt Inspektion (rank=0), Fallback erste echte Kategorie.
+    // Greift NUR bei initialem Laden oder nach Branch-Wechsel mit ungültiger alter ID.
+    // Wenn der User aktiv eine Kategorie (auch Hol & Bring, rank=99) angeklickt hat,
+    // bleibt seine Auswahl erhalten — vorher wurde sie hier fälschlich überschrieben.
     effect(() => {
       const cats = this.categories();
       const realCats = cats.filter(c => c.rank !== 99);
       if (realCats.length === 0) { return; }
       const current = this.activeCategoryId();
-      if (current !== null && current !== 'virtual-pickup-delivery') { return; }
+      // current ist eine gültige Kategorie der aktuellen Liste → User-Auswahl behalten.
+      if (current !== null && cats.some(c => c.id === current)) { return; }
       const inspektion = realCats.find(c => c.rank === 0);
       const target = inspektion ?? realCats[0];
       this.activeCategoryId.set(target.id);
+      // Karussell ganz nach links — Inspektion soll sichtbar starten.
+      queueMicrotask(() => {
+        const track = this.trackEl()?.nativeElement;
+        if (track) { track.scrollLeft = 0; }
+      });
     });
   }
 

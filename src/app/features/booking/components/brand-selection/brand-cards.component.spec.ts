@@ -30,7 +30,7 @@ describe('BrandCardsComponent', () => {
   });
 
   it('should compute enrichedBrands with logoPath for known brands', () => {
-    const exposed = component as unknown as { enrichedBrands: () => Array<{ logoPath: string }> };
+    const exposed = component as unknown as { enrichedBrands: () => { logoPath: string }[] };
     const enriched = exposed.enrichedBrands();
     expect(enriched.length).toBe(AVAILABLE_BRANDS.length);
     enriched.forEach(b => {
@@ -43,7 +43,7 @@ describe('BrandCardsComponent', () => {
       { id: 'audi', name: 'UnknownBrand' } as BrandDisplay
     ]);
     fixture.detectChanges();
-    const exposed = component as unknown as { enrichedBrands: () => Array<{ logoPath: string }> };
+    const exposed = component as unknown as { enrichedBrands: () => { logoPath: string }[] };
     expect(exposed.enrichedBrands()[0].logoPath).toBe('');
   });
 

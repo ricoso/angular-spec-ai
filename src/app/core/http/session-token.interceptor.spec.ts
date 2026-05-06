@@ -1,6 +1,6 @@
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import type { HttpTestingController } from '@angular/common/http/testing';
-import { provideHttpClientTesting, HttpTestingController as Controller } from '@angular/common/http/testing';
+import { HttpTestingController as Controller,provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { sessionTokenInterceptor } from './session-token.interceptor';
@@ -32,7 +32,7 @@ describe('sessionTokenInterceptor', () => {
     httpMock = TestBed.inject(Controller);
   });
 
-  afterEach(() => httpMock.verify());
+  afterEach(() => { httpMock.verify(); });
 
   it('should pass through non-/api/ URLs without token header', () => {
     http.get('/static/foo.png').subscribe();
@@ -51,7 +51,7 @@ describe('sessionTokenInterceptor', () => {
 
   it('should attach X-Session-Token, X-Correlation-Id, X-Session-Id headers on /api/ calls', async () => {
     const promise = new Promise<void>(resolve => {
-      http.get('/api/v1/branches').subscribe(() => resolve());
+      http.get('/api/v1/branches').subscribe(() => { resolve(); });
     });
     // Wait for token-promise to resolve
     await Promise.resolve();
@@ -66,7 +66,7 @@ describe('sessionTokenInterceptor', () => {
 
   it('should propagate request errors with trace logging', async () => {
     const subPromise = new Promise<unknown>(resolve => {
-      http.get('/api/v1/fail').subscribe({ error: e => resolve(e) });
+      http.get('/api/v1/fail').subscribe({ error: e => { resolve(e); } });
     });
     await Promise.resolve();
     await Promise.resolve();

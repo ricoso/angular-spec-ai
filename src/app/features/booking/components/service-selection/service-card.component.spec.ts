@@ -178,6 +178,26 @@ describe('ServiceCardComponent', () => {
       const exposed = component as unknown as { iconClass: () => string };
       expect(exposed.iconClass()).toBe('bi-tools');
     });
+
+    it('id "virtual-pickup-delivery" → bi-arrow-left-right (egal welcher rank)', () => {
+      fixture.componentRef.setInput('category', { id: 'virtual-pickup-delivery', name: 'Hol & Bringservice', rank: 0 });
+      fixture.componentRef.setInput('operations', operations);
+      fixture.componentRef.setInput('isSelected', false);
+      fixture.componentRef.setInput('selectedOperationIds', []);
+      fixture.detectChanges();
+      const exposed = component as unknown as { iconClass: () => string };
+      expect(exposed.iconClass()).toBe('bi-arrow-left-right');
+    });
+
+    it('name "Hol & Bringservice" → bi-arrow-left-right (egal welcher rank)', () => {
+      fixture.componentRef.setInput('category', { id: 'tag-foo', name: 'Hol & Bringservice', rank: 2 });
+      fixture.componentRef.setInput('operations', operations);
+      fixture.componentRef.setInput('isSelected', false);
+      fixture.componentRef.setInput('selectedOperationIds', []);
+      fixture.detectChanges();
+      const exposed = component as unknown as { iconClass: () => string };
+      expect(exposed.iconClass()).toBe('bi-arrow-left-right');
+    });
   });
 
   describe('Confirm/Deselect button visibility logic', () => {

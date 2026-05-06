@@ -73,27 +73,27 @@ describe('LocationSelectionContainerComponent', () => {
   describe('Branch Selection', () => {
     it('should set branch in store on selection', () => {
       const exposed = component as unknown as {
-        onBranchSelect: (branch: BranchConfig) => void;
+        onBranchSelect: (selection: { branch: BranchConfig; groupIdOverride: string | null }) => void;
       };
-      exposed.onBranchSelect(TEST_BRANCH);
+      exposed.onBranchSelect({ branch: TEST_BRANCH, groupIdOverride: null });
 
       expect(store.selectedBranch()).toEqual(TEST_BRANCH);
       expect(store.selectedLocation()).toEqual({
         id: TEST_BRANCH.branchId,
         name: TEST_BRANCH.name,
-        city: TEST_BRANCH.address.street || TEST_BRANCH.name,
-        formattedAddress: TEST_BRANCH.address.street || TEST_BRANCH.name
+        city: TEST_BRANCH.address.city,
+        formattedAddress: `${TEST_BRANCH.address.street}, ${TEST_BRANCH.address.zip} ${TEST_BRANCH.address.city}`
       });
     });
 
     it('should cascade-reset downstream state when branch changes', () => {
       const exposed = component as unknown as {
-        onBranchSelect: (branch: BranchConfig) => void;
+        onBranchSelect: (selection: { branch: BranchConfig; groupIdOverride: string | null }) => void;
       };
-      exposed.onBranchSelect(TEST_BRANCH);
+      exposed.onBranchSelect({ branch: TEST_BRANCH, groupIdOverride: null });
       expect(store.selectedBranch()).toEqual(TEST_BRANCH);
 
-      exposed.onBranchSelect(TEST_BRANCH_2);
+      exposed.onBranchSelect({ branch: TEST_BRANCH_2, groupIdOverride: null });
       expect(store.selectedBranch()).toEqual(TEST_BRANCH_2);
       expect(store.selectedBrand()).toBeNull();
     });

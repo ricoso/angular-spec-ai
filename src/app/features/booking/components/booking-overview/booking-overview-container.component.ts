@@ -53,7 +53,7 @@ export class BookingOverviewContainerComponent {
 
   protected readonly resolvedLocationName = computed(() => {
     const location = this.store.selectedLocation();
-    return location?.name ?? '';
+    return location?.formattedAddress ?? '';
   });
 
   protected readonly resolvedServiceLabels = computed(() => {

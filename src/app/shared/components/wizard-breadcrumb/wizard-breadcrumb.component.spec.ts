@@ -60,7 +60,7 @@ describe('WizardBreadcrumbComponent', () => {
 
   describe('stepsWithStatus computed', () => {
     it('should mark first step active when activeIndex=0', () => {
-      const exposed = component as unknown as { stepsWithStatus: () => Array<{ status: string; isLast: boolean; originalIndex: number }> };
+      const exposed = component as unknown as { stepsWithStatus: () => { status: string; isLast: boolean; originalIndex: number }[] };
       const result = exposed.stepsWithStatus();
       expect(result[0].status).toBe('active');
       expect(result[1].status).toBe('future');
@@ -69,7 +69,7 @@ describe('WizardBreadcrumbComponent', () => {
     it('should mark earlier steps as done', () => {
       fixture.componentRef.setInput('activeIndex', 3);
       fixture.detectChanges();
-      const exposed = component as unknown as { stepsWithStatus: () => Array<{ status: string }> };
+      const exposed = component as unknown as { stepsWithStatus: () => { status: string }[] };
       const result = exposed.stepsWithStatus();
       expect(result[0].status).toBe('done');
       expect(result[1].status).toBe('done');
@@ -79,16 +79,16 @@ describe('WizardBreadcrumbComponent', () => {
     });
 
     it('should set isLast=true for the final step', () => {
-      const exposed = component as unknown as { stepsWithStatus: () => Array<{ isLast: boolean }> };
+      const exposed = component as unknown as { stepsWithStatus: () => { isLast: boolean }[] };
       const result = exposed.stepsWithStatus();
       expect(result[result.length - 1].isLast).toBe(true);
       expect(result[0].isLast).toBe(false);
     });
 
     it('should preserve originalIndex when not deep-linked', () => {
-      const exposed = component as unknown as { stepsWithStatus: () => Array<{ originalIndex: number }> };
+      const exposed = component as unknown as { stepsWithStatus: () => { originalIndex: number }[] };
       const result = exposed.stepsWithStatus();
-      result.forEach((s, i) => expect(s.originalIndex).toBe(i));
+      result.forEach((s, i) => { expect(s.originalIndex).toBe(i); });
     });
   });
 

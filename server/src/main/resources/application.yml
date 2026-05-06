@@ -20,7 +20,7 @@ setup:
   json-path: ${SETUP_JSON_PATH:config/setup.json}
 
 features:
-  radwechsel-enabled: ${RADWECHSEL_ENABLED:false}
+  radwechsel-enabled: ${RADWECHSEL_ENABLED:true}
 
 logging:
   level:

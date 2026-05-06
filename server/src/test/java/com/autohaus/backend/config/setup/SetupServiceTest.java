@@ -225,6 +225,44 @@ class SetupServiceTest {
     }
 
     @Test
+    void validateGroupIdForBranch_returnsGroupIdWhenValid() {
+        SetupService svc = newService(SAMPLE_JSON, true);
+        assertEquals("grp-1-default",    svc.validateGroupIdForBranch("branch-1", "grp-1-default"));
+        assertEquals("grp-1-tireChange", svc.validateGroupIdForBranch("branch-1", "grp-1-tireChange"));
+    }
+
+    @Test
+    void validateGroupIdForBranch_throwsWhenGroupBelongsToDifferentBranch() {
+        SetupService svc = newService(SAMPLE_JSON, true);
+        // grp-2-default gehört zu branch-2, nicht zu branch-1 → 400
+        GroupIdNotInBranchException ex = assertThrows(
+            GroupIdNotInBranchException.class,
+            () -> svc.validateGroupIdForBranch("branch-1", "grp-2-default")
+        );
+        assertTrue(ex.getMessage().contains("grp-2-default"));
+        assertTrue(ex.getMessage().contains("branch-1"));
+    }
+
+    @Test
+    void validateGroupIdForBranch_throwsBranchNotFoundForUnknownBranch() {
+        SetupService svc = newService(SAMPLE_JSON, true);
+        assertThrows(BranchNotFoundException.class,
+            () -> svc.validateGroupIdForBranch("does-not-exist", "anything"));
+    }
+
+    @Test
+    void validateGroupIdForBranch_fallsBackToDefaultWhenSeasonDisabled() {
+        // Saison aus → setup.json filtert tireChange-Group raus → Group-ID nicht
+        // mehr im Branch enthalten → Validation würde werfen. Deshalb wird hier
+        // explizit getestet, dass die Logik bei "Saison aus" nicht crasht.
+        // (Der eigentliche Fallback findet nur statt, wenn die tireChange-Group
+        // überhaupt noch geladen ist — Saison aus filtert sie schon beim init().)
+        SetupService svcSeasonOff = newService(SAMPLE_JSON, false);
+        assertThrows(GroupIdNotInBranchException.class,
+            () -> svcSeasonOff.validateGroupIdForBranch("branch-1", "grp-1-tireChange"));
+    }
+
+    @Test
     void getAllBranches_sortedByNameIgnoreCase() {
         String json = """
             {

@@ -33,7 +33,11 @@ public class JobTypesService {
     }
 
     public List<JobTypeResponseDto> getJobTypesByBranch(String branchId) {
-        String groupId = setupService.resolveGroupId(branchId, "default");
+        return getJobTypesByBranch(branchId, null);
+    }
+
+    public List<JobTypeResponseDto> getJobTypesByBranch(String branchId, String groupIdOverride) {
+        String groupId = resolveGroupId(branchId, groupIdOverride);
         List<JsonNode> jobTypes = softnetApi.getJobTypes(groupId);
         List<JsonNode> operations = softnetApi.getOperations(groupId);
 
@@ -63,7 +67,11 @@ public class JobTypesService {
      * Cards auf der Services-Page rendern 1:1 diese Liste.
      */
     public List<CategoryDto> getCategoriesByBranch(String branchId) {
-        String groupId = setupService.resolveGroupId(branchId, "default");
+        return getCategoriesByBranch(branchId, null);
+    }
+
+    public List<CategoryDto> getCategoriesByBranch(String branchId, String groupIdOverride) {
+        String groupId = resolveGroupId(branchId, groupIdOverride);
         List<JsonNode> tags = softnetApi.getList("/api/planning/tags", groupId);
         return tags.stream()
             .map(t -> new CategoryDto(
@@ -80,7 +88,11 @@ public class JobTypesService {
      * Frontend gruppiert per `tagIds` unter den jeweiligen Cards und sortiert nach `order`.
      */
     public List<OperationDto> getOperationsByBranch(String branchId) {
-        String groupId = setupService.resolveGroupId(branchId, "default");
+        return getOperationsByBranch(branchId, null);
+    }
+
+    public List<OperationDto> getOperationsByBranch(String branchId, String groupIdOverride) {
+        String groupId = resolveGroupId(branchId, groupIdOverride);
         List<JsonNode> operations = softnetApi.getOperations(groupId);
         return operations.stream()
             .map(op -> {
@@ -107,6 +119,19 @@ public class JobTypesService {
                 (OperationDto o) -> o.order() != null ? o.order() : Double.MAX_VALUE
             ))
             .toList();
+    }
+
+    /**
+     * Wenn das Frontend per Deep-Link eine konkrete {@code groupId} mitschickt
+     * (z. B. die "tireChange"-Group für Boxenstopp-Tage), wird diese gegen die
+     * in setup.json hinterlegten Groups der Branch validiert und direkt verwendet.
+     * Sonst → Default-Group der Branch.
+     */
+    private String resolveGroupId(String branchId, String groupIdOverride) {
+        if (groupIdOverride != null && !groupIdOverride.isBlank()) {
+            return setupService.validateGroupIdForBranch(branchId, groupIdOverride);
+        }
+        return setupService.resolveGroupId(branchId, "default");
     }
 
     private String nonBlankOrNull(String s) {

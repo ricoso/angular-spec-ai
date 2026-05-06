@@ -33,6 +33,7 @@ export const deepLinkGuard: CanActivateFn = async (route) => {
 
     store.selectBranch(branch);
     store.setDeepLinked(true);
+    store.setDeepLinkGroupId(groupId);
     store.loadBrands(branch.branchId);
 
     return router.createUrlTree(['/home/brand'], { queryParams: { groupId, branchId } });

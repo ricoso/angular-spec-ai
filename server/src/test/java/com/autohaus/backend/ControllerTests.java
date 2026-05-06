@@ -67,7 +67,7 @@ class ControllerTests {
     void branchesController_getBranches_returnsList() {
         BranchesController ctrl = new BranchesController(branchesService);
         when(branchesService.getBranches()).thenReturn(List.of(
-            new BranchResponseDto("1", "Munich", "desc", null, List.of("BMW", "Audi"))
+            new BranchResponseDto("1", "Munich", "desc", null, List.of("BMW", "Audi"), null)
         ));
         List<BranchResponseDto> result = ctrl.getBranches();
         assertEquals(1, result.size());
@@ -84,7 +84,7 @@ class ControllerTests {
     @Test
     void branchesController_getBranch_returnsBranch() {
         BranchesController ctrl = new BranchesController(branchesService);
-        when(branchesService.getBranch("1")).thenReturn(new BranchResponseDto("1", "Test", "desc", null, List.of()));
+        when(branchesService.getBranch("1")).thenReturn(new BranchResponseDto("1", "Test", "desc", null, List.of(), null));
         BranchResponseDto result = ctrl.getBranch("1");
         assertNotNull(result);
         assertEquals("1", result.id());
@@ -116,17 +116,17 @@ class ControllerTests {
     @Test
     void jobTypesController_getJobTypes_returnsList() {
         JobTypesController ctrl = new JobTypesController(jobTypesService);
-        when(jobTypesService.getJobTypesByBranch("b1")).thenReturn(List.of(
+        when(jobTypesService.getJobTypesByBranch("b1", null)).thenReturn(List.of(
             new JobTypeResponseDto("1", "Oil Change", "desc", null, null, null, null, List.of())
         ));
-        assertEquals(1, ctrl.getJobTypes("b1").size());
+        assertEquals(1, ctrl.getJobTypes("b1", null).size());
     }
 
     @Test
     void jobTypesController_getJobTypes_emptyList() {
         JobTypesController ctrl = new JobTypesController(jobTypesService);
-        when(jobTypesService.getJobTypesByBranch("b1")).thenReturn(List.of());
-        assertTrue(ctrl.getJobTypes("b1").isEmpty());
+        when(jobTypesService.getJobTypesByBranch("b1", null)).thenReturn(List.of());
+        assertTrue(ctrl.getJobTypes("b1", null).isEmpty());
     }
 
     // === MobilityController ===
