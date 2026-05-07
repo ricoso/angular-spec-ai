@@ -91,7 +91,7 @@
             @if (appointment(); as apt) {
               <div class="d-flex justify-content-between mb-3">
                 <span>{{ bookingOverview.tiles.appointment.title | translate }}</span>
-                <span class="fw-semibold">{{ apt.displayDate }} · {{ apt.displayTime }}</span>
+                <span class="fw-semibold">{{ apt.displayDate }} · {{ apt.displayTime | berlinTime: apt.date }}</span>
               </div>
             }
 

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 import { WizardBreadcrumbComponent } from '@shared/components/wizard-breadcrumb/wizard-breadcrumb.component';
 import { WIZARD_STEPS } from '@shared/components/wizard-breadcrumb/wizard-steps.config';
+import { convertToBerlinTime } from '@shared/pipes/berlin-time.pipe';
 
 import type { AppointmentSlot, DayAbbreviation } from '../../models/appointment.model';
 import { BookingStore } from '../../stores/booking.store';
@@ -127,7 +128,8 @@ export class AppointmentSelectionContainerComponent {
     if (!appt) {
       return '';
     }
-    return `${DAY_FULL_NAMES.get(appt.dayAbbreviation) ?? appt.dayAbbreviation}, ${appt.displayDate} — ${appt.displayTime}`;
+    const time = convertToBerlinTime(appt.displayTime, appt.date);
+    return `${DAY_FULL_NAMES.get(appt.dayAbbreviation) ?? appt.dayAbbreviation}, ${appt.displayDate} — ${time}`;
   });
 
   protected onDateSelect(date: string): void {

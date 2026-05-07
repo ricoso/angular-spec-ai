@@ -265,7 +265,8 @@ describe('AppointmentSelectionContainerComponent', () => {
       const summary = exposed.selectedSummary();
       expect(summary).toContain('Donnerstag');
       expect(summary).toContain('26.02.2026');
-      expect(summary).toContain('14:00 Uhr');
+      // 14:00 UTC im Februar (Winterzeit, UTC+1) → 15:00 Berliner Zeit
+      expect(summary).toContain('15:00 Uhr');
     });
   });
 });

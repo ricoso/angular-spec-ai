@@ -3,10 +3,10 @@
   [class.selected]="isSelected()"
   role="radio"
   [attr.aria-checked]="isSelected()"
-  [attr.aria-label]="appointment().dayAbbreviation + ', ' + appointment().displayDate + ', ' + appointment().displayTime"
+  [attr.aria-label]="appointment().dayAbbreviation + ', ' + appointment().displayDate + ', ' + (appointment().displayTime | berlinTime: appointment().date)"
   tabindex="0"
   (click)="onSelect()"
   (keydown)="onKeydown($event)"
 >
-  {{ appointment().displayTime }}
+  {{ appointment().displayTime | berlinTime: appointment().date }}
 </div>

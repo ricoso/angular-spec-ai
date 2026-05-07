@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
+import { BerlinTimePipe } from '@shared/pipes/berlin-time.pipe';
+
 import type { AppointmentSlot } from '../../models/appointment.model';
 
 @Component({
   selector: 'app-appointment-card',
   standalone: true,
-  imports: [],
+  imports: [BerlinTimePipe],
   templateUrl: './appointment-card.component.html',
   styleUrl: './appointment-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
