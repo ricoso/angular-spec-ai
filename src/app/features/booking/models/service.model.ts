@@ -178,4 +178,7 @@ export interface ApiOperation {
   tagIds: string[];
   order: number | null;
   imageId: string | null;
+  /** Marken, fuer die diese Operation in der SoftNet-Group buchbar ist.
+   *  Leer/undefined = keine Filterung (Operation fuer alle Marken sichtbar). */
+  brands?: string[];
 }

@@ -13,5 +13,7 @@ public record OperationDto(
     String description,
     List<String> tagIds,
     Double order,
-    String imageId
+    String imageId,
+    /** Marken, fuer die diese Operation in der SoftNet-Group buchbar ist. Leere Liste = alle Marken (Fallback wenn SoftNet kein brand-Feld liefert). */
+    List<String> brands
 ) {}

@@ -106,13 +106,26 @@ public class JobTypesService {
                 Double order = op.has("order") && !op.path("order").isNull()
                     ? op.path("order").asDouble()
                     : null;
+                // SoftNet-Operations koennen ein "brand"-Feld haben (Single-String oder Array).
+                // Fehlt es / ist leer → leere Liste → Frontend filtert nicht.
+                List<String> brands = new ArrayList<>();
+                JsonNode brandNode = op.path("brand");
+                if (brandNode.isArray()) {
+                    for (JsonNode b : brandNode) {
+                        String s = b.asText("");
+                        if (!s.isBlank()) brands.add(s);
+                    }
+                } else if (brandNode.isTextual() && !brandNode.asText().isBlank()) {
+                    brands.add(brandNode.asText());
+                }
                 return new OperationDto(
                     op.path("id").asText(),
                     op.path("name").asText(),
                     nonBlankOrNull(op.path("description").asText("")),
                     tagIds,
                     order,
-                    nonBlankOrNull(op.path("image").asText(""))
+                    nonBlankOrNull(op.path("image").asText("")),
+                    brands
                 );
             })
             .sorted(Comparator.comparing(

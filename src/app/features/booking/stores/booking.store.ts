@@ -204,11 +204,25 @@ export const BookingStore = signalStore(
       const inspektionTagId = categories().find(c => c.rank === 0)?.id ?? null;
       const result: Record<string, ApiOperation[]> = {};
 
+      // Marken-Filter: SoftNet-Operations koennen ein "brand"-Feld haben (Liste);
+      // Operations sollen nur erscheinen, wenn die ausgewaehlte Marke (brand) dort
+      // aufgefuehrt ist. Operationen ohne Brand-Info → immer sichtbar (Fallback).
+      // Solange noch keine Marke gewaehlt ist → ebenfalls keine Filterung.
+      const brand = selectedBrand();
+      const brandLower = brand ? brand.toLowerCase() : null;
+      const matchesBrand = (op: ApiOperation): boolean => {
+        const opBrands = (op.brands ?? []);
+        if (opBrands.length === 0) { return true; }
+        if (brandLower === null) { return true; }
+        return opBrands.some((x: string) => x.toLowerCase() === brandLower);
+      };
+
       // De-duplizierte Pickup-Operations (eindeutig per ID) — ausschließlich Operations
       // mit Name "Hol & Bringservice", egal welche tagIds sie haben.
       const seenPickupIds = new Set<string>();
       const pickupOps = operations()
         .filter(op => op.name === PICKUP_DELIVERY_NAME)
+        .filter(matchesBrand)
         .filter(op => { if (seenPickupIds.has(op.id)) return false; seenPickupIds.add(op.id); return true; });
 
       // Reguläre Categories
@@ -226,6 +240,7 @@ export const BookingStore = signalStore(
             if (INSPEKTION_ONLY_NAMES.has(op.name) && cat.id !== inspektionTagId) {
               return false;
             }
+            if (!matchesBrand(op)) return false;
             return true;
           })
           .sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER));
@@ -237,6 +252,7 @@ export const BookingStore = signalStore(
       // Virtuelle Räderwechsel-Card für tireChange-Group (Boxenstopp), wenn SoftNet
       // dort keine Tags konfiguriert hat — alle Operations dieser Group landen darunter.
       result['virtual-tire-change'] = operations()
+        .filter(matchesBrand)
         .sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER));
 
       return result;

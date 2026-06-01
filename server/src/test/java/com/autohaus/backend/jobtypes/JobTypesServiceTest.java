@@ -121,6 +121,58 @@ class JobTypesServiceTest {
         assertEquals("img-1", result.get(0).imageId());
         // op-2: leere description → null
         assertNull(result.get(1).description());
+        // brand-Feld ist in den beiden Mocks nicht gesetzt → leere brands-Liste (Frontend filtert nicht)
+        assertNotNull(result.get(0).brands());
+        assertTrue(result.get(0).brands().isEmpty());
+        assertTrue(result.get(1).brands().isEmpty());
+    }
+
+    /** SoftNet liefert pro Operation ein Single-String "brand"-Feld. */
+    @Test
+    void getOperationsByBranch_extractsBrandAsSingleString() {
+        ObjectNode op = om.createObjectNode();
+        op.put("id", "op-audi");
+        op.put("name", "Audi-Service");
+        op.put("brand", "Audi");
+        op.putArray("tags");
+
+        when(softnetApi.getOperations("mock-group-id")).thenReturn(List.of(op));
+
+        var result = service.getOperationsByBranch("any-branch");
+        assertEquals(1, result.size());
+        assertEquals(List.of("Audi"), result.get(0).brands());
+    }
+
+    /** SoftNet liefert pro Operation ein Array "brand": ["Audi", "VW"]. */
+    @Test
+    void getOperationsByBranch_extractsBrandAsArray() {
+        ObjectNode op = om.createObjectNode();
+        op.put("id", "op-multi");
+        op.put("name", "Multi-Brand-Service");
+        op.putArray("brand").add("Audi").add("VW");
+        op.putArray("tags");
+
+        when(softnetApi.getOperations("mock-group-id")).thenReturn(List.of(op));
+
+        var result = service.getOperationsByBranch("any-branch");
+        assertEquals(1, result.size());
+        assertEquals(List.of("Audi", "VW"), result.get(0).brands());
+    }
+
+    /** Wenn das brand-Feld fehlt → leere Liste, keine NullPointerException. */
+    @Test
+    void getOperationsByBranch_missingBrandFieldYieldsEmptyList() {
+        ObjectNode op = om.createObjectNode();
+        op.put("id", "op-no-brand");
+        op.put("name", "Generic-Service");
+        op.putArray("tags");
+
+        when(softnetApi.getOperations("mock-group-id")).thenReturn(List.of(op));
+
+        var result = service.getOperationsByBranch("any-branch");
+        assertEquals(1, result.size());
+        assertNotNull(result.get(0).brands());
+        assertTrue(result.get(0).brands().isEmpty());
     }
 
     /**
