@@ -80,6 +80,14 @@
 
   &__sidebar {
     top: 1em;
+
+    // Safari Mobile/Tablet: Sticky-Sidebar ist auf Mobile sinnlos (Bootstrap-Grid
+    // stapelt `.col-lg-4` unter `.col-lg-8` ab < 992px) und blockiert in iOS-Safari
+    // den Scroll. Sticky daher unterhalb des Desktop-Breakpoints deaktivieren.
+    @media (max-width: 991.98px) {
+      position: static !important;
+      top: auto;
+    }
   }
 
   &__navigation {
