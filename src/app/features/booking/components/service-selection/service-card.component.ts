@@ -1,38 +1,68 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatIconModule } from '@angular/material/icon';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 
-import type { ServiceDisplay, ServiceType } from '../../models/service.model';
+import type { ApiCategory, ApiOperation } from '../../models/service.model';
 
+/**
+ * Mini-Card im Service-Karussell. Zeigt pro Kategorie ein Icon, Titel und einen
+ * Counter (entweder selected/total oder nur total). Klick aktiviert die Kategorie.
+ *
+ * Public API (inputs/outputs) bleibt rueckwaertskompatibel mit der vorherigen
+ * Material-basierten Implementierung — die Detail-Sicht (Operations + Confirm)
+ * lebt jetzt im Container.
+ */
 @Component({
   selector: 'app-service-card',
   standalone: true,
-  imports: [MatCardModule, MatIconModule, MatButtonModule, MatCheckboxModule, TranslatePipe],
+  imports: [TranslatePipe],
   templateUrl: './service-card.component.html',
   styleUrl: './service-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ServiceCardComponent {
-  public readonly service = input.required<ServiceDisplay>();
+  public readonly category = input.required<ApiCategory>();
+  public readonly operations = input.required<ApiOperation[]>();
   public readonly isSelected = input<boolean>(false);
-  public readonly selectedOptionIds = input<string[]>([]);
+  public readonly selectedOperationIds = input<string[]>([]);
 
-  public readonly serviceClicked = output<ServiceType>();
-  public readonly serviceConfirmed = output<{ serviceId: ServiceType; optionIds: string[] }>();
-  public readonly serviceDeselected = output<ServiceType>();
+  /** Emittet die Category-ID beim Klick auf die Mini-Card. */
+  public readonly serviceClicked = output<string>();
+  public readonly serviceConfirmed = output<{ serviceId: string; optionIds: string[] }>();
+  public readonly serviceDeselected = output<string>();
 
   protected readonly services = i18nKeys.booking.services;
   protected readonly isExpanded = signal<boolean>(false);
   protected readonly selectedCheckboxOptions = signal<Set<string>>(new Set());
 
-  protected readonly hasOptions = computed(() => this.service().options.length > 0);
+  protected readonly hasOptions = computed(() => this.operations().length > 0);
+  protected readonly operationCount = computed(() => this.operations().length);
+  protected readonly selectedCount = computed(() => this.selectedOperationIds().length);
+
+  /**
+   * Bootstrap-Icon-Klasse pro Kategorie, gemappt auf Tag-Rank.
+   * SoftNet liefert keine iconUrl fuer Tags → lokales Mapping als Uebergangsloesung.
+   */
+  protected readonly iconClass = computed<string>(() => {
+    const cat = this.category();
+    if (cat.id === 'virtual-pickup-delivery' || cat.name === 'Hol & Bringservice') {
+      return 'bi-arrow-left-right';
+    }
+    switch (cat.rank) {
+      case 0: return 'bi-tools';
+      case 1: return 'bi-clipboard-check';
+      case 2: return 'bi-droplet-half';
+      case 3: return 'bi-record-circle';
+      case 4: return 'bi-check2-circle';
+      case 5: return 'bi-search';
+      case 6: return 'bi-car-front';
+      case 99: return 'bi-arrow-left-right';
+      default: return 'bi-tools';
+    }
+  });
 
   protected readonly hasOptionsChanged = computed(() => {
-    const confirmed = this.selectedOptionIds();
+    const confirmed = this.selectedOperationIds();
     const selected = this.selectedCheckboxOptions();
     if (confirmed.length === 0 || selected.size === 0) return false;
     if (confirmed.length !== selected.size) return true;
@@ -52,7 +82,7 @@ export class ServiceCardComponent {
 
   constructor() {
     effect(() => {
-      const optionIds = this.selectedOptionIds();
+      const optionIds = this.selectedOperationIds();
       if (optionIds.length > 0) {
         this.selectedCheckboxOptions.set(new Set(optionIds));
       }
@@ -62,17 +92,17 @@ export class ServiceCardComponent {
   protected onCardClick(): void {
     if (this.hasOptions()) {
       this.isExpanded.set(!this.isExpanded());
-      return;
     }
-    this.serviceClicked.emit(this.service().id);
+    // Emittet immer die Category-ID — der Container setzt damit die aktive Kategorie.
+    this.serviceClicked.emit(this.category().id);
   }
 
-  protected onCheckboxChange(optionId: string, checked: boolean): void {
+  protected onCheckboxChange(operationId: string, checked: boolean): void {
     const current = new Set(this.selectedCheckboxOptions());
     if (checked) {
-      current.add(optionId);
+      current.add(operationId);
     } else {
-      current.delete(optionId);
+      current.delete(operationId);
     }
     this.selectedCheckboxOptions.set(current);
   }
@@ -80,12 +110,12 @@ export class ServiceCardComponent {
   protected onConfirm(): void {
     const optionIds = Array.from(this.selectedCheckboxOptions());
     if (optionIds.length > 0) {
-      this.serviceConfirmed.emit({ serviceId: this.service().id, optionIds });
+      this.serviceConfirmed.emit({ serviceId: this.category().id, optionIds });
     }
   }
 
   protected onDeselect(): void {
-    this.serviceDeselected.emit(this.service().id);
+    this.serviceDeselected.emit(this.category().id);
     this.selectedCheckboxOptions.set(new Set());
     this.isExpanded.set(false);
   }

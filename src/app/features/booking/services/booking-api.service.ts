@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 
 import { environment } from '@environments/environment';
@@ -8,18 +8,39 @@ import type { BranchConfig } from '../models/branch-config.model';
 import { FALLBACK_ADDRESS, getBrandLogoPath } from '../models/branch-config.model';
 import type { Brand, BrandDisplay } from '../models/brand.model';
 import type { LocationDisplay } from '../models/location.model';
-import type { ServiceDisplay } from '../models/service.model';
+import type { ApiJobType, ApiJobTypeOption, ServiceDisplay } from '../models/service.model';
 import { AVAILABLE_SERVICES } from '../models/service.model';
+
+interface JobTypeDto {
+  id: string;
+  name: string;
+  description: string;
+  hint: string | null;
+  category: string | null;
+  categoryName: string | null;
+  iconUrl: string | null;
+  operations: ApiJobTypeOption[];
+}
 
 interface ApiResponse<T> {
   data: T;
+}
+
+interface BranchAddressDto {
+  street: string | null;
+  zip: string | null;
+  city: string | null;
+  country: string | null;
 }
 
 interface BranchDto {
   id: string;
   name: string;
   description: string | null;
+  address: BranchAddressDto | null;
   brands: string[];
+  /** SoftNet-Group-ID der tireChange-Variante (Boxenstopp), null wenn keine konfiguriert. */
+  tireChangeGroupId?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -95,6 +116,55 @@ export class BookingApiService {
     return Promise.resolve(AVAILABLE_SERVICES);
   }
 
+  /** REQ-025: Lädt JobTypes der gewählten Branch über das Backend (mit hint/category/iconUrl). */
+  public async getJobTypesByBranch(branchId: string): Promise<ApiJobType[]> {
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<JobTypeDto[]>>(`${this.apiUrl}/branches/${branchId}/jobtypes`)
+    );
+    return response.data.map(dto => ({
+      id: dto.id,
+      name: dto.name,
+      description: dto.description,
+      hint: dto.hint,
+      category: dto.category,
+      categoryName: dto.categoryName,
+      iconUrl: dto.iconUrl,
+      operations: dto.operations,
+    }));
+  }
+
+  /** REQ-025 (b) Iter. 3: Service-Kategorien (Tags aus SoftNet) — sortiert nach rank.
+   *  Optional `groupId` (Deep-Link, z. B. tireChange-Group) wird ans Backend durchgereicht. */
+  public async getCategoriesByBranch(
+    branchId: string,
+    groupId?: string | null
+  ): Promise<import('../models/service.model').ApiCategory[]> {
+    const params = groupId ? new HttpParams().set('groupId', groupId) : undefined;
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<import('../models/service.model').ApiCategory[]>>(
+        `${this.apiUrl}/branches/${branchId}/categories`,
+        { params }
+      )
+    );
+    return response.data;
+  }
+
+  /** REQ-025 (b) Iter. 3: Operations (Services) inkl. description, tagIds, order, imageId.
+   *  Optional `groupId` wird ans Backend durchgereicht (Boxenstopp-Modus). */
+  public async getOperationsByBranch(
+    branchId: string,
+    groupId?: string | null
+  ): Promise<import('../models/service.model').ApiOperation[]> {
+    const params = groupId ? new HttpParams().set('groupId', groupId) : undefined;
+    const response = await firstValueFrom(
+      this.http.get<ApiResponse<import('../models/service.model').ApiOperation[]>>(
+        `${this.apiUrl}/branches/${branchId}/operations`,
+        { params }
+      )
+    );
+    return response.data;
+  }
+
   /** Get brand logo path with default.svg fallback */
   public getBrandLogoPath(brandName: string): string {
     return getBrandLogoPath(brandName);
@@ -106,23 +176,26 @@ export class BookingApiService {
     return {
       id: dto.id,
       name: dto.name,
-      city: address,
+      city: dto.address?.city ?? address,
       formattedAddress: address,
     };
   }
 
   private mapBranchToBranchConfig(dto: BranchDto): BranchConfig {
+    // REQ-025 (i): Strukturierte Adresse direkt aus Backend-DTO durchreichen.
     const trimmed = dto.description?.trim();
-    const address = trimmed && trimmed.length > 0 ? trimmed : FALLBACK_ADDRESS;
+    const fallback = trimmed && trimmed.length > 0 ? trimmed : FALLBACK_ADDRESS;
     return {
       branchId: dto.id,
       name: dto.name,
       address: {
-        street: address,
-        zip: '',
-        city: '',
+        street: dto.address?.street ?? fallback,
+        zip: dto.address?.zip ?? '',
+        city: dto.address?.city ?? '',
+        country: dto.address?.country ?? undefined,
       },
       brands: dto.brands,
+      tireChangeGroupId: dto.tireChangeGroupId ?? null,
     };
   }
 }

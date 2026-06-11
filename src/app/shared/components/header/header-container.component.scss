@@ -69,7 +69,6 @@
     flex: 1;
   }
 
-  &__a11y-button,
   &__close-button {
     min-width: var(--touch-target-min);
     min-height: var(--touch-target-min);
@@ -79,83 +78,9 @@
       outline-offset: 0.125em;
     }
   }
-
-  &__cart-dropdown {
-    padding: var(--spacing-md);
-    min-width: 15em;
-    background: var(--color-background-surface);
-    color: var(--color-text-primary);
-  }
-
-  &__cart-title {
-    font-size: var(--font-size-md);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-sm) 0;
-  }
-
-  &__cart-summary {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-primary);
-    font-weight: 500;
-    margin: 0 0 var(--spacing-sm) 0;
-  }
-
-  &__cart-row {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    margin-bottom: var(--spacing-sm);
-  }
-
-  &__cart-label {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  &__cart-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-xs);
-  }
-
-  &__cart-chip {
-    font-size: var(--font-size-sm);
-
-    // Fix: Allow option labels to wrap instead of truncating
-    ::ng-deep .mdc-evolution-chip__text-label {
-      white-space: normal;
-      overflow: visible;
-      text-overflow: clip;
-    }
-  }
-
-  &__cart-chip-icon {
-    width: 1.5em;
-    height: 1.5em;
-    object-fit: contain;
-    filter: invert(48%) sepia(79%) saturate(1564%) hue-rotate(212deg) brightness(97%) contrast(88%);
-  }
-
-  &__cart-variant {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
-    margin-left: var(--spacing-xs);
-  }
-
-  &__cart-empty,
-  &__cart-placeholder {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    margin: 0;
-  }
 }
 
 // Responsive: Mobile-First
-// Mobile: Logo only, no company text
 @media (max-width: 47.9375em) {
   .header {
     &__company {
@@ -168,7 +93,6 @@
   }
 }
 
-// Tablet: Single line company name
 @media (min-width: 48em) and (max-width: 63.9375em) {
   .header {
     &__company-subtitle {
@@ -177,7 +101,6 @@
   }
 }
 
-// Desktop: Full display
 @media (min-width: 64em) {
   .header {
     &__content {
@@ -191,7 +114,6 @@
   }
 }
 
-// Reduced Motion Support
 @media (prefers-reduced-motion: reduce) {
   .header {
     &__logo-link {
@@ -200,7 +122,6 @@
   }
 }
 
-// High Contrast Support
 html[data-high-contrast="true"] {
   .header {
     border-bottom-width: 0.125em;

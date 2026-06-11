@@ -1,7 +1,7 @@
 @use 'breakpoints' as *;
 
 .booking-overview {
-  max-width: 70em;
+  max-width: 75em;
   margin: 0 auto;
   padding: var(--spacing-xl) var(--spacing-md);
 
@@ -48,8 +48,6 @@
 
   &__error-icon {
     font-size: 3em;
-    width: 3em;
-    height: 3em;
     color: var(--color-error);
   }
 
@@ -68,28 +66,24 @@
   }
 
   &__retry-button {
-    mat-icon {
-      margin-right: var(--spacing-xs);
-    }
+    min-height: var(--touch-target-min);
   }
 
-  &__grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
+  &__summary-heading {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-md);
+    display: flex;
+    align-items: center;
+  }
 
-    @include tablet {
-      grid-template-columns: 1fr 1fr;
-    }
+  &__sidebar {
+    top: 1em;
   }
 
   &__navigation {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-xl);
-    padding: var(--spacing-md) 0;
+    margin-top: var(--spacing-sm);
   }
 
   &__back-button,
@@ -97,11 +91,52 @@
     min-height: var(--touch-target-min);
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: var(--spacing-xs);
 
     &:focus-visible {
       outline: 0.1875em solid var(--color-focus-ring);
       outline-offset: 0.125em;
+    }
+  }
+}
+
+// ============================================================
+// Bootstrap-Card-Tweaks
+// ============================================================
+.booking-overview__summary-card,
+.booking-overview__consent-card,
+.booking-overview__sidebar {
+  border: 1px solid #e3e6e9;
+  border-radius: 0.5em;
+  background-color: var(--color-background-surface);
+}
+
+// ============================================================
+// Datenschutz-Consent-Box (analog 06-overview.html)
+// ============================================================
+.consent-box {
+  border: 0.125em solid #d6dce0;
+  border-radius: 0.5em;
+  padding: 1em;
+  margin: 0;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+
+  &:has(input:checked) {
+    border-color: var(--bs-primary);
+    background: #f5fafd;
+  }
+
+  a {
+    color: var(--bs-link-color);
+    text-decoration: underline;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--bs-link-hover-color);
     }
   }
 }

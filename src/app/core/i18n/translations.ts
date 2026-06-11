@@ -11,7 +11,19 @@ export const translations = {
     app: {
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Zum Hauptinhalt springen'
+      skipLink: 'Zum Hauptinhalt springen',
+      error: {
+        title: 'Es ist ein Fehler aufgetreten',
+        subtext: 'Wir können momentan keine Daten laden. Bitte versuchen Sie es erneut oder kommen Sie später wieder.',
+        offlineHint: 'Bitte prüfen Sie Ihre Internetverbindung.',
+        retryButton: 'Erneut versuchen',
+        retryButtonAriaLabel: 'Erneut versuchen, die Daten zu laden',
+        detailsToggle: 'Technische Details anzeigen',
+        codeLabel: 'Fehler-Code',
+        statusLabel: 'Status',
+        timestampLabel: 'Zeitstempel',
+        requestIdLabel: 'Request-ID'
+      }
     },
 
     header: {
@@ -68,8 +80,8 @@ export const translations = {
         infoSeparator: '—'
       },
       brand: {
-        title: 'Welche Marke möchten Sie servicen lassen?',
-        subtitle: 'Am Standort stehen Ihnen folgende Marken zur Verfügung',
+        title: 'Welche Fahrzeugmarke fahren Sie?',
+        subtitle: 'Bitte wählen Sie die gewünschte Marke aus.',
         backButton: 'Zurück',
         noBrandsAvailable: 'Für diesen Standort sind derzeit keine Marken verfügbar.',
         ariaGroupLabel: 'Markenauswahl',
@@ -178,20 +190,12 @@ export const translations = {
       notes: {
         pageTitle: 'Bitte geben Sie uns weitere Hinweise zu Ihrer Buchung',
         sectionTitle: 'Möchten Sie uns noch etwas zu Ihrer Buchung mitteilen?',
-        textareaPlaceholder: 'Bitte tragen Sie hier Ihre Nachricht an uns ein (Hinweise, Buchung weiterer Leistungen, etc.)',
+        textareaPlaceholder: 'Bitte tragen Sie hier Ihre Nachricht an uns ein.',
+        textareaHint: 'Bitte tragen Sie hier Ihre Nachricht an uns ein.',
         charCountAriaLabel: '{current} von {max} Zeichen verwendet',
         hintsTitle: 'Wichtige Hinweise zu Ihren ausgewählten Services',
         backButton: 'Zurück',
         continueButton: 'Weiter',
-        hints: {
-          inspection: 'Bitte beachten Sie: Bringen Sie Ihr Serviceheft mit. Bei umfangreichen Arbeiten kann ein Ersatzfahrzeug bereitgestellt werden — bitte im Voraus anfragen.',
-          tuv: 'Bitte beachten Sie: Für die HU/AU benötigen Sie alle Fahrzeugpapiere. Stellen Sie sicher, dass Ihr Fahrzeug fahrtüchtig und verkehrssicher ist.',
-          brakeFluid: 'Bitte beachten Sie: Der Wechsel der Bremsflüssigkeit ist gemäß Herstellervorgaben alle 2 Jahre empfohlen.',
-          tireChange: 'Bitte beachten Sie: Für die Einlagerung Ihrer Reifen bitten wir um Vorabinformation über Reifenanzahl und -größe. Die Einlagerung ist kostenpflichtig.',
-          actionsChecks: 'Bitte beachten Sie: Für den Garantie-Check benötigen wir die Fahrzeugpapiere und ggf. das Serviceheft.',
-          repair: 'Bitte beachten Sie: Beschreiben Sie Ihre Beanstandung so detailliert wie möglich im Kommentarfeld, damit wir uns optimal vorbereiten können.',
-          bodywork: 'Bitte beachten Sie: Bei Unfallschäden benötigen wir ggf. die Schadennummer Ihrer Versicherung. Bringen Sie relevante Unterlagen mit.'
-        },
         mobilityOptions: {
           title: 'Mobilitätsoptionen (kostenpflichtig)',
           label: 'Wählen',
@@ -205,6 +209,12 @@ export const translations = {
           label: 'Kategorie wählen',
           none: 'Kein Mietwagen'
         },
+        rentCategoryPrice: {
+          label: 'Mietwagen-Kategorie',
+          unitDay: 'pro Tag',
+          unitHour: 'pro Stunde',
+          srLabel: 'Mietwagen-Kategorie ausgewählt'
+        },
         appointmentPreference: {
           title: 'Terminpräferenz',
           label: 'Wählen',
@@ -215,8 +225,14 @@ export const translations = {
         callback: {
           title: 'Weitere Optionen: Rückruf',
           label: 'Rückruf',
-          none: 'Keine Auswahl',
+          no: 'Nein',
           yes: 'Ja'
+        },
+        notification: {
+          title: 'Benachrichtigung',
+          label: 'Wie möchten Sie benachrichtigt werden?',
+          email: 'E-Mail',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -244,16 +260,16 @@ export const translations = {
           city: { label: 'Wohnort', placeholder: 'Berlin',
             error: { required: 'Bitte geben Sie Ihren Wohnort ein.', lettersOnly: 'Wohnort darf nur Buchstaben enthalten.' } },
           mobilePhone: { label: 'Mobilfunknummer', placeholder: '017012345678',
-            hint: 'Bitte geben Sie Ihre Mobilfunknummer ohne Sonderzeichen als Zahl im Format 017012345678 ein.',
-            error: { required: 'Bitte geben Sie Ihre Mobilfunknummer ein.', digitsOnly: 'Mobilfunknummer darf nur Zahlen enthalten.', startsWithZero: 'Die Mobilfunknummer muss mit 0 beginnen.' } },
+            hint: 'Format: 017012345678 oder +491701234567',
+            error: { required: 'Bitte geben Sie Ihre Mobilfunknummer ein.', digitsOnly: 'Mobilfunknummer darf nur Zahlen enthalten.', startsWithZero: 'Mobilfunknummer muss mit 0 oder +49 beginnen.' } },
           licensePlate: { label: 'Kfz. Kennzeichen', placeholder: 'XX-XX1234',
             error: { required: 'Bitte geben Sie Ihr Kfz-Kennzeichen ein.', invalidFormat: 'Bitte geben Sie ein gültiges Kennzeichen ein (z.B. B-MS1234).' } },
           mileage: { label: 'Kilometerstand', placeholder: '5000',
             error: { required: 'Bitte geben Sie den Kilometerstand ein.', digitsOnly: 'Kilometerstand darf nur Zahlen enthalten.' } },
 vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der FIN',
             error: { required: 'Bitte geben Sie die Fahrzeugidentifikationsnummer ein.', invalidLength: 'Die FIN muss genau 17 Zeichen enthalten.', invalidFormat: 'Die FIN darf nur Buchstaben und Zahlen enthalten.' } },
-          privacy: { consent: 'Ich willige in die Verarbeitung meiner personenbezogenen Daten zum Zwecke der Online-Terminvereinbarung ein. Näheres finden Sie in unserer',
-            privacyLink: 'Datenschutzerklärung',
+          privacy: { consent: 'Ich willige in die Verarbeitung meiner personenbezogenen Daten zum Zwecke der Online-Terminvereinbarung ein. Informationen',
+            privacyLink: 'hier',
             error: { required: 'Bitte bestätigen Sie die Datenschutzerklärung.' } },
           requiredHint: 'Pflichtfelder sind mit * gekennzeichnet'
         },
@@ -264,6 +280,7 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
         subtitle: 'Bitte prüfen Sie Ihre Angaben bevor Sie den Termin versenden.',
         ariaGridLabel: 'Buchungsübersicht',
         ariaNavLabel: 'Seitennavigation',
+        edit: 'Ändern',
         tiles: {
           appointment: {
             title: 'Wunschtermin',
@@ -332,7 +349,19 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
     app: {
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Skip to main content'
+      skipLink: 'Skip to main content',
+      error: {
+        title: 'An error occurred',
+        subtext: 'We can\'t load data right now. Please try again or come back later.',
+        offlineHint: 'Please check your internet connection.',
+        retryButton: 'Retry',
+        retryButtonAriaLabel: 'Retry loading the data',
+        detailsToggle: 'Show technical details',
+        codeLabel: 'Error code',
+        statusLabel: 'Status',
+        timestampLabel: 'Timestamp',
+        requestIdLabel: 'Request ID'
+      }
     },
 
     header: {
@@ -389,8 +418,8 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
         infoSeparator: '—'
       },
       brand: {
-        title: 'Which brand would you like to have serviced?',
-        subtitle: 'The following brands are available at your location',
+        title: 'Which vehicle brand do you drive?',
+        subtitle: 'Please choose the brand you need.',
         backButton: 'Back',
         noBrandsAvailable: 'No brands are currently available for this location.',
         ariaGroupLabel: 'Brand selection',
@@ -499,20 +528,12 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
       notes: {
         pageTitle: 'Please provide further notes for your booking',
         sectionTitle: 'Would you like to tell us anything else about your booking?',
-        textareaPlaceholder: 'Please enter your message here (notes, booking of additional services, etc.)',
+        textareaPlaceholder: 'Please enter your message to us here.',
+        textareaHint: 'Please enter your message to us here.',
         charCountAriaLabel: '{current} of {max} characters used',
         hintsTitle: 'Important notes about your selected services',
         backButton: 'Back',
         continueButton: 'Continue',
-        hints: {
-          inspection: 'Please note: Please bring your service booklet. For extensive work, a replacement vehicle may be provided — please enquire in advance.',
-          tuv: 'Please note: For the MOT you will need all vehicle documents. Make sure your vehicle is roadworthy and safe to drive.',
-          brakeFluid: 'Please note: Brake fluid change is recommended every 2 years according to manufacturer specifications.',
-          tireChange: 'Please note: For tire storage, please inform us in advance about the number and size of tires. Storage is subject to a fee.',
-          actionsChecks: 'Please note: For the warranty check we need the vehicle documents and, if applicable, the service booklet.',
-          repair: 'Please note: Please describe your complaint as detailed as possible in the comment field so we can prepare optimally.',
-          bodywork: 'Please note: For accident damage we may need your insurance claim number. Please bring relevant documents.'
-        },
         mobilityOptions: {
           title: 'Mobility options (chargeable)',
           label: 'Select',
@@ -526,6 +547,12 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
           label: 'Select category',
           none: 'No rental car'
         },
+        rentCategoryPrice: {
+          label: 'Rental car category',
+          unitDay: 'per day',
+          unitHour: 'per hour',
+          srLabel: 'Rental car category selected'
+        },
         appointmentPreference: {
           title: 'Appointment preference',
           label: 'Select',
@@ -536,8 +563,14 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
         callback: {
           title: 'Further options: Callback',
           label: 'Callback',
-          none: 'No selection',
+          no: 'No',
           yes: 'Yes'
+        },
+        notification: {
+          title: 'Notification',
+          label: 'How would you like to be notified?',
+          email: 'Email',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -565,16 +598,16 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
           city: { label: 'City', placeholder: 'Berlin',
             error: { required: 'Please enter your city.', lettersOnly: 'City may only contain letters.' } },
           mobilePhone: { label: 'Mobile Phone Number', placeholder: '017012345678',
-            hint: 'Please enter your mobile number without special characters in the format 017012345678.',
-            error: { required: 'Please enter your mobile phone number.', digitsOnly: 'Mobile number may only contain digits.', startsWithZero: 'Mobile number must start with 0.' } },
+            hint: 'Format: 017012345678 or +491701234567',
+            error: { required: 'Please enter your mobile phone number.', digitsOnly: 'Mobile number may only contain digits.', startsWithZero: 'Mobile number must start with 0 or +49.' } },
           licensePlate: { label: 'License Plate', placeholder: 'XX-XX1234',
             error: { required: 'Please enter your license plate.', invalidFormat: 'Please enter a valid license plate (e.g. B-MS1234).' } },
           mileage: { label: 'Mileage', placeholder: '5000',
             error: { required: 'Please enter the current mileage.', digitsOnly: 'Mileage may only contain digits.' } },
 vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of VIN',
             error: { required: 'Please enter the vehicle identification number.', invalidLength: 'The VIN must be exactly 17 characters.', invalidFormat: 'The VIN may only contain letters and digits.' } },
-          privacy: { consent: 'I consent to the processing of my personal data for the purpose of online appointment booking. More information can be found in our',
-            privacyLink: 'Privacy Policy',
+          privacy: { consent: 'I consent to the processing of my personal data for the purpose of online appointment booking. More information',
+            privacyLink: 'here',
             error: { required: 'Please accept the privacy policy.' } },
           requiredHint: 'Required fields are marked with *'
         },
@@ -585,6 +618,7 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
         subtitle: 'Please review your details before submitting the appointment.',
         ariaGridLabel: 'Booking summary',
         ariaNavLabel: 'Page navigation',
+        edit: 'Edit',
         tiles: {
           appointment: {
             title: 'Desired Appointment',
@@ -653,7 +687,19 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
     app: {
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Перейти до основного вмісту'
+      skipLink: 'Перейти до основного вмісту',
+      error: {
+        title: 'Сталася помилка',
+        subtext: 'Наразі не вдається завантажити дані. Будь ласка, спробуйте знову або поверніться пізніше.',
+        offlineHint: 'Будь ласка, перевірте підключення до Інтернету.',
+        retryButton: 'Повторити',
+        retryButtonAriaLabel: 'Повторити завантаження даних',
+        detailsToggle: 'Показати технічні деталі',
+        codeLabel: 'Код помилки',
+        statusLabel: 'Статус',
+        timestampLabel: 'Часова мітка',
+        requestIdLabel: 'ID запиту'
+      }
     },
 
     header: {
@@ -820,20 +866,12 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
       notes: {
         pageTitle: 'Будь ласка, надайте додаткові примітки до вашого запису',
         sectionTitle: 'Чи хочете ви повідомити нам щось ще про ваш запис?',
-        textareaPlaceholder: 'Будь ласка, введіть ваше повідомлення тут (примітки, бронювання додаткових послуг тощо)',
+        textareaPlaceholder: 'Будь ласка, введіть тут ваше повідомлення.',
+        textareaHint: 'Будь ласка, введіть тут ваше повідомлення.',
         charCountAriaLabel: '{current} з {max} символів використано',
         hintsTitle: 'Важливі примітки щодо обраних послуг',
         backButton: 'Назад',
         continueButton: 'Далі',
-        hints: {
-          inspection: 'Зверніть увагу: принесіть сервісну книжку. При масштабних роботах може бути надано підмінний автомобіль — запитайте заздалегідь.',
-          tuv: 'Зверніть увагу: для техогляду вам знадобляться всі документи на автомобіль. Переконайтеся, що ваш автомобіль справний та безпечний.',
-          brakeFluid: 'Зверніть увагу: заміна гальмівної рідини рекомендується кожні 2 роки відповідно до вимог виробника.',
-          tireChange: 'Зверніть увагу: для зберігання шин повідомте нас заздалегідь про кількість та розмір шин. Зберігання платне.',
-          actionsChecks: 'Зверніть увагу: для гарантійної перевірки нам потрібні документи на автомобіль та, за потреби, сервісна книжка.',
-          repair: 'Зверніть увагу: опишіть вашу скаргу якомога детальніше у полі коментарів, щоб ми могли оптимально підготуватися.',
-          bodywork: 'Зверніть увагу: при аварійних пошкодженнях нам може знадобитися номер страхового випадку. Принесіть відповідні документи.'
-        },
         mobilityOptions: {
           title: 'Варіанти мобільності (платно)',
           label: 'Обрати',
@@ -847,6 +885,12 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
           label: 'Обрати категорію',
           none: 'Без орендного автомобіля'
         },
+        rentCategoryPrice: {
+          label: 'Категорія орендного автомобіля',
+          unitDay: 'на день',
+          unitHour: 'за годину',
+          srLabel: 'Категорію орендного автомобіля обрано'
+        },
         appointmentPreference: {
           title: 'Бажаний час',
           label: 'Обрати',
@@ -857,8 +901,14 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
         callback: {
           title: 'Додаткові опції: Зворотний дзвінок',
           label: 'Зворотний дзвінок',
-          none: 'Без вибору',
+          no: 'Ні',
           yes: 'Так'
+        },
+        notification: {
+          title: 'Сповіщення',
+          label: 'Як ви хочете отримувати сповіщення?',
+          email: 'Електронна пошта',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -906,6 +956,7 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
         subtitle: 'Будь ласка, перевірте свої дані перед відправленням запису.',
         ariaGridLabel: 'Огляд бронювання',
         ariaNavLabel: 'Навігація сторінки',
+        edit: 'Редагувати',
         tiles: {
           appointment: {
             title: 'Бажаний термін',
@@ -972,7 +1023,19 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
     app: {
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Aller au contenu principal'
+      skipLink: 'Aller au contenu principal',
+      error: {
+        title: 'Une erreur s\'est produite',
+        subtext: 'Nous ne pouvons pas charger les données pour le moment. Veuillez réessayer ou revenir plus tard.',
+        offlineHint: 'Veuillez vérifier votre connexion Internet.',
+        retryButton: 'Réessayer',
+        retryButtonAriaLabel: 'Réessayer de charger les données',
+        detailsToggle: 'Afficher les détails techniques',
+        codeLabel: 'Code d\'erreur',
+        statusLabel: 'Statut',
+        timestampLabel: 'Horodatage',
+        requestIdLabel: 'ID de requête'
+      }
     },
 
     header: {
@@ -1139,20 +1202,12 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
       notes: {
         pageTitle: 'Veuillez fournir des remarques supplémentaires pour votre réservation',
         sectionTitle: 'Souhaitez-vous nous communiquer autre chose concernant votre réservation ?',
-        textareaPlaceholder: 'Veuillez saisir votre message ici (remarques, réservation de services supplémentaires, etc.)',
+        textareaPlaceholder: 'Veuillez saisir votre message ici.',
+        textareaHint: 'Veuillez saisir votre message ici.',
         charCountAriaLabel: '{current} sur {max} caractères utilisés',
         hintsTitle: 'Remarques importantes concernant vos services sélectionnés',
         backButton: 'Retour',
         continueButton: 'Continuer',
-        hints: {
-          inspection: 'Veuillez noter : apportez votre carnet d\'entretien. Pour les travaux importants, un véhicule de remplacement peut être fourni — veuillez vous renseigner à l\'avance.',
-          tuv: 'Veuillez noter : pour le contrôle technique, vous aurez besoin de tous les documents du véhicule. Assurez-vous que votre véhicule est en état de rouler.',
-          brakeFluid: 'Veuillez noter : le changement de liquide de frein est recommandé tous les 2 ans selon les spécifications du fabricant.',
-          tireChange: 'Veuillez noter : pour l\'entreposage des pneus, informez-nous à l\'avance du nombre et de la taille des pneus. L\'entreposage est payant.',
-          actionsChecks: 'Veuillez noter : pour la vérification de garantie, nous avons besoin des documents du véhicule et éventuellement du carnet d\'entretien.',
-          repair: 'Veuillez noter : décrivez votre réclamation aussi précisément que possible dans le champ de commentaire afin que nous puissions nous préparer au mieux.',
-          bodywork: 'Veuillez noter : en cas de dommages accidentels, nous pourrions avoir besoin de votre numéro de sinistre. Apportez les documents pertinents.'
-        },
         mobilityOptions: {
           title: 'Options de mobilité (payantes)',
           label: 'Sélectionner',
@@ -1160,6 +1215,12 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
           compactCar: 'Voiture compacte',
           midRange: 'Gamme moyenne',
           luxury: 'Haut de gamme'
+        },
+        rentCategoryPrice: {
+          label: 'Catégorie de voiture de location',
+          unitDay: 'par jour',
+          unitHour: 'par heure',
+          srLabel: 'Catégorie de voiture de location sélectionnée'
         },
         rentCategory: {
           title: 'Catégorie de voiture de location',
@@ -1176,8 +1237,14 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
         callback: {
           title: 'Options supplémentaires : Rappel',
           label: 'Rappel',
-          none: 'Aucune sélection',
+          no: 'Non',
           yes: 'Oui'
+        },
+        notification: {
+          title: 'Notification',
+          label: 'Comment souhaitez-vous être notifié ?',
+          email: 'E-mail',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -1225,6 +1292,7 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
         subtitle: 'Veuillez vérifier vos informations avant d\'envoyer le rendez-vous.',
         ariaGridLabel: 'Récapitulatif de la réservation',
         ariaNavLabel: 'Navigation de la page',
+        edit: 'Modifier',
         tiles: {
           appointment: {
             title: 'Rendez-vous souhaité',
@@ -1291,7 +1359,19 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
     app: {
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'انتقل إلى المحتوى الرئيسي'
+      skipLink: 'انتقل إلى المحتوى الرئيسي',
+      error: {
+        title: 'حدث خطأ',
+        subtext: 'لا يمكننا تحميل البيانات في الوقت الحالي. يرجى المحاولة مرة أخرى أو العودة لاحقاً.',
+        offlineHint: 'يرجى التحقق من اتصالك بالإنترنت.',
+        retryButton: 'إعادة المحاولة',
+        retryButtonAriaLabel: 'إعادة محاولة تحميل البيانات',
+        detailsToggle: 'عرض التفاصيل الفنية',
+        codeLabel: 'رمز الخطأ',
+        statusLabel: 'الحالة',
+        timestampLabel: 'الطابع الزمني',
+        requestIdLabel: 'معرف الطلب'
+      }
     },
 
     header: {
@@ -1458,20 +1538,12 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
       notes: {
         pageTitle: 'يرجى تقديم ملاحظات إضافية لحجزك',
         sectionTitle: 'هل تود إخبارنا بشيء آخر بخصوص حجزك؟',
-        textareaPlaceholder: 'يرجى إدخال رسالتك هنا (ملاحظات، حجز خدمات إضافية، إلخ)',
+        textareaPlaceholder: 'يرجى إدخال رسالتك إلينا هنا.',
+        textareaHint: 'يرجى إدخال رسالتك إلينا هنا.',
         charCountAriaLabel: '{current} من {max} حرف مستخدم',
         hintsTitle: 'ملاحظات مهمة حول الخدمات المختارة',
         backButton: 'رجوع',
         continueButton: 'متابعة',
-        hints: {
-          inspection: 'يرجى ملاحظة: أحضر دفتر الخدمة الخاص بك. للأعمال الكبيرة يمكن توفير سيارة بديلة — يرجى الاستفسار مسبقاً.',
-          tuv: 'يرجى ملاحظة: للفحص الفني ستحتاج إلى جميع وثائق السيارة. تأكد من أن سيارتك صالحة للقيادة وآمنة.',
-          brakeFluid: 'يرجى ملاحظة: يوصى بتغيير سائل الفرامل كل سنتين وفقاً لمواصفات الشركة المصنعة.',
-          tireChange: 'يرجى ملاحظة: لتخزين الإطارات، أبلغنا مسبقاً بعدد وحجم الإطارات. التخزين مقابل رسوم.',
-          actionsChecks: 'يرجى ملاحظة: لفحص الضمان نحتاج إلى وثائق السيارة وربما دفتر الخدمة.',
-          repair: 'يرجى ملاحظة: صف شكواك بأكبر قدر ممكن من التفصيل في حقل التعليقات حتى نتمكن من التحضير بشكل مثالي.',
-          bodywork: 'يرجى ملاحظة: في حالة أضرار الحوادث قد نحتاج إلى رقم مطالبة التأمين الخاص بك. أحضر المستندات ذات الصلة.'
-        },
         mobilityOptions: {
           title: 'خيارات التنقل (مقابل رسوم)',
           label: 'اختيار',
@@ -1485,6 +1557,12 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
           label: 'اختر الفئة',
           none: 'بدون سيارة إيجار'
         },
+        rentCategoryPrice: {
+          label: 'فئة سيارة الإيجار',
+          unitDay: 'في اليوم',
+          unitHour: 'في الساعة',
+          srLabel: 'تم اختيار فئة سيارة الإيجار'
+        },
         appointmentPreference: {
           title: 'تفضيل الموعد',
           label: 'اختيار',
@@ -1495,8 +1573,14 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
         callback: {
           title: 'خيارات إضافية: معاودة الاتصال',
           label: 'معاودة الاتصال',
-          none: 'بدون اختيار',
+          no: 'لا',
           yes: 'نعم'
+        },
+        notification: {
+          title: 'الإشعار',
+          label: 'كيف ترغب في تلقي الإشعارات؟',
+          email: 'بريد إلكتروني',
+          sms: 'رسالة نصية'
         }
       },
       carinformation: {
@@ -1544,6 +1628,7 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم 
         subtitle: 'يرجى مراجعة بياناتك قبل إرسال الموعد.',
         ariaGridLabel: 'ملخص الحجز',
         ariaNavLabel: 'التنقل في الصفحة',
+        edit: 'تعديل',
         tiles: {
           appointment: {
             title: 'الموعد المطلوب',
@@ -1631,11 +1716,9 @@ export interface LanguageOption {
 }
 
 export const AVAILABLE_LANGUAGES: LanguageOption[] = [
-  { code: 'de', label: 'Deutsch' },
-  { code: 'en', label: 'English' },
-  { code: 'uk', label: 'Українська' },
-  { code: 'fr', label: 'Français' },
-  { code: 'ar', label: 'العربية' }
+  { code: 'de', label: 'Deutsch' }
+  // EN-Auswahl entfernt — Translation-Daten unten bleiben erhalten,
+  // koennen via 1-Zeilen-Change wieder aktiviert werden.
 ];
 
 /**

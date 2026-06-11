@@ -36,8 +36,8 @@ public class SnapsService {
     }
 
     public List<SnapResponseDto> getSnaps(SnapRequestDto request) {
-        List<String> mappedOps = operationIdMapper.mapToSoftnetOperations(request.jobTypeIds());
         String groupId = setupService.resolveGroupId(request.branchId(), request.variant());
+        List<String> mappedOps = operationIdMapper.mapToSoftnetOperations(groupId, request.jobTypeIds());
 
         Map<String, Object> softnetRequest = new LinkedHashMap<>();
         softnetRequest.put("groupid", groupId);
@@ -58,6 +58,14 @@ public class SnapsService {
 
         if (request.replacementCar() != null && request.replacementCar()) {
             softnetRequest.put("replacementPreference", true);
+        }
+
+        // REQ-027: forward notification channel ({ SMS, SMTP }) to SoftNet.
+        if (request.notifications() != null) {
+            Map<String, Boolean> notifications = new LinkedHashMap<>();
+            notifications.put("SMS", Boolean.TRUE.equals(request.notifications().SMS()));
+            notifications.put("SMTP", Boolean.TRUE.equals(request.notifications().SMTP()));
+            softnetRequest.put("notifications", notifications);
         }
 
         log.debug("SoftNet snaps request: {}", softnetRequest);

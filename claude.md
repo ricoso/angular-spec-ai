@@ -11,6 +11,7 @@
 - **UI-Sprachen**: DE, EN
 - **Doc-Sprachen**: DE, EN
 - **Deployment**: Production (Spring Boot Backend + SoftNet API)
+- **Hosting**: Azure Container App (`gs-terminbuchungs-app`, RG `DefaultResourceGroup-DEWC`, Region `westeurope`) — Konfig auslesen + Login-Anleitung: [`docs/infrastructure/azure-read.md`](./docs/infrastructure/azure-read.md)
 - **SoftNet API-Doku**: `test-booking-flow copy.mjs` — Feature Discovery (Zeitfilter, Ersatzwagen, Wiederkehr-Kunde); `soft-netOpenAPI.html` — Offizielle OpenAPI Spec
 - **SoftNet API-Erkenntnisse** (getestet + bewiesen, INT-System, `scope.api.planning.service`):
   - `checkInTimePreference: "AM"|"PM"` → verschiebt Snap-Verteilung (VM/NM)
@@ -107,13 +108,15 @@
 | 4 | Styling | `_variables.scss`, Mobile-First, WCAG 2.1 AA |
 | 5 | Tests | Jest >80% Coverage |
 | **6** | **Tech-Check (3 PARALLEL AGENTS)** | **`lint:fix` + `type-check` + `test:coverage`** |
+| **6.5** | **Smoke + E2E (VERBINDLICH)** | **Smoke-Test + `npm run e2e:backend` GRUEN (3 Viewports) — siehe REQ-023** |
 | **7** | **Quality Gate** | **`/check-all` Score >= 90 + qualitaets.md generiert** |
 | 8 | Fertigmeldung | Änderungen LOKAL — kein Commit/Push (User prüft selbst) |
 
 > **Branch-Regel:** Kein separater `feat/`-Branch — Implementierung auf `req/REQ-XXX`.
 > **Kein Auto-Commit:** Änderungen bleiben lokal bis der User selbst committed.
 > **STOP bei Step 6 FAIL!** Erst fixen, dann weiter.
-> **STOP bei Step 7 Score < 90!** Erst fixen, Step 6+7 wiederholen.
+> **STOP bei Step 6.5 FAIL!** Smoke-Test und E2E sind PFLICHT (REQ-023). Ohne grünen E2E-Run kein Commit.
+> **STOP bei Step 7 Score < 90!** Erst fixen, Step 6+6.5+7 wiederholen.
 > Details: `.claude/commands/implement-requirement.md`
 
 ### /create-requirement — Pflicht-Ablauf:

@@ -67,7 +67,7 @@ class ControllerTests {
     void branchesController_getBranches_returnsList() {
         BranchesController ctrl = new BranchesController(branchesService);
         when(branchesService.getBranches()).thenReturn(List.of(
-            new BranchResponseDto("1", "Munich", "desc", List.of("BMW", "Audi"))
+            new BranchResponseDto("1", "Munich", "desc", null, List.of("BMW", "Audi"), null)
         ));
         List<BranchResponseDto> result = ctrl.getBranches();
         assertEquals(1, result.size());
@@ -84,7 +84,7 @@ class ControllerTests {
     @Test
     void branchesController_getBranch_returnsBranch() {
         BranchesController ctrl = new BranchesController(branchesService);
-        when(branchesService.getBranch("1")).thenReturn(new BranchResponseDto("1", "Test", "desc", List.of()));
+        when(branchesService.getBranch("1")).thenReturn(new BranchResponseDto("1", "Test", "desc", null, List.of(), null));
         BranchResponseDto result = ctrl.getBranch("1");
         assertNotNull(result);
         assertEquals("1", result.id());
@@ -116,17 +116,17 @@ class ControllerTests {
     @Test
     void jobTypesController_getJobTypes_returnsList() {
         JobTypesController ctrl = new JobTypesController(jobTypesService);
-        when(jobTypesService.getJobTypesByBranch("b1")).thenReturn(List.of(
-            new JobTypeResponseDto("1", "Oil Change", "desc", List.of())
+        when(jobTypesService.getJobTypesByBranch("b1", null)).thenReturn(List.of(
+            new JobTypeResponseDto("1", "Oil Change", "desc", null, null, null, null, List.of())
         ));
-        assertEquals(1, ctrl.getJobTypes("b1").size());
+        assertEquals(1, ctrl.getJobTypes("b1", null).size());
     }
 
     @Test
     void jobTypesController_getJobTypes_emptyList() {
         JobTypesController ctrl = new JobTypesController(jobTypesService);
-        when(jobTypesService.getJobTypesByBranch("b1")).thenReturn(List.of());
-        assertTrue(ctrl.getJobTypes("b1").isEmpty());
+        when(jobTypesService.getJobTypesByBranch("b1", null)).thenReturn(List.of());
+        assertTrue(ctrl.getJobTypes("b1", null).isEmpty());
     }
 
     // === MobilityController ===
@@ -198,7 +198,7 @@ class ControllerTests {
         CreateAppointmentRequest.VehicleDto vehicle = new CreateAppointmentRequest.VehicleDto(
             "B-MS1234", 50000, null, null, null, null
         );
-        CreateAppointmentRequest request = new CreateAppointmentRequest("snap1", "branch-1", null, customer, vehicle, "note", null, null);
+        CreateAppointmentRequest request = new CreateAppointmentRequest("snap1", "branch-1", null, customer, vehicle, "note", null, null, null);
 
         AppointmentResponseDto result = ctrl.createAppointment(request);
         assertNotNull(result);
@@ -231,7 +231,7 @@ class ControllerTests {
     @Test
     void snapsController_getSnaps_returnsList() {
         SnapsController ctrl = new SnapsController(snapsService);
-        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null, null);
+        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null, null, null);
         when(snapsService.getSnaps(any())).thenReturn(List.of(
             new SnapResponseDto("2026-04-15", "Di 15.04.", "Di", List.of())
         ));
@@ -242,7 +242,7 @@ class ControllerTests {
     @Test
     void snapsController_getSnaps_emptyResult() {
         SnapsController ctrl = new SnapsController(snapsService);
-        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null, null);
+        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null, null, null);
         when(snapsService.getSnaps(any())).thenReturn(List.of());
         assertTrue(ctrl.getSnaps(request).isEmpty());
     }
@@ -281,7 +281,7 @@ class ControllerTests {
     @Test
     void rentCategoriesController_getRentCategories_returnsList() {
         RentCategoriesController ctrl = new RentCategoriesController(rentCategoriesService);
-        RentCategoryResponseDto dto = new RentCategoryResponseDto("rc-1", "grp-1", "Kleinwagen", "desc", List.of("VW"), List.of("branch-1"));
+        RentCategoryResponseDto dto = new RentCategoryResponseDto("rc-1", "grp-1", "Kleinwagen", "desc", null, null, null, List.of("VW"), List.of("branch-1"));
         when(rentCategoriesService.getRentCategories("branch-1")).thenReturn(List.of(dto));
 
         List<RentCategoryResponseDto> result = ctrl.getRentCategories("branch-1");

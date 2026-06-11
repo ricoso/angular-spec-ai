@@ -1,0 +1,415 @@
+/* Bootstrap-basierte Custom Theme — Autohaus Termin-App Design-Experiment */
+:root {
+  --bs-primary: #003d6b;
+  --bs-primary-rgb: 0, 61, 107;
+  --bs-link-color: #00558e;
+  --bs-link-color-rgb: 0, 85, 142;
+  --bs-link-hover-color: #003d6b;
+  --bs-body-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --bs-body-bg: #f4f6f8;
+  --autohaus-accent: #c41e3a;
+}
+
+body {
+  background: var(--bs-body-bg);
+  min-height: 100vh;
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--bs-primary);
+  --bs-btn-border-color: var(--bs-primary);
+  --bs-btn-hover-bg: #002d52;
+  --bs-btn-hover-border-color: #002d52;
+  --bs-btn-active-bg: #002240;
+  --bs-btn-active-border-color: #002240;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Wizard-Stepper */
+.wizard-steps {
+  background: white;
+  border-bottom: 1px solid #e3e6e9;
+  padding: 1rem 0;
+}
+.wizard-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.5em 1em;
+  color: #888;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+.wizard-step__circle {
+  width: 1.7em; height: 1.7em;
+  border-radius: 50%;
+  background: #e3e6e9;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85em;
+}
+.wizard-step--done .wizard-step__circle {
+  background: var(--bs-primary);
+}
+.wizard-step--active {
+  color: var(--bs-primary);
+  font-weight: 700;
+}
+.wizard-step--active .wizard-step__circle {
+  background: var(--autohaus-accent);
+}
+
+/* Card-Look — etwas mehr Charakter als Standard-Bootstrap */
+.card-pickable {
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  border: 2px solid #e3e6e9;
+}
+.card-pickable:hover {
+  transform: translateY(-2px);
+  border-color: var(--bs-primary);
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.08);
+}
+.card-pickable.selected {
+  border-color: var(--bs-primary);
+  background: #eaf2f9;
+  box-shadow: 0 0 0 0.25rem rgba(0, 61, 107, 0.15);
+}
+.card-pickable .card-icon {
+  font-size: 2.5em;
+  color: var(--bs-primary);
+  margin-bottom: 0.5em;
+}
+.card-pickable.selected .badge-selected {
+  display: inline-flex;
+}
+.badge-selected {
+  display: none;
+  position: absolute;
+  top: 0.5em; right: 0.5em;
+  background: var(--bs-primary);
+  color: white;
+  border-radius: 50%;
+  width: 1.5em; height: 1.5em;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85em;
+}
+
+/* Brand-Logos */
+.brand-logo {
+  height: 3.5em;
+  width: auto;
+  max-width: 80%;
+  object-fit: contain;
+  filter: grayscale(1);
+  opacity: 0.7;
+  transition: filter 0.15s ease, opacity 0.15s ease;
+}
+.card-pickable:hover .brand-logo,
+.card-pickable.selected .brand-logo {
+  filter: grayscale(0);
+  opacity: 1;
+}
+
+/* Service-Card mit ausklappbaren Operationen */
+.service-card {
+  position: relative;
+}
+.service-card-options {
+  border-top: 1px solid #e3e6e9;
+  padding: 1em;
+  background: #fafbfc;
+}
+.service-option {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5em 0.75em;
+  border-radius: 0.4em;
+}
+.service-option:hover { background: rgba(0, 61, 107, 0.04); }
+.service-option__name {
+  font-weight: 600;
+  font-size: 0.95em;
+}
+.service-option__desc {
+  font-size: 0.8em;
+  color: #6c757d;
+  line-height: 1.4;
+  margin-top: 0.2em;
+  margin-left: 1.7em;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Branch-Banner */
+.branch-banner {
+  background: linear-gradient(135deg, var(--bs-primary) 0%, #00558e 100%);
+  color: white;
+  padding: 1.25em 1.5em;
+  border-radius: 0.6em;
+  margin-bottom: 2em;
+  display: flex;
+  align-items: center;
+  gap: 1em;
+}
+.branch-banner__icon {
+  font-size: 1.8em;
+  background: rgba(255,255,255,0.15);
+  width: 2.5em; height: 2.5em;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.branch-banner__title { font-size: 0.85em; opacity: 0.9; margin-bottom: 0.1em; }
+.branch-banner__address { font-size: 1.1em; font-weight: 700; }
+
+/* Page-Wrapper */
+.page-wrap {
+  max-width: 70em;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+.page-title { font-weight: 700; margin-bottom: 0.4em; }
+.page-subtitle { color: #6c757d; margin-bottom: 2em; }
+
+/* Demo-Header für Index-Page */
+.demo-banner {
+  background: #1a2030;
+  color: white;
+  padding: 0.6em 1em;
+  font-size: 0.9em;
+  text-align: center;
+}
+.demo-banner a { color: #ffd166; }
+
+/* Sidebar Cart-Overlay (Floating) */
+.cart-fab {
+  position: fixed;
+  bottom: 5em; right: 1.5em;
+  background: var(--autohaus-accent);
+  color: white;
+  width: 3.5em; height: 3.5em;
+  border-radius: 50%;
+  border: 0;
+  box-shadow: 0 0.5em 1.5em rgba(0,0,0,.2);
+  font-size: 1.4em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+/* Description unter Operation-Name kleiner — alternativ zu Bootstrap form-text */
+.form-text-small {
+  font-size: 0.78em;
+  color: #6c757d;
+}
+
+/* ============================================================
+   Accessibility Floating Button (bottom-left)
+   ============================================================ */
+.a11y-fab {
+  position: fixed;
+  bottom: 5em; left: 1.5em;
+  background: white;
+  color: var(--bs-primary);
+  border: 2px solid var(--bs-primary);
+  width: 3.5em; height: 3.5em;
+  border-radius: 50%;
+  font-size: 1.4em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0.5em 1.5em rgba(0,0,0,.15);
+  z-index: 100;
+  transition: transform 0.1s ease;
+  cursor: pointer;
+}
+.a11y-fab:hover { transform: scale(1.05); }
+.a11y-fab:focus-visible {
+  outline: 3px solid var(--autohaus-accent);
+  outline-offset: 3px;
+}
+
+/* Pill-Group (Radio/Checkbox als Pills — wird in 03/04 + A11y-Panel verwendet) */
+.pill-group {
+  display: flex;
+  gap: 0.5em;
+  flex-wrap: wrap;
+}
+.pill-group input[type="radio"],
+.pill-group input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.pill-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.55em 1.1em;
+  border: 2px solid #d6dce0;
+  border-radius: 2em;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.12s ease;
+  font-size: 0.95em;
+  background: white;
+}
+.pill-group label:hover {
+  border-color: var(--bs-primary);
+  color: var(--bs-primary);
+}
+.pill-group input:checked + label {
+  background: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: white;
+}
+.pill-group input:focus-visible + label {
+  outline: 2px solid var(--autohaus-accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   Cart-Item im Offcanvas
+   ============================================================ */
+.cart-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75em;
+  padding: 0.85em 0;
+  border-bottom: 1px solid #eef0f2;
+}
+.cart-item:last-child { border-bottom: 0; }
+.cart-item__icon {
+  width: 2.25em; height: 2.25em;
+  background: #eaf2f9;
+  color: var(--bs-primary);
+  border-radius: 0.4em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cart-item__icon--empty {
+  background: #f4f6f8;
+  color: #adb5bd;
+}
+.cart-item__label {
+  font-size: 0.7em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #6c757d;
+  letter-spacing: 0.06em;
+}
+.cart-item__value {
+  font-weight: 600;
+  font-size: 0.95em;
+  margin: 0.1em 0 0;
+}
+.cart-item__value--empty {
+  color: #adb5bd;
+  font-weight: 500;
+  font-style: italic;
+}
+.cart-item__sub {
+  font-size: 0.8em;
+  color: #6c757d;
+  margin: 0.15em 0 0;
+}
+
+/* ============================================================
+   Wizard-Navigation (Zurueck / Weiter Buttons unten)
+   ============================================================ */
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75em;
+  margin-top: 2rem;
+}
+.wizard-nav.justify-content-end {
+  justify-content: flex-end;
+}
+
+@media (max-width: 48em) {
+  .wizard-nav,
+  .wizard-nav.justify-content-end {
+    flex-direction: column-reverse;   /* "Weiter" landet oben — Daumen-Zone */
+    align-items: stretch;
+    gap: 0.5em;
+  }
+  .wizard-nav .btn,
+  .wizard-nav > a.btn {
+    width: 100%;
+  }
+}
+
+/* Services-Page Bottom-Bar — Counter + Nav nebeneinander auf Desktop, gestapelt auf Mobile */
+.services-bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e3e6e9;
+  border-radius: 0.5rem;
+}
+@media (max-width: 48em) {
+  .services-bottom-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75em;
+  }
+  .services-bottom-bar > div:last-child {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.5em;
+  }
+  .services-bottom-bar > div:last-child .btn {
+    width: 100%;
+    margin: 0 !important;
+  }
+}
+
+/* ============================================================
+   A11y Body-Modes — werden vom A11y-Panel gesetzt
+   ============================================================ */
+body.font-small  { font-size: 0.9em; }
+body.font-large  { font-size: 1.15em; }
+body.font-xlarge { font-size: 1.3em; }
+
+body.high-contrast {
+  --bs-primary: #000;
+  --bs-primary-rgb: 0,0,0;
+  --bs-link-color: #000;
+  background: #fff;
+  color: #000;
+}
+body.high-contrast .card,
+body.high-contrast .switch-card,
+body.high-contrast .service-detail,
+body.high-contrast .date-tile,
+body.high-contrast .slot,
+body.high-contrast .pill-group label {
+  border: 2px solid #000 !important;
+}
+body.high-contrast .text-muted,
+body.high-contrast .page-subtitle { color: #000 !important; }
+body.high-contrast .branch-banner { background: #000 !important; }
+
+body.reduce-motion *,
+body.reduce-motion *::before,
+body.reduce-motion *::after {
+  transition-duration: 0s !important;
+  animation-duration: 0s !important;
+}

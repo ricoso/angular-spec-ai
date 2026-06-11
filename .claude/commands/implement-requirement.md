@@ -13,6 +13,10 @@ Implementiert ein Requirement basierend auf der Spezifikation.
 > **Kein Auto-Commit:** Änderungen werden NICHT automatisch committed oder gepusht.
 > Der Benutzer prüft lokal und entscheidet selbst über Commit + Push.
 
+> **VERBINDLICH (REQ-023):** Smoke-Tests und E2E-Tests sind PFLICHTBESTANDTEIL jeder Feature-Implementierung.
+> Ohne grünen Smoke-Test UND grünen `npm run e2e:backend`-Run ist die Implementierung **NICHT abgeschlossen**.
+> Step 6.5 ist ein BLOCKER — bei FAIL darf Step 7 nicht starten und es darf NICHT committed werden.
+
 ## Usage
 
 ```
@@ -38,6 +42,7 @@ Implementiert ein Requirement basierend auf der Spezifikation.
 | Step 4 | Styling angewendet |
 | Step 5 | Tests geschrieben + >80% |
 | **Step 6** | **lint + type-check + tests (3 parallele Agents)** |
+| **Step 6.5** | **Smoke-Test + E2E (`npm run e2e:backend`) GRUEN — VERBINDLICH** |
 | **Step 7** | **`/check-all` Score >= 90 + qualitaets.md generiert** |
 | Step 8 | Implementierung abgeschlossen, Änderungen lokal bereit |
 
@@ -209,9 +214,75 @@ TECHNISCHE PRÜFUNG (4 parallele Agents):
 ```
 
 > **STOP bei FAIL!** Erst fixen, dann erneut ALLE 4 parallel als Agents prüfen.
-> **Step 7 darf NICHT starten wenn Step 6 nicht GRUEN ist!**
+> **Step 6.5 darf NICHT starten wenn Step 6 nicht GRUEN ist!**
 
 **GATE 6:** lint + type-check + tests
+
+---
+
+### Step 6.5: Smoke-Test + E2E (PFLICHT! BLOCKER! VERBINDLICH!)
+
+> **Smoke-Tests und E2E-Tests sind verpflichtender Bestandteil jeder Feature-Implementierung.**
+> **Ohne grünen Smoke-Test UND grünen E2E-Run ist die Implementierung NICHT abgeschlossen.**
+> **Festgelegt durch REQ-023 — gilt rueckwirkend fuer alle zukuenftigen Features.**
+
+**6.5a — Smoke-Test (ca. 30 s):**
+
+Verifiziert, dass die App ueberhaupt startet, Backend gesund ist und das Angular-Bundle ausgeliefert wird:
+
+```bash
+# Frontend Build
+npm run build
+
+# Backend in Hintergrund starten
+(cd server && ./gradlew bootRun) &
+BACKEND_PID=$!
+
+# Bis zu 60 s auf Health warten
+for i in $(seq 1 60); do
+  if curl -sf http://localhost:3000/api/v1/health >/dev/null; then break; fi
+  sleep 1
+done
+
+# Health-Check + Root-Page-Check
+curl -sf http://localhost:3000/api/v1/health | grep -q '"status":"healthy"' \
+  || (echo "SMOKE FAIL: Health-Check"; kill $BACKEND_PID; exit 1)
+curl -sf http://localhost:3000/ | grep -q '<app-root' \
+  || (echo "SMOKE FAIL: Angular-Root nicht ausgeliefert"; kill $BACKEND_PID; exit 1)
+
+kill $BACKEND_PID
+echo "SMOKE PASS"
+```
+
+**6.5b — E2E (full, ca. 5–10 min):**
+
+```bash
+npm run e2e:backend
+```
+
+Erwartung: alle Specs grün in Desktop + Tablet + Mobile.
+
+**Ergebnis dokumentieren:**
+
+```
+SMOKE + E2E:
+- Smoke-Test         → [PASS / FAIL + Fehlerausgabe]
+- E2E (Desktop)      → [PASS (XX/XX) / FAIL + Spec-Namen]
+- E2E (Tablet)       → [PASS (XX/XX) / FAIL + Spec-Namen]
+- E2E (Mobile)       → [PASS (XX/XX) / FAIL + Spec-Namen]
+```
+
+> **STOP bei FAIL!**
+> - Smoke-FAIL → Container-Setup, Health-Endpoint oder Build defekt → fix, Step 6 + 6.5 erneut
+> - E2E-FAIL → echte Regression oder Flake. **Flake-Fix ist Pflicht** (kein „retry & ignore")
+> **Step 7 darf NICHT starten wenn Step 6.5 nicht GRUEN ist!**
+> **Es darf NICHT committed werden bei FAIL!**
+
+**Bei neuen Features ohne dedizierten E2E-Test:**
+- Eine neue Spec `playwright/<REQ-ID>-<feature>.spec.ts` MUSS angelegt werden, die mindestens den Happy-Path des Features validiert (Filiale → … → Submit).
+- Ziel: User-Flow-Abdeckung ≥ 95 % (Vorgabe REQ-023).
+
+**GATE 6.5:** Smoke-Test grün + E2E grün in allen 3 Viewports
 
 ---
 
@@ -290,6 +361,9 @@ Nächste Schritte (manuell):
 - [ ] **Step 6: `npm run type-check`**
 - [ ] **Step 6: `npm run test:coverage`**
 - [ ] **Step 6: `cd server && ./gradlew test` (Backend-Tests)**
+- [ ] **Step 6.5: Smoke-Test (Frontend-Build + Backend-Health-Check) PASS**
+- [ ] **Step 6.5: `npm run e2e:backend` GRUEN in Desktop + Tablet + Mobile (PFLICHT, REQ-023)**
+- [ ] **Step 6.5: Bei neuem Feature ohne Spec → neue `playwright/<REQ-ID>-*.spec.ts` angelegt (≥ Happy-Path)**
 - [ ] **Step 7: `/check-all` ausgeführt (Score >= 90/100)**
 - [ ] **Step 7: `qualitaets.md` generiert**
 - [ ] **Step 7: E2E Tests bestanden (check-e2e)**

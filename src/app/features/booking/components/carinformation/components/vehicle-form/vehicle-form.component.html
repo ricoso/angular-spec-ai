@@ -2,35 +2,45 @@
   <legend class="vehicle-form__title">{{ carinformation.form.vehicleTitle | translate }}</legend>
 
   <div class="vehicle-form__row">
-    <mat-form-field appearance="outline" class="vehicle-form__input">
-      <mat-label>{{ carinformation.form.licensePlate.label | translate }}</mat-label>
+    <div class="form-floating">
       <input
-        matInput
         type="text"
+        id="vehicle-licensePlate"
+        class="form-control"
+        [class.is-invalid]="form().get('licensePlate')?.invalid && form().get('licensePlate')?.touched"
         formControlName="licensePlate"
         [placeholder]="carinformation.form.licensePlate.placeholder | translate"
         autocomplete="off"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('licensePlate')?.invalid && form().get('licensePlate')?.touched ? 'true' : null"
+        aria-describedby="vehicle-licensePlate-error"
       />
+      <label for="vehicle-licensePlate">{{ carinformation.form.licensePlate.label | translate }} *</label>
       @if (licensePlateErrors(); as error) {
-        <mat-error>{{ error | translate }}</mat-error>
+        <div class="invalid-feedback" id="vehicle-licensePlate-error" role="alert">{{ error | translate }}</div>
       }
-    </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline" class="vehicle-form__input">
-      <mat-label>{{ carinformation.form.mileage.label | translate }}</mat-label>
+    <div class="form-floating">
       <input
-        matInput
         type="number"
+        id="vehicle-mileage"
+        class="form-control"
+        [class.is-invalid]="form().get('mileage')?.invalid && form().get('mileage')?.touched"
         formControlName="mileage"
         [placeholder]="carinformation.form.mileage.placeholder | translate"
         autocomplete="off"
         inputmode="numeric"
         min="0"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('mileage')?.invalid && form().get('mileage')?.touched ? 'true' : null"
+        aria-describedby="vehicle-mileage-error"
       />
+      <label for="vehicle-mileage">{{ carinformation.form.mileage.label | translate }} *</label>
       @if (mileageErrors(); as error) {
-        <mat-error>{{ error | translate }}</mat-error>
+        <div class="invalid-feedback" id="vehicle-mileage-error" role="alert">{{ error | translate }}</div>
       }
-    </mat-form-field>
+    </div>
   </div>
 
 </fieldset>

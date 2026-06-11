@@ -4,9 +4,9 @@
 	 viewBox="0 0 134.4 134.4" style="enable-background:new 0 0 134.4 134.4;" xml:space="preserve">
 <style type="text/css">
 	.st0{fill:#003C4A;}
-	.st1{fill:#FFFFFF;}
+	.st1{fill:currentColor;}
 </style>
-<rect class="st0" width="134.4" height="134.4"/>
+
 <g>
 	<path class="st1" d="M82.6,94.2v2.4h12.7c0.3,0,0.5-0.2,0.5-0.4v-1.5c0-0.3-0.2-0.5-0.5-0.4L82.6,94.2z M79.4,102V92h16.4
 		c1.5,0,2.8,0.9,2.8,2.3v2.1c0,1.5-1,2.4-1.9,2.4l2.2,3.2h-3.6l-1.9-3.1H82.6v3.1L79.4,102z"/>

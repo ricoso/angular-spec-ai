@@ -102,7 +102,7 @@
   }
 
   &__separator {
-    width: 1.5em;
+    width: 0.75em; // mobile: Haelfte der bisherigen 1.5em
     height: 0.0625em;
     background-color: var(--color-border);
     flex-shrink: 0;

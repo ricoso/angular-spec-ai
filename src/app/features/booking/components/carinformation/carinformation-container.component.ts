@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -19,8 +17,6 @@ import { VehicleFormComponent } from './components/vehicle-form/vehicle-form.com
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    MatButtonModule,
-    MatCheckboxModule,
     TranslatePipe,
     WizardBreadcrumbComponent,
     CustomerFormComponent,
@@ -47,11 +43,11 @@ export class CarinformationContainerComponent {
     street: ['', [Validators.required]],
     postalCode: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
     city: ['', [Validators.required, Validators.pattern(/^[a-zA-ZÀ-ÖØ-öø-ÿ\s-]+$/)]],
-    mobilePhone: ['', [Validators.required, Validators.pattern(/^0[0-9]+$/)]]
+    mobilePhone: ['', [Validators.required, Validators.pattern(/^(\+|0)[0-9\s]+$/)]]
   });
 
   protected readonly vehicleForm = this.fb.group({
-    licensePlate: ['', [Validators.required, Validators.pattern(/^[A-ZÄÖÜ]{1,3}-[A-Z]{1,2}\s?\d{1,4}$/i)]],
+    licensePlate: ['', [Validators.required]],
     mileage: [null as number | null, [Validators.required, Validators.min(0)]]
   });
 
@@ -117,10 +113,5 @@ export class CarinformationContainerComponent {
 
   protected onBack(): void {
     void this.router.navigate(['/home/appointment']);
-  }
-
-  protected onReturningCustomer(): void {
-    // TODO: REQ-010+ — retrieve existing customer data
-    console.debug('[CarinformationContainer] Returning customer button clicked');
   }
 }

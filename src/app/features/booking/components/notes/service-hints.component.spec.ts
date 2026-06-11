@@ -1,7 +1,7 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import type { SelectedService } from '../../models/service.model';
+import type { ApiJobType } from '../../models/service.model';
 
 import { ServiceHintsComponent } from './service-hints.component';
 
@@ -21,6 +21,7 @@ describe('ServiceHintsComponent', () => {
     fixture = TestBed.createComponent(ServiceHintsComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('selectedServices', []);
+    fixture.componentRef.setInput('jobTypes', []);
     fixture.detectChanges();
   });
 
@@ -28,90 +29,118 @@ describe('ServiceHintsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('visibleHints', () => {
-    it('should return empty array when no services selected', () => {
-      const exposed = component as unknown as {
-        visibleHints: () => unknown[];
-      };
-      expect(exposed.visibleHints()).toEqual([]);
-    });
+  it('should return empty array when no jobTypes are loaded', () => {
+    const exposed = component as unknown as { visibleHints: () => unknown[] };
+    expect(exposed.visibleHints()).toEqual([]);
+  });
 
-    it('should return hints for selected tuv service', () => {
-      const services: SelectedService[] = [
-        { serviceId: 'tuv', selectedOptionIds: [] }
-      ];
-      fixture.componentRef.setInput('selectedServices', services);
+  it('renders raw API hint strings (TC-8)', () => {
+    const jobTypes: ApiJobType[] = [
+      { id: 'jt-1', name: 'Inspektion', description: 'desc', hint: 'Bitte bringen Sie ihr Serviceheft mit.', category: null, categoryName: null, iconUrl: null, operations: [] }
+    ];
+    fixture.componentRef.setInput('jobTypes', jobTypes);
+    fixture.detectChanges();
+
+    const exposed = component as unknown as { visibleHints: () => { key: string; hint: string }[] };
+    expect(exposed.visibleHints()).toHaveLength(1);
+    expect(exposed.visibleHints()[0].hint).toBe('Bitte bringen Sie ihr Serviceheft mit.');
+  });
+
+  it('hides cards for jobTypes with empty hint (TC-9)', () => {
+    const jobTypes: ApiJobType[] = [
+      { id: 'jt-1', name: 'A', description: '', hint: '   ', category: null, categoryName: null, iconUrl: null, operations: [] },
+      { id: 'jt-2', name: 'B', description: '', hint: 'Real hint', category: null, categoryName: null, iconUrl: null, operations: [] },
+      { id: 'jt-3', name: 'C', description: '', hint: null, category: null, categoryName: null, iconUrl: null, operations: [] }
+    ];
+    fixture.componentRef.setInput('jobTypes', jobTypes);
+    fixture.detectChanges();
+
+    const exposed = component as unknown as { visibleHints: () => { key: string }[] };
+    expect(exposed.visibleHints()).toHaveLength(1);
+    expect(exposed.visibleHints()[0].key).toBe('jt-2');
+  });
+
+  it('exposes iconUrl from jobType when present', () => {
+    const jobTypes: ApiJobType[] = [
+      { id: 'jt-1', name: 'A', description: '', hint: 'h', category: null, categoryName: null, iconUrl: '/assets/api/x.svg', operations: [] }
+    ];
+    fixture.componentRef.setInput('jobTypes', jobTypes);
+    fixture.detectChanges();
+
+    const exposed = component as unknown as { visibleHints: () => { iconUrl: string | null }[] };
+    expect(exposed.visibleHints()[0].iconUrl).toBe('/assets/api/x.svg');
+  });
+
+  it('passes null iconUrl through when API delivers no icon', () => {
+    const jobTypes: ApiJobType[] = [
+      { id: 'jt-1', name: 'A', description: '', hint: 'h', category: null, categoryName: null, iconUrl: null, operations: [] }
+    ];
+    fixture.componentRef.setInput('jobTypes', jobTypes);
+    fixture.detectChanges();
+
+    const exposed = component as unknown as { visibleHints: () => { iconUrl: string | null }[] };
+    expect(exposed.visibleHints()[0].iconUrl).toBeNull();
+  });
+
+  describe('Operations-based hints (REQ-025 b Iter. 3)', () => {
+    it('renders Operation description as hint when selected', () => {
+      fixture.componentRef.setInput('selectedServices', [{ serviceId: 'op-1', selectedOptionIds: [] }]);
+      fixture.componentRef.setInput('categories', [{ id: 'c1', name: 'Inspektion', rank: 0 }]);
+      fixture.componentRef.setInput('operations', [
+        { id: 'op-1', name: 'Inspektion', description: 'Bitte bringen Sie Serviceheft', tagIds: ['c1'], order: 1, imageId: null }
+      ]);
       fixture.detectChanges();
-
-      const exposed = component as unknown as {
-        visibleHints: () => { serviceId: string; svgIcon: string; hintKey: string }[];
-      };
+      const exposed = component as unknown as { visibleHints: () => { hint: string; iconUrl: string | null }[] };
       const hints = exposed.visibleHints();
       expect(hints).toHaveLength(1);
-      expect(hints[0].serviceId).toBe('tuv');
-      expect(hints[0].svgIcon).toBe('assets/icons/services/tuv.svg');
+      expect(hints[0].hint).toContain('Serviceheft');
+      expect(hints[0].iconUrl).toBe('assets/icons/services/inspection.svg');
     });
 
-    it('should return hints for selected inspection service', () => {
-      const services: SelectedService[] = [
-        { serviceId: 'inspection', selectedOptionIds: [] }
-      ];
-      fixture.componentRef.setInput('selectedServices', services);
+    it('uses Hol & Bringservice icon (rank 99) for that specific operation', () => {
+      fixture.componentRef.setInput('selectedServices', [{ serviceId: 'op-pickup', selectedOptionIds: [] }]);
+      fixture.componentRef.setInput('categories', [{ id: 'c1', name: 'Reparatur', rank: 5 }]);
+      fixture.componentRef.setInput('operations', [
+        { id: 'op-pickup', name: 'Hol & Bringservice', description: 'Wir holen ab.', tagIds: ['c1'], order: 99, imageId: null }
+      ]);
       fixture.detectChanges();
-
-      const exposed = component as unknown as {
-        visibleHints: () => { serviceId: string; svgIcon: string }[];
-      };
-      const hints = exposed.visibleHints();
-      expect(hints).toHaveLength(1);
-      expect(hints[0].serviceId).toBe('inspection');
-      expect(hints[0].svgIcon).toBe('assets/icons/services/inspection.svg');
+      const exposed = component as unknown as { visibleHints: () => { iconUrl: string | null }[] };
+      expect(exposed.visibleHints()[0].iconUrl).toBe('assets/icons/services/pickup-delivery.svg');
     });
 
-    it('should return hints for selected tire-change service', () => {
-      const services: SelectedService[] = [
-        { serviceId: 'tire-change', selectedOptionIds: ['stored-tires'] }
-      ];
-      fixture.componentRef.setInput('selectedServices', services);
+    it('treats operation description=null as empty string', () => {
+      fixture.componentRef.setInput('selectedServices', [{ serviceId: 'op-1', selectedOptionIds: [] }]);
+      fixture.componentRef.setInput('categories', [{ id: 'c1', name: 'X', rank: 0 }]);
+      fixture.componentRef.setInput('operations', [
+        { id: 'op-1', name: 'X', description: null, tagIds: ['c1'], order: 1, imageId: null }
+      ]);
       fixture.detectChanges();
-
-      const exposed = component as unknown as {
-        visibleHints: () => { serviceId: string; svgIcon: string }[];
-      };
-      const hints = exposed.visibleHints();
-      expect(hints).toHaveLength(1);
-      expect(hints[0].serviceId).toBe('tire-change');
-      expect(hints[0].svgIcon).toBe('assets/icons/services/tire-change.svg');
+      const exposed = component as unknown as { visibleHints: () => { hint: string }[] };
+      expect(exposed.visibleHints()[0].hint).toBe('');
     });
 
-    it('should return hints for all selected services', () => {
-      const services: SelectedService[] = [
-        { serviceId: 'tuv', selectedOptionIds: [] },
-        { serviceId: 'inspection', selectedOptionIds: [] },
-        { serviceId: 'tire-change', selectedOptionIds: ['bring-own-tires'] }
-      ];
-      fixture.componentRef.setInput('selectedServices', services);
+    it('falls back to jobTypes when operations array is empty', () => {
+      fixture.componentRef.setInput('selectedServices', []);
+      fixture.componentRef.setInput('categories', []);
+      fixture.componentRef.setInput('operations', []);
+      fixture.componentRef.setInput('jobTypes', [
+        { id: 'jt-x', name: 'X', description: '', hint: 'hint', category: null, categoryName: null, iconUrl: null, operations: [] }
+      ]);
       fixture.detectChanges();
-
-      const exposed = component as unknown as {
-        visibleHints: () => { serviceId: string }[];
-      };
-      expect(exposed.visibleHints()).toHaveLength(3);
+      const exposed = component as unknown as { visibleHints: () => { hint: string }[] };
+      expect(exposed.visibleHints()).toHaveLength(1);
+      expect(exposed.visibleHints()[0].hint).toBe('hint');
     });
 
-    it('should only show hints for selected services', () => {
-      const services: SelectedService[] = [
-        { serviceId: 'tuv', selectedOptionIds: [] }
-      ];
-      fixture.componentRef.setInput('selectedServices', services);
+    it('handles operation with no matching category (uses default rank 0 → inspection icon)', () => {
+      fixture.componentRef.setInput('selectedServices', [{ serviceId: 'op-orphan', selectedOptionIds: [] }]);
+      fixture.componentRef.setInput('categories', [{ id: 'c-other', name: 'X', rank: 5 }]);
+      fixture.componentRef.setInput('operations', [
+        { id: 'op-orphan', name: 'Y', description: '', tagIds: [], order: 1, imageId: null }
+      ]);
       fixture.detectChanges();
-
-      const exposed = component as unknown as {
-        visibleHints: () => { serviceId: string }[];
-      };
-      const hints = exposed.visibleHints();
-      expect(hints).toHaveLength(1);
-      expect(hints[0].serviceId).toBe('tuv');
+      const exposed = component as unknown as { visibleHints: () => { iconUrl: string | null }[] };
+      expect(exposed.visibleHints()[0].iconUrl).toBe('assets/icons/services/inspection.svg');
     });
   });
 });

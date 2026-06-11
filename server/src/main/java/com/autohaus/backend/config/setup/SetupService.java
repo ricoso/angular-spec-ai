@@ -46,6 +46,7 @@ public class SetupService {
         this.setupJsonPath = setupJsonPath;
     }
 
+    /** REQ-025 (Iter.3): setup.json wird beim App-Start einmal geladen. */
     @PostConstruct
     public void init() {
         String json = resolveJson();
@@ -122,18 +123,59 @@ public class SetupService {
     public String resolveGroupId(String branchId, String variant) {
         BranchSetup branch = findByBranchId(branchId);
         String effectiveVariant = variant == null || variant.isBlank() ? "default" : variant;
-        return branch.groups().stream()
+        var direct = branch.groups().stream()
             .filter(g -> g.variant().equals(effectiveVariant))
             .map(GroupEntry::groupId)
-            .findFirst()
-            .orElseThrow(() -> new VariantNotFoundException(
-                branchId,
-                effectiveVariant,
-                branch.groups().stream().map(GroupEntry::variant).toList()
-            ));
+            .findFirst();
+        if (direct.isPresent()) {
+            return direct.get();
+        }
+        // Fallback auf default: z. B. wenn tireChange angefragt wird, aber Radwechsel-Saison
+        // ausgeschaltet ist, soll die Buchung in der Default-Gruppe landen statt zu crashen.
+        var fallback = branch.groups().stream()
+            .filter(g -> "default".equals(g.variant()))
+            .map(GroupEntry::groupId)
+            .findFirst();
+        if (fallback.isPresent()) {
+            log.warn("Variant '{}' not available for branch '{}', falling back to 'default'",
+                effectiveVariant, branchId);
+            return fallback.get();
+        }
+        throw new VariantNotFoundException(
+            branchId,
+            effectiveVariant,
+            branch.groups().stream().map(GroupEntry::variant).toList()
+        );
     }
 
     public boolean isTireChangeEnabled() {
         return featureProperties.radwechselEnabled();
+    }
+
+    /**
+     * Validates that {@code groupId} is configured for the given {@code branchId}
+     * in setup.json. Used when the frontend deep-links a specific Workshop-Group:
+     * we only accept group-IDs that belong to the same branch (defense against
+     * forged URLs that target a foreign workshop).
+     *
+     * <p>If Radwechsel-Saison is disabled but a tireChange-Group is requested,
+     * this falls back to the branch's default group (analog to {@link #resolveGroupId}).
+     *
+     * @return the validated group-ID (or the default-group-ID after fallback)
+     * @throws GroupIdNotInBranchException if the group-ID is not part of the branch
+     */
+    public String validateGroupIdForBranch(String branchId, String groupId) {
+        BranchSetup branch = findByBranchId(branchId);
+        var match = branch.groups().stream()
+            .filter(g -> g.groupId().equals(groupId))
+            .findFirst();
+        if (match.isEmpty()) {
+            throw new GroupIdNotInBranchException(branchId, groupId);
+        }
+        if (TIRE_CHANGE_VARIANT.equals(match.get().variant()) && !isTireChangeEnabled()) {
+            log.warn("Radwechsel-Saison disabled — tireChange group requested for branch '{}', falling back to default", branchId);
+            return resolveGroupId(branchId, "default");
+        }
+        return groupId;
     }
 }

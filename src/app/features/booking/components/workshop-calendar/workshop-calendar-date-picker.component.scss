@@ -26,11 +26,22 @@
 
   &__input-row {
     display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
+    align-items: stretch;
+    gap: 0;
   }
 
   &__field {
     flex: 1;
+  }
+
+  &__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+
+    .icon-framed {
+      pointer-events: none;
+    }
   }
 }

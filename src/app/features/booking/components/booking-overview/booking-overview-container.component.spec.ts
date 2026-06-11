@@ -133,7 +133,7 @@ describe('BookingOverviewContainerComponent', () => {
     expect(exposed.resolvedLocationName()).toBe('');
 
     store.setLocation(MOCK_LOCATION);
-    expect(exposed.resolvedLocationName()).toBe('Autohaus München');
+    expect(exposed.resolvedLocationName()).toBe('München');
   });
 
   it('should compute resolved service labels', () => {
@@ -198,5 +198,46 @@ describe('BookingOverviewContainerComponent', () => {
     exposed.onRetry();
     expect(resetSpy).toHaveBeenCalled();
     expect(submitSpy).toHaveBeenCalled();
+  });
+
+  describe('resolvedServiceLabels — additional pathways', () => {
+    it('uses Operation name when service is an Operation', () => {
+      // simulate operations are loaded into store
+      jest.spyOn(store, 'operations').mockReturnValue([
+        { id: 'op-A', name: 'Inspektion (Operation)', description: 'desc', tagIds: ['c1'], order: 1, imageId: null }
+      ]);
+      // toggle a fake "operation" service-id
+      store.toggleService('op-A' as never);
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      expect(exposed.resolvedServiceLabels()['op-A']).toBe('Inspektion (Operation)');
+    });
+
+    it('uses jobType name when no Operation matches but jobType does', () => {
+      jest.spyOn(store, 'operations').mockReturnValue([]);
+      jest.spyOn(store, 'jobTypes').mockReturnValue([
+        { id: 'jt-1', name: 'Reparatur', operations: [{ id: 'op-r1', name: 'Lichtwechsel' }], iconUrl: null }
+      ] as never);
+      store.toggleService('jt-1' as never);
+      store.confirmServiceOptions('jt-1' as never, ['op-r1']);
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      const lbl = exposed.resolvedServiceLabels()['jt-1'];
+      expect(lbl).toContain('Reparatur');
+      expect(lbl).toContain('Lichtwechsel');
+    });
+
+    it('returns empty when no source matches', () => {
+      jest.spyOn(store, 'operations').mockReturnValue([]);
+      jest.spyOn(store, 'jobTypes').mockReturnValue([]);
+      store.toggleService('totally-unknown-id' as never);
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      expect(exposed.resolvedServiceLabels()['totally-unknown-id']).toBeUndefined();
+    });
+  });
+
+  describe('resolvedLocationName edge cases', () => {
+    it('returns empty string when no location selected', () => {
+      const exposed = component as unknown as { resolvedLocationName: () => string };
+      expect(exposed.resolvedLocationName()).toBe('');
+    });
   });
 });

@@ -87,6 +87,7 @@ describe('deepLinkGuard', () => {
     expect(apiSpy.getBranchById).toHaveBeenCalledWith('b1');
     expect(store.isDeepLinked()).toBe(true);
     expect(store.selectedBranch()).toEqual(mockBranch);
+    expect(store.deepLinkGroupId()).toBe('g1');
     expect(router.createUrlTree).toHaveBeenCalledWith(['/home/brand'], { queryParams: { groupId: 'g1', branchId: 'b1' } });
   });
 

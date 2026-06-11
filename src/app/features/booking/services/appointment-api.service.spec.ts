@@ -121,6 +121,125 @@ describe('AppointmentApiService', () => {
     expect(uniqueIds.size).toBe(ids.length);
   });
 
+  it('should forward timePreference=AM in the POST body', async () => {
+    const promise = service.getAppointments('branch-1', ['inspection'], 'audi', 'default', 'AM');
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    expect(req.request.body.timePreference).toBe('AM');
+    req.flush(mockSnapResponse);
+    await promise;
+  });
+
+  it('should forward timePreference=PM in the POST body', async () => {
+    const promise = service.getAppointments('branch-1', ['inspection'], 'audi', 'default', 'PM');
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    expect(req.request.body.timePreference).toBe('PM');
+    req.flush(mockSnapResponse);
+    await promise;
+  });
+
+  it('should omit timePreference when not passed', async () => {
+    const promise = service.getAppointments('branch-1', ['inspection']);
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    expect(req.request.body.timePreference).toBeUndefined();
+    req.flush(mockSnapResponse);
+    await promise;
+  });
+
+  it('should prefer afternoon slots when timePreference=PM', async () => {
+    const responseWithMixedSlots = {
+      data: [
+        {
+          date: '2026-04-20',
+          displayDate: '20.04.2026',
+          dayAbbreviation: 'Mo',
+          slots: [
+            { id: 'morning', time: '08:00', displayTime: '08:00 Uhr', available: true },
+            { id: 'afternoon', time: '14:00', displayTime: '14:00 Uhr', available: true },
+          ],
+        },
+      ],
+    };
+    const promise = service.getAppointments('branch-1', ['inspection'], 'audi', 'default', 'PM');
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    req.flush(responseWithMixedSlots);
+
+    const slots = await promise;
+    expect(slots[0].id).toBe('afternoon');
+    expect(slots[0].time).toBe('14:00');
+  });
+
+  it('should prefer morning slots when timePreference=AM', async () => {
+    const responseWithMixedSlots = {
+      data: [
+        {
+          date: '2026-04-20',
+          displayDate: '20.04.2026',
+          dayAbbreviation: 'Mo',
+          slots: [
+            { id: 'afternoon', time: '14:00', displayTime: '14:00 Uhr', available: true },
+            { id: 'morning', time: '08:00', displayTime: '08:00 Uhr', available: true },
+          ],
+        },
+      ],
+    };
+    const promise = service.getAppointments('branch-1', ['inspection'], 'audi', 'default', 'AM');
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    req.flush(responseWithMixedSlots);
+
+    const slots = await promise;
+    expect(slots[0].id).toBe('morning');
+    expect(slots[0].time).toBe('08:00');
+  });
+
+  it('should fall back to earliest slot when no PM slot exists (soft preference)', async () => {
+    // Day 1: morning-only → falls back to morning slot
+    // Day 2: has PM slot → uses it
+    const mixed = {
+      data: [
+        {
+          date: '2026-04-20',
+          displayDate: '20.04.2026',
+          dayAbbreviation: 'Mo',
+          slots: [{ id: 'morning-only', time: '08:00', displayTime: '08:00 Uhr', available: true }],
+        },
+        {
+          date: '2026-04-21',
+          displayDate: '21.04.2026',
+          dayAbbreviation: 'Di',
+          slots: [{ id: 'pm-slot', time: '15:00', displayTime: '15:00 Uhr', available: true }],
+        },
+      ],
+    };
+    const promise = service.getAppointments('branch-1', ['inspection'], 'audi', 'default', 'PM');
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    req.flush(mixed);
+
+    const slots = await promise;
+    expect(slots).toHaveLength(2);
+    expect(slots.find(s => s.date === '2026-04-20')?.id).toBe('morning-only');
+    expect(slots.find(s => s.date === '2026-04-21')?.id).toBe('pm-slot');
+  });
+
+  it('should still return slots when NO day has PM (soft fallback to morning)', async () => {
+    const morningOnly = {
+      data: [
+        {
+          date: '2026-04-20',
+          displayDate: '20.04.2026',
+          dayAbbreviation: 'Mo',
+          slots: [{ id: 'morning', time: '08:00', displayTime: '08:00 Uhr', available: true }],
+        },
+      ],
+    };
+    const promise = service.getAppointments('branch-1', ['inspection'], 'audi', 'default', 'PM');
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    req.flush(morningOnly);
+
+    const slots = await promise;
+    expect(slots).toHaveLength(1);
+    expect(slots[0].id).toBe('morning');
+  });
+
   it('should format displayDate as DD.MM.YYYY', async () => {
     const promise = service.getAppointments('branch-1', ['inspection']);
     const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);

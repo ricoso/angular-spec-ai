@@ -19,9 +19,9 @@ describe('PriceTileComponent', () => {
     fixture = TestBed.createComponent(PriceTileComponent);
     component = fixture.componentInstance;
 
-    fixture.componentRef.setInput('mobilityOption', 'none');
+    fixture.componentRef.setInput('rentCategoryName', null);
     fixture.componentRef.setInput('appointmentPreference', 'anytime');
-    fixture.componentRef.setInput('callbackOption', 'none');
+    fixture.componentRef.setInput('callbackOption', 'no');
     fixture.componentRef.setInput('bookingNote', '');
 
     fixture.detectChanges();
@@ -31,8 +31,11 @@ describe('PriceTileComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should have mobility option input', () => {
-    expect(component.mobilityOption()).toBe('none');
+  it('should accept rentCategoryName input', () => {
+    expect(component.rentCategoryName()).toBeNull();
+    fixture.componentRef.setInput('rentCategoryName', 'Kleinwagen');
+    fixture.detectChanges();
+    expect(component.rentCategoryName()).toBe('Kleinwagen');
   });
 
   it('should expose i18n keys', () => {
@@ -44,28 +47,16 @@ describe('PriceTileComponent', () => {
     const exposed = (c: PriceTileComponent): { mobilityOptionLabel: () => string } =>
       c as unknown as { mobilityOptionLabel: () => string };
 
-    it('should resolve label for "none"', () => {
-      fixture.componentRef.setInput('mobilityOption', 'none');
+    it('should fall back to "none" label when rentCategoryName is null', () => {
+      fixture.componentRef.setInput('rentCategoryName', null);
       fixture.detectChanges();
       expect(exposed(component).mobilityOptionLabel()).toBeTruthy();
     });
 
-    it('should resolve label for "compact-car"', () => {
-      fixture.componentRef.setInput('mobilityOption', 'compact-car');
+    it('should return category name directly when provided', () => {
+      fixture.componentRef.setInput('rentCategoryName', 'Mittelklasse');
       fixture.detectChanges();
-      expect(exposed(component).mobilityOptionLabel()).toBeTruthy();
-    });
-
-    it('should resolve label for "mid-range"', () => {
-      fixture.componentRef.setInput('mobilityOption', 'mid-range');
-      fixture.detectChanges();
-      expect(exposed(component).mobilityOptionLabel()).toBeTruthy();
-    });
-
-    it('should resolve label for "luxury"', () => {
-      fixture.componentRef.setInput('mobilityOption', 'luxury');
-      fixture.detectChanges();
-      expect(exposed(component).mobilityOptionLabel()).toBeTruthy();
+      expect(exposed(component).mobilityOptionLabel()).toBe('Mittelklasse');
     });
   });
 
@@ -97,7 +88,7 @@ describe('PriceTileComponent', () => {
       c as unknown as { callbackOptionLabel: () => string };
 
     it('should resolve label for "none"', () => {
-      fixture.componentRef.setInput('callbackOption', 'none');
+      fixture.componentRef.setInput('callbackOption', 'no');
       fixture.detectChanges();
       expect(exposed(component).callbackOptionLabel()).toBeTruthy();
     });

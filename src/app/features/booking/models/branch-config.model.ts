@@ -2,6 +2,8 @@ export interface BranchAddress {
   street: string;
   zip: string;
   city: string;
+  /** REQ-025 (c): optional, falls API ein Land mitliefert. */
+  country?: string;
 }
 
 export interface BranchConfig {
@@ -9,6 +11,8 @@ export interface BranchConfig {
   name: string;
   address: BranchAddress;
   brands: string[];
+  /** SoftNet-Group-ID der tireChange-Variante (Boxenstopp), null/undefined wenn keine konfiguriert. */
+  tireChangeGroupId?: string | null;
 }
 
 export interface BranchConfigFile {
@@ -19,19 +23,19 @@ export interface BranchConfigFile {
 /** Map brand display name to SVG filename in assets/brands/ */
 /* eslint-disable @typescript-eslint/naming-convention */
 export const BRAND_LOGO_MAP: Record<string, string> = {
-  'VW': 'volkswagen.svg',
-  'Volkswagen': 'volkswagen.svg',
-  'VW Nutzfahrzeuge': 'vw_nutzfahrzeuge.svg',
-  'VW-Nutzfahrzeuge': 'vw_nutzfahrzeuge.svg',
-  'Volkswagen Nutzfahrzeuge': 'vw_nutzfahrzeuge.svg',
-  'Volkswagen-Nutzfahrzeuge': 'vw_nutzfahrzeuge.svg',
-  'VWN': 'vw_nutzfahrzeuge.svg',
-  'Audi': 'audi.svg',
-  'SEAT': 'seat.svg',
-  'CUPRA': 'cupra.svg',
-  'ŠKODA': 'skoda.svg',
-  'Skoda': 'skoda.svg',
-  'Hyundai': 'hyundai.svg',
+  'VW': 'volkswagen.png',
+  'Volkswagen': 'volkswagen.png',
+  'VW Nutzfahrzeuge': 'vw_nutzfahrzeuge.png',
+  'VW-Nutzfahrzeuge': 'vw_nutzfahrzeuge.png',
+  'Volkswagen Nutzfahrzeuge': 'vw_nutzfahrzeuge.png',
+  'Volkswagen-Nutzfahrzeuge': 'vw_nutzfahrzeuge.png',
+  'VWN': 'vw_nutzfahrzeuge.png',
+  'Audi': 'audi.png',
+  'SEAT': 'seat.png',
+  'CUPRA': 'cupra.png',
+  'ŠKODA': 'skoda.png',
+  'Skoda': 'skoda.png',
+  'Hyundai': 'hyundai.png',
   'Porsche': 'porsche.svg',
   'Bentley': 'bentley.svg',
   'Bugatti': 'bugatti.svg',

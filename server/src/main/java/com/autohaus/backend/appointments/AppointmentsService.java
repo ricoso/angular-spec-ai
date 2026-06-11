@@ -120,6 +120,18 @@ public class AppointmentsService {
             wishlist.put("fleetType", "rentObject");
             wishlist.put("fleetCategoryid", dto.rentCategoryId());
         }
+
+        if (Boolean.TRUE.equals(dto.callbackRequested())) {
+            wishlist.put("callbackPreference", true);
+        }
+
+        // REQ-027: forward notification channel ({ SMS, SMTP }) to SoftNet.
+        if (dto.notifications() != null) {
+            ObjectNode notifications = objectMapper.createObjectNode();
+            notifications.put("SMS", Boolean.TRUE.equals(dto.notifications().SMS()));
+            notifications.put("SMTP", Boolean.TRUE.equals(dto.notifications().SMTP()));
+            snap.set("notifications", notifications);
+        }
     }
 
     private AppointmentResponseDto mapAppointmentResponse(JsonNode result, CreateAppointmentRequest dto) {

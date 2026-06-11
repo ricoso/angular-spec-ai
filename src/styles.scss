@@ -7,8 +7,8 @@
 // 2. Accessibility
 @use 'styles/accessibility';
 
-// 3. Material Overrides
-@use 'styles/material-overrides';
+// 3. Bootstrap Theme (Bootstrap CSS via CDN; Custom-Properties + Component-Klassen hier)
+@use 'styles/bootstrap-theme';
 
 // 4. Utilities
 @use 'styles/utilities';
@@ -84,7 +84,55 @@ img {
   }
 }
 
+// iframe-Embedding: Bei Deep-Link-Einbettung ist die Filiale bereits per URL-Parameter
+// gesetzt — der Zurueck-Button auf der Marken-Auswahl-Seite fuehrt zurueck zur
+// Filialauswahl, was in diesem Kontext nicht gewollt ist. Daher nur hier ausblenden.
+:root.is-embedded .brand-selection__back-button {
+  display: none;
+}
+
 // Common Utilities
 .text-center { text-align: center; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
+
+// Wizard-Nav: mobile stack (full-width), tablet+ row — gilt fuer alle Seiten-Navigationen (Back/Weiter)
+.wizard-nav,
+.booking-overview__navigation,
+.brand-selection__nav,
+.appointment-selection__nav,
+.carinformation__nav,
+.carinformation__actions,
+.notes__actions,
+.summary-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+
+  @include tablet {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  // Mobile: Buttons ueber die gesamte Breite
+  > button,
+  > a.btn {
+    width: 100%;
+
+    @include tablet {
+      width: auto;
+    }
+  }
+
+  // Auf Mobile: Continue-Button oben, Back-Button unten (primary-first Pattern)
+  > [class*='continue-button'],
+  > [class*='submit-button'] {
+    order: 1;
+    @include tablet { order: 2; }
+  }
+  > [class*='back-button'] {
+    order: 2;
+    @include tablet { order: 1; }
+  }
+}

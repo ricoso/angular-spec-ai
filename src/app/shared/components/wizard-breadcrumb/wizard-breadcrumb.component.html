@@ -8,11 +8,11 @@
         [class.wizard__step--future]="step.status === 'future'"
         [attr.aria-current]="step.status === 'active' ? 'step' : null"
       >
-        <span class="wizard__step-icon">
+        <span class="wizard__step-icon" aria-hidden="true">
           @if (step.status === 'done') {
-            <mat-icon aria-hidden="true" [style.font-size.rem]="0.875" [style.width.rem]="0.875" [style.height.rem]="0.875">check</mat-icon>
+            <i class="bi bi-check-lg"></i>
           } @else {
-            <mat-icon aria-hidden="true" [style.font-size.rem]="0.875" [style.width.rem]="0.875" [style.height.rem]="0.875">{{ step.icon }}</mat-icon>
+            <i class="bi" [class]="'bi ' + step.icon"></i>
           }
         </span>
         @if (step.status === 'done') {

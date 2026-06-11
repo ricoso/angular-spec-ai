@@ -19,115 +19,20 @@
     <!-- Spacer -->
     <div class="header__spacer"></div>
 
-    <!-- Cart Icon + Dropdown -->
-    <app-cart-icon
-      [itemCount]="cartStore.itemCount()"
-      [badgeText]="cartStore.badgeText()"
-      [matMenuTriggerFor]="cartMenu"
-      (cartClicked)="onCartOpen()"
-    />
-
-    <mat-menu #cartMenu="matMenu" class="header__cart-menu">
-      <div class="header__cart-dropdown" role="group" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-        <h3 class="header__cart-title">{{ header.cart.title | translate }}</h3>
-        @if (cartStore.hasItems()) {
-          <p class="header__cart-summary">{{ cartSummaryText() }}</p>
-
-          @if (selectedBrandName()) {
-            <div class="header__cart-row">
-              <span class="header__cart-label">{{ header.cart.brandLabel | translate }}:</span>
-              <mat-chip-set class="header__cart-chips">
-                <mat-chip class="header__cart-chip">
-                  <mat-icon matChipAvatar>directions_car</mat-icon>
-                  {{ selectedBrandName() }}
-                </mat-chip>
-              </mat-chip-set>
-            </div>
-          }
-
-          @if (selectedLocationName()) {
-            <div class="header__cart-row">
-              <span class="header__cart-label">{{ header.cart.locationLabel | translate }}:</span>
-              <mat-chip-set class="header__cart-chips">
-                <mat-chip class="header__cart-chip">
-                  <mat-icon matChipAvatar>location_on</mat-icon>
-                  {{ selectedLocationName() }}
-                </mat-chip>
-              </mat-chip-set>
-            </div>
-          }
-
-          <div class="header__cart-row">
-            <span class="header__cart-label">{{ header.cart.servicesLabel | translate }}:</span>
-            <mat-chip-set class="header__cart-chips">
-              @for (chip of cartServiceChips(); track chip.title) {
-                <mat-chip class="header__cart-chip">
-                  <img matChipAvatar [src]="chip.svgIcon" [alt]="chip.title" class="header__cart-chip-icon">
-                  {{ chip.title }}
-                  @if (chip.optionLabels.length > 0) {
-                    <span class="header__cart-variant">({{ chip.optionLabels.join(', ') }})</span>
-                  }
-                </mat-chip>
-              }
-            </mat-chip-set>
-          </div>
-
-          @if (selectedAppointmentText()) {
-            <div class="header__cart-row">
-              <span class="header__cart-label">{{ header.cart.appointmentLabel | translate }}:</span>
-              <mat-chip-set class="header__cart-chips">
-                <mat-chip class="header__cart-chip">
-                  <mat-icon matChipAvatar>event</mat-icon>
-                  {{ selectedAppointmentText() }}
-                </mat-chip>
-              </mat-chip-set>
-            </div>
-          }
-        } @else {
-          <p class="header__cart-empty">{{ header.cart.empty | translate }}</p>
-        }
-      </div>
-    </mat-menu>
-
-    <!-- Accessibility Button -->
-    <button
-      mat-icon-button
-      class="header__a11y-button"
-      [matMenuTriggerFor]="accessibilityMenu"
-      [attr.aria-label]="header.accessibility.buttonLabel | translate">
-      <span class="icon-framed icon-framed--sm">
-        <mat-icon aria-hidden="true">accessibility_new</mat-icon>
-      </span>
-    </button>
+    <!--
+      Cart-Icon + Accessibility-Menu sind in <app-floating-overlay /> ausgelagert
+      (FABs unten links/rechts). Hier nur noch der Close-Button im iframe-Modus.
+    -->
 
     <!-- Close Button (only visible when embedded in iframe) -->
     @if (isEmbedded()) {
       <button
-        mat-icon-button
-        class="header__close-button"
         type="button"
+        class="btn btn-light header__close-button"
         [attr.aria-label]="header.close.buttonLabel | translate"
         (click)="onClose()">
-        <span class="icon-framed icon-framed--sm">
-          <mat-icon aria-hidden="true">close</mat-icon>
-        </span>
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
       </button>
     }
-
-    <!-- Accessibility Menu -->
-    <mat-menu #accessibilityMenu="matMenu" class="header__a11y-menu">
-      <div role="group" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-        <app-accessibility-menu
-          [fontSize]="accessibilityStore.fontSize()"
-          [highContrast]="accessibilityStore.highContrast()"
-          [reducedMotion]="accessibilityStore.reducedMotion()"
-          [currentLanguage]="currentLanguage()"
-          (fontSizeChanged)="onFontSizeChange($event)"
-          (highContrastChanged)="onHighContrastChange($event)"
-          (reducedMotionChanged)="onReducedMotionChange($event)"
-          (languageChanged)="onLanguageChange($event)"
-        />
-      </div>
-    </mat-menu>
   </div>
 </header>

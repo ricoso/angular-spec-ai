@@ -32,7 +32,10 @@ class SnapsServiceTest {
     @BeforeEach
     void setUp() {
         when(setupService.resolveGroupId(anyString(), any())).thenReturn("mock-group-id");
-        OperationIdMapper mapper = new OperationIdMapper();
+        // Operations API returns empty list — mapper passes through hex IDs as-is,
+        // drops frontend keys. Tests below use hex IDs in SnapRequestDto.
+        when(softnetApi.getOperations(anyString())).thenReturn(List.of());
+        OperationIdMapper mapper = new OperationIdMapper(softnetApi);
         service = new SnapsService(softnetApi, mapper, snapCache, setupService);
     }
 
@@ -54,7 +57,7 @@ class SnapsServiceTest {
 
         when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of(snap1, snap2, snap3));
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", "BMW", null, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", "BMW", null, null, null, null);
 
         List<SnapResponseDto> result = service.getSnaps(request);
 
@@ -78,7 +81,7 @@ class SnapsServiceTest {
     void getSnaps_dateRangeMode() {
         when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of());
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("oil-change"), "2026-04-15", "2026-04-29", "date-range", null, null, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("oil-change"), "2026-04-15", "2026-04-29", "date-range", null, null, null, null, null);
         List<SnapResponseDto> result = service.getSnaps(request);
         assertTrue(result.isEmpty());
     }
@@ -87,7 +90,7 @@ class SnapsServiceTest {
     void getSnaps_withTimePreferenceAndReplacementCar() {
         when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of());
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", "BMW", "AM", true, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", "BMW", "AM", true, null, null);
         List<SnapResponseDto> result = service.getSnaps(request);
         assertTrue(result.isEmpty());
         verify(softnetApi).getSnaps(any(), eq("mock-group-id"));
@@ -101,7 +104,7 @@ class SnapsServiceTest {
 
         when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of(snap));
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("tuv"), "2026-04-15", "2026-04-29", "next-available", null, null, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("tuv"), "2026-04-15", "2026-04-29", "next-available", null, null, null, null, null);
         List<SnapResponseDto> result = service.getSnaps(request);
         assertTrue(result.isEmpty());
     }
@@ -115,7 +118,7 @@ class SnapsServiceTest {
 
         when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of(snap));
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", null, null, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", null, null, null, null, null);
         List<SnapResponseDto> result = service.getSnaps(request);
 
         assertEquals(1, result.size());

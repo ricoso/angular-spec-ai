@@ -12,6 +12,11 @@ export const routes: Routes = [
       .then(m => m.bookingRoutes)
   },
   {
+    path: 'app-error',
+    loadChildren: () => import('./features/error-fallback/error-fallback.routes')
+      .then(m => m.errorFallbackRoutes)
+  },
+  {
     path: '**',
     redirectTo: 'home'
   }

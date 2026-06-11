@@ -62,7 +62,7 @@ WORKDIR /app
 # Fat JAR
 COPY --from=backend-build /workspace/server/build/libs/*.jar /app/app.jar
 
-# Angular dist next to the jar (WebConfig probes ./dist/angular-21-project/browser)
+# Angular dist next to the jar (WebConfig probes ./dist/terminbuchungsapp/browser)
 COPY --from=backend-build /workspace/dist/ /app/dist/
 
 # Writable config dir for fingerprint Secret mount.

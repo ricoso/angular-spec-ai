@@ -137,7 +137,7 @@ public class SoftnetApiClient {
         return parseJson(body);
     }
 
-    private List<JsonNode> getList(String endpoint, String groupId) {
+    public List<JsonNode> getList(String endpoint, String groupId) {
         String body = executeRequest("GET", endpoint, null, groupId);
         return parseJsonList(body);
     }

@@ -44,9 +44,9 @@ public class WebConfig implements WebMvcConfigurer {
 
         // Try to find the Angular dist folder
         String basePath = System.getProperty("user.dir");
-        Path distDir = Path.of(basePath, "..", "dist", "angular-21-project", "browser");
+        Path distDir = Path.of(basePath, "..", "dist", "terminbuchungsapp", "browser");
         if (!Files.exists(distDir)) {
-            distDir = Path.of(basePath, "dist", "angular-21-project", "browser");
+            distDir = Path.of(basePath, "dist", "terminbuchungsapp", "browser");
         }
         this.distPath = distDir.toAbsolutePath().normalize().toString();
 
@@ -94,8 +94,27 @@ public class WebConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/**")
             .addResourceLocations("file:" + this.distPath + "/")
+            .setCachePeriod(0)  // REQ-025: HTML/SPA-Fallback ohne Browser-Cache (sonst alter Bundle-Hash)
             .resourceChain(true)
             .addResolver(new SpaResourceResolver(this.distPath, this.indexHtmlTemplate));
+    }
+
+    /** REQ-025: HTML-Responses dürfen NICHT gecacht werden. JS-Bundles (mit Hash) dürfen forever-cached. */
+    @Bean
+    public org.springframework.boot.web.servlet.FilterRegistrationBean<jakarta.servlet.Filter> noCacheHtmlFilter() {
+        jakarta.servlet.Filter filter = (req, res, chain) -> {
+            chain.doFilter(req, res);
+            jakarta.servlet.http.HttpServletResponse httpRes = (jakarta.servlet.http.HttpServletResponse) res;
+            String ct = httpRes.getContentType();
+            if (ct != null && ct.startsWith("text/html")) {
+                httpRes.setHeader("Cache-Control", "no-store, must-revalidate");
+                httpRes.setHeader("Pragma", "no-cache");
+            }
+        };
+        org.springframework.boot.web.servlet.FilterRegistrationBean<jakarta.servlet.Filter> reg = new org.springframework.boot.web.servlet.FilterRegistrationBean<>(filter);
+        reg.addUrlPatterns("/*");
+        reg.setOrder(Integer.MIN_VALUE + 1000);
+        return reg;
     }
 
     /**
@@ -104,12 +123,27 @@ public class WebConfig implements WebMvcConfigurer {
      */
     static class SpaResourceResolver extends PathResourceResolver {
         private final String distPath;
-        private final String indexHtmlTemplate;
+        private final String fallbackTemplate;
         private final SecureRandom secureRandom = new SecureRandom();
 
         SpaResourceResolver(String distPath, String indexHtmlTemplate) {
             this.distPath = distPath;
-            this.indexHtmlTemplate = indexHtmlTemplate;
+            this.fallbackTemplate = indexHtmlTemplate;
+        }
+
+        /**
+         * REQ-025: Liest index.html bei JEDER Anfrage frisch von Disk — sonst zeigt
+         * der Backend nach `npm run build` weiterhin den alten Bundle-Hash und der
+         * Browser bekommt 500/404 für nicht mehr existierende JS-Chunks.
+         */
+        private String readCurrentIndexHtml() {
+            try {
+                java.nio.file.Path p = java.nio.file.Path.of(distPath, "index.html");
+                if (java.nio.file.Files.exists(p)) {
+                    return java.nio.file.Files.readString(p);
+                }
+            } catch (IOException ignored) { /* fallback unten */ }
+            return fallbackTemplate;
         }
 
         @Override
@@ -119,16 +153,44 @@ public class WebConfig implements WebMvcConfigurer {
                 return resource;
             }
 
-            // SPA fallback: return index.html with CSP nonce
-            if (indexHtmlTemplate != null && !resourcePath.startsWith("api/")) {
-                byte[] nonceBytes = new byte[16];
-                secureRandom.nextBytes(nonceBytes);
-                String nonce = Base64.getEncoder().encodeToString(nonceBytes);
-                String html = indexHtmlTemplate.replace("<app-root>", "<app-root ngCspNonce=\"" + nonce + "\">");
-                return new InMemoryResource(html);
+            // SPA fallback: nur für Pfade OHNE Datei-Extension (= echte Angular-Routen).
+            // Datei-Anfragen (.js/.css/.svg/...) die nicht existieren → 404,
+            // sonst bekäme der Browser HTML mit falschem MIME-Type oder einen 500.
+            if (resourcePath.startsWith("api/")) {
+                return new NotFoundResource(resourcePath);
+            }
+            String lastSegment = resourcePath.substring(resourcePath.lastIndexOf('/') + 1);
+            if (lastSegment.contains(".")) {
+                return new NotFoundResource(resourcePath);
             }
 
-            return null;
+            String template = readCurrentIndexHtml();
+            if (template == null) {
+                return new NotFoundResource(resourcePath);
+            }
+            byte[] nonceBytes = new byte[16];
+            secureRandom.nextBytes(nonceBytes);
+            String nonce = Base64.getEncoder().encodeToString(nonceBytes);
+            String html = template.replace("<app-root>", "<app-root ngCspNonce=\"" + nonce + "\">");
+            return new InMemoryResource(html);
+        }
+    }
+
+    /** Sentinel-Resource — `exists()` false → Spring liefert 404. */
+    static class NotFoundResource implements Resource {
+        private final String path;
+        NotFoundResource(String path) { this.path = path; }
+        @Override public boolean exists() { return false; }
+        @Override public java.net.URL getURL() { return null; }
+        @Override public java.net.URI getURI() { return null; }
+        @Override public File getFile() { return null; }
+        @Override public long contentLength() { return 0; }
+        @Override public long lastModified() { return 0; }
+        @Override public Resource createRelative(String relativePath) { return null; }
+        @Override public String getFilename() { return path; }
+        @Override public String getDescription() { return "Not found: " + path; }
+        @Override public java.io.InputStream getInputStream() throws IOException {
+            throw new java.io.FileNotFoundException(path);
         }
     }
 

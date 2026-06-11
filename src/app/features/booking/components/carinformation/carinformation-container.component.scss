@@ -5,99 +5,43 @@
   margin: 0 auto;
   padding: var(--spacing-xl) var(--spacing-md);
 
-  &__title {
+  > .page-title {
     font-size: var(--font-size-2xl);
+    font-weight: 700;
     line-height: var(--line-height-tight);
     color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-sm);
-    text-align: center;
-  }
-
-  &__subtitle {
-    font-size: var(--font-size-md);
-    line-height: var(--line-height-normal);
-    color: var(--color-text-secondary);
     margin: 0 0 var(--spacing-xl);
     text-align: center;
-  }
-
-  &__returning-banner {
-    background-color: var(--color-background-surface);
-    border: 0.0625em solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-md) var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-
-    @include tablet {
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-    }
-  }
-
-  &__returning-content {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-md);
-  }
-
-  &__returning-text {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-  }
-
-  &__returning-title {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-primary);
-    font-weight: 500;
-  }
-
-  &__returning-description {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
-    line-height: var(--line-height-normal);
-    margin: 0;
-  }
-
-  &__returning-button {
-    min-height: var(--touch-target-min);
-    white-space: nowrap;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-
-    &:focus-visible {
-      outline: 0.125em solid var(--color-focus-ring);
-      outline-offset: 0.125em;
-    }
   }
 
   &__form {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xl);
+    gap: var(--spacing-lg);
+  }
+
+  &__card {
+    background: var(--color-background-surface);
   }
 
   &__privacy {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
+    padding-left: 1.75em;
   }
 
-  &__privacy-checkbox {
+  &__privacy-label {
     line-height: var(--line-height-normal);
+    cursor: pointer;
   }
 
-  &__privacy-error {
-    font-size: var(--font-size-xs);
-    color: var(--color-error);
-    margin: 0;
-    padding-left: 2.5em;
+  &__privacy-link {
+    color: var(--color-primary);
+    text-decoration: underline;
+
+    &:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+      border-radius: var(--radius-sm);
+    }
   }
 
   &__required-hint {
@@ -121,9 +65,9 @@
   &__back-button,
   &__continue-button {
     min-height: var(--touch-target-min);
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: var(--spacing-xs);
+    justify-content: center;
 
     &:focus-visible {
       outline: 0.125em solid var(--color-focus-ring);
@@ -144,6 +88,16 @@
 
     @include tablet {
       order: 2;
+    }
+  }
+}
+
+@media (max-width: 47.9375em) {
+  .carinformation {
+    padding: var(--spacing-lg) var(--spacing-sm);
+
+    > .page-title {
+      font-size: var(--font-size-xl);
     }
   }
 }

@@ -26,20 +26,21 @@
         </p>
       } @else if (isLoading()) {
         <div class="workshop-calendar__loading" role="status" aria-live="polite">
-          <mat-spinner diameter="48" />
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">{{ booking.api.loading | translate }}</span>
+          </div>
           <p class="workshop-calendar__loading-text">{{ booking.api.loading | translate }}</p>
         </div>
       } @else if (error()) {
         <div class="workshop-calendar__error" role="alert" aria-live="assertive">
-          <mat-icon class="workshop-calendar__error-icon" aria-hidden="true">error_outline</mat-icon>
+          <i class="bi bi-exclamation-circle workshop-calendar__error-icon" aria-hidden="true"></i>
           <h2 class="workshop-calendar__error-title">{{ booking.api.errorTitle | translate }}</h2>
           <p class="workshop-calendar__error-message">{{ booking.api.errorUnknown | translate }}</p>
           <button
-            mat-flat-button
-            color="primary"
-            class="workshop-calendar__retry-button"
+            type="button"
+            class="btn btn-primary workshop-calendar__retry-button"
             (click)="onRetry()">
-            <mat-icon aria-hidden="true">refresh</mat-icon>
+            <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>
             {{ booking.api.retryButton | translate }}
           </button>
         </div>
@@ -65,27 +66,24 @@
   <!-- Navigation Bar -->
   <nav class="wizard-nav" [attr.aria-label]="booking.workshopCalendar.navAriaLabel | translate">
     <button
-      mat-flat-button
-      class="wizard-nav__back-button"
       type="button"
+      class="btn btn-outline-secondary wizard-nav__back-button"
       [attr.aria-label]="booking.workshopCalendar.backButton | translate"
       (click)="onBack()"
     >
-      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
       {{ booking.workshopCalendar.backButton | translate }}
     </button>
 
     <button
-      mat-flat-button
-      color="primary"
-      class="wizard-nav__continue-button"
       type="button"
+      class="btn btn-primary wizard-nav__continue-button"
       [disabled]="!hasAppointmentSelected()"
       [attr.aria-label]="booking.workshopCalendar.continueButton | translate"
       (click)="onContinue()"
     >
       {{ booking.workshopCalendar.continueButton | translate }}
-      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
     </button>
   </nav>
 

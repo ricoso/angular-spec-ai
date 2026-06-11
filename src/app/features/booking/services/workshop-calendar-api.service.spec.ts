@@ -68,13 +68,87 @@ describe('WorkshopCalendarApiService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should return exactly 3 workshop calendar days', async () => {
+  it('should return exactly 2 days: selected + next business day, with all slots', async () => {
     const promise = service.getWorkshopCalendarDays('2026-03-02', 'branch-1', ['inspection']);
     const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
     req.flush(mockSnapResponse);
 
     const days = await promise;
-    expect(days).toHaveLength(3);
+    expect(days).toHaveLength(2);
+    expect(days[0].date).toBe('2026-03-02'); // Montag
+    expect(days[1].date).toBe('2026-03-03'); // Dienstag (naechster Business-Tag)
+  });
+
+  it('should skip weekend when computing next business day (Fr → Mo)', async () => {
+    const fridayResponse = {
+      data: [
+        { date: '2026-03-06', displayDate: '06.03.2026', dayAbbreviation: 'Fr',
+          slots: [{ id: 'fri', time: '10:00', displayTime: '10:00 Uhr', available: true }] },
+        { date: '2026-03-07', displayDate: '07.03.2026', dayAbbreviation: 'Sa',
+          slots: [{ id: 'sat', time: '10:00', displayTime: '10:00 Uhr', available: true }] },
+        { date: '2026-03-08', displayDate: '08.03.2026', dayAbbreviation: 'So',
+          slots: [{ id: 'sun', time: '10:00', displayTime: '10:00 Uhr', available: true }] },
+        { date: '2026-03-09', displayDate: '09.03.2026', dayAbbreviation: 'Mo',
+          slots: [{ id: 'mon', time: '10:00', displayTime: '10:00 Uhr', available: true }] },
+      ],
+    };
+    const promise = service.getWorkshopCalendarDays('2026-03-06', 'branch-1', ['inspection']);
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    req.flush(fridayResponse);
+
+    const days = await promise;
+    expect(days).toHaveLength(2);
+    expect(days[0].date).toBe('2026-03-06'); // Freitag
+    expect(days[1].date).toBe('2026-03-09'); // Montag (Sa/So uebersprungen)
+  });
+
+  it('should return all slots per day (no slot limit)', async () => {
+    const manySlots = {
+      data: [
+        { date: '2026-03-02', displayDate: '02.03.2026', dayAbbreviation: 'Mo',
+          slots: Array.from({ length: 15 }, (_, i) => ({
+            id: `s${i}`, time: `${String(7 + i).padStart(2, '0')}:00`, displayTime: `${7 + i}:00 Uhr`, available: true,
+          })),
+        },
+      ],
+    };
+    const promise = service.getWorkshopCalendarDays('2026-03-02', 'branch-1', ['inspection']);
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    req.flush(manySlots);
+
+    const days = await promise;
+    expect(days).toHaveLength(1);
+    expect(days[0].slots).toHaveLength(15);
+  });
+
+  it('should NOT send timePreference to backend (calendar ignores AM/PM filter)', async () => {
+    const promise = service.getWorkshopCalendarDays('2026-03-02', 'branch-1', ['inspection']);
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    expect(req.request.body.timePreference).toBeUndefined();
+    expect(req.request.body.mode).toBe('next-available');
+    req.flush(mockSnapResponse);
+    await promise;
+  });
+
+  it('should filter out days BEFORE the selected date', async () => {
+    const responseWithPastDays = {
+      data: [
+        { date: '2026-03-01', displayDate: '01.03.2026', dayAbbreviation: 'So',
+          slots: [{ id: 'past', time: '10:00', displayTime: '10:00 Uhr', available: true }] },
+        { date: '2026-03-02', displayDate: '02.03.2026', dayAbbreviation: 'Mo',
+          slots: [{ id: 'today', time: '10:00', displayTime: '10:00 Uhr', available: true }] },
+        { date: '2026-03-03', displayDate: '03.03.2026', dayAbbreviation: 'Di',
+          slots: [{ id: 'tomorrow', time: '10:00', displayTime: '10:00 Uhr', available: true }] },
+      ],
+    };
+    const promise = service.getWorkshopCalendarDays('2026-03-02', 'branch-1', ['inspection']);
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    req.flush(responseWithPastDays);
+
+    const days = await promise;
+    expect(days.some(d => d.date === '2026-03-01')).toBe(false);
+    expect(days.some(d => d.date === '2026-03-02')).toBe(true);
+    expect(days.some(d => d.date === '2026-03-03')).toBe(true);
   });
 
   it('should return days with all required fields', async () => {
@@ -161,12 +235,12 @@ describe('WorkshopCalendarApiService', () => {
     expect(uniqueIds.size).toBe(allIds.length);
   });
 
-  it('should send POST request with date-range mode', async () => {
+  it('should send POST request with next-available mode (more slots than date-range)', async () => {
     const promise = service.getWorkshopCalendarDays('2026-03-02', 'branch-1', ['inspection']);
     const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
 
     expect(req.request.method).toBe('POST');
-    expect(req.request.body.mode).toBe('date-range');
+    expect(req.request.body.mode).toBe('next-available');
     expect(req.request.body.fromDate).toBe('2026-03-02');
 
     req.flush(mockSnapResponse);

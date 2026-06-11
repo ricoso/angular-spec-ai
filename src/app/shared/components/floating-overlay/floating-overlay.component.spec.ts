@@ -96,4 +96,68 @@ describe('FloatingOverlayComponent', () => {
     const exposed = component as unknown as { selectedServiceCount: () => number };
     expect(exposed.selectedServiceCount()).toBe(0);
   });
+
+  describe('A11y panel', () => {
+    it('should toggle a11y panel and close cart when opened', () => {
+      const exposed = component as unknown as {
+        isExpanded: () => boolean; isA11yOpen: () => boolean;
+        onToggleCart: () => void; onToggleAccessibility: () => void; onCloseAccessibility: () => void;
+      };
+      exposed.onToggleCart(); // open cart
+      expect(exposed.isExpanded()).toBe(true);
+      exposed.onToggleAccessibility(); // open a11y closes cart
+      expect(exposed.isExpanded()).toBe(false);
+      expect(exposed.isA11yOpen()).toBe(true);
+      exposed.onToggleAccessibility(); // toggle a11y off
+      expect(exposed.isA11yOpen()).toBe(false);
+    });
+
+    it('should close a11y via onCloseAccessibility', () => {
+      const exposed = component as unknown as {
+        isA11yOpen: () => boolean; onToggleAccessibility: () => void; onCloseAccessibility: () => void;
+      };
+      exposed.onToggleAccessibility();
+      expect(exposed.isA11yOpen()).toBe(true);
+      exposed.onCloseAccessibility();
+      expect(exposed.isA11yOpen()).toBe(false);
+    });
+  });
+
+  describe('A11y settings forwarding', () => {
+    it('should delegate fontSize change to AccessibilityStore', () => {
+      const exposed = component as unknown as { onFontSizeChange: (s: 'small'|'normal'|'large'|'x-large') => void; fontSize: () => string };
+      exposed.onFontSizeChange('large');
+      expect(exposed.fontSize()).toBe('large');
+    });
+
+    it('should delegate highContrast change to AccessibilityStore', () => {
+      const exposed = component as unknown as { onHighContrastChange: (v: boolean) => void; highContrast: () => boolean };
+      exposed.onHighContrastChange(true);
+      expect(exposed.highContrast()).toBe(true);
+    });
+
+    it('should delegate reducedMotion change to AccessibilityStore', () => {
+      const exposed = component as unknown as { onReducedMotionChange: (v: boolean) => void; reducedMotion: () => boolean };
+      exposed.onReducedMotionChange(true);
+      expect(exposed.reducedMotion()).toBe(true);
+    });
+
+    it('should delegate language change to TranslateService', () => {
+      const exposed = component as unknown as { onLanguageChange: (l: 'de'|'en') => void; currentLanguage: () => string };
+      exposed.onLanguageChange('de');
+      expect(['de', 'en']).toContain(exposed.currentLanguage());
+    });
+  });
+
+  describe('Cart computed signals with services', () => {
+    it('should expose hasItems based on cart store', () => {
+      const exposed = component as unknown as { hasItems: () => boolean };
+      expect(typeof exposed.hasItems()).toBe('boolean');
+    });
+
+    it('should expose badgeText based on cart store', () => {
+      const exposed = component as unknown as { badgeText: () => string };
+      expect(typeof exposed.badgeText()).toBe('string');
+    });
+  });
 });

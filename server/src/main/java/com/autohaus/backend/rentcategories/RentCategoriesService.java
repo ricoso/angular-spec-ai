@@ -34,9 +34,35 @@ public class RentCategoriesService {
             node.path("groupid").asText(),
             node.path("name").asText(),
             node.path("description").asText(""),
+            extractPrice(node),
+            nonBlankOrNull(node.path("currency").asText("")),
+            nonBlankOrNull(node.path("priceUnit").asText("")),
             toStringList(node.path("brand")),
             toStringList(node.path("branches"))
         );
+    }
+
+    private java.math.BigDecimal extractPrice(JsonNode node) {
+        JsonNode priceNode = node.path("price");
+        if (priceNode.isMissingNode() || priceNode.isNull()) {
+            return null;
+        }
+        if (priceNode.isNumber()) {
+            return priceNode.decimalValue();
+        }
+        String text = priceNode.asText("").trim();
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            return new java.math.BigDecimal(text.replace(",", "."));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String nonBlankOrNull(String s) {
+        return (s == null || s.isBlank()) ? null : s;
     }
 
     private List<String> toStringList(JsonNode node) {

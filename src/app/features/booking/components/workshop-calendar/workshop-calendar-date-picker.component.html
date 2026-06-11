@@ -7,23 +7,28 @@
     {{ booking.workshopCalendar.desiredDateLabel | translate }}
   </label>
 
-  <div class="date-picker-card__input-row">
-    <span class="icon-framed icon-framed--sm" aria-hidden="true">
-      <mat-icon>calendar_today</mat-icon>
-    </span>
-
-    <mat-form-field class="date-picker-card__field" appearance="outline">
-      <input
-        matInput
-        id="workshop-date-input"
-        [matDatepicker]="picker"
-        [min]="today"
-        [attr.aria-label]="booking.workshopCalendar.dateInputAriaLabel | translate"
-        [placeholder]="booking.workshopCalendar.datePlaceholder | translate"
-        (dateChange)="onDateChange($event.value)"
-      />
-      <mat-datepicker-toggle matIconSuffix [for]="picker" />
-      <mat-datepicker #picker />
-    </mat-form-field>
+  <div class="date-picker-card__input-row input-group">
+    <input
+      type="text"
+      class="form-control date-picker-card__field"
+      id="workshop-date-input"
+      ngbDatepicker
+      #dp="ngbDatepicker"
+      [minDate]="minDate"
+      [attr.aria-label]="booking.workshopCalendar.dateInputAriaLabel | translate"
+      [placeholder]="booking.workshopCalendar.datePlaceholder | translate"
+      (dateSelect)="onNgbDateSelect($event)"
+      readonly
+    />
+    <button
+      type="button"
+      class="btn btn-outline-secondary date-picker-card__toggle"
+      [attr.aria-label]="booking.workshopCalendar.dateInputAriaLabel | translate"
+      (click)="dp.toggle()"
+    >
+      <span class="icon-framed icon-framed--sm" aria-hidden="true">
+        <i class="bi bi-calendar"></i>
+      </span>
+    </button>
   </div>
 </div>

@@ -8,7 +8,7 @@ import { AppointmentApiService } from '../services/appointment-api.service';
 import { BookingApiService } from '../services/booking-api.service';
 import { RentCategoryApiService } from '../services/rent-category-api.service';
 
-import { BookingStore } from './booking.store';
+import { BookingStore, mapAppointmentPreferenceToSoftnet } from './booking.store';
 
 describe('BookingStore', () => {
   let store: InstanceType<typeof BookingStore>;
@@ -325,42 +325,49 @@ describe('BookingStore', () => {
     });
 
     it('should have default computed values initially', () => {
-      expect(store.selectedMobilityOption()).toBe('none');
       expect(store.selectedAppointmentPreference()).toBe('anytime');
-      expect(store.selectedCallbackOption()).toBe('none');
+      expect(store.selectedCallbackOption()).toBe('no');
+      expect(store.callbackRequested()).toBe(false);
+      expect(store.selectedNotificationChannel()).toBe('email');
     });
 
     it('should set notesExtras', () => {
-      const extras = { mobilityOption: 'mid-range' as const, appointmentPreference: 'morning' as const, callbackOption: 'yes' as const };
+      const extras = {
+        appointmentPreference: 'morning' as const,
+        callbackOption: 'yes' as const,
+        notificationChannel: 'email' as const
+      };
       store.setNotesExtras(extras);
       expect(store.notesExtras()).toEqual(extras);
     });
 
     it('should update hasNotesExtras to true after set', () => {
-      store.setNotesExtras({ mobilityOption: 'none', appointmentPreference: 'anytime', callbackOption: 'none' });
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no', notificationChannel: 'email' });
       expect(store.hasNotesExtras()).toBe(true);
     });
 
     it('should update computed signals after set', () => {
-      store.setNotesExtras({ mobilityOption: 'luxury', appointmentPreference: 'afternoon', callbackOption: 'yes' });
-      expect(store.selectedMobilityOption()).toBe('luxury');
+      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes', notificationChannel: 'sms' });
       expect(store.selectedAppointmentPreference()).toBe('afternoon');
       expect(store.selectedCallbackOption()).toBe('yes');
+      expect(store.callbackRequested()).toBe(true);
+      expect(store.selectedNotificationChannel()).toBe('sms');
     });
 
     it('should clear notesExtras', () => {
-      store.setNotesExtras({ mobilityOption: 'compact-car', appointmentPreference: 'morning', callbackOption: 'yes' });
+      store.setNotesExtras({ appointmentPreference: 'morning', callbackOption: 'yes', notificationChannel: 'email' });
       store.clearNotesExtras();
       expect(store.notesExtras()).toBeNull();
       expect(store.hasNotesExtras()).toBe(false);
     });
 
     it('should reset computed signals after clear', () => {
-      store.setNotesExtras({ mobilityOption: 'luxury', appointmentPreference: 'afternoon', callbackOption: 'yes' });
+      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes', notificationChannel: 'sms' });
       store.clearNotesExtras();
-      expect(store.selectedMobilityOption()).toBe('none');
       expect(store.selectedAppointmentPreference()).toBe('anytime');
-      expect(store.selectedCallbackOption()).toBe('none');
+      expect(store.selectedCallbackOption()).toBe('no');
+      expect(store.callbackRequested()).toBe(false);
+      expect(store.selectedNotificationChannel()).toBe('email');
     });
   });
 
@@ -383,6 +390,171 @@ describe('BookingStore', () => {
       store.resetBookingSubmission();
       expect(store.hasBookingError()).toBe(false);
       expect(store.hasBookingSubmitted()).toBe(false);
+    });
+  });
+
+  describe('selectedServiceLabels', () => {
+    it('returns empty list when no services are selected', () => {
+      expect(store.selectedServiceLabels()).toEqual([]);
+    });
+
+    it('returns each selected sub-option as a separate label', () => {
+      store.confirmServiceOptions('inspection', ['inspection', 'oil-change', 'brake-check']);
+      const labels = store.selectedServiceLabels();
+      expect(labels).toHaveLength(3);
+      expect(labels).toContain('booking.services.inspection.options.inspection');
+      expect(labels).toContain('booking.services.inspection.options.oilChange');
+      expect(labels).toContain('booking.services.inspection.options.brakeCheck');
+    });
+
+    it('uses the service title when no sub-options are selected', () => {
+      store.toggleService('brake-fluid'); // keine options
+      const labels = store.selectedServiceLabels();
+      expect(labels).toHaveLength(1);
+      expect(labels[0]).toBe('booking.services.brakeFluid.title');
+    });
+  });
+
+  describe('mapAppointmentPreferenceToSoftnet', () => {
+    it('maps morning to AM', () => {
+      expect(mapAppointmentPreferenceToSoftnet('morning')).toBe('AM');
+    });
+
+    it('maps afternoon to PM', () => {
+      expect(mapAppointmentPreferenceToSoftnet('afternoon')).toBe('PM');
+    });
+
+    it('maps anytime to undefined (filter omitted)', () => {
+      expect(mapAppointmentPreferenceToSoftnet('anytime')).toBeUndefined();
+    });
+  });
+
+  describe('selectedRentCategoryName', () => {
+    it('returns null when no rent category is selected', () => {
+      expect(store.selectedRentCategoryName()).toBeNull();
+    });
+  });
+
+  describe('callbackRequested computed', () => {
+    it('is false initially', () => {
+      expect(store.callbackRequested()).toBe(false);
+    });
+
+    it('is true when callbackOption is yes', () => {
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'yes', notificationChannel: 'email' });
+      expect(store.callbackRequested()).toBe(true);
+    });
+
+    it('is false when callbackOption is none', () => {
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no', notificationChannel: 'email' });
+      expect(store.callbackRequested()).toBe(false);
+    });
+  });
+
+  describe('selectedNotificationChannel (REQ-027)', () => {
+    it('defaults to "email" when no extras are set', () => {
+      expect(store.selectedNotificationChannel()).toBe('email');
+    });
+
+    it('reflects the configured channel after setNotesExtras', () => {
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no', notificationChannel: 'sms' });
+      expect(store.selectedNotificationChannel()).toBe('sms');
+    });
+
+    it('falls back to "email" after clearNotesExtras', () => {
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no', notificationChannel: 'sms' });
+      store.clearNotesExtras();
+      expect(store.selectedNotificationChannel()).toBe('email');
+    });
+  });
+
+  describe('REQ-025 Tag/Operation Loaders', () => {
+    it('loadJobTypesForBranch sets jobTypes on success', async () => {
+      const jts = [{ id: 'jt1', name: 'Test', operations: [] }];
+      apiSpy.getJobTypesByBranch = jest.fn().mockResolvedValue(jts);
+      store.loadJobTypesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.jobTypes()).toEqual(jts);
+    });
+
+    it('loadJobTypesForBranch handles Error rejection', async () => {
+      apiSpy.getJobTypesByBranch = jest.fn().mockRejectedValue(new Error('boom'));
+      store.loadJobTypesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBe('boom');
+    });
+
+    it('loadJobTypesForBranch handles non-Error rejection', async () => {
+      apiSpy.getJobTypesByBranch = jest.fn().mockRejectedValue('string-error');
+      store.loadJobTypesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBeTruthy();
+    });
+
+    it('loadCategoriesForBranch sets categories on success', async () => {
+      const cats = [{ id: 'c1', name: 'Test', rank: 0 }];
+      apiSpy.getCategoriesByBranch = jest.fn().mockResolvedValue(cats);
+      store.loadCategoriesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.categories()).toEqual(cats);
+    });
+
+    it('loadCategoriesForBranch handles error', async () => {
+      apiSpy.getCategoriesByBranch = jest.fn().mockRejectedValue(new Error('cat-fail'));
+      store.loadCategoriesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBe('cat-fail');
+    });
+
+    it('loadCategoriesForBranch handles non-Error rejection', async () => {
+      apiSpy.getCategoriesByBranch = jest.fn().mockRejectedValue('boom');
+      store.loadCategoriesForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBeTruthy();
+    });
+
+    it('loadOperationsForBranch sets operations on success', async () => {
+      const ops = [{ id: 'op1', name: 'X', description: null, tagIds: ['c1'], order: 1, imageId: null }];
+      apiSpy.getOperationsByBranch = jest.fn().mockResolvedValue(ops);
+      store.loadOperationsForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.operations()).toEqual(ops);
+    });
+
+    it('loadOperationsForBranch handles Error rejection', async () => {
+      apiSpy.getOperationsByBranch = jest.fn().mockRejectedValue(new Error('op-fail'));
+      store.loadOperationsForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBe('op-fail');
+    });
+
+    it('loadOperationsForBranch handles non-Error rejection', async () => {
+      apiSpy.getOperationsByBranch = jest.fn().mockRejectedValue(undefined);
+      store.loadOperationsForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      expect(store.error()).toBeTruthy();
+    });
+  });
+
+  describe('Service Toggle / Confirm / Deselect', () => {
+    it('toggleService adds and removes a service', () => {
+      store.toggleService('inspection');
+      expect(store.selectedServices().some(s => s.serviceId === 'inspection')).toBe(true);
+      store.toggleService('inspection');
+      expect(store.selectedServices().some(s => s.serviceId === 'inspection')).toBe(false);
+    });
+
+    it('confirmServiceOptions sets selectedOptionIds for a service', () => {
+      store.toggleService('inspection');
+      store.confirmServiceOptions('inspection', ['opt-a']);
+      const entry = store.selectedServices().find(s => s.serviceId === 'inspection');
+      expect(entry?.selectedOptionIds).toEqual(['opt-a']);
+    });
+
+    it('deselectService removes from selectedServices', () => {
+      store.toggleService('inspection');
+      store.deselectService('inspection');
+      expect(store.selectedServices().some(s => s.serviceId === 'inspection')).toBe(false);
     });
   });
 

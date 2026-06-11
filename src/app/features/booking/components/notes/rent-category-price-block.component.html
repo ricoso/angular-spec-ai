@@ -1,0 +1,19 @@
+@if (priceInfo(); as info) {
+  <aside
+    class="rent-category-price alert alert-primary d-flex align-items-start gap-2 mt-3"
+    role="status"
+    aria-live="polite"
+    [attr.aria-label]="booking.notes.rentCategoryPrice.srLabel | translate"
+  >
+    <i class="bi bi-car-front-fill text-primary fs-5 rent-category-price__icon" aria-hidden="true"></i>
+    <p class="rent-category-price__text mb-0">
+      <span class="rent-category-price__label">
+        {{ booking.notes.rentCategoryPrice.label | translate }}:
+      </span>
+      <strong class="rent-category-price__name">{{ info.name }}</strong>
+      <span class="rent-category-price__separator" aria-hidden="true">—</span>
+      <strong class="rent-category-price__amount">{{ formattedPrice() }}</strong>
+      <span class="rent-category-price__unit">{{ unitLabelKey() | translate }}</span>
+    </p>
+  </aside>
+}

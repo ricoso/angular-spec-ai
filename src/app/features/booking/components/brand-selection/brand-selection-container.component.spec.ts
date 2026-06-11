@@ -88,7 +88,7 @@ describe('BrandSelectionContainerComponent', () => {
       expect(exposed.formattedBranchAddress()).toBe('');
     });
 
-    it('should format branch address correctly', () => {
+    it('should format full structured address as "<Street>, <ZIP> <City>" (REQ-025 c TC-4)', () => {
       store.selectBranch({
         branchId: 'b1',
         name: 'Autohaus Test',
@@ -96,14 +96,36 @@ describe('BrandSelectionContainerComponent', () => {
         brands: ['audi']
       });
       const exposed = component as unknown as { formattedBranchAddress: () => string };
+      expect(exposed.formattedBranchAddress()).toBe('Musterstr. 1, 12345 Berlin');
+    });
+
+    it('should drop trailing comma when zip and city are missing (REQ-025 c TC-5)', () => {
+      store.selectBranch({
+        branchId: 'b1b',
+        name: 'Autohaus Test',
+        address: { street: 'Musterstr. 1', zip: '', city: '' },
+        brands: ['audi']
+      });
+      const exposed = component as unknown as { formattedBranchAddress: () => string };
       expect(exposed.formattedBranchAddress()).toBe('Musterstr. 1');
     });
 
-    it('should fall back to branch name when street is empty', () => {
+    it('should render zip+city alone when street is empty', () => {
       store.selectBranch({
         branchId: 'b2',
         name: 'Fallback Name',
         address: { street: '', zip: '00000', city: 'Nowhere' },
+        brands: ['bmw']
+      });
+      const exposed = component as unknown as { formattedBranchAddress: () => string };
+      expect(exposed.formattedBranchAddress()).toBe('00000 Nowhere');
+    });
+
+    it('should fall back to branch name when entire address is empty', () => {
+      store.selectBranch({
+        branchId: 'b3',
+        name: 'Fallback Name',
+        address: { street: '', zip: '', city: '' },
         brands: ['bmw']
       });
       const exposed = component as unknown as { formattedBranchAddress: () => string };

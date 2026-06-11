@@ -1,77 +1,62 @@
+@use 'breakpoints' as *;
 
-.summary-card {
-  background-color: var(--color-background-surface);
-  border: 0.125em solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  box-shadow: var(--shadow-small);
+:host {
+  display: block;
+}
 
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 0.0625em solid var(--color-divider);
-  }
+.summary-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1em;
+  padding: 0.85em 0;
+  border-bottom: 0.0625em solid #eef0f2;
 
-  &__title {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--color-primary);
-    margin: 0;
+  &:last-child {
+    border-bottom: 0;
   }
 
   &__icon {
-    color: var(--color-primary);
-    display: flex;
+    flex: 0 0 2.5em;
+    width: 2.5em;
+    height: 2.5em;
+    background: #eaf2f9;
+    color: var(--bs-primary);
+    border-radius: 0.5em;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-
-    .material-icons {
-      font-size: 1.5em;
-    }
+    font-size: 1.2em;
   }
-}
 
-.service-intro {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-sm);
-  line-height: var(--line-height-normal);
+  &__label {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #6c757d;
+    letter-spacing: 0.05em;
+    margin: 0;
+  }
 
-  strong {
+  &__value {
+    font-size: 1em;
+    font-weight: 600;
+    margin: 0.1em 0 0;
     color: var(--color-text-primary);
   }
-}
 
-.detail-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  padding: 0;
-  margin: 0;
-
-  &__item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    line-height: var(--line-height-normal);
-
-    &::before {
-      content: '';
-      width: 0.375em;
-      height: 0.375em;
-      border-radius: var(--radius-full);
-      background-color: var(--color-primary);
-      flex-shrink: 0;
-    }
+  &__sub {
+    font-size: 0.85em;
+    color: #6c757d;
+    margin: 0.1em 0 0;
 
     strong {
       color: var(--color-text-primary);
     }
+  }
+
+  &__edit {
+    align-self: center;
+    margin-left: auto;
+    flex-shrink: 0;
   }
 }

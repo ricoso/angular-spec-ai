@@ -30,7 +30,7 @@ describe('CustomerFormComponent', () => {
       street: ['', [Validators.required]],
       postalCode: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
       city: ['', [Validators.required, Validators.pattern(/^[a-zA-ZÀ-ÖØ-öø-ÿ\s-]+$/)]],
-      mobilePhone: ['', [Validators.required, Validators.pattern(/^0[0-9]+$/)]]
+      mobilePhone: ['', [Validators.required, Validators.pattern(/^(\+|0)[0-9\s]+$/)]]
     });
 
     fixture.componentRef.setInput('form', form);

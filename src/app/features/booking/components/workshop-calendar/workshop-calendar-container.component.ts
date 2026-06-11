@@ -1,7 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -20,9 +17,6 @@ import { WorkshopCalendarDayComponent } from './workshop-calendar-day.component'
   standalone: true,
   imports: [
     TranslatePipe,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
     WizardBreadcrumbComponent,
     WorkshopCalendarDatePickerComponent,
     WorkshopCalendarDayComponent

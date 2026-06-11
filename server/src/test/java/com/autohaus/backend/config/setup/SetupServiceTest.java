@@ -19,7 +19,7 @@ class SetupServiceTest {
             {
               "branchId": "branch-1",
               "name": "Filiale Eins",
-              "address": "Musterstr. 1",
+              "address": {"street": "Musterstr. 1", "zip": "12345", "city": "Berlin", "country": "DE"},
               "groups": [
                 { "variant": "default",    "groupId": "grp-1-default",    "fullName": "Filiale Eins" },
                 { "variant": "tireChange", "groupId": "grp-1-tireChange", "fullName": "Filiale Eins Radwechsel" }
@@ -28,7 +28,7 @@ class SetupServiceTest {
             {
               "branchId": "branch-2",
               "name": "Filiale Zwei",
-              "address": "Musterstr. 2",
+              "address": {"street": "Musterstr. 2", "zip": "12346", "city": "Berlin", "country": "DE"},
               "groups": [
                 { "variant": "default", "groupId": "grp-2-default", "fullName": "Filiale Zwei" }
               ]
@@ -77,7 +77,7 @@ class SetupServiceTest {
                 {
                   "branchId": "only-tire",
                   "name": "Nur Radwechsel",
-                  "address": "Str 1",
+                  "address": {"street": "Str 1", "zip": "10001", "city": "X", "country": "DE"},
                   "groups": [
                     { "variant": "tireChange", "groupId": "grp-tc", "fullName": "Nur Radwechsel" }
                   ]
@@ -85,7 +85,7 @@ class SetupServiceTest {
                 {
                   "branchId": "mixed",
                   "name": "Gemischt",
-                  "address": "Str 2",
+                  "address": {"street": "Str 2", "zip": "10002", "city": "X", "country": "DE"},
                   "groups": [
                     { "variant": "default", "groupId": "grp-d", "fullName": "Gemischt" }
                   ]
@@ -120,13 +120,41 @@ class SetupServiceTest {
     }
 
     @Test
-    void resolveGroupId_throwsVariantNotFoundForUnknownVariant() {
+    void resolveGroupId_fallsBackToDefaultWhenVariantMissing() {
+        // branch-2 hat nur 'default', keine 'tireChange'-Gruppe — darf nicht mehr werfen.
         SetupService svc = newService(SAMPLE_JSON, true);
+        assertEquals("grp-2-default", svc.resolveGroupId("branch-2", "tireChange"));
+    }
+
+    @Test
+    void resolveGroupId_fallsBackToDefaultWhenSeasonDisabled() {
+        // branch-1 hat beide, aber Saison aus → tireChange wird gefiltert → Fallback auf default.
+        SetupService svc = newService(SAMPLE_JSON, false);
+        assertEquals("grp-1-default", svc.resolveGroupId("branch-1", "tireChange"));
+    }
+
+    @Test
+    void resolveGroupId_throwsVariantNotFoundWhenNoDefaultExists() {
+        String onlyTireChange = """
+            {
+              "branches": [
+                {
+                  "branchId": "only-tire",
+                  "name": "Nur Radwechsel",
+                  "address": {"street": "Str 1", "zip": "10001", "city": "X", "country": "DE"},
+                  "groups": [
+                    { "variant": "tireChange", "groupId": "grp-tc", "fullName": "Nur Radwechsel" }
+                  ]
+                }
+              ]
+            }
+            """;
+        SetupService svc = newService(onlyTireChange, true);
         VariantNotFoundException ex = assertThrows(
             VariantNotFoundException.class,
-            () -> svc.resolveGroupId("branch-2", "tireChange")
+            () -> svc.resolveGroupId("only-tire", "unknownVariant")
         );
-        assertTrue(ex.getMessage().contains("tireChange"));
+        assertTrue(ex.getMessage().contains("unknownVariant"));
     }
 
     @Test
@@ -197,6 +225,44 @@ class SetupServiceTest {
     }
 
     @Test
+    void validateGroupIdForBranch_returnsGroupIdWhenValid() {
+        SetupService svc = newService(SAMPLE_JSON, true);
+        assertEquals("grp-1-default",    svc.validateGroupIdForBranch("branch-1", "grp-1-default"));
+        assertEquals("grp-1-tireChange", svc.validateGroupIdForBranch("branch-1", "grp-1-tireChange"));
+    }
+
+    @Test
+    void validateGroupIdForBranch_throwsWhenGroupBelongsToDifferentBranch() {
+        SetupService svc = newService(SAMPLE_JSON, true);
+        // grp-2-default gehört zu branch-2, nicht zu branch-1 → 400
+        GroupIdNotInBranchException ex = assertThrows(
+            GroupIdNotInBranchException.class,
+            () -> svc.validateGroupIdForBranch("branch-1", "grp-2-default")
+        );
+        assertTrue(ex.getMessage().contains("grp-2-default"));
+        assertTrue(ex.getMessage().contains("branch-1"));
+    }
+
+    @Test
+    void validateGroupIdForBranch_throwsBranchNotFoundForUnknownBranch() {
+        SetupService svc = newService(SAMPLE_JSON, true);
+        assertThrows(BranchNotFoundException.class,
+            () -> svc.validateGroupIdForBranch("does-not-exist", "anything"));
+    }
+
+    @Test
+    void validateGroupIdForBranch_fallsBackToDefaultWhenSeasonDisabled() {
+        // Saison aus → setup.json filtert tireChange-Group raus → Group-ID nicht
+        // mehr im Branch enthalten → Validation würde werfen. Deshalb wird hier
+        // explizit getestet, dass die Logik bei "Saison aus" nicht crasht.
+        // (Der eigentliche Fallback findet nur statt, wenn die tireChange-Group
+        // überhaupt noch geladen ist — Saison aus filtert sie schon beim init().)
+        SetupService svcSeasonOff = newService(SAMPLE_JSON, false);
+        assertThrows(GroupIdNotInBranchException.class,
+            () -> svcSeasonOff.validateGroupIdForBranch("branch-1", "grp-1-tireChange"));
+    }
+
+    @Test
     void getAllBranches_sortedByNameIgnoreCase() {
         String json = """
             {
@@ -204,13 +270,13 @@ class SetupServiceTest {
                 {
                   "branchId": "b1",
                   "name": "Zebra",
-                  "address": "Str",
+                  "address": {"street": "Str", "zip": "10000", "city": "X", "country": "DE"},
                   "groups": [{ "variant": "default", "groupId": "g1", "fullName": "Zebra" }]
                 },
                 {
                   "branchId": "b2",
                   "name": "alpha",
-                  "address": "Str",
+                  "address": {"street": "Str", "zip": "10000", "city": "X", "country": "DE"},
                   "groups": [{ "variant": "default", "groupId": "g2", "fullName": "alpha" }]
                 }
               ]

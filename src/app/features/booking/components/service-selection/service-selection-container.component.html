@@ -1,47 +1,152 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="service-selection">
-  <h1 class="service-selection__title">{{ booking.services.title | translate }}</h1>
-  <p class="service-selection__subtitle">{{ booking.services.subtitle | translate }}</p>
+<main class="page-wrap service-selection">
+  <h1 class="page-title">{{ booking.services.title | translate }}</h1>
+  <p class="page-subtitle">{{ booking.services.subtitle | translate }}</p>
 
   @if (isLoading()) {
-    <div class="service-selection__loading" role="status" aria-live="polite">
-      <mat-spinner diameter="48" />
-      <p class="service-selection__loading-text">{{ booking.api.loading | translate }}</p>
+    <div class="service-selection__loading text-center py-5" role="status" aria-live="polite">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ booking.api.loading | translate }}</span>
+      </div>
+      <p class="service-selection__loading-text mt-3 mb-0">{{ booking.api.loading | translate }}</p>
     </div>
   } @else if (error()) {
-    <div class="service-selection__error" role="alert" aria-live="assertive">
-      <mat-icon class="service-selection__error-icon" aria-hidden="true">error_outline</mat-icon>
+    <div class="service-selection__error text-center py-5" role="alert" aria-live="assertive">
+      <i class="bi bi-exclamation-circle service-selection__error-icon" aria-hidden="true"></i>
       <h2 class="service-selection__error-title">{{ booking.api.errorTitle | translate }}</h2>
       <p class="service-selection__error-message">{{ booking.api.errorUnknown | translate }}</p>
       <button
-        mat-flat-button
-        color="primary"
-        class="service-selection__retry-button"
+        type="button"
+        class="btn btn-primary service-selection__retry-button"
         (click)="onRetry()">
-        <mat-icon aria-hidden="true">refresh</mat-icon>
+        <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>
         {{ booking.api.retryButton | translate }}
       </button>
     </div>
   } @else {
-    <div class="service-selection__grid" role="group" [attr.aria-label]="booking.services.ariaGroupLabel | translate">
-      @for (service of services(); track service.id) {
-        <app-service-card
-          [service]="service"
-          [isSelected]="selectedServiceIds().includes(service.id)"
-          [selectedOptionIds]="selectedOptionsMap()[service.id] ?? []"
-          (serviceClicked)="onServiceClick($event)"
-          (serviceConfirmed)="onServiceConfirm($event)"
-          (serviceDeselected)="onServiceDeselect($event)"
-        />
+    <!-- Karussell mit Mini-Cards (eine pro Tag-Kategorie) -->
+    <div
+      class="service-carousel service-selection__grid"
+      role="group"
+      [attr.aria-label]="booking.services.ariaGroupLabel | translate">
+      <button
+        type="button"
+        class="service-carousel__btn service-carousel__btn--prev"
+        id="carPrev"
+        aria-label="Zurück"
+        (click)="onCarouselPrev()">
+        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        class="service-carousel__btn service-carousel__btn--next"
+        id="carNext"
+        aria-label="Weiter"
+        (click)="onCarouselNext()">
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      </button>
+
+      <div
+        class="service-carousel__track"
+        id="carTrack"
+        #carTrack
+        (scroll)="onTrackScroll()">
+        @for (cat of categories(); track cat.id) {
+          <div class="service-carousel__item">
+            <app-service-card
+              [category]="cat"
+              [operations]="operationsByCategory()[cat.id] ?? []"
+              [isSelected]="categorySelectedMap()[cat.id] ?? false"
+              [selectedOperationIds]="selectedOptionsMap()[cat.id] ?? []"
+              (serviceClicked)="onMiniCardClick($event)"
+              (serviceConfirmed)="onServiceConfirm($event)"
+              (serviceDeselected)="onServiceDeselect($event)"
+            />
+          </div>
+        }
+      </div>
+
+      @if (slideCount() > 1) {
+        <div class="service-carousel__indicators" id="carDots" aria-hidden="true">
+          @for (i of [].constructor(slideCount()); track $index) {
+            <span
+              class="service-carousel__dot"
+              [class.active]="activeSlideIndex() === $index"
+            ></span>
+          }
+        </div>
       }
     </div>
 
-    <app-service-summary-bar
-      [selectedServiceCount]="selectedServiceCount()"
-      [hasServicesSelected]="hasServicesSelected()"
-      (continueClicked)="onContinue()"
-      (backClicked)="onBack()"
-    />
+    <!-- Detail-Panel: Operations der aktiven Kategorie -->
+    @if (activeCategory(); as cat) {
+      <div class="service-detail">
+        <div class="service-detail__header">
+          <i class="bi {{ activeIconClass() }} service-detail__icon" aria-hidden="true"></i>
+          <div class="flex-grow-1">
+            <h4 class="service-detail__title">{{ cat.name }}</h4>
+            @if (activeOperations().length > 0) {
+              <p class="service-detail__subtitle">
+                {{ activeOperations().length }} Services &mdash; {{ activeSelectedIds().length }} ausgewählt
+              </p>
+            } @else {
+              <p class="service-detail__subtitle">Keine Services in dieser Kategorie</p>
+            }
+          </div>
+        </div>
+
+        <div class="vstack">
+          @for (op of activeOperations(); track op.id) {
+            <label class="service-option d-flex">
+              <div class="d-flex align-items-start">
+                <input
+                  type="checkbox"
+                  class="form-check-input mt-1 me-2"
+                  [id]="'service-option-' + op.id"
+                  [checked]="activeSelectedSet().has(op.id)"
+                  (change)="onOperationToggle(op.id, $any($event.target).checked)"
+                />
+                <div>
+                  <span class="service-option__name">{{ op.name }}</span>
+                  @if (op.description) {
+                    <p class="service-option__desc mb-0">{{ op.description }}</p>
+                  }
+                </div>
+              </div>
+            </label>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Bottom-Bar: Counter + Nav-Buttons -->
+    <div class="services-bottom-bar">
+      <div>
+        <strong>
+          {{ selectedServiceCount() }} {{ booking.services.ariaGroupLabel | translate }}
+        </strong>
+        @if (selectedServiceCount() > 0) {
+          <small class="text-muted ms-2">{{ selectedNamesList() }}</small>
+        }
+      </div>
+      <div>
+        <button
+          type="button"
+          class="btn btn-outline-secondary me-2"
+          (click)="onBack()">
+          <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
+          {{ booking.services.backButton | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary btn-lg"
+          [disabled]="!hasServicesSelected()"
+          (click)="onContinue()">
+          {{ booking.services.continueButton | translate }}
+          <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
   }
-</section>
+</main>

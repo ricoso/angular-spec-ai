@@ -2,70 +2,41 @@
   max-width: 70em;
   margin: 0 auto;
   padding: var(--spacing-xl) var(--spacing-md);
-  text-align: center;
 
   &__title {
-    font-size: var(--font-size-xl);
-    line-height: var(--line-height-tight);
-    color: var(--color-text-primary);
+    text-align: center;
     margin: 0 0 var(--spacing-xl);
-    font-weight: 700;
-  }
-
-  &__loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-2xl) 0;
   }
 
   &__loading-text {
-    font-size: var(--font-size-md);
     color: var(--color-text-secondary);
     margin: 0;
   }
 
-  &__error {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-2xl) var(--spacing-md);
-  }
-
   &__error-icon {
     font-size: 3em;
-    width: 3em;
-    height: 3em;
     color: var(--color-error);
+    display: block;
+    margin-bottom: var(--spacing-sm);
   }
 
   &__error-title {
     font-size: var(--font-size-lg);
     font-weight: 700;
     color: var(--color-text-primary);
-    margin: 0;
+    margin: 0 0 var(--spacing-sm);
   }
 
   &__error-message {
-    font-size: var(--font-size-md);
     color: var(--color-text-secondary);
     margin: 0 0 var(--spacing-md);
     max-width: 30em;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  &__retry-button {
-    mat-icon {
-      margin-right: var(--spacing-xs);
-    }
-  }
-
-  &__grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-xl);
+  &__summary {
+    border-left: 0.25em solid #198754;
   }
 
   &__calendar-link {
@@ -102,23 +73,22 @@
   }
 }
 
-@media (min-width: 48em) {
-  .appointment-selection {
-    &__title {
-      font-size: var(--font-size-2xl);
-    }
+.slot-section {
+  margin-top: 1.5em;
 
-    &__grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--spacing-lg);
-    }
+  &:first-of-type {
+    margin-top: 0;
   }
-}
 
-@media (min-width: 64em) {
-  .appointment-selection {
-    &__grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
+  &__head {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #6c757d;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.75em;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
   }
 }

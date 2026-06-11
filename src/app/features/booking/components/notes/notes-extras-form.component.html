@@ -1,86 +1,150 @@
 <div class="notes-extras" role="group" [attr.aria-label]="notes.mobilityOptions.title | translate">
-  <!-- Mobility Options -->
-  <div class="notes-extras__section" role="region">
-    <h2 class="notes-extras__heading">{{ notes.mobilityOptions.title | translate }}</h2>
-    <div class="notes-extras__card">
-      <mat-form-field appearance="outline" class="notes-extras__field">
-        <mat-label>{{ notes.mobilityOptions.label | translate }}</mat-label>
-        <mat-select
-          [value]="mobilityOption()"
-          (selectionChange)="onMobilityOptionChange($event.value)"
+  <!-- Mietwagen — Switch-Card (Toggle) + Pill-Group Klassen-Auswahl bei Aktiv -->
+  <div
+    class="switch-card mb-3 notes-extras__switch-card"
+    [class.is-on]="rentEnabled()"
+    role="region"
+    [attr.aria-label]="notes.rentCategory.title | translate"
+  >
+    <div class="d-flex align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-car-front-fill text-primary fs-4" aria-hidden="true"></i>
+        <div>
+          <p class="switch-card__title">{{ notes.rentCategory.title | translate }}</p>
+          <p class="switch-card__hint">{{ notes.rentCategory.label | translate }}</p>
+        </div>
+      </div>
+      <div class="form-check form-switch m-0">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          role="switch"
+          id="rentSwitch"
+          [checked]="rentEnabled()"
+          [attr.aria-label]="notes.rentCategory.title | translate"
+          (change)="onRentSwitchToggle($event)"
         >
-          @for (item of mobilityOptionItems(); track item.value) {
-            <mat-option [value]="item.value">
-              {{ item.label | translate }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    </div>
-  </div>
-
-  <!-- Rent Category (dynamic from SoftNet API) -->
-  @if (rentCategories().length > 0) {
-    <div class="notes-extras__section" role="region">
-      <h2 class="notes-extras__heading">{{ notes.rentCategory.title | translate }}</h2>
-      <div class="notes-extras__card">
-        <mat-form-field appearance="outline" class="notes-extras__field">
-          <mat-label>{{ notes.rentCategory.label | translate }}</mat-label>
-          <mat-select
-            [value]="selectedRentCategoryId()"
-            (selectionChange)="onRentCategoryChange($event.value)"
-          >
-            <mat-option [value]="null">
-              {{ notes.rentCategory.none | translate }}
-            </mat-option>
-            @for (category of rentCategories(); track category.id) {
-              <mat-option [value]="category.id">
-                {{ category.name }}
-              </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
       </div>
     </div>
-  }
 
-  <!-- Appointment Preference -->
-  <div class="notes-extras__section" role="region">
-    <h2 class="notes-extras__heading">{{ notes.appointmentPreference.title | translate }}</h2>
-    <div class="notes-extras__card">
-      <mat-form-field appearance="outline" class="notes-extras__field">
-        <mat-label>{{ notes.appointmentPreference.label | translate }}</mat-label>
-        <mat-select
-          [value]="appointmentPreference()"
-          (selectionChange)="onAppointmentPreferenceChange($event.value)"
-        >
-          @for (item of appointmentOptionItems(); track item.value) {
-            <mat-option [value]="item.value">
-              {{ item.label | translate }}
-            </mat-option>
+    @if (rentEnabled()) {
+      <div class="switch-card__detail">
+        <span class="form-label small text-uppercase text-muted mb-2 d-block">
+          {{ notes.rentCategory.label | translate }}
+        </span>
+        <div class="pill-group" role="radiogroup" [attr.aria-label]="notes.rentCategory.label | translate">
+          @for (category of rentCategories(); track category.id) {
+            <input
+              type="radio"
+              name="rentClass"
+              [id]="'rentClass-' + category.id"
+              [checked]="selectedRentCategoryId() === category.id"
+              (change)="onRentCategoryChange(category.id)"
+            >
+            <label [for]="'rentClass-' + category.id">
+              <i class="bi bi-car-front" aria-hidden="true"></i>
+              {{ category.name }}
+            </label>
           }
-        </mat-select>
-      </mat-form-field>
+        </div>
+        @if (selectedRentCategoryDescription(); as desc) {
+          <div
+            class="alert alert-primary small mt-3 mb-0 d-flex gap-2 align-items-start notes-extras__rent-info"
+            role="note"
+            aria-live="polite"
+          >
+            <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+            <div>{{ desc }}</div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Terminpräferenz — Pill-Group Radios -->
+  <div class="card mb-3" role="region" [attr.aria-label]="notes.appointmentPreference.title | translate">
+    <div class="card-body">
+      <p class="switch-card__title mb-1">
+        <i class="bi bi-clock me-2 text-primary" aria-hidden="true"></i>
+        {{ notes.appointmentPreference.title | translate }}
+      </p>
+      <p class="switch-card__hint mb-3">{{ notes.appointmentPreference.label | translate }}</p>
+      <div class="pill-group" role="radiogroup" [attr.aria-label]="notes.appointmentPreference.title | translate">
+        @for (item of appointmentOptionItems(); track item.value) {
+          <input
+            type="radio"
+            name="timePref"
+            [id]="'timePref-' + item.value"
+            [checked]="appointmentPreference() === item.value"
+            (change)="onAppointmentPreferenceChange(item.value)"
+          >
+          <label [for]="'timePref-' + item.value">
+            @if (item.icon) {
+              <i [class]="'bi ' + item.icon" aria-hidden="true"></i>
+            }
+            {{ item.label | translate }}
+          </label>
+        }
+      </div>
     </div>
   </div>
 
-  <!-- Callback -->
-  <div class="notes-extras__section" role="region">
-    <h2 class="notes-extras__heading">{{ notes.callback.title | translate }}</h2>
-    <div class="notes-extras__card">
-      <mat-form-field appearance="outline" class="notes-extras__field">
-        <mat-label>{{ notes.callback.label | translate }}</mat-label>
-        <mat-select
-          [value]="callbackOption()"
-          (selectionChange)="onCallbackOptionChange($event.value)"
+  <!-- Rückruf — Switch-Card (Boolean) -->
+  <div
+    class="switch-card mb-3 notes-extras__switch-card"
+    [class.is-on]="callbackEnabled()"
+    role="region"
+    [attr.aria-label]="notes.callback.title | translate"
+  >
+    <div class="d-flex align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-telephone-fill text-primary fs-4" aria-hidden="true"></i>
+        <div>
+          <p class="switch-card__title">{{ notes.callback.title | translate }}</p>
+          <p class="switch-card__hint">{{ notes.callback.label | translate }}</p>
+        </div>
+      </div>
+      <div class="form-check form-switch m-0">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          role="switch"
+          id="callbackSwitch"
+          [checked]="callbackEnabled()"
+          [attr.aria-label]="notes.callback.title | translate"
+          (change)="onCallbackSwitchToggle($event)"
         >
-          @for (item of callbackOptionItems(); track item.value) {
-            <mat-option [value]="item.value">
-              {{ item.label | translate }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      </div>
+    </div>
+  </div>
+
+  <!-- REQ-027: Benachrichtigung — Pill-Group (E-Mail | SMS) -->
+  <div
+    class="switch-card mb-3 notes-extras__switch-card"
+    role="region"
+    [attr.aria-label]="notes.notification.title | translate"
+  >
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <i class="bi bi-bell-fill text-primary fs-4" aria-hidden="true"></i>
+      <div>
+        <p class="switch-card__title">{{ notes.notification.title | translate }}</p>
+        <p class="switch-card__hint">{{ notes.notification.label | translate }}</p>
+      </div>
+    </div>
+    <div class="pill-group" role="radiogroup" [attr.aria-label]="notes.notification.title | translate">
+      @for (item of notificationChannelItems(); track item.value) {
+        <input
+          type="radio"
+          name="notificationChannel"
+          [id]="'notificationChannel-' + item.value"
+          [checked]="notificationChannel() === item.value"
+          (change)="onNotificationChannelChange(item.value)"
+        >
+        <label [for]="'notificationChannel-' + item.value">
+          <i [class]="'bi ' + item.icon" aria-hidden="true"></i>
+          {{ item.label | translate }}
+        </label>
+      }
     </div>
   </div>
 </div>

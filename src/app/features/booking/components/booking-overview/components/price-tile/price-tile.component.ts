@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { i18nKeys, TranslatePipe, TranslateService } from '@core/i18n';
 
-import type { AppointmentPreference, CallbackOption, MobilityOption } from '../../../../models/notes-extras.model';
+import type { AppointmentPreference, CallbackOption } from '../../../../models/notes-extras.model';
 
 @Component({
   selector: 'app-price-tile',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [RouterLink, TranslatePipe],
   templateUrl: './price-tile.component.html',
   styleUrl: './price-tile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -15,7 +16,7 @@ import type { AppointmentPreference, CallbackOption, MobilityOption } from '../.
 export class PriceTileComponent {
   private readonly translateService = inject(TranslateService);
 
-  public readonly mobilityOption = input.required<MobilityOption>();
+  public readonly rentCategoryName = input<string | null>(null);
   public readonly appointmentPreference = input.required<AppointmentPreference>();
   public readonly callbackOption = input.required<CallbackOption>();
   public readonly bookingNote = input<string>('');
@@ -24,13 +25,8 @@ export class PriceTileComponent {
   private readonly notes = i18nKeys.booking.notes;
 
   protected readonly mobilityOptionLabel = computed(() => {
-    const value = this.mobilityOption();
-    switch (value) {
-      case 'none':        return this.translateService.instant(this.notes.mobilityOptions.none);
-      case 'compact-car': return this.translateService.instant(this.notes.mobilityOptions.compactCar);
-      case 'mid-range':   return this.translateService.instant(this.notes.mobilityOptions.midRange);
-      case 'luxury':      return this.translateService.instant(this.notes.mobilityOptions.luxury);
-    }
+    const name = this.rentCategoryName();
+    return name ?? this.translateService.instant(this.notes.rentCategory.none);
   });
 
   protected readonly appointmentPreferenceLabel = computed(() => {
@@ -44,7 +40,7 @@ export class PriceTileComponent {
 
   protected readonly callbackOptionLabel = computed(() => {
     const map = {
-      'none': this.notes.callback.none,
+      'no': this.notes.callback.no,
       'yes': this.notes.callback.yes
     } as const;
     return this.translateService.instant(map[this.callbackOption()]);

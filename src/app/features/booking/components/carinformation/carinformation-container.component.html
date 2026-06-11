@@ -1,64 +1,74 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="carinformation">
-  <h1 class="carinformation__title">{{ carinformation.title | translate }}</h1>
-
-  <div class="carinformation__returning-banner">
-    <div class="carinformation__returning-content">
-      <div class="carinformation__returning-text">
-        <strong class="carinformation__returning-title">{{ carinformation.returningCustomer.title | translate }}</strong>
-        <p class="carinformation__returning-description">{{ carinformation.returningCustomer.description | translate }}</p>
-      </div>
-    </div>
-    <button
-      mat-flat-button
-      class="carinformation__returning-button"
-      type="button"
-      (click)="onReturningCustomer()"
-    >
-      {{ carinformation.returningCustomer.button | translate }}
-    </button>
-  </div>
+<section class="page-wrap carinformation">
+  <h1 class="page-title">{{ carinformation.title | translate }}</h1>
 
   <form class="carinformation__form" (submit)="onSubmit($event)" novalidate>
-    <app-customer-form [form]="customerForm" />
+    <div class="card carinformation__card">
+      <div class="card-body">
+        <app-customer-form [form]="customerForm" />
+      </div>
+    </div>
 
-    <app-vehicle-form [form]="vehicleForm" />
+    <div class="card carinformation__card">
+      <div class="card-body">
+        <app-vehicle-form [form]="vehicleForm" />
+      </div>
+    </div>
 
-    <div class="carinformation__privacy">
-      <mat-checkbox
-        [formControl]="privacyControl"
-        class="carinformation__privacy-checkbox"
-      >
-        {{ carinformation.form.privacy.consent | translate }}
-      </mat-checkbox>
-      @if (privacyError()) {
-        <p class="carinformation__privacy-error" role="alert">
-          {{ carinformation.form.privacy.error.required | translate }}
-        </p>
-      }
+    <div class="card carinformation__card">
+      <div class="card-body">
+        <div class="form-check carinformation__privacy">
+          <input
+            type="checkbox"
+            id="privacy-consent"
+            class="form-check-input"
+            [class.is-invalid]="privacyError()"
+            [formControl]="privacyControl"
+            aria-required="true"
+            [attr.aria-invalid]="privacyError() ? 'true' : null"
+            aria-describedby="privacy-consent-error"
+          />
+          <label for="privacy-consent" class="form-check-label carinformation__privacy-label">
+            {{ carinformation.form.privacy.consent | translate }}
+            <a
+              href="https://www.gottfried-schultz.de/rechtliches/datenschutz/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="carinformation__privacy-link"
+              (click)="$event.stopPropagation()"
+            >{{ carinformation.form.privacy.privacyLink | translate }}</a>.
+          </label>
+          @if (privacyError()) {
+            <div class="invalid-feedback d-block" id="privacy-consent-error" role="alert">
+              {{ carinformation.form.privacy.error.required | translate }}
+            </div>
+          }
+        </div>
+      </div>
     </div>
 
     <p class="carinformation__required-hint">{{ carinformation.form.requiredHint | translate }}</p>
 
     <nav class="carinformation__actions" [attr.aria-label]="carinformation.navigation.back | translate">
       <button
-        mat-flat-button
-        class="carinformation__back-button"
         type="button"
+        id="carinformation-back-button"
+        class="btn btn-outline-secondary carinformation__back-button"
         [attr.aria-label]="carinformation.navigation.back | translate"
         (click)="onBack()"
       >
+        <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>
         {{ carinformation.navigation.back | translate }}
       </button>
       <button
-        mat-flat-button
-        color="primary"
-        class="carinformation__continue-button"
         type="submit"
+        id="carinformation-continue-button"
+        class="btn btn-primary carinformation__continue-button"
         [attr.aria-label]="carinformation.navigation.continue | translate"
       >
         {{ carinformation.navigation.continue | translate }}
+        <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
       </button>
     </nav>
   </form>

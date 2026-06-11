@@ -1,12 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe, TranslateService } from '@core/i18n';
 import { WizardBreadcrumbComponent } from '@shared/components/wizard-breadcrumb/wizard-breadcrumb.component';
 import { WIZARD_STEPS } from '@shared/components/wizard-breadcrumb/wizard-steps.config';
+import { BerlinTimePipe } from '@shared/pipes/berlin-time.pipe';
 
 import { AVAILABLE_BRANDS } from '../../models/brand.model';
 import { AVAILABLE_SERVICES } from '../../models/service.model';
@@ -21,10 +19,8 @@ import { ServicesTileComponent } from './components/services-tile/services-tile.
   selector: 'app-booking-overview-container',
   standalone: true,
   imports: [
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
     TranslatePipe,
+    BerlinTimePipe,
     WizardBreadcrumbComponent,
     AppointmentTileComponent,
     ServicesTileComponent,
@@ -59,14 +55,39 @@ export class BookingOverviewContainerComponent {
 
   protected readonly resolvedLocationName = computed(() => {
     const location = this.store.selectedLocation();
-    return location?.name ?? '';
+    return location?.formattedAddress ?? '';
   });
 
   protected readonly resolvedServiceLabels = computed(() => {
     const selected = this.store.selectedServices();
+    const jobTypes = this.store.jobTypes();
+    const operations = this.store.operations();
     const labels: Record<string, string> = {};
 
     for (const service of selected) {
+      // REQ-025 (b) Iter. 3: Operations sind primäre Quelle (jede Operation = ein Service).
+      const op = operations.find(o => o.id === service.serviceId);
+      if (op) {
+        labels[service.serviceId] = op.name;
+        continue;
+      }
+
+      // REQ-025 (b): API jobTypes als Fallback.
+      const jt = jobTypes.find(j => j.id === service.serviceId);
+      if (jt) {
+        let label = jt.name;
+        if (service.selectedOptionIds.length > 0) {
+          const optionLabels = service.selectedOptionIds
+            .map(optionId => jt.operations.find(o => o.id === optionId)?.name ?? '')
+            .filter(Boolean);
+          if (optionLabels.length > 0) {
+            label += ' — ' + optionLabels.join(', ');
+          }
+        }
+        labels[service.serviceId] = label;
+        continue;
+      }
+
       const serviceDisplay = AVAILABLE_SERVICES.find(s => s.id === service.serviceId);
       if (!serviceDisplay) { continue; }
 

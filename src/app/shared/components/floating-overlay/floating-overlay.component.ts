@@ -1,7 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 
 import { BookingStore } from '@app/features/booking/stores/booking.store';
 import type { Language } from '@core/i18n';
@@ -15,7 +12,7 @@ import { AccessibilityMenuComponent } from '../header/components/accessibility-m
 @Component({
   selector: 'app-floating-overlay',
   standalone: true,
-  imports: [MatIconModule, MatButtonModule, MatBadgeModule, TranslatePipe, AccessibilityMenuComponent],
+  imports: [TranslatePipe, AccessibilityMenuComponent],
   templateUrl: './floating-overlay.component.html',
   styleUrl: './floating-overlay.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -33,9 +30,10 @@ export class FloatingOverlayComponent {
   protected readonly badgeText = this.cartStore.badgeText;
   protected readonly hasItems = this.cartStore.hasItems;
 
-  protected readonly selectedLocationName = computed(() => this.bookingStore.selectedLocation()?.name ?? '');
+  protected readonly selectedLocationName = computed(() => this.bookingStore.selectedLocation()?.formattedAddress ?? '');
   protected readonly selectedBrandName = computed(() => this.bookingStore.selectedBrand() ?? '');
   protected readonly selectedServiceCount = computed(() => this.bookingStore.selectedServiceCount());
+  protected readonly selectedServiceLabels = computed(() => this.bookingStore.selectedServiceLabels());
 
   protected readonly fontSize = this.a11yStore.fontSize;
   protected readonly highContrast = this.a11yStore.highContrast;
