@@ -5,7 +5,8 @@ import { i18nKeys, TranslatePipe } from '@core/i18n';
 import type {
   AppointmentPreference,
   CallbackOption,
-  NotesExtras
+  NotesExtras,
+  NotificationChannel
 } from '../../models/notes-extras.model';
 import { DEFAULT_NOTES_EXTRAS } from '../../models/notes-extras.model';
 import type { RentCategory } from '../../models/rent-category.model';
@@ -30,6 +31,8 @@ export class NotesExtrasFormComponent {
 
   protected readonly appointmentPreference = signal<AppointmentPreference>(DEFAULT_NOTES_EXTRAS.appointmentPreference);
   protected readonly callbackOption = signal<CallbackOption>(DEFAULT_NOTES_EXTRAS.callbackOption);
+  /** REQ-027: chosen notification channel (default 'email'). */
+  protected readonly notificationChannel = signal<NotificationChannel>(DEFAULT_NOTES_EXTRAS.notificationChannel);
 
   /** Toggle-Switch State — abgeleitet vom rentCategoryId. */
   protected readonly rentEnabled = computed<boolean>(() => this.selectedRentCategoryId() !== null);
@@ -48,6 +51,12 @@ export class NotesExtrasFormComponent {
     { value: 'yes' as CallbackOption, label: this.notes.callback.yes }
   ]);
 
+  /** REQ-027: pill items for notification channel toggle. */
+  protected readonly notificationChannelItems = computed(() => [
+    { value: 'email' as NotificationChannel, label: this.notes.notification.email, icon: 'bi-envelope-fill' },
+    { value: 'sms'   as NotificationChannel, label: this.notes.notification.sms,   icon: 'bi-chat-dots-fill' }
+  ]);
+
   /** REQ-025: Description (inkl. Preis) der gewählten Mietwagen-Kategorie aus SoftNet. */
   protected readonly selectedRentCategoryDescription = computed<string | null>(() => {
     const id = this.selectedRentCategoryId();
@@ -62,6 +71,7 @@ export class NotesExtrasFormComponent {
       if (extras) {
         this.appointmentPreference.set(extras.appointmentPreference);
         this.callbackOption.set(extras.callbackOption);
+        this.notificationChannel.set(extras.notificationChannel);
       }
     });
 
@@ -107,6 +117,12 @@ export class NotesExtrasFormComponent {
     this.emitExtras();
   }
 
+  /** REQ-027: user toggled notification channel (email <-> sms). */
+  protected onNotificationChannelChange(value: NotificationChannel): void {
+    this.notificationChannel.set(value);
+    this.emitExtras();
+  }
+
   /**
    * Toggle-Switch fuer Rueckruf: mappt boolean -> 'yes'/'no' (Output-Vertrag).
    */
@@ -123,7 +139,8 @@ export class NotesExtrasFormComponent {
   private emitExtras(): void {
     this.extrasChanged.emit({
       appointmentPreference: this.appointmentPreference(),
-      callbackOption: this.callbackOption()
+      callbackOption: this.callbackOption(),
+      notificationChannel: this.notificationChannel()
     });
   }
 }

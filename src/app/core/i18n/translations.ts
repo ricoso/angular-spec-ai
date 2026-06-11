@@ -227,6 +227,12 @@ export const translations = {
           label: 'Rückruf',
           no: 'Nein',
           yes: 'Ja'
+        },
+        notification: {
+          title: 'Benachrichtigung',
+          label: 'Wie möchten Sie benachrichtigt werden?',
+          email: 'E-Mail',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -559,6 +565,12 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
           label: 'Callback',
           no: 'No',
           yes: 'Yes'
+        },
+        notification: {
+          title: 'Notification',
+          label: 'How would you like to be notified?',
+          email: 'Email',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -891,6 +903,12 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
           label: 'Зворотний дзвінок',
           no: 'Ні',
           yes: 'Так'
+        },
+        notification: {
+          title: 'Сповіщення',
+          label: 'Як ви хочете отримувати сповіщення?',
+          email: 'Електронна пошта',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -1221,6 +1239,12 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
           label: 'Rappel',
           no: 'Non',
           yes: 'Oui'
+        },
+        notification: {
+          title: 'Notification',
+          label: 'Comment souhaitez-vous être notifié ?',
+          email: 'E-mail',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -1551,6 +1575,12 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
           label: 'معاودة الاتصال',
           no: 'لا',
           yes: 'نعم'
+        },
+        notification: {
+          title: 'الإشعار',
+          label: 'كيف ترغب في تلقي الإشعارات؟',
+          email: 'بريد إلكتروني',
+          sms: 'رسالة نصية'
         }
       },
       carinformation: {

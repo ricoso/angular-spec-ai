@@ -51,7 +51,7 @@ class AppointmentsServiceTest {
             null,
             new CreateAppointmentRequest.CustomerDto("test@test.de", "Max", "Muster", "0170", null, "Str 1", "12345", "Berlin", null, null, null),
             new CreateAppointmentRequest.VehicleDto("B-MS1234", 50000, null, null, null, null),
-            null, null, null
+            null, null, null, null
         );
 
         assertThrows(ResponseStatusException.class, () -> service.createAppointment(dto));
@@ -84,7 +84,7 @@ class AppointmentsServiceTest {
             null,
             new CreateAppointmentRequest.CustomerDto("test@test.de", "Max", "Muster", "0170", null, "Str 1", "12345", "Berlin", null, null, null),
             new CreateAppointmentRequest.VehicleDto("B-MS1234", 50000, "WVWZZZ3CZWE123456", "Golf", "01", "2020"),
-            "Bitte Klima prüfen", null, null
+            "Bitte Klima prüfen", null, null, null
         );
 
         AppointmentResponseDto response = service.createAppointment(dto);
@@ -207,7 +207,8 @@ class AppointmentsServiceTest {
             new CreateAppointmentRequest.VehicleDto("W-TEST-99", 45000, null, "A4", "03", "2023"),
             null,
             rentCategoryId,
-            callbackRequested
+            callbackRequested,
+            null
         );
     }
 

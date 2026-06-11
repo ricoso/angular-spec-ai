@@ -56,6 +56,8 @@ export interface CreateAppointmentRequest {
   note?: string;
   rentCategoryId?: string;
   callbackRequested?: boolean;
+  /** REQ-027: SoftNet `notifications` ({ SMS, SMTP }). */
+  notifications?: { SMS: boolean; SMTP: boolean };
 }
 
 export interface AppointmentResponse {
@@ -80,6 +82,7 @@ export class AppointmentApiService {
     brandName?: string,
     variant?: 'default' | 'tireChange',
     timePreference?: 'AM' | 'PM',
+    notifications?: { SMS: boolean; SMTP: boolean },
   ): Promise<AppointmentSlot[]> {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -100,6 +103,7 @@ export class AppointmentApiService {
         brandName: brandName ?? '',
         variant: variant ?? 'default',
         timePreference,
+        notifications,
       })
     );
 

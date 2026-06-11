@@ -198,7 +198,7 @@ class ControllerTests {
         CreateAppointmentRequest.VehicleDto vehicle = new CreateAppointmentRequest.VehicleDto(
             "B-MS1234", 50000, null, null, null, null
         );
-        CreateAppointmentRequest request = new CreateAppointmentRequest("snap1", "branch-1", null, customer, vehicle, "note", null, null);
+        CreateAppointmentRequest request = new CreateAppointmentRequest("snap1", "branch-1", null, customer, vehicle, "note", null, null, null);
 
         AppointmentResponseDto result = ctrl.createAppointment(request);
         assertNotNull(result);
@@ -231,7 +231,7 @@ class ControllerTests {
     @Test
     void snapsController_getSnaps_returnsList() {
         SnapsController ctrl = new SnapsController(snapsService);
-        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null, null);
+        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null, null, null);
         when(snapsService.getSnaps(any())).thenReturn(List.of(
             new SnapResponseDto("2026-04-15", "Di 15.04.", "Di", List.of())
         ));
@@ -242,7 +242,7 @@ class ControllerTests {
     @Test
     void snapsController_getSnaps_emptyResult() {
         SnapsController ctrl = new SnapsController(snapsService);
-        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null, null);
+        SnapRequestDto request = new SnapRequestDto("b1", List.of("jt1"), "2026-04-15", "2026-04-20", "date-range", null, null, null, null, null);
         when(snapsService.getSnaps(any())).thenReturn(List.of());
         assertTrue(ctrl.getSnaps(request).isEmpty());
     }

@@ -117,4 +117,34 @@
       </div>
     </div>
   </div>
+
+  <!-- REQ-027: Benachrichtigung — Pill-Group (E-Mail | SMS) -->
+  <div
+    class="switch-card mb-3 notes-extras__switch-card"
+    role="region"
+    [attr.aria-label]="notes.notification.title | translate"
+  >
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <i class="bi bi-bell-fill text-primary fs-4" aria-hidden="true"></i>
+      <div>
+        <p class="switch-card__title">{{ notes.notification.title | translate }}</p>
+        <p class="switch-card__hint">{{ notes.notification.label | translate }}</p>
+      </div>
+    </div>
+    <div class="pill-group" role="radiogroup" [attr.aria-label]="notes.notification.title | translate">
+      @for (item of notificationChannelItems(); track item.value) {
+        <input
+          type="radio"
+          name="notificationChannel"
+          [id]="'notificationChannel-' + item.value"
+          [checked]="notificationChannel() === item.value"
+          (change)="onNotificationChannelChange(item.value)"
+        >
+        <label [for]="'notificationChannel-' + item.value">
+          <i [class]="'bi ' + item.icon" aria-hidden="true"></i>
+          {{ item.label | translate }}
+        </label>
+      }
+    </div>
+  </div>
 </div>

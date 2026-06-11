@@ -11,7 +11,8 @@ public record CreateAppointmentRequest(
     @Valid VehicleDto vehicle,
     String note,
     String rentCategoryId,
-    Boolean callbackRequested
+    Boolean callbackRequested,
+    NotificationsDto notifications
 ) {
     public record CustomerDto(
         @NotBlank String email,
@@ -35,4 +36,7 @@ public record CreateAppointmentRequest(
         String firstRegMonth,
         String firstRegYear
     ) {}
+
+    /** REQ-027: SoftNet notifications channel ({ SMS, SMTP }). */
+    public record NotificationsDto(Boolean SMS, Boolean SMTP) {}
 }

@@ -60,6 +60,14 @@ public class SnapsService {
             softnetRequest.put("replacementPreference", true);
         }
 
+        // REQ-027: forward notification channel ({ SMS, SMTP }) to SoftNet.
+        if (request.notifications() != null) {
+            Map<String, Boolean> notifications = new LinkedHashMap<>();
+            notifications.put("SMS", Boolean.TRUE.equals(request.notifications().SMS()));
+            notifications.put("SMTP", Boolean.TRUE.equals(request.notifications().SMTP()));
+            softnetRequest.put("notifications", notifications);
+        }
+
         log.debug("SoftNet snaps request: {}", softnetRequest);
         List<JsonNode> rawSnaps = softnetApi.getSnaps(softnetRequest, groupId);
         log.debug("SoftNet snaps response: {} items", rawSnaps.size());

@@ -11,7 +11,8 @@ import type { BranchConfig } from '../models/branch-config.model';
 import type { Brand, BrandDisplay } from '../models/brand.model';
 import type { CustomerInfo, VehicleInfo } from '../models/customer.model';
 import type { LocationDisplay } from '../models/location.model';
-import type { AppointmentPreference, NotesExtras } from '../models/notes-extras.model';
+import type { AppointmentPreference, NotesExtras, NotificationChannel } from '../models/notes-extras.model';
+import { mapNotificationChannelToSoftnet } from '../models/notes-extras.model';
 import type { RentCategory } from '../models/rent-category.model';
 import type { ApiCategory, ApiJobType, ApiOperation, SelectedService, ServiceDisplay, ServiceType } from '../models/service.model';
 import { AVAILABLE_SERVICES } from '../models/service.model';
@@ -318,6 +319,10 @@ export const BookingStore = signalStore(
     selectedAppointmentPreference: computed(() => notesExtras()?.appointmentPreference ?? 'anytime'),
     selectedCallbackOption: computed(() => notesExtras()?.callbackOption ?? 'no'),
     callbackRequested: computed(() => notesExtras()?.callbackOption === 'yes'),
+    /** REQ-027: selected notification channel (default 'email'). */
+    selectedNotificationChannel: computed<NotificationChannel>(
+      () => notesExtras()?.notificationChannel ?? 'email'
+    ),
     selectedRentCategoryName: computed<string | null>(() => {
       const id = selectedRentCategoryId();
       if (!id) return null;
@@ -557,7 +562,8 @@ export const BookingStore = signalStore(
           const brandName = store.selectedBrand() ?? '';
           const variant = store.selectedVariant();
           const timePreference = mapAppointmentPreferenceToSoftnet(store.selectedAppointmentPreference());
-          return from(appointmentApi.getAppointments(branchId, serviceIds, brandName, variant, timePreference)).pipe(
+          const notifications = mapNotificationChannelToSoftnet(store.selectedNotificationChannel());
+          return from(appointmentApi.getAppointments(branchId, serviceIds, brandName, variant, timePreference, notifications)).pipe(
             tap((appointments) => {
               patchState(store, { appointments, isLoading: false });
             }),
@@ -673,6 +679,7 @@ export const BookingStore = signalStore(
             note: store.bookingNote() ?? undefined,
             rentCategoryId: store.selectedRentCategoryId() ?? undefined,
             callbackRequested: extras?.callbackOption === 'yes',
+            notifications: mapNotificationChannelToSoftnet(extras?.notificationChannel ?? 'email'),
           };
 
           return from(appointmentApi.createAppointment(request)).pipe(

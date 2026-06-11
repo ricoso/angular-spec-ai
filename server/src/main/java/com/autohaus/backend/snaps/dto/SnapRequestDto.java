@@ -14,5 +14,9 @@ public record SnapRequestDto(
     String brandName,
     String timePreference,
     Boolean replacementCar,
-    String variant
-) {}
+    String variant,
+    NotificationsDto notifications
+) {
+    /** REQ-027: SoftNet notifications channel ({ SMS, SMTP }). */
+    public record NotificationsDto(Boolean SMS, Boolean SMTP) {}
+}

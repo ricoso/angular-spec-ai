@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REQ-027 Benachrichtigungs-Kanal-Toggle — Mockup</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* =========================================================================
+       CSS Custom Properties - Design System (from _variables.scss)
+       ========================================================================= */
+    :root {
+      --color-primary: #667eea;
+      --color-primary-hover: #5a67d8;
+      --color-secondary: #764ba2;
+      --color-accent: #ed8936;
+
+      --color-text-primary: #1a1a1a;
+      --color-text-secondary: #595959;
+      --color-text-muted: #767676;
+      --color-text-on-primary: #ffffff;
+
+      --color-background-page: #f8f9fa;
+      --color-background-surface: #ffffff;
+      --color-background-hover: #f5f5f5;
+
+      --color-border: #e0e0e0;
+      --color-divider: #eeeeee;
+
+      --color-error: #c62828;
+      --color-success: #2e7d32;
+      --color-warning: #e65100;
+      --color-info: #1565c0;
+      --color-info-bg: #e3f2fd;
+      --color-info-border: #90caf9;
+
+      --color-focus-ring: #005fcc;
+
+      --shadow-small: 0 0.0625em 0.125em rgba(0, 0, 0, 0.1);
+      --shadow-medium: 0 0.25em 0.5em rgba(0, 0, 0, 0.1);
+      --shadow-large: 0 0.5em 1em rgba(0, 0, 0, 0.15);
+
+      --font-size-base: 1em;
+      --font-size-xs: 0.875em;
+      --font-size-sm: 1em;
+      --font-size-md: 1.125em;
+      --font-size-lg: 1.25em;
+      --font-size-xl: 1.5em;
+      --font-size-2xl: 2em;
+
+      --line-height-tight: 1.25;
+      --line-height-normal: 1.5;
+      --line-height-relaxed: 1.75;
+
+      --spacing-xs: 0.25em;
+      --spacing-sm: 0.5em;
+      --spacing-md: 1em;
+      --spacing-lg: 1.5em;
+      --spacing-xl: 2em;
+
+      --radius-sm: 0.25em;
+      --radius-md: 0.5em;
+      --radius-lg: 0.75em;
+      --radius-xl: 1em;
+      --radius-full: 50%;
+
+      --touch-target-min: 2.75em;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      font-size: 16px;
+      line-height: var(--line-height-normal);
+      color: var(--color-text-primary);
+      background-color: var(--color-background-page);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: -3em;
+      left: 0;
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      text-decoration: none;
+      z-index: 1000;
+      transition: top 0.2s;
+    }
+
+    .skip-link:focus { top: var(--spacing-sm); }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ============================ App Layout ============================ */
+    .app-layout {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--color-background-page);
+    }
+
+    .app-main {
+      flex: 1;
+      padding: var(--spacing-md);
+      width: 100%;
+      max-width: 80em;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 48em) {
+      .app-main { padding: var(--spacing-xl); }
+    }
+
+    /* ============================ Icon Framed ============================ */
+    .icon-framed {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5em;
+      height: 2.5em;
+      background: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-small);
+    }
+
+    .icon-framed--sm { width: 2em; height: 2em; }
+    .icon-framed--primary { border-color: var(--color-primary); color: var(--color-primary); }
+
+    /* ============================ Header ============================ */
+    .header {
+      background-color: var(--color-background-surface);
+      border-bottom: 0.0625em solid var(--color-border);
+      box-shadow: var(--shadow-small);
+    }
+
+    .header__content {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      max-width: 80em;
+      margin: 0 auto;
+      min-height: 3.5em;
+    }
+
+    .header__logo-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      text-decoration: none;
+      color: inherit;
+      min-height: var(--touch-target-min);
+      padding: var(--spacing-xs);
+      border-radius: var(--radius-sm);
+      transition: background-color 0.2s ease;
+    }
+
+    .header__logo-link:hover { background-color: var(--color-background-hover); }
+    .header__logo-link:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .header__logo-container {
+      width: 2.5em;
+      height: 2.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .header__logo-circle {
+      width: 2.5em;
+      height: 2.5em;
+      border-radius: var(--radius-full);
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: var(--font-size-sm);
+      letter-spacing: 0.05em;
+    }
+
+    .header__company {
+      display: flex;
+      flex-direction: column;
+      line-height: var(--line-height-tight);
+    }
+
+    .header__company-name {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .header__company-subtitle {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+
+    .header__spacer { flex: 1; }
+
+    .header__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    .header__icon-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      min-width: var(--touch-target-min);
+      min-height: var(--touch-target-min);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      position: relative;
+      padding: 0;
+      color: var(--color-text-primary);
+    }
+
+    .header__icon-button:hover { background-color: var(--color-background-hover); }
+    .header__icon-button:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: 0.125em;
+      right: -0.125em;
+      background-color: var(--color-accent);
+      color: var(--color-text-on-primary);
+      font-size: 0.6875em;
+      font-weight: 700;
+      min-width: 1.25em;
+      height: 1.25em;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      padding: 0 0.25em;
+    }
+
+    @media (max-width: 47.9375em) {
+      .header__company { display: none; }
+      .header__content { padding: var(--spacing-xs) var(--spacing-sm); }
+    }
+
+    @media (min-width: 48em) and (max-width: 63.9375em) {
+      .header__company-subtitle { display: none; }
+    }
+
+    @media (min-width: 64em) {
+      .header__content { padding: var(--spacing-md) var(--spacing-lg); }
+      .header__logo-container,
+      .header__logo-circle { width: 3em; height: 3em; }
+      .header__logo-circle { font-size: var(--font-size-md); }
+    }
+
+    /* ============================ Notes Page Layout ============================ */
+    .notes-page {
+      max-width: 50em;
+      margin: 0 auto;
+      padding: var(--spacing-xl) var(--spacing-md);
+    }
+
+    .notes-page__title {
+      font-size: var(--font-size-2xl);
+      line-height: var(--line-height-tight);
+      color: var(--color-text-primary);
+      margin: 0 0 var(--spacing-sm);
+      font-weight: 700;
+    }
+
+    .notes-page__subtitle {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      margin: 0 0 var(--spacing-xl);
+    }
+
+    @media (max-width: 47.9375em) {
+      .notes-page__title { font-size: var(--font-size-xl); }
+    }
+
+    /* ============================ Switch Card ============================ */
+    .switch-card {
+      background-color: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-small);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-md);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .switch-card.is-on {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 0.0625em var(--color-primary), var(--shadow-small);
+    }
+
+    .switch-card__row {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .switch-card__lead {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .switch-card__icon {
+      font-size: 1.5em;
+      color: var(--color-primary);
+      flex-shrink: 0;
+    }
+
+    .switch-card__text { min-width: 0; }
+
+    .switch-card__title {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0;
+      line-height: var(--line-height-tight);
+    }
+
+    .switch-card__hint {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+      margin: 0.25em 0 0;
+      line-height: var(--line-height-normal);
+    }
+
+    .switch-card__detail {
+      margin-top: var(--spacing-lg);
+      padding-top: var(--spacing-md);
+      border-top: 0.0625em solid var(--color-divider);
+    }
+
+    /* ============================ Form Switch (iOS-Style Toggle) ============================ */
+    .form-switch {
+      position: relative;
+      width: 3em;
+      height: 1.75em;
+      flex-shrink: 0;
+    }
+
+    .form-switch input {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .form-switch__track {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background-color: var(--color-border);
+      border-radius: 1em;
+      transition: background-color 0.2s;
+      position: relative;
+    }
+
+    .form-switch__track::after {
+      content: '';
+      position: absolute;
+      top: 0.125em;
+      left: 0.125em;
+      width: 1.5em;
+      height: 1.5em;
+      background: var(--color-background-surface);
+      border-radius: 50%;
+      box-shadow: var(--shadow-small);
+      transition: transform 0.2s;
+    }
+
+    .form-switch input:checked + .form-switch__track {
+      background-color: var(--color-primary);
+    }
+
+    .form-switch input:checked + .form-switch__track::after {
+      transform: translateX(1.25em);
+    }
+
+    .form-switch input:focus-visible + .form-switch__track {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    /* ============================ Pill Group ============================ */
+    .pill-group-label {
+      display: block;
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+    }
+
+    .pill-group input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pill-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      min-height: var(--touch-target-min);
+      padding: 0.5em 1em;
+      background: var(--color-background-surface);
+      border: 0.125em solid var(--color-border);
+      border-radius: 1.75em;
+      color: var(--color-text-primary);
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+    }
+
+    .pill-group label:hover {
+      border-color: var(--color-primary);
+      background-color: var(--color-background-hover);
+    }
+
+    .pill-group input[type="radio"]:checked + label {
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+    }
+
+    .pill-group input[type="radio"]:focus-visible + label {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .pill-group label .bi {
+      font-size: 1.125em;
+    }
+
+    /* ============================ Info Alert (for Mietwagen Beschreibung) ============================ */
+    .info-alert {
+      margin-top: var(--spacing-md);
+      padding: var(--spacing-md);
+      background-color: var(--color-info-bg);
+      border: 0.0625em solid var(--color-info-border);
+      border-radius: var(--radius-md);
+      color: var(--color-info);
+      font-size: var(--font-size-xs);
+      display: flex;
+      gap: var(--spacing-sm);
+      align-items: flex-start;
+      line-height: var(--line-height-normal);
+    }
+
+    .info-alert .bi { font-size: 1.125em; flex-shrink: 0; margin-top: 0.125em; }
+
+    /* ============================ Notification Card — Highlight (NEU) ============================ */
+    .switch-card--new {
+      position: relative;
+    }
+
+    .switch-card__badge {
+      position: absolute;
+      top: -0.625em;
+      right: var(--spacing-md);
+      background-color: var(--color-accent);
+      color: var(--color-text-on-primary);
+      font-size: 0.6875em;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.25em 0.625em;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-small);
+    }
+
+    /* ============================ Buttons ============================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      min-height: var(--touch-target-min);
+      padding: 0.625em 1.5em;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      line-height: 1;
+    }
+
+    .btn:focus-visible {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .btn--primary {
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+    }
+
+    .btn--primary:hover {
+      background-color: var(--color-primary-hover);
+      box-shadow: var(--shadow-medium);
+    }
+
+    .btn--flat {
+      background-color: var(--color-background-hover);
+      color: var(--color-text-primary);
+    }
+
+    .btn--flat:hover { background-color: var(--color-border); }
+
+    .material-icons { font-size: 1.5em; vertical-align: middle; }
+
+    /* ============================ Navigation Bar ============================ */
+    .navigation-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: var(--spacing-lg);
+      margin-top: var(--spacing-xl);
+      border-top: 0.0625em solid var(--color-divider);
+      gap: var(--spacing-md);
+    }
+
+    /* ============================ Footer ============================ */
+    .app-footer {
+      background: var(--color-background-surface);
+      padding: var(--spacing-md);
+      text-align: center;
+      border-top: 0.0625em solid var(--color-border);
+    }
+
+    @media (min-width: 48em) {
+      .app-footer { padding: var(--spacing-lg); }
+    }
+
+    .app-footer p {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-xs);
+    }
+
+    /* ============================ Reduced Motion ============================ */
+    @media (prefers-reduced-motion: reduce) {
+      .switch-card,
+      .form-switch__track,
+      .form-switch__track::after,
+      .pill-group label,
+      .btn,
+      .header__logo-link,
+      .header__icon-button { transition: none; }
+    }
+
+    /* ============================ High Contrast ============================ */
+    html[data-high-contrast="true"] {
+      --color-text-primary: #000000;
+      --color-text-secondary: #000000;
+      --color-background-page: #ffffff;
+      --color-border: #000000;
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Zum Hauptinhalt springen</a>
+
+  <div class="app-layout">
+
+    <!-- Header -->
+    <header class="header" role="banner">
+      <div class="header__content">
+        <a href="#" class="header__logo-link" aria-label="Zur Startseite">
+          <div class="header__logo-container">
+            <div class="header__logo-circle" aria-hidden="true">AH</div>
+          </div>
+          <div class="header__company">
+            <span class="header__company-name">Autohaus GmbH</span>
+            <span class="header__company-subtitle">Terminbuchung</span>
+          </div>
+        </a>
+
+        <div class="header__spacer"></div>
+
+        <div class="header__actions">
+          <button class="header__icon-button" type="button" aria-label="Warenkorb: 3 Services ausgewählt">
+            <span class="icon-framed icon-framed--sm" style="overflow: visible; position: relative;">
+              <span class="material-icons" aria-hidden="true">shopping_cart</span>
+              <span class="cart-badge" aria-hidden="true">3</span>
+            </span>
+          </button>
+
+          <button class="header__icon-button" type="button" aria-label="Barrierefreiheit-Einstellungen">
+            <span class="icon-framed icon-framed--sm">
+              <span class="material-icons" aria-hidden="true">accessibility_new</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main id="main-content" class="app-main" role="main">
+      <section class="notes-page" aria-labelledby="notes-title">
+
+        <h1 id="notes-title" class="notes-page__title">
+          Zusatzoptionen
+        </h1>
+        <p class="notes-page__subtitle">
+          Optionale Auswahl: Ersatzwagen, Wunschzeit, Rückruf und Benachrichtigungskanal.
+        </p>
+
+        <!-- ===== Card 1: Mietwagen (Toggle aktiv + Pill-Group) ===== -->
+        <div class="switch-card is-on"
+             role="region"
+             aria-labelledby="rent-title">
+          <div class="switch-card__row">
+            <div class="switch-card__lead">
+              <i class="bi bi-car-front-fill switch-card__icon" aria-hidden="true"></i>
+              <div class="switch-card__text">
+                <p id="rent-title" class="switch-card__title">Mietwagen während Service</p>
+                <p class="switch-card__hint">Benötigen Sie einen Ersatzwagen?</p>
+              </div>
+            </div>
+            <label class="form-switch">
+              <input type="checkbox" role="switch" checked aria-labelledby="rent-title">
+              <span class="form-switch__track" aria-hidden="true"></span>
+            </label>
+          </div>
+
+          <div class="switch-card__detail">
+            <span class="pill-group-label">Fahrzeugklasse</span>
+            <div class="pill-group" role="radiogroup" aria-label="Fahrzeugklasse">
+              <input type="radio" name="rentClass" id="rentClass-economy" checked>
+              <label for="rentClass-economy"><i class="bi bi-car-front" aria-hidden="true"></i>Economy</label>
+
+              <input type="radio" name="rentClass" id="rentClass-compact">
+              <label for="rentClass-compact"><i class="bi bi-car-front" aria-hidden="true"></i>Kompakt</label>
+
+              <input type="radio" name="rentClass" id="rentClass-mid">
+              <label for="rentClass-mid"><i class="bi bi-car-front" aria-hidden="true"></i>Mittelklasse</label>
+            </div>
+
+            <div class="info-alert" role="note" aria-live="polite">
+              <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+              <div>Economy-Klasse: kompakter Cityflitzer, 4 Sitze, Klimaanlage. Inklusive 200 km/Tag.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Card 2: Terminpräferenz (Pill-Group) ===== -->
+        <div class="switch-card"
+             role="region"
+             aria-labelledby="pref-title">
+          <div class="switch-card__lead" style="margin-bottom: var(--spacing-md);">
+            <i class="bi bi-clock switch-card__icon" aria-hidden="true"></i>
+            <div class="switch-card__text">
+              <p id="pref-title" class="switch-card__title">Terminpräferenz</p>
+              <p class="switch-card__hint">Wann soll Ihr Termin stattfinden?</p>
+            </div>
+          </div>
+          <div class="pill-group" role="radiogroup" aria-labelledby="pref-title">
+            <input type="radio" name="timePref" id="timePref-any" checked>
+            <label for="timePref-any"><i class="bi bi-clock" aria-hidden="true"></i>Jederzeit</label>
+
+            <input type="radio" name="timePref" id="timePref-am">
+            <label for="timePref-am"><i class="bi bi-sunrise" aria-hidden="true"></i>Vormittags</label>
+
+            <input type="radio" name="timePref" id="timePref-pm">
+            <label for="timePref-pm"><i class="bi bi-sunset" aria-hidden="true"></i>Nachmittags</label>
+          </div>
+        </div>
+
+        <!-- ===== Card 3: Rückruf (Switch) ===== -->
+        <div class="switch-card"
+             role="region"
+             aria-labelledby="callback-title">
+          <div class="switch-card__row">
+            <div class="switch-card__lead">
+              <i class="bi bi-telephone-fill switch-card__icon" aria-hidden="true"></i>
+              <div class="switch-card__text">
+                <p id="callback-title" class="switch-card__title">Rückruf gewünscht</p>
+                <p class="switch-card__hint">Wir rufen Sie zur Terminbestätigung zurück.</p>
+              </div>
+            </div>
+            <label class="form-switch">
+              <input type="checkbox" role="switch" aria-labelledby="callback-title">
+              <span class="form-switch__track" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ===== Card 4: NEU — Benachrichtigungs-Kanal (REQ-027) ===== -->
+        <div class="switch-card switch-card--new"
+             role="region"
+             aria-labelledby="notification-title">
+          <span class="switch-card__badge" aria-label="Neues Feature">Neu</span>
+          <div class="switch-card__lead" style="margin-bottom: var(--spacing-md);">
+            <i class="bi bi-bell-fill switch-card__icon" aria-hidden="true"></i>
+            <div class="switch-card__text">
+              <p id="notification-title" class="switch-card__title">Benachrichtigung</p>
+              <p class="switch-card__hint">Wie möchten Sie benachrichtigt werden?</p>
+            </div>
+          </div>
+          <div class="pill-group" role="radiogroup" aria-labelledby="notification-title">
+            <input type="radio" name="notificationChannel" id="notificationChannel-email" checked>
+            <label for="notificationChannel-email">
+              <i class="bi bi-envelope" aria-hidden="true"></i>
+              E-Mail
+            </label>
+
+            <input type="radio" name="notificationChannel" id="notificationChannel-sms">
+            <label for="notificationChannel-sms">
+              <i class="bi bi-chat-dots" aria-hidden="true"></i>
+              SMS
+            </label>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="navigation-bar" aria-label="Seitennavigation">
+          <a href="#" class="btn btn--flat" aria-label="Zurück zur Serviceauswahl">
+            <span class="material-icons" aria-hidden="true">arrow_back</span>
+            Zurück
+          </a>
+          <a href="#" class="btn btn--primary" aria-label="Weiter zur Übersicht">
+            Weiter
+            <span class="material-icons" aria-hidden="true">arrow_forward</span>
+          </a>
+        </nav>
+
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer" role="contentinfo">
+      <p>Autohaus GmbH</p>
+    </footer>
+
+  </div>
+</body>
+</html>

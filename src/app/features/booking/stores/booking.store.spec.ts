@@ -328,39 +328,46 @@ describe('BookingStore', () => {
       expect(store.selectedAppointmentPreference()).toBe('anytime');
       expect(store.selectedCallbackOption()).toBe('no');
       expect(store.callbackRequested()).toBe(false);
+      expect(store.selectedNotificationChannel()).toBe('email');
     });
 
     it('should set notesExtras', () => {
-      const extras = { appointmentPreference: 'morning' as const, callbackOption: 'yes' as const };
+      const extras = {
+        appointmentPreference: 'morning' as const,
+        callbackOption: 'yes' as const,
+        notificationChannel: 'email' as const
+      };
       store.setNotesExtras(extras);
       expect(store.notesExtras()).toEqual(extras);
     });
 
     it('should update hasNotesExtras to true after set', () => {
-      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no' });
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no', notificationChannel: 'email' });
       expect(store.hasNotesExtras()).toBe(true);
     });
 
     it('should update computed signals after set', () => {
-      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes' });
+      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes', notificationChannel: 'sms' });
       expect(store.selectedAppointmentPreference()).toBe('afternoon');
       expect(store.selectedCallbackOption()).toBe('yes');
       expect(store.callbackRequested()).toBe(true);
+      expect(store.selectedNotificationChannel()).toBe('sms');
     });
 
     it('should clear notesExtras', () => {
-      store.setNotesExtras({ appointmentPreference: 'morning', callbackOption: 'yes' });
+      store.setNotesExtras({ appointmentPreference: 'morning', callbackOption: 'yes', notificationChannel: 'email' });
       store.clearNotesExtras();
       expect(store.notesExtras()).toBeNull();
       expect(store.hasNotesExtras()).toBe(false);
     });
 
     it('should reset computed signals after clear', () => {
-      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes' });
+      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes', notificationChannel: 'sms' });
       store.clearNotesExtras();
       expect(store.selectedAppointmentPreference()).toBe('anytime');
       expect(store.selectedCallbackOption()).toBe('no');
       expect(store.callbackRequested()).toBe(false);
+      expect(store.selectedNotificationChannel()).toBe('email');
     });
   });
 
@@ -434,13 +441,30 @@ describe('BookingStore', () => {
     });
 
     it('is true when callbackOption is yes', () => {
-      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'yes' });
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'yes', notificationChannel: 'email' });
       expect(store.callbackRequested()).toBe(true);
     });
 
     it('is false when callbackOption is none', () => {
-      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no' });
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no', notificationChannel: 'email' });
       expect(store.callbackRequested()).toBe(false);
+    });
+  });
+
+  describe('selectedNotificationChannel (REQ-027)', () => {
+    it('defaults to "email" when no extras are set', () => {
+      expect(store.selectedNotificationChannel()).toBe('email');
+    });
+
+    it('reflects the configured channel after setNotesExtras', () => {
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no', notificationChannel: 'sms' });
+      expect(store.selectedNotificationChannel()).toBe('sms');
+    });
+
+    it('falls back to "email" after clearNotesExtras', () => {
+      store.setNotesExtras({ appointmentPreference: 'anytime', callbackOption: 'no', notificationChannel: 'sms' });
+      store.clearNotesExtras();
+      expect(store.selectedNotificationChannel()).toBe('email');
     });
   });
 

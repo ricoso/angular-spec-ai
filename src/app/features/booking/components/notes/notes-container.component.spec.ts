@@ -78,9 +78,9 @@ describe('NotesContainerComponent', () => {
     it('should expose currentExtras with defaults initially', () => {
       const exposed = component as unknown as { currentExtras: () => NotesExtras };
       expect(exposed.currentExtras()).toEqual({
-        
         appointmentPreference: 'anytime',
-        callbackOption: 'no'
+        callbackOption: 'no',
+        notificationChannel: 'email'
       });
     });
   });
@@ -108,9 +108,9 @@ describe('NotesContainerComponent', () => {
   describe('onExtrasChanged', () => {
     it('should update currentExtras when extras change', () => {
       const extras: NotesExtras = {
-        
         appointmentPreference: 'afternoon',
-        callbackOption: 'yes'
+        callbackOption: 'yes',
+        notificationChannel: 'sms'
       };
       const exposed = component as unknown as {
         onExtrasChanged: (extras: NotesExtras) => void;
@@ -124,9 +124,9 @@ describe('NotesContainerComponent', () => {
   describe('onContinue', () => {
     it('should save note and extras to store and navigate', () => {
       const extras: NotesExtras = {
-        
         appointmentPreference: 'morning',
-        callbackOption: 'yes'
+        callbackOption: 'yes',
+        notificationChannel: 'sms'
       };
       const exposed = component as unknown as {
         onNoteChanged: (note: string | null) => void;
@@ -175,9 +175,9 @@ describe('NotesContainerComponent', () => {
       const exposed = component as unknown as { onContinue: () => void };
       exposed.onContinue();
       expect(store.notesExtras()).toEqual({
-        
         appointmentPreference: 'anytime',
-        callbackOption: 'no'
+        callbackOption: 'no',
+        notificationChannel: 'email'
       });
       expect(router.navigate).toHaveBeenCalledWith(['/home/appointment']);
     });
@@ -192,7 +192,7 @@ describe('NotesContainerComponent', () => {
 
     it('should clear booking note and notesExtras in store before navigating back', () => {
       store.setBookingNote('Test note');
-      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes' });
+      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes', notificationChannel: 'email' });
 
       const exposed = component as unknown as { onBack: () => void };
       exposed.onBack();
@@ -232,9 +232,9 @@ describe('NotesContainerComponent', () => {
 
     it('should reflect notesExtras from store', () => {
       const extras: NotesExtras = {
-        
         appointmentPreference: 'morning',
-        callbackOption: 'yes'
+        callbackOption: 'yes',
+        notificationChannel: 'email'
       };
       const exposed = component as unknown as { initialExtras: () => NotesExtras | null };
       store.setNotesExtras(extras);

@@ -49,7 +49,8 @@ describe('NotesExtrasFormComponent', () => {
     it('should apply initial extras when provided', () => {
       const extras: NotesExtras = {
         appointmentPreference: 'morning',
-        callbackOption: 'yes'
+        callbackOption: 'yes',
+        notificationChannel: 'sms'
       };
       fixture.componentRef.setInput('initialExtras', extras);
       fixture.detectChanges();
@@ -57,9 +58,11 @@ describe('NotesExtrasFormComponent', () => {
       const exposed = component as unknown as {
         appointmentPreference: () => string;
         callbackOption: () => string;
+        notificationChannel: () => string;
       };
       expect(exposed.appointmentPreference()).toBe('morning');
       expect(exposed.callbackOption()).toBe('yes');
+      expect(exposed.notificationChannel()).toBe('sms');
     });
 
     it('should apply initial rent category id', () => {
@@ -75,9 +78,11 @@ describe('NotesExtrasFormComponent', () => {
       const exposed = component as unknown as {
         appointmentPreference: () => string;
         callbackOption: () => string;
+        notificationChannel: () => string;
       };
       expect(exposed.appointmentPreference()).toBe('anytime');
       expect(exposed.callbackOption()).toBe('no');
+      expect(exposed.notificationChannel()).toBe('email');
     });
   });
 
@@ -124,7 +129,8 @@ describe('NotesExtrasFormComponent', () => {
       expect(exposed.appointmentPreference()).toBe('afternoon');
       expect(spy).toHaveBeenCalledWith({
         appointmentPreference: 'afternoon',
-        callbackOption: 'no'
+        callbackOption: 'no',
+        notificationChannel: 'email'
       });
     });
   });
@@ -143,7 +149,45 @@ describe('NotesExtrasFormComponent', () => {
       expect(exposed.callbackOption()).toBe('yes');
       expect(spy).toHaveBeenCalledWith({
         appointmentPreference: 'anytime',
-        callbackOption: 'yes'
+        callbackOption: 'yes',
+        notificationChannel: 'email'
+      });
+    });
+  });
+
+  describe('onNotificationChannelChange (REQ-027)', () => {
+    it('updates notificationChannel and emits extras with sms', () => {
+      const spy = jest.fn();
+      component.extrasChanged.subscribe(spy);
+
+      const exposed = component as unknown as {
+        onNotificationChannelChange: (value: 'email' | 'sms') => void;
+        notificationChannel: () => string;
+      };
+      exposed.onNotificationChannelChange('sms');
+
+      expect(exposed.notificationChannel()).toBe('sms');
+      expect(spy).toHaveBeenCalledWith({
+        appointmentPreference: 'anytime',
+        callbackOption: 'no',
+        notificationChannel: 'sms'
+      });
+    });
+
+    it('emits extras with email after toggling back', () => {
+      const spy = jest.fn();
+      component.extrasChanged.subscribe(spy);
+
+      const exposed = component as unknown as {
+        onNotificationChannelChange: (value: 'email' | 'sms') => void;
+      };
+      exposed.onNotificationChannelChange('sms');
+      exposed.onNotificationChannelChange('email');
+
+      expect(spy).toHaveBeenLastCalledWith({
+        appointmentPreference: 'anytime',
+        callbackOption: 'no',
+        notificationChannel: 'email'
       });
     });
   });
@@ -171,6 +215,12 @@ describe('NotesExtrasFormComponent', () => {
       const exposed = component as unknown as { callbackOptionItems: () => { value: string; label: string }[] };
       expect(exposed.callbackOptionItems()).toHaveLength(2);
       expect(exposed.callbackOptionItems().map(i => i.value)).toEqual(['no', 'yes']);
+    });
+
+    it('should have 2 notification channel items (email, sms) — REQ-027', () => {
+      const exposed = component as unknown as { notificationChannelItems: () => { value: string; label: string; icon: string }[] };
+      expect(exposed.notificationChannelItems()).toHaveLength(2);
+      expect(exposed.notificationChannelItems().map(i => i.value)).toEqual(['email', 'sms']);
     });
   });
 

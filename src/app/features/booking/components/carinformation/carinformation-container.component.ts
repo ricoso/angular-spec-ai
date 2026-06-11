@@ -47,7 +47,7 @@ export class CarinformationContainerComponent {
   });
 
   protected readonly vehicleForm = this.fb.group({
-    licensePlate: ['', [Validators.required, Validators.pattern(/^[A-ZÄÖÜ]{1,3}-[A-Z]{1,2}\s?\d{1,4}$/i)]],
+    licensePlate: ['', [Validators.required]],
     mileage: [null as number | null, [Validators.required, Validators.min(0)]]
   });
 
