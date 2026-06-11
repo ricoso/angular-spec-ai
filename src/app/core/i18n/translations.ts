@@ -290,7 +290,8 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
           services: {
             title: 'Gewählter Service',
             intro: 'Folgende Leistungen werden in',
-            introSuffix: 'für Sie angefragt:'
+            introSuffix: 'für Sie angefragt:',
+            empty: 'Keine Leistungen ausgewählt.'
           },
           personalData: {
             title: 'Ihre Daten',
@@ -628,7 +629,8 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
           services: {
             title: 'Selected Service',
             intro: 'The following services will be requested at',
-            introSuffix: 'for you:'
+            introSuffix: 'for you:',
+            empty: 'No services selected.'
           },
           personalData: {
             title: 'Your Details',
@@ -966,7 +968,8 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
           services: {
             title: 'Обраний сервіс',
             intro: 'Наступні послуги будуть запитані в',
-            introSuffix: 'для вас:'
+            introSuffix: 'для вас:',
+            empty: 'Послуги не вибрано.'
           },
           personalData: {
             title: 'Ваші дані',
@@ -1302,7 +1305,8 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
           services: {
             title: 'Service sélectionné',
             intro: 'Les prestations suivantes seront demandées à',
-            introSuffix: 'pour vous :'
+            introSuffix: 'pour vous :',
+            empty: 'Aucune prestation sélectionnée.'
           },
           personalData: {
             title: 'Vos données',
@@ -1638,7 +1642,8 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم 
           services: {
             title: 'الخدمة المختارة',
             intro: 'سيتم طلب الخدمات التالية في',
-            introSuffix: 'لك:'
+            introSuffix: 'لك:',
+            empty: 'لم يتم تحديد أي خدمات.'
           },
           personalData: {
             title: 'بياناتك',

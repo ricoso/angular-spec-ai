@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test';
 
 // REQ-023: SKIPPED — Spec war fuer altes UI (vor REQ-013/REQ-015 Refactor) geschrieben.
 // Reaktivieren nach Selektor-Update — siehe REQ-024 (Test-Suite-Stabilisierung).
-
 import { navigateTo, waitForAngular } from './helpers/app.helpers';
 
 /**
@@ -850,7 +849,7 @@ test.describe.skip('REQ-015: Full Wizard Flow (TC-30)', () => {
 
     // Check form validity before submitting
     const formValid = await page.evaluate(() => {
-      const btn = document.querySelector('.carinformation__continue-button');
+      const btn = document.querySelector<HTMLButtonElement>('.carinformation__continue-button');
       return { disabled: btn?.disabled, tagName: btn?.tagName, type: btn?.getAttribute('type') };
     });
     console.log('Button state before submit:', JSON.stringify(formValid));

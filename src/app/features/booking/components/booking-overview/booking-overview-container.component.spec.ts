@@ -225,12 +225,16 @@ describe('BookingOverviewContainerComponent', () => {
       expect(lbl).toContain('Lichtwechsel');
     });
 
-    it('returns empty when no source matches', () => {
+    it('falls back to the raw serviceId when no source matches', () => {
+      // Defensive fallback (Bug-Fix): wenn weder operations, jobTypes noch
+      // AVAILABLE_SERVICES die ID auflösen koennen, muss wenigstens die ID
+      // selbst als Label gerendert werden — sonst wirkt die Auswahl optisch
+      // verschwunden (Bug: leere Services-Kachel auf der Übersicht).
       jest.spyOn(store, 'operations').mockReturnValue([]);
       jest.spyOn(store, 'jobTypes').mockReturnValue([]);
       store.toggleService('totally-unknown-id' as never);
       const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
-      expect(exposed.resolvedServiceLabels()['totally-unknown-id']).toBeUndefined();
+      expect(exposed.resolvedServiceLabels()['totally-unknown-id']).toBe('totally-unknown-id');
     });
   });
 

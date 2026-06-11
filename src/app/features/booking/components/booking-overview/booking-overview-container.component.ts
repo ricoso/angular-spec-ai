@@ -89,7 +89,13 @@ export class BookingOverviewContainerComponent {
       }
 
       const serviceDisplay = AVAILABLE_SERVICES.find(s => s.id === service.serviceId);
-      if (!serviceDisplay) { continue; }
+      if (!serviceDisplay) {
+        // Defensive Fallback: kein API-Datensatz UND kein Legacy-Match — wenigstens die
+        // ServiceId anzeigen, damit der User die Auswahl nicht "verschwinden" sieht
+        // (vorher: leerer String → optisch keine Services).
+        labels[service.serviceId] = service.serviceId;
+        continue;
+      }
 
       let label = this.translateService.instant(serviceDisplay.titleKey);
 
