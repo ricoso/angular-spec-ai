@@ -67,7 +67,7 @@
   <nav class="wizard-nav" [attr.aria-label]="booking.workshopCalendar.navAriaLabel | translate">
     <button
       type="button"
-      class="btn btn-outline-secondary wizard-nav__back-button"
+      class="btn btn-outline-secondary btn-lg wizard-nav__back-button"
       [attr.aria-label]="booking.workshopCalendar.backButton | translate"
       (click)="onBack()"
     >
@@ -77,7 +77,7 @@
 
     <button
       type="button"
-      class="btn btn-primary wizard-nav__continue-button"
+      class="btn btn-primary btn-lg wizard-nav__continue-button"
       [disabled]="!hasAppointmentSelected()"
       [attr.aria-label]="booking.workshopCalendar.continueButton | translate"
       (click)="onContinue()"
