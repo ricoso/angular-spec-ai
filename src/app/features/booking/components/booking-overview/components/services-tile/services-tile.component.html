@@ -6,17 +6,17 @@
     <p class="summary-row__label" id="tile-title-service">
       {{ bookingOverview.tiles.services.title | translate }} ({{ services().length }})
     </p>
+    <p class="summary-row__sub">
+      {{ bookingOverview.tiles.services.intro | translate }}
+      <strong>{{ locationName() }}</strong>
+      {{ bookingOverview.tiles.services.introSuffix | translate }}
+    </p>
     <p class="summary-row__value">
       @for (service of services(); track service.serviceId; let last = $last) {
         {{ serviceLabels()[service.serviceId] || service.serviceId }}@if (!last) {<span aria-hidden="true"> &middot; </span>}
       } @empty {
         <em class="summary-row__empty">{{ bookingOverview.tiles.services.empty | translate }}</em>
       }
-    </p>
-    <p class="summary-row__sub">
-      {{ bookingOverview.tiles.services.intro | translate }}
-      <strong>{{ locationName() }}</strong>
-      {{ bookingOverview.tiles.services.introSuffix | translate }}
     </p>
   </div>
 </article>
