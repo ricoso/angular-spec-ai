@@ -11,7 +11,9 @@
 - **UI-Sprachen**: DE, EN
 - **Doc-Sprachen**: DE, EN
 - **Deployment**: Production (Spring Boot Backend + SoftNet API)
-- **Hosting**: Azure Container App (`gs-terminbuchungs-app`, RG `DefaultResourceGroup-DEWC`, Region `westeurope`) — Konfig auslesen + Login-Anleitung: [`docs/infrastructure/azure-read.md`](./docs/infrastructure/azure-read.md)
+- **Hosting**: Azure Container App (`gs-terminbuchungs-app`, RG `DefaultResourceGroup-DEWC`, Region `westeurope`)
+  - **Konfig auslesen / Logs / Monitoring:** [`docs/infrastructure/azure-read.md`](./docs/infrastructure/azure-read.md)
+  - **Deploy / Update (acr build → containerapp update):** [`docs/infrastructure/azure-deploy.md`](./docs/infrastructure/azure-deploy.md)
 - **SoftNet API-Doku**: `test-booking-flow copy.mjs` — Feature Discovery (Zeitfilter, Ersatzwagen, Wiederkehr-Kunde); `soft-netOpenAPI.html` — Offizielle OpenAPI Spec
 - **SoftNet API-Erkenntnisse** (getestet + bewiesen, INT-System, `scope.api.planning.service`):
   - `checkInTimePreference: "AM"|"PM"` → verschiebt Snap-Verteilung (VM/NM)
