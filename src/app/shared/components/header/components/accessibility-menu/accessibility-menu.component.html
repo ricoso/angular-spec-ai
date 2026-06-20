@@ -54,12 +54,13 @@
   <section class="accessibility-menu__section">
     <div class="form-check form-switch accessibility-menu__toggle">
       <input
+        #highContrastToggle
         class="form-check-input"
         type="checkbox"
         role="switch"
         id="a11y-high-contrast"
         [checked]="highContrast()"
-        (change)="onHighContrastChange($any($event.target).checked)" />
+        (change)="onHighContrastChange(highContrastToggle.checked)" />
       <label class="form-check-label" for="a11y-high-contrast">
         {{ a11y.highContrast | translate }}
       </label>
@@ -70,12 +71,13 @@
   <section class="accessibility-menu__section">
     <div class="form-check form-switch accessibility-menu__toggle">
       <input
+        #reducedMotionToggle
         class="form-check-input"
         type="checkbox"
         role="switch"
         id="a11y-reduced-motion"
         [checked]="reducedMotion()"
-        (change)="onReducedMotionChange($any($event.target).checked)" />
+        (change)="onReducedMotionChange(reducedMotionToggle.checked)" />
       <label class="form-check-label" for="a11y-reduced-motion">
         {{ a11y.reducedMotion | translate }}
       </label>

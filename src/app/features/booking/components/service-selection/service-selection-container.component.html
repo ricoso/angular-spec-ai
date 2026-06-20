@@ -101,11 +101,12 @@
             <label class="service-option d-flex">
               <div class="d-flex align-items-start">
                 <input
+                  #operationCheckbox
                   type="checkbox"
                   class="form-check-input mt-1 me-2"
                   [id]="'service-option-' + op.id"
                   [checked]="activeSelectedSet().has(op.id)"
-                  (change)="onOperationToggle(op.id, $any($event.target).checked)"
+                  (change)="onOperationToggle(op.id, operationCheckbox.checked)"
                 />
                 <div>
                   <span class="service-option__name">{{ op.name }}</span>

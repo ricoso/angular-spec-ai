@@ -62,7 +62,7 @@ export class NotesExtrasFormComponent {
     const id = this.selectedRentCategoryId();
     if (!id) return null;
     const cat = this.rentCategories().find(c => c.id === id);
-    return cat?.description?.trim() ? cat.description : null;
+    return cat?.description.trim() ? cat.description : null;
   });
 
   constructor() {

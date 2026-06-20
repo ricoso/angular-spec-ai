@@ -501,12 +501,12 @@ export const BookingStore = signalStore(
     selectBranch(branch: BranchConfig): void {
       const currentBranch = store.selectedBranch();
       const branchChanged = currentBranch?.branchId !== branch.branchId;
-      const street = branch.address.street ?? '';
+      const street = branch.address.street;
       const zipCity = [branch.address.zip, branch.address.city].filter(Boolean).join(' ');
       const formattedAddress = [street, zipCity].filter(Boolean).join(', ') || branch.name;
       patchState(store, {
         selectedBranch: branch,
-        selectedLocation: { id: branch.branchId, name: branch.name, city: branch.address.city ?? '', formattedAddress }
+        selectedLocation: { id: branch.branchId, name: branch.name, city: branch.address.city, formattedAddress }
       });
       if (branchChanged) {
         patchState(store, {
