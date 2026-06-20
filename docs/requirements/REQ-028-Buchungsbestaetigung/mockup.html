@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REQ-028 Buchungsbestätigung — Mockup</title>
+
+  <!-- Bootstrap 5 CSS + Bootstrap Icons (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================================
+       CSS Custom Properties — Design System (from src/styles/_variables.scss)
+       Diese Werte überschreiben auch die relevanten Bootstrap-Tokens (--bs-*).
+       ========================================================================= */
+    :root {
+      /* Brand Colors */
+      --color-primary: #667eea;
+      --color-primary-hover: #5a67d8;
+      --color-secondary: #764ba2;
+      --color-accent: #ed8936;
+
+      /* Text Colors (WCAG AA) */
+      --color-text-primary: #1a1a1a;
+      --color-text-secondary: #595959;
+      --color-text-muted: #767676;
+      --color-text-on-primary: #ffffff;
+      --color-text-on-dark: #ffffff;
+
+      /* Background Colors */
+      --color-background-page: #f8f9fa;
+      --color-background-surface: #ffffff;
+      --color-background-hover: #f5f5f5;
+
+      /* Border & Divider */
+      --color-border: #e0e0e0;
+      --color-divider: #eeeeee;
+
+      /* Semantic Colors */
+      --color-error: #c62828;
+      --color-success: #2e7d32;
+      --color-warning: #e65100;
+      --color-info: #1565c0;
+      --color-info-bg: #e3f2fd;
+      --color-info-border: #90caf9;
+
+      /* Focus */
+      --color-focus-ring: #005fcc;
+
+      /* Shadows */
+      --shadow-small: 0 0.0625em 0.125em rgba(0, 0, 0, 0.1);
+      --shadow-medium: 0 0.25em 0.5em rgba(0, 0, 0, 0.1);
+      --shadow-large: 0 0.5em 1em rgba(0, 0, 0, 0.15);
+
+      /* Typography */
+      --font-size-base: 1em;
+      --font-size-xs: 0.875em;
+      --font-size-sm: 1em;
+      --font-size-md: 1.125em;
+      --font-size-lg: 1.25em;
+      --font-size-xl: 1.5em;
+      --font-size-2xl: 2em;
+      --font-size-3xl: 2.5em;
+
+      --line-height-tight: 1.25;
+      --line-height-normal: 1.5;
+      --line-height-relaxed: 1.75;
+
+      /* Spacing */
+      --spacing-xs: 0.25em;
+      --spacing-sm: 0.5em;
+      --spacing-md: 1em;
+      --spacing-lg: 1.5em;
+      --spacing-xl: 2em;
+
+      /* Border Radius */
+      --radius-sm: 0.25em;
+      --radius-md: 0.5em;
+      --radius-lg: 0.75em;
+      --radius-xl: 1em;
+      --radius-full: 50%;
+
+      /* Touch Targets */
+      --touch-target-min: 2.75em;
+
+      /* ---- Bootstrap-Tokens an Design-System angleichen ---- */
+      --bs-primary: var(--color-primary);
+      --bs-primary-rgb: 102, 126, 234;
+      --bs-link-color: var(--color-primary);
+      --bs-link-hover-color: var(--color-primary-hover);
+      --bs-body-color: var(--color-text-primary);
+      --bs-body-bg: var(--color-background-page);
+      --bs-body-font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+    }
+
+    /* =========================================================================
+       Base
+       ========================================================================= */
+    body {
+      font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+      background-color: var(--color-background-page);
+      color: var(--color-text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Bootstrap-Primary-Buttons an Brand-Hover anbinden */
+    .btn-primary {
+      --bs-btn-bg: var(--color-primary);
+      --bs-btn-border-color: var(--color-primary);
+      --bs-btn-hover-bg: var(--color-primary-hover);
+      --bs-btn-hover-border-color: var(--color-primary-hover);
+      --bs-btn-active-bg: var(--color-primary-hover);
+      --bs-btn-active-border-color: var(--color-primary-hover);
+      --bs-btn-disabled-bg: var(--color-primary);
+      --bs-btn-disabled-border-color: var(--color-primary);
+    }
+
+    /* Konsistente Focus-Styles (WCAG) */
+    a:focus-visible,
+    button:focus-visible,
+    .btn:focus-visible,
+    .header__icon-button:focus-visible {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+      box-shadow: none;
+    }
+
+    /* =========================================================================
+       Skip Link (Accessibility)
+       ========================================================================= */
+    .skip-link {
+      position: absolute;
+      top: -3em;
+      left: var(--spacing-md);
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      text-decoration: none;
+      z-index: 1080;
+      transition: top 0.2s ease;
+    }
+    .skip-link:focus { top: var(--spacing-sm); }
+
+    /* =========================================================================
+       App Layout
+       ========================================================================= */
+    .app-layout {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--color-background-page);
+    }
+
+    .app-main {
+      flex: 1;
+      min-height: 0;
+      padding: var(--spacing-md);
+      width: 100%;
+      max-width: 80em;
+      margin: 0 auto;
+    }
+    @media (min-width: 48em) { .app-main { padding: var(--spacing-xl); } }
+
+    /* =========================================================================
+       Icon Framed (from src/styles/_utilities.scss)
+       ========================================================================= */
+    .icon-framed {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5em;
+      height: 2.5em;
+      background: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-small);
+    }
+    .icon-framed--sm { width: 2em; height: 2em; }
+    .icon-framed--primary { border-color: var(--color-primary); color: var(--color-primary); }
+
+    /* =========================================================================
+       Header (from header-container.component.html/.scss)
+       ========================================================================= */
+    .header {
+      background-color: var(--color-background-surface);
+      border-bottom: 0.0625em solid var(--color-border);
+      box-shadow: var(--shadow-small);
+    }
+    .header__content {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      max-width: 80em;
+      margin: 0 auto;
+      min-height: 3.5em;
+    }
+    .header__logo-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      text-decoration: none;
+      color: inherit;
+      min-height: var(--touch-target-min);
+      padding: var(--spacing-xs);
+      border-radius: var(--radius-sm);
+      transition: background-color 0.2s ease;
+    }
+    .header__logo-link:hover { background-color: var(--color-background-hover); }
+    .header__logo-container {
+      width: 2.5em;
+      height: 2.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .header__logo-circle {
+      width: 2.5em;
+      height: 2.5em;
+      border-radius: var(--radius-full);
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: var(--font-size-sm);
+      letter-spacing: 0.05em;
+    }
+    .header__company {
+      display: flex;
+      flex-direction: column;
+      line-height: var(--line-height-tight);
+    }
+    .header__company-name {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+    .header__company-subtitle {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+    .header__spacer { flex: 1; }
+    .header__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+    .header__icon-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      min-width: var(--touch-target-min);
+      min-height: var(--touch-target-min);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      position: relative;
+      padding: 0;
+      color: var(--color-text-primary);
+    }
+    .header__icon-button:hover { background-color: var(--color-background-hover); }
+    .header__icon-button .bi { font-size: 1.25em; }
+    .cart-badge {
+      position: absolute;
+      top: 0.125em;
+      right: -0.125em;
+      background-color: var(--color-accent);
+      color: var(--color-text-on-primary);
+      font-size: 0.6875em;
+      font-weight: 700;
+      min-width: 1.25em;
+      height: 1.25em;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      padding: 0 0.25em;
+    }
+
+    @media (max-width: 47.9375em) {
+      .header__company { display: none; }
+      .header__content { padding: var(--spacing-xs) var(--spacing-sm); }
+    }
+    @media (min-width: 48em) and (max-width: 63.9375em) {
+      .header__company-subtitle { display: none; }
+    }
+    @media (min-width: 64em) {
+      .header__content { padding: var(--spacing-md) var(--spacing-lg); }
+      .header__logo-container,
+      .header__logo-circle { width: 3em; height: 3em; }
+      .header__logo-circle { font-size: var(--font-size-md); }
+    }
+
+    /* =========================================================================
+       Booking Overview Page (from booking-overview-container.component.*)
+       ========================================================================= */
+    .booking-overview {
+      max-width: 75em;
+      margin: 0 auto;
+      padding: var(--spacing-xl) var(--spacing-md);
+    }
+    .booking-overview__title {
+      font-size: var(--font-size-2xl);
+      line-height: var(--line-height-tight);
+      color: var(--color-text-primary);
+      margin: 0 0 var(--spacing-sm);
+      font-weight: 700;
+      text-align: center;
+    }
+    .booking-overview__subtitle {
+      font-size: var(--font-size-md);
+      line-height: var(--line-height-normal);
+      color: var(--color-text-secondary);
+      margin: 0 0 var(--spacing-xl);
+      text-align: center;
+    }
+    .booking-overview__summary-heading {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+    }
+    .booking-overview__summary-card,
+    .booking-overview__sidebar {
+      border: 1px solid #e3e6e9;
+      border-radius: 0.5em;
+      background-color: var(--color-background-surface);
+    }
+    .booking-overview__sidebar { top: 1em; }
+    @media (max-width: 991.98px) {
+      .booking-overview__sidebar { position: static !important; top: auto; }
+    }
+    .booking-overview__submit-button,
+    .booking-overview__back-button {
+      min-height: var(--touch-target-min);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+    }
+
+    /* =========================================================================
+       Summary Rows (from appointment/services/personal-data/price tiles)
+       ========================================================================= */
+    .summary-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1em;
+      padding: 0.85em 0;
+      border-bottom: 0.0625em solid #eef0f2;
+    }
+    .summary-row:last-child { border-bottom: 0; }
+    .summary-row__icon {
+      flex: 0 0 2.5em;
+      width: 2.5em;
+      height: 2.5em;
+      background: #eaf2f9;
+      color: var(--color-primary);
+      border-radius: 0.5em;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2em;
+    }
+    .summary-row__label {
+      font-size: 0.75em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #6c757d;
+      letter-spacing: 0.05em;
+      margin: 0;
+    }
+    .summary-row__value {
+      font-size: 1em;
+      font-weight: 600;
+      margin: 0.1em 0 0;
+      color: var(--color-text-primary);
+    }
+    .summary-row__sub {
+      font-size: 0.85em;
+      color: var(--color-text-secondary);
+      margin: 0.15em 0 0;
+    }
+    .summary-row__details {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.35em 1em;
+      margin-top: 0.5em;
+    }
+    @media (min-width: 48em) {
+      .summary-row__details { grid-template-columns: 1fr 1fr; }
+    }
+    .summary-row__detail { display: flex; flex-direction: column; }
+    .summary-row__detail-label {
+      font-size: 0.7em;
+      text-transform: uppercase;
+      color: #6c757d;
+      letter-spacing: 0.04em;
+      font-weight: 500;
+    }
+    .summary-row__detail-value {
+      font-size: 0.9em;
+      color: var(--color-text-primary);
+    }
+
+    /* =========================================================================
+       NEU (REQ-028): Buchungs-Bestätigung
+       Stil orientiert an `summary-row__value` (font-weight 600,
+       color var(--color-text-primary)) — fett/hervorgehoben, VW-artige Optik.
+       Erscheint NUR im "submitted"-Zustand direkt unter dem Submit-Button.
+       ========================================================================= */
+    .booking-confirmation {
+      margin-top: var(--spacing-md);
+      padding: var(--spacing-md);
+      background-color: #eef6ef;                 /* dezenter Erfolgs-Tint, weiß-nah */
+      border: 0.0625em solid #bcdcc0;
+      border-left: 0.25em solid var(--color-success);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-sm);
+      animation: confirmation-in 0.35s ease both;
+    }
+    .booking-confirmation__icon {
+      flex: 0 0 auto;
+      font-size: 1.5em;
+      line-height: 1;
+      color: var(--color-success);
+      margin-top: 0.05em;
+    }
+    .booking-confirmation__text {
+      margin: 0;
+      /* Highlight-Lettern wie summary-row__value */
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      line-height: var(--line-height-normal);
+      color: var(--color-text-primary);
+    }
+
+    @keyframes confirmation-in {
+      from { opacity: 0; transform: translateY(0.5em); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =========================================================================
+       Footer
+       ========================================================================= */
+    .app-footer {
+      background: var(--color-background-surface);
+      padding: var(--spacing-md);
+      text-align: center;
+      border-top: 0.0625em solid var(--color-border);
+    }
+    @media (min-width: 48em) { .app-footer { padding: var(--spacing-lg); } }
+    .app-footer p {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-xs);
+    }
+
+    /* =========================================================================
+       CSS-only State-Toggle (Vorher / Nachher) — KEIN JavaScript
+       ========================================================================= */
+    .state-toggle {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      justify-content: center;
+      margin-bottom: var(--spacing-lg);
+    }
+    /* Versteckte Radios steuern den angezeigten Zustand */
+    .state-input {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .state-toggle__option {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      min-height: var(--touch-target-min);
+      padding: 0.5em 1.1em;
+      border: 0.125em solid var(--color-border);
+      border-radius: 1.75em;
+      background: var(--color-background-surface);
+      color: var(--color-text-primary);
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+    }
+    .state-toggle__option:hover {
+      border-color: var(--color-primary);
+      background: var(--color-background-hover);
+    }
+    #state-before:checked ~ .state-toggle label[for="state-before"],
+    #state-after:checked  ~ .state-toggle label[for="state-after"] {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+    }
+    .state-input:focus-visible + .state-toggle .state-toggle__option,
+    .state-toggle__option:has(+ .state-input:focus-visible) {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+    /* Fallback-Fokusring für die zugehörige Label-Option */
+    #state-before:focus-visible ~ .state-toggle label[for="state-before"],
+    #state-after:focus-visible  ~ .state-toggle label[for="state-after"] {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    /* Sichtbarkeit der beiden Submit-Block-Varianten je nach State */
+    .submit-block { display: none; }
+    #state-before:checked ~ .app-layout .submit-block--before { display: block; }
+    #state-after:checked  ~ .app-layout .submit-block--after  { display: block; }
+
+    /* Mockup-Hinweisbanner */
+    .mockup-note {
+      max-width: 75em;
+      margin: var(--spacing-md) auto 0;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--color-info-bg);
+      border: 0.0625em solid var(--color-info-border);
+      border-radius: var(--radius-md);
+      color: var(--color-info);
+      font-size: var(--font-size-xs);
+      text-align: center;
+    }
+
+    /* =========================================================================
+       Reduced Motion
+       ========================================================================= */
+    @media (prefers-reduced-motion: reduce) {
+      .header__logo-link,
+      .header__icon-button,
+      .btn,
+      .state-toggle__option,
+      .skip-link { transition: none; }
+      .booking-confirmation { animation: none; }
+    }
+
+    /* =========================================================================
+       High Contrast
+       ========================================================================= */
+    html[data-high-contrast="true"] {
+      --color-text-primary: #000000;
+      --color-text-secondary: #000000;
+      --color-background-page: #ffffff;
+      --color-border: #000000;
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Zum Hauptinhalt springen</a>
+
+  <!-- =====================================================================
+       State-Inputs (CSS-only Toggle): standardmäßig "Nachher" (submitted)
+       ===================================================================== -->
+  <input class="state-input" type="radio" name="view-state" id="state-before">
+  <input class="state-input" type="radio" name="view-state" id="state-after" checked>
+
+  <div class="state-toggle" role="radiogroup" aria-label="Mockup-Ansicht umschalten">
+    <label class="state-toggle__option" for="state-before">
+      <i class="bi bi-hourglass-split" aria-hidden="true"></i> Vorher (noch nicht gesendet)
+    </label>
+    <label class="state-toggle__option" for="state-after">
+      <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Nachher (Anfrage gesendet)
+    </label>
+  </div>
+
+  <div class="app-layout">
+
+    <!-- =================================================================
+         HEADER (Logo "AH" + Firmenname links, Cart/A11y rechts mit .icon-framed)
+         ================================================================= -->
+    <header class="header" role="banner">
+      <div class="header__content">
+        <a href="#" class="header__logo-link" aria-label="Zur Startseite">
+          <div class="header__logo-container">
+            <div class="header__logo-circle" aria-hidden="true">AH</div>
+          </div>
+          <div class="header__company">
+            <span class="header__company-name">Autohaus GmbH</span>
+            <span class="header__company-subtitle">Terminbuchung</span>
+          </div>
+        </a>
+
+        <div class="header__spacer"></div>
+
+        <div class="header__actions">
+          <button class="header__icon-button" type="button" aria-label="Warenkorb: 1 Service ausgewählt">
+            <span class="icon-framed icon-framed--sm" style="overflow: visible; position: relative;">
+              <i class="bi bi-cart3" aria-hidden="true"></i>
+              <span class="cart-badge" aria-hidden="true">1</span>
+            </span>
+          </button>
+          <button class="header__icon-button" type="button" aria-label="Barrierefreiheit-Einstellungen">
+            <span class="icon-framed icon-framed--sm">
+              <i class="bi bi-universal-access" aria-hidden="true"></i>
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- =================================================================
+         MAIN CONTENT
+         ================================================================= -->
+    <main id="main-content" class="app-main" role="main">
+      <section class="booking-overview" aria-labelledby="overview-title">
+        <h1 id="overview-title" class="booking-overview__title">Übersicht</h1>
+        <p class="booking-overview__subtitle">
+          Bitte prüfen Sie Ihre Angaben, bevor Sie den Termin versenden.
+        </p>
+
+        <div class="row g-3 booking-overview__grid" role="region" aria-label="Buchungszusammenfassung">
+
+          <!-- ===== Linke Spalte: Buchungs-Zusammenfassung ===== -->
+          <div class="col-lg-8">
+            <div class="card booking-overview__summary-card">
+              <div class="card-body">
+                <h5 class="booking-overview__summary-heading mb-3">
+                  <i class="bi bi-clipboard-check text-primary me-2" aria-hidden="true"></i>Übersicht
+                </h5>
+
+                <!-- Wunschtermin -->
+                <article class="summary-row" aria-labelledby="row-appointment">
+                  <span class="summary-row__icon" aria-hidden="true"><i class="bi bi-calendar-check-fill"></i></span>
+                  <div class="flex-grow-1">
+                    <p class="summary-row__label" id="row-appointment">Wunschtermin</p>
+                    <p class="summary-row__value">13.03.2026 &mdash; 07:30 Uhr</p>
+                    <p class="summary-row__sub">Datum: 13.03.2026 · Uhrzeit: 07:30 Uhr</p>
+                  </div>
+                </article>
+
+                <!-- Services -->
+                <article class="summary-row" aria-labelledby="row-services">
+                  <span class="summary-row__icon" aria-hidden="true"><i class="bi bi-tools"></i></span>
+                  <div class="flex-grow-1">
+                    <p class="summary-row__label" id="row-services">Gewählte Services (1)</p>
+                    <p class="summary-row__sub">
+                      Folgende Leistungen werden in <strong>Garbsen</strong> für Sie angefragt:
+                    </p>
+                    <p class="summary-row__value">HU/AU</p>
+                  </div>
+                </article>
+
+                <!-- Persönliche Daten (Straße/Ort = Highlight-Vorbild) -->
+                <article class="summary-row" aria-labelledby="row-data">
+                  <span class="summary-row__icon" aria-hidden="true"><i class="bi bi-person-circle"></i></span>
+                  <div class="flex-grow-1">
+                    <p class="summary-row__label" id="row-data">Ihre Daten</p>
+                    <p class="summary-row__value">Max Mustermann</p>
+                    <div class="summary-row__details">
+                      <div class="summary-row__detail">
+                        <span class="summary-row__detail-label">Straße</span>
+                        <span class="summary-row__detail-value">Musterstraße 12</span>
+                      </div>
+                      <div class="summary-row__detail">
+                        <span class="summary-row__detail-label">Ort</span>
+                        <span class="summary-row__detail-value">30823 Garbsen</span>
+                      </div>
+                      <div class="summary-row__detail">
+                        <span class="summary-row__detail-label">Telefon</span>
+                        <span class="summary-row__detail-value">0511 12345678</span>
+                      </div>
+                      <div class="summary-row__detail">
+                        <span class="summary-row__detail-label">E-Mail</span>
+                        <span class="summary-row__detail-value">max@mustermann.de</span>
+                      </div>
+                      <div class="summary-row__detail">
+                        <span class="summary-row__detail-label">Marke</span>
+                        <span class="summary-row__detail-value">Audi</span>
+                      </div>
+                      <div class="summary-row__detail">
+                        <span class="summary-row__detail-label">Kennzeichen</span>
+                        <span class="summary-row__detail-value">GS-MM 123</span>
+                      </div>
+                      <div class="summary-row__detail">
+                        <span class="summary-row__detail-label">Kilometerstand</span>
+                        <span class="summary-row__detail-value">48.500 km</span>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+
+                <!-- Zusatzoptionen / Preis -->
+                <article class="summary-row" aria-labelledby="row-extras">
+                  <span class="summary-row__icon" aria-hidden="true"><i class="bi bi-clock"></i></span>
+                  <div class="flex-grow-1">
+                    <p class="summary-row__label" id="row-extras">Terminpräferenz · Rückruf</p>
+                    <p class="summary-row__value">
+                      Vormittags <span class="text-muted">&mdash; Kein Rückruf</span>
+                    </p>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== Rechte Spalte: Sticky Submit-Sidebar ===== -->
+          <div class="col-lg-4">
+            <div class="card booking-overview__sidebar sticky-top">
+              <div class="card-body">
+                <h6 class="text-uppercase text-muted small mb-3">Übersicht</h6>
+
+                <div class="d-flex justify-content-between mb-1">
+                  <span>Gewählte Services</span>
+                  <span class="fw-semibold">1</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                  <span>Marke</span>
+                  <span class="fw-semibold">Audi</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                  <span>Wunschtermin</span>
+                  <span class="fw-semibold">13.03.2026 · 07:30 Uhr</span>
+                </div>
+
+                <hr>
+
+                <p class="small text-muted">
+                  Bitte prüfen Sie Ihre Angaben, bevor Sie den Termin versenden.
+                </p>
+
+                <nav class="booking-overview__navigation d-flex flex-column gap-2"
+                     aria-label="Seitennavigation">
+
+                  <!-- ============================================================
+                       VORHER-Zustand: Button "Jetzt anfragen", KEINE Bestätigung
+                       ============================================================ -->
+                  <div class="submit-block submit-block--before">
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-lg w-100 booking-overview__submit-button"
+                      aria-label="Termin jetzt anfragen">
+                      <i class="bi bi-check-circle me-2" aria-hidden="true"></i>
+                      <span>Jetzt anfragen</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary w-100 booking-overview__back-button mt-2"
+                      aria-label="Zurück zur vorherigen Seite">
+                      <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>
+                      Zurück
+                    </button>
+                  </div>
+
+                  <!-- ============================================================
+                       NACHHER-Zustand (submitted): Button disabled "Anfrage
+                       gesendet" + NEUE Bestätigung in fetten Highlight-Lettern
+                       direkt darunter (statt Zurück-Button).
+                       ============================================================ -->
+                  <div class="submit-block submit-block--after">
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-lg w-100 booking-overview__submit-button"
+                      disabled
+                      aria-disabled="true"
+                      aria-label="Anfrage gesendet">
+                      <i class="bi bi-check-circle me-2" aria-hidden="true"></i>
+                      <span>Anfrage gesendet</span>
+                    </button>
+
+                    <!-- NEU (REQ-028): prominente Bestätigung -->
+                    <div class="booking-confirmation" role="status" aria-live="polite">
+                      <i class="bi bi-check-circle-fill booking-confirmation__icon" aria-hidden="true"></i>
+                      <p class="booking-confirmation__text">
+                        Vielen Dank, Ihr Termin ist reserviert. Wir freuen uns auf Ihren Besuch.
+                      </p>
+                    </div>
+                  </div>
+
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <p class="mockup-note">
+        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+        Mockup-Hinweis: Über die Umschalter oben lässt sich der Zustand „Vorher / Nachher“ wechseln.
+        Standard ist „Nachher“ (erfolgreich gesendet) — die neue Bestätigung erscheint unter dem Button.
+      </p>
+    </main>
+
+    <!-- =================================================================
+         FOOTER
+         ================================================================= -->
+    <footer class="app-footer" role="contentinfo">
+      <p>Autohaus GmbH</p>
+    </footer>
+
+  </div>
+</body>
+</html>

@@ -200,6 +200,53 @@ describe('BookingOverviewContainerComponent', () => {
     expect(submitSpy).toHaveBeenCalled();
   });
 
+  // REQ-028: Bestätigungsnachricht unter dem Submit-Button. Die Sichtbarkeit wird
+  // ausschließlich durch das bestehende hasSubmitted()-Signal gesteuert; das DOM-
+  // Rendering (role/aria-live, Position) wird via Playwright E2E abgedeckt.
+  describe('REQ-028 confirmation message', () => {
+    it('exposes the confirmation i18n key via the bookingOverview alias', () => {
+      const exposed = component as unknown as {
+        bookingOverview: { confirmation: { message: string } };
+      };
+      expect(exposed.bookingOverview.confirmation.message).toBe(
+        'booking.bookingOverview.confirmation.message'
+      );
+    });
+
+    it('does not flag hasSubmitted() before submission', () => {
+      const exposed = component as unknown as { hasSubmitted: () => boolean };
+      expect(exposed.hasSubmitted()).toBe(false);
+    });
+
+    it('flags hasSubmitted() === true after a successful submission (drives the confirmation)', async () => {
+      const exposed = component as unknown as {
+        hasSubmitted: () => boolean;
+        submitError: () => boolean;
+        isSubmitting: () => boolean;
+      };
+      expect(exposed.hasSubmitted()).toBe(false);
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      expect(exposed.hasSubmitted()).toBe(true);
+      // Bestätigung erscheint nur im reinen Erfolgs-Zustand (nicht Loading/Error).
+      expect(exposed.isSubmitting()).toBe(false);
+      expect(exposed.submitError()).toBe(false);
+    });
+
+    it('hides the confirmation again after resetBookingSubmission()', async () => {
+      const exposed = component as unknown as { hasSubmitted: () => boolean };
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      expect(exposed.hasSubmitted()).toBe(true);
+
+      store.resetBookingSubmission();
+      expect(exposed.hasSubmitted()).toBe(false);
+    });
+  });
+
   describe('resolvedServiceLabels — additional pathways', () => {
     it('uses Operation name when service is an Operation', () => {
       // simulate operations are loaded into store
@@ -223,6 +270,41 @@ describe('BookingOverviewContainerComponent', () => {
       const lbl = exposed.resolvedServiceLabels()['jt-1'];
       expect(lbl).toContain('Reparatur');
       expect(lbl).toContain('Lichtwechsel');
+    });
+
+    it('renders a jobType without any selected options as just its name', () => {
+      jest.spyOn(store, 'operations').mockReturnValue([]);
+      jest.spyOn(store, 'jobTypes').mockReturnValue([
+        { id: 'jt-plain', name: 'Inspektion', operations: [], iconUrl: null }
+      ] as never);
+      store.toggleService('jt-plain' as never);
+      // Keine confirmServiceOptions → selectedOptionIds bleibt leer.
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      expect(exposed.resolvedServiceLabels()['jt-plain']).toBe('Inspektion');
+    });
+
+    it('handles a jobType whose selected option ids do not resolve to operations', () => {
+      jest.spyOn(store, 'operations').mockReturnValue([]);
+      jest.spyOn(store, 'jobTypes').mockReturnValue([
+        { id: 'jt-x', name: 'Karosserie', operations: [], iconUrl: null }
+      ] as never);
+      store.toggleService('jt-x' as never);
+      store.confirmServiceOptions('jt-x' as never, ['ghost-option']);
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      // Unbekannte Option-Ids werden herausgefiltert → kein " — "-Suffix, nur der Name.
+      expect(exposed.resolvedServiceLabels()['jt-x']).toBe('Karosserie');
+    });
+
+    it('ignores unknown option ids in the AVAILABLE_SERVICES fallback path', () => {
+      jest.spyOn(store, 'operations').mockReturnValue([]);
+      jest.spyOn(store, 'jobTypes').mockReturnValue([]);
+      store.toggleService('tire-change');
+      store.confirmServiceOptions('tire-change', ['nonexistent-option']);
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      const label = exposed.resolvedServiceLabels()['tire-change'];
+      expect(label).toBeDefined();
+      // Option nicht auflösbar → kein angehängter Options-Teil.
+      expect(label).not.toContain('—');
     });
 
     it('falls back to the raw serviceId when no source matches', () => {

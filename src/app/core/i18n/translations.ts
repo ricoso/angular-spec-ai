@@ -318,6 +318,9 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
           submit: 'Jetzt anfragen',
           submitting: 'Wird gesendet...',
           submitted: 'Anfrage gesendet'
+        },
+        confirmation: {
+          message: 'Vielen Dank, Ihr Termin ist reserviert. Wir freuen uns auf Ihren Besuch.'
         }
       },
       api: {
@@ -657,6 +660,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
           submit: 'Request Now',
           submitting: 'Sending...',
           submitted: 'Request Sent'
+        },
+        confirmation: {
+          message: 'Thank you, your appointment is reserved. We look forward to your visit.'
         }
       },
       api: {
@@ -994,6 +1000,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
           submit: 'Запросити зараз',
           submitting: 'Надсилається...',
           submitted: 'Запит надіслано'
+        },
+        confirmation: {
+          message: 'Дякуємо, ваш запис заброньовано. Ми з нетерпінням чекаємо на ваш візит.'
         }
       },
       api: {
@@ -1331,6 +1340,9 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
           submit: 'Demander maintenant',
           submitting: 'Envoi en cours...',
           submitted: 'Demande envoyée'
+        },
+        confirmation: {
+          message: 'Merci, votre rendez-vous est réservé. Nous nous réjouissons de votre visite.'
         }
       },
       api: {
@@ -1668,6 +1680,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم 
           submit: 'اطلب الآن',
           submitting: 'جارٍ الإرسال...',
           submitted: 'تم إرسال الطلب'
+        },
+        confirmation: {
+          message: 'شكرًا لك، تم حجز موعدك. نتطلع إلى زيارتك.'
         }
       },
       api: {
