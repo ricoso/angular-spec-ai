@@ -33,6 +33,7 @@
 | REQ-008 | Werkstattkalender | ✔️ Implemented | High | REQ-006 | Werkstattkalender mit DatePicker und Uhrzeitslot-Auswahl (Wizard-Schritt 5b) |
 | REQ-009 | carinformation | ✔️ Implemented | High | REQ-008 | Fahrzeugdaten und Kundendaten erfassen (Wizard-Schritt 6) |
 | REQ-010 | Buchungsübersicht | ✔️ Implemented | High | REQ-009 | Letzte Seite des Buchungs-Wizards. Zeigt Übersicht aller Eingaben (Termin, Service, persönliche Daten, Preis inkl. MwSt.). Enthält "Jetzt anfragen"-Button statt Weiter-Button. |
+| REQ-002-Marke | Standortauswahl nach Marke | 📝 Draft | High | REQ-002 | Standortauswahl nach Markenauswahl: User wählt Marke → sieht Autohaus-Standorte → wählt Standort. Statische Daten, kein Backend. |
 
 ---
 
@@ -73,7 +74,8 @@ REQ-001-Header
 | REQ-007 | [REQ-007-WizardStateSync](./REQ-007-WizardStateSync/requirement.md)     |
 | REQ-008 | [REQ-008-Werkstattkalender](./REQ-008-Werkstattkalender/requirement.md) |
 | REQ-009 | [REQ-009-carinformation](./REQ-009-carinformation/requirement.md)       |
-| REQ-010 | [REQ-010-Buchungsübersicht](./REQ-010-Buchungsübersicht/requirement.md) | ✔️ Implemented 
+| REQ-010 | [REQ-010-Buchungsübersicht](./REQ-010-Buchungsübersicht/requirement.md) | ✔️ Implemented |
+| REQ-002-Marke | [REQ-002-Marke](./REQ-002-Marke/requirement.md) |
 
 ---
 

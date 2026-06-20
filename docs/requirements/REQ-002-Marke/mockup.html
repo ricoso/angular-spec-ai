@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REQ-002-Marke Standortauswahl - Mockup</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <style>
+    /* ================================================================
+       CSS Custom Properties (from _variables.scss - Single Source of Truth)
+       ================================================================ */
+    :root {
+      /* Brand Colors */
+      --color-primary: #667eea;
+      --color-primary-hover: #5a67d8;
+      --color-secondary: #764ba2;
+      --color-accent: #ed8936;
+
+      /* Text Colors (WCAG AA verified) */
+      --color-text-primary: #1a1a1a;
+      --color-text-secondary: #595959;
+      --color-text-muted: #767676;
+      --color-text-on-primary: #ffffff;
+      --color-text-on-dark: #ffffff;
+
+      /* Background Colors - HELLES Theme */
+      --color-background-page: #f8f9fa;
+      --color-background-surface: #ffffff;
+      --color-background-hover: #f5f5f5;
+
+      /* Border & Divider */
+      --color-border: #e0e0e0;
+      --color-divider: #eeeeee;
+
+      /* Semantic Colors */
+      --color-error: #c62828;
+      --color-success: #2e7d32;
+      --color-warning: #e65100;
+      --color-info: #1565c0;
+
+      /* Focus (Accessibility) */
+      --color-focus-ring: #005fcc;
+
+      /* Shadows */
+      --shadow-small: 0 0.0625em 0.125em rgba(0, 0, 0, 0.1);
+      --shadow-medium: 0 0.25em 0.5em rgba(0, 0, 0, 0.1);
+      --shadow-large: 0 0.5em 1em rgba(0, 0, 0, 0.15);
+
+      /* Typography */
+      --font-size-base: 1em;
+      --font-size-xs: 0.875em;
+      --font-size-sm: 1em;
+      --font-size-md: 1.125em;
+      --font-size-lg: 1.25em;
+      --font-size-xl: 1.5em;
+      --font-size-2xl: 2em;
+
+      --line-height-tight: 1.25;
+      --line-height-normal: 1.5;
+      --line-height-relaxed: 1.75;
+
+      /* Spacing (em-based for Responsive) */
+      --spacing-xs: 0.25em;
+      --spacing-sm: 0.5em;
+      --spacing-md: 1em;
+      --spacing-lg: 1.5em;
+      --spacing-xl: 2em;
+
+      /* Border Radius */
+      --radius-sm: 0.25em;
+      --radius-md: 0.5em;
+      --radius-lg: 0.75em;
+      --radius-xl: 1em;
+      --radius-full: 50%;
+
+      /* Touch Targets (Accessibility) */
+      --touch-target-min: 2.75em;
+    }
+
+    /* ================================================================
+       Reset & Base
+       ================================================================ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: var(--line-height-normal);
+      color: var(--color-text-primary);
+      background-color: var(--color-background-page);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ================================================================
+       Skip Link (Accessibility)
+       ================================================================ */
+    .skip-link {
+      position: absolute;
+      top: -10em;
+      left: var(--spacing-md);
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      font-weight: 600;
+      z-index: 9999;
+      transition: top 0.2s ease;
+    }
+
+    .skip-link:focus {
+      top: var(--spacing-md);
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    /* ================================================================
+       Icon-Framed (from _utilities.scss)
+       ================================================================ */
+    .icon-framed {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5em;
+      height: 2.5em;
+      background-color: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-small);
+      flex-shrink: 0;
+    }
+
+    .icon-framed--sm {
+      width: 2em;
+      height: 2em;
+    }
+
+    .icon-framed--primary {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .icon-framed .material-icons {
+      font-size: 1.25em;
+      color: var(--color-text-primary);
+    }
+
+    .icon-framed--sm .material-icons {
+      font-size: 1em;
+    }
+
+    .icon-framed--primary .material-icons {
+      color: var(--color-primary);
+    }
+
+    /* ================================================================
+       Header (from header-container.component.scss)
+       ================================================================ */
+    .header {
+      background-color: var(--color-background-surface);
+      border-bottom: 0.0625em solid var(--color-border);
+      box-shadow: var(--shadow-small);
+    }
+
+    .header__content {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      max-width: 80em;
+      margin: 0 auto;
+      min-height: 3.5em;
+    }
+
+    .header__logo-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      text-decoration: none;
+      color: inherit;
+      min-height: var(--touch-target-min);
+      padding: var(--spacing-xs);
+      border-radius: var(--radius-sm);
+      transition: background-color 0.2s ease;
+    }
+
+    .header__logo-link:hover {
+      background-color: var(--color-background-hover);
+    }
+
+    .header__logo-link:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .header__logo-container {
+      width: 2.5em;
+      height: 2.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background-color: var(--color-primary);
+      border-radius: var(--radius-md);
+      color: var(--color-text-on-primary);
+      font-weight: 700;
+      font-size: var(--font-size-md);
+    }
+
+    .header__company {
+      display: flex;
+      flex-direction: column;
+      line-height: var(--line-height-tight);
+    }
+
+    .header__company-name {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .header__company-subtitle {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+
+    .header__spacer {
+      flex: 1;
+    }
+
+    .header__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .header__icon-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: var(--touch-target-min);
+      min-height: var(--touch-target-min);
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      padding: 0;
+    }
+
+    .header__icon-button:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .header__icon-button:hover .icon-framed {
+      border-color: var(--color-primary);
+    }
+
+    /* ================================================================
+       Main Content
+       ================================================================ */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .content {
+      max-width: 70em;
+      width: 100%;
+      margin: 0 auto;
+      padding: var(--spacing-xl) var(--spacing-md);
+      flex: 1;
+    }
+
+    .content__title {
+      font-size: var(--font-size-2xl);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      text-align: center;
+      line-height: var(--line-height-tight);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .content__subtitle {
+      font-size: var(--font-size-md);
+      color: var(--color-text-secondary);
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
+    }
+
+    /* ================================================================
+       Back Navigation (top of content area)
+       ================================================================ */
+    .navigation {
+      display: flex;
+      justify-content: flex-start;
+      padding: 0 0 var(--spacing-lg) 0;
+    }
+
+    .navigation__back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      font-family: inherit;
+      color: var(--color-text-secondary);
+      background-color: var(--color-background-hover);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      min-height: var(--touch-target-min);
+      transition: background-color 0.2s ease, color 0.2s ease,
+        border-color 0.2s ease;
+      text-decoration: none;
+    }
+
+    .navigation__back-button:hover {
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+      border-color: var(--color-primary);
+    }
+
+    .navigation__back-button:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .navigation__back-button .material-icons {
+      font-size: 1.25em;
+    }
+
+    /* ================================================================
+       Location Grid - CSS-only selection via hidden radio inputs
+       Uses: input[type="radio"]:checked + label (sibling selector)
+       ================================================================ */
+    .location-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    /* Visually hidden radio inputs (accessible for screen readers) */
+    .location-grid__radio {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Location Card - styled as clickable label */
+    .location-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-lg);
+      background-color: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-small);
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease,
+        background-color 0.2s ease;
+      min-height: var(--touch-target-min);
+      width: 100%;
+      text-align: center;
+      font-family: inherit;
+      font-size: inherit;
+      color: inherit;
+      position: relative;
+    }
+
+    .location-card:hover {
+      box-shadow: var(--shadow-medium);
+      border-color: var(--color-primary);
+    }
+
+    /* Focus-visible on the label when its radio is focused via keyboard */
+    .location-grid__radio:focus-visible + .location-card {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    /* ================================================================
+       Selected State - :checked sibling selector (NO JavaScript!)
+       ================================================================ */
+    .location-grid__radio:checked + .location-card {
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-medium);
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+    }
+
+    .location-grid__radio:checked + .location-card:hover {
+      background-color: var(--color-primary-hover);
+      border-color: var(--color-primary-hover);
+    }
+
+    .location-grid__radio:checked + .location-card .location-card__name {
+      color: var(--color-text-on-primary);
+    }
+
+    /* Checkmark badge - hidden by default, shown when :checked */
+    .location-card__check {
+      display: none;
+      position: absolute;
+      top: var(--spacing-sm);
+      right: var(--spacing-sm);
+      width: 1.5em;
+      height: 1.5em;
+      background-color: var(--color-background-surface);
+      border-radius: var(--radius-full);
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-small);
+    }
+
+    .location-card__check .material-icons {
+      font-size: 1em;
+      color: var(--color-primary);
+    }
+
+    .location-grid__radio:checked + .location-card .location-card__check {
+      display: flex;
+    }
+
+    .location-card__name {
+      font-size: var(--font-size-lg);
+      font-weight: 500;
+      color: var(--color-text-primary);
+      line-height: var(--line-height-tight);
+    }
+
+    /* ================================================================
+       Breadcrumb / Context indicator (shows selected brand)
+       ================================================================ */
+    .context-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-lg);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+    }
+
+    .context-indicator__brand {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      background-color: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      color: var(--color-text-primary);
+    }
+
+    .context-indicator__brand .material-icons {
+      font-size: 1.125em;
+      color: var(--color-primary);
+    }
+
+    /* ================================================================
+       Footer (from app.component.scss)
+       ================================================================ */
+    .footer {
+      background: var(--color-background-surface);
+      padding: var(--spacing-lg) var(--spacing-md);
+      text-align: center;
+      border-top: 0.0625em solid var(--color-border);
+    }
+
+    .footer__text {
+      margin: 0;
+      color: var(--color-text-muted);
+      font-size: var(--font-size-xs);
+    }
+
+    /* ================================================================
+       Responsive: Tablet (>= 48em)
+       ================================================================ */
+    @media (min-width: 48em) {
+      .location-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .header__company-subtitle {
+        display: none;
+      }
+
+      .footer {
+        padding: var(--spacing-lg);
+      }
+    }
+
+    /* ================================================================
+       Responsive: Desktop (>= 64em)
+       ================================================================ */
+    @media (min-width: 64em) {
+      .location-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .header__content {
+        padding: var(--spacing-md) var(--spacing-lg);
+      }
+
+      .header__logo-container {
+        width: 3em;
+        height: 3em;
+        font-size: var(--font-size-lg);
+      }
+
+      .header__company-subtitle {
+        display: block;
+      }
+    }
+
+    /* ================================================================
+       Responsive: Mobile (< 48em)
+       ================================================================ */
+    @media (max-width: 47.9375em) {
+      .header__company {
+        display: none;
+      }
+
+      .header__content {
+        padding: var(--spacing-xs) var(--spacing-sm);
+      }
+
+      .content__title {
+        font-size: var(--font-size-xl);
+      }
+
+      .content {
+        padding: var(--spacing-lg) var(--spacing-sm);
+      }
+
+      .location-card {
+        padding: var(--spacing-md);
+      }
+
+      .location-card__name {
+        font-size: var(--font-size-md);
+      }
+    }
+
+    /* ================================================================
+       Reduced Motion Support
+       ================================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      .location-card,
+      .navigation__back-button,
+      .header__logo-link,
+      .header__icon-button,
+      .skip-link {
+        transition: none;
+      }
+    }
+
+    /* ================================================================
+       High Contrast Support
+       ================================================================ */
+    html[data-high-contrast="true"] {
+      --color-text-primary: #000000;
+      --color-text-secondary: #000000;
+      --color-background-page: #ffffff;
+      --color-border: #000000;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Skip Link (Accessibility) -->
+  <a href="#main-content" class="skip-link">
+    Zum Hauptinhalt springen
+  </a>
+
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <header class="header" role="banner">
+    <div class="header__content">
+      <!-- Logo & Company Name -->
+      <a href="#" class="header__logo-link" aria-label="Zur Startseite">
+        <div class="header__logo-container" aria-hidden="true">GS</div>
+        <div class="header__company">
+          <span class="header__company-name">Gottfried Schultz</span>
+          <span class="header__company-subtitle">Automobilhandels SE</span>
+        </div>
+      </a>
+
+      <!-- Spacer -->
+      <div class="header__spacer"></div>
+
+      <!-- Action Icons -->
+      <nav class="header__actions" aria-label="Header-Aktionen">
+        <button
+          class="header__icon-button"
+          type="button"
+          aria-label="Warenkorb"
+        >
+          <span class="icon-framed icon-framed--sm">
+            <span class="material-icons" aria-hidden="true">shopping_cart</span>
+          </span>
+        </button>
+        <button
+          class="header__icon-button"
+          type="button"
+          aria-label="Barrierefreiheit"
+        >
+          <span class="icon-framed icon-framed--sm">
+            <span class="material-icons" aria-hidden="true">accessibility_new</span>
+          </span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       MAIN CONTENT
+       ============================================================ -->
+  <main class="main" id="main-content" role="main">
+    <div class="content">
+
+      <!-- Back Navigation -->
+      <nav class="navigation" aria-label="Seitennavigation">
+        <a
+          href="#"
+          class="navigation__back-button"
+          role="button"
+          aria-label="Zur&uuml;ck zur Markenauswahl"
+        >
+          <span class="material-icons" aria-hidden="true">arrow_back</span>
+          Zur&uuml;ck
+        </a>
+      </nav>
+
+      <!-- Context Indicator: Selected Brand -->
+      <div class="context-indicator" role="status" aria-label="Ausgew&auml;hlte Marke">
+        <span class="context-indicator__brand">
+          <span class="material-icons" aria-hidden="true">directions_car</span>
+          Audi
+        </span>
+      </div>
+
+      <!-- Title -->
+      <h1 class="content__title">
+        An welchem Standort d&uuml;rfen wir Sie begr&uuml;&szlig;en?
+      </h1>
+      <p class="content__subtitle">
+        Bitte w&auml;hlen Sie den gew&uuml;nschten Standort aus.
+      </p>
+
+      <!-- Location Grid - CSS-only selection via hidden radio + :checked sibling -->
+      <div
+        class="location-grid"
+        role="radiogroup"
+        aria-label="Standortauswahl f&uuml;r Audi"
+      >
+
+        <!-- Card 1: M&uuml;nchen (pre-selected) -->
+        <input
+          type="radio"
+          name="location"
+          id="location-muenchen"
+          class="location-grid__radio"
+          value="muenchen"
+          aria-label="Standort M&uuml;nchen"
+          checked
+        />
+        <label for="location-muenchen" class="location-card">
+          <span class="location-card__check" aria-hidden="true">
+            <span class="material-icons">check</span>
+          </span>
+          <span class="location-card__name">M&uuml;nchen</span>
+        </label>
+
+        <!-- Card 2: Berlin -->
+        <input
+          type="radio"
+          name="location"
+          id="location-berlin"
+          class="location-grid__radio"
+          value="berlin"
+          aria-label="Standort Berlin"
+        />
+        <label for="location-berlin" class="location-card">
+          <span class="location-card__check" aria-hidden="true">
+            <span class="material-icons">check</span>
+          </span>
+          <span class="location-card__name">Berlin</span>
+        </label>
+
+        <!-- Card 3: Hamburg -->
+        <input
+          type="radio"
+          name="location"
+          id="location-hamburg"
+          class="location-grid__radio"
+          value="hamburg"
+          aria-label="Standort Hamburg"
+        />
+        <label for="location-hamburg" class="location-card">
+          <span class="location-card__check" aria-hidden="true">
+            <span class="material-icons">check</span>
+          </span>
+          <span class="location-card__name">Hamburg</span>
+        </label>
+
+        <!-- Card 4: Stuttgart -->
+        <input
+          type="radio"
+          name="location"
+          id="location-stuttgart"
+          class="location-grid__radio"
+          value="stuttgart"
+          aria-label="Standort Stuttgart"
+        />
+        <label for="location-stuttgart" class="location-card">
+          <span class="location-card__check" aria-hidden="true">
+            <span class="material-icons">check</span>
+          </span>
+          <span class="location-card__name">Stuttgart</span>
+        </label>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="footer" role="contentinfo">
+    <p class="footer__text">Gottfried Schultz Automobilhandels SE</p>
+  </footer>
+
+</body>
+</html>
