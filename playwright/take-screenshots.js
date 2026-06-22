@@ -321,6 +321,122 @@ const SCREENSHOT_CONFIG = {
       await page.waitForTimeout(500);
     },
   },
+
+  'REQ-028-Buchungsbestaetigung': {
+    route: '/home/booking-overview',
+    // Full wizard up to booking-overview, then SUBMIT to render the confirmation.
+    // The final state-mutating POST /api/v1/appointments is stubbed (deterministic,
+    // no real INT bookings) — everything else (branches/snaps) runs against the
+    // real backend, mirroring the green E2E spec.
+    setup: async (page) => {
+      // Stub only the final appointment write.
+      await page.route('**/api/v1/appointments', async (route) => {
+        if (route.request().method() === 'POST') {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              data: { id: 'screenshot-req028-confirmation', status: 'confirmed' },
+              meta: { timestamp: '2026-06-19T00:00:00Z', requestId: 'screenshot-req028' },
+            }),
+          });
+          return;
+        }
+        await route.continue();
+      });
+
+      // REQ-013 wizard order: Location (Step 1) -> Brand (Step 2) -> Services -> Notes -> Appointment -> Car Info.
+      await page.goto(`${HASH}/home/location`);
+      await page.waitForLoadState('networkidle');
+      await page.locator('.location-card').first().click();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(300);
+      if (!page.url().includes('/home/brand')) {
+        await page.goto(`${HASH}/home/brand`);
+        await page.waitForLoadState('networkidle');
+      }
+      await page.locator('.brand-card').first().click();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(300);
+
+      // Services (REQ-026): category carousel + detail panel with operation checkboxes.
+      // Prefer "Inspektion" (reliably bookable on INT); fall back to any operation.
+      await page.locator('app-service-card').first().waitFor({ state: 'visible', timeout: 15000 });
+      const categoryCards = page.locator('app-service-card');
+      const cardCount = await categoryCards.count();
+      const preferred = page
+        .locator('.service-option', { hasText: /inspektion|inspection/i })
+        .locator('input[type="checkbox"]')
+        .first();
+      const anyOption = page.locator('.service-option input[type="checkbox"]').first();
+      let operationSelected = false;
+      for (let pass = 0; pass < 2 && !operationSelected; pass++) {
+        const target = pass === 0 ? preferred : anyOption;
+        for (let i = -1; i < cardCount && !operationSelected; i++) {
+          if (i >= 0) {
+            await categoryCards.nth(i).click();
+            await page.waitForTimeout(200);
+          }
+          if (await target.isVisible().catch(() => false)) {
+            if (!(await target.isChecked())) {
+              await target.check({ force: true });
+              await page.waitForTimeout(200);
+            }
+            operationSelected = true;
+          }
+        }
+      }
+      // Continue to notes via the services bottom bar.
+      const servicesContinue = page.locator('.services-bottom-bar .btn-primary');
+      await servicesContinue.click();
+      await page.locator('.notes').waitFor({ state: 'visible', timeout: 10000 });
+      await page.waitForTimeout(300);
+
+      // Notes -> continue.
+      await page.locator('.notes__continue-button').click();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+
+      // Appointment (REQ-026): pick a date tile, then the first available slot.
+      const dateTiles = page.locator('.date-tile');
+      const tileCount = await dateTiles.count();
+      const slots = page.locator('app-appointment-card .slot');
+      for (let i = 0; i < tileCount; i++) {
+        await dateTiles.nth(i).click();
+        await page.waitForTimeout(300);
+        if (await slots.first().isVisible().catch(() => false)) {
+          break;
+        }
+      }
+      await slots.first().click();
+      await page.waitForTimeout(300);
+      await page.locator('.appointment-selection__continue-button').click();
+      await page.locator('.carinformation').waitFor({ state: 'visible', timeout: 10000 });
+      await page.waitForTimeout(500);
+
+      // Car information forms.
+      await page.locator('input[formcontrolname="email"]').fill('max@mustermann.de');
+      await page.locator('input[formcontrolname="firstName"]').fill('Max');
+      await page.locator('input[formcontrolname="lastName"]').fill('Mustermann');
+      await page.locator('input[formcontrolname="street"]').fill('Musterweg 1');
+      await page.locator('input[formcontrolname="postalCode"]').fill('30159');
+      await page.locator('input[formcontrolname="city"]').fill('Berlin');
+      await page.locator('input[formcontrolname="mobilePhone"]').fill('017012345678');
+      await page.locator('input[formcontrolname="licensePlate"]').fill('B-MS1234');
+      await page.locator('input[formcontrolname="mileage"]').fill('5000');
+      await page.locator('#privacy-consent').check({ force: true });
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(300);
+      await page.locator('.carinformation__continue-button').click();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+      // On the booking-overview page now: SUBMIT to reveal the confirmation.
+      await page.locator('.booking-overview__submit-button').click();
+      // Wait for the confirmation to appear (mocked POST resolves instantly).
+      await page.locator('.booking-overview__confirmation').waitFor({ state: 'visible', timeout: 15000 });
+      await page.waitForTimeout(500);
+    },
+  },
 };
 
 // ---------------------------------------------------------------------------

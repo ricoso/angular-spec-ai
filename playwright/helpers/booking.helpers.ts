@@ -118,20 +118,30 @@ export async function goToServiceSelection(
   brandName?: string,
   locationName?: string
 ): Promise<void> {
-  if (brandName) {
+  // Wizard order (REQ-013): Location (1) -> Brand (2) -> Services (3).
+  // Selecting a location card auto-navigates to the brand page; selecting a brand
+  // card auto-navigates to the services page (REQ-026 carousel UI).
+  if (locationName) {
+    await goToLocationSelection(page);
+    await selectLocation(page, locationName);
+    await page.locator('.brand-card').first().waitFor({ state: 'visible', timeout: 15000 });
+    if (brandName) {
+      const brandCard = page.locator('.brand-card').filter({
+        has: page.locator('.brand-card__name', { hasText: brandName })
+      });
+      await brandCard.click();
+      await waitForAngular(page);
+    } else {
+      await page.locator('.brand-card').first().click();
+      await waitForAngular(page);
+    }
+  } else if (brandName) {
     await selectBrand(page, brandName);
   } else {
     await selectFirstBrand(page);
   }
-  // Wait for location page to render with buttons
-  await page.locator('.location-grid__button').first().waitFor({ state: 'visible', timeout: 15000 });
-  if (locationName) {
-    await selectLocation(page, locationName);
-  } else {
-    await selectFirstLocation(page);
-  }
-  // Wait for service cards to appear (confirms we reached the services page)
-  await page.locator('.service-card').first().waitFor({ state: 'visible', timeout: 15000 });
+  // Wait for the services carousel to render (confirms we reached the services page).
+  await page.locator('app-service-card').first().waitFor({ state: 'visible', timeout: 15000 });
   await waitForAngular(page);
 }
 
@@ -332,37 +342,16 @@ export async function goToNotesPage(
 ): Promise<void> {
   const brandName = options?.brandName;
   const locationName = options?.locationName;
-  const defaultServiceNames = options?.serviceNames;
 
   await goToServiceSelection(page, brandName, locationName);
 
-  // Determine service names to select
-  // If none provided, auto-detect language and use brake-fluid (no options, simplest toggle)
-  let serviceNames: string[];
-  if (defaultServiceNames) {
-    serviceNames = defaultServiceNames;
-  } else {
-    // Auto-detect: check if brake-fluid card has DE or EN title
-    const brakeFluidDE = page.locator('.service-card').filter({
-      has: page.locator('.service-card__title', { hasText: 'Wechsel Bremsflüssigkeit' })
-    });
-    const isDE = await brakeFluidDE.isVisible().catch(() => false);
-    serviceNames = isDE ? ['Wechsel Bremsflüssigkeit'] : ['Brake Fluid Change'];
-  }
+  // REQ-026 service UI: a carousel of category mini-cards plus a detail panel that
+  // auto-shows the first category's operations. Selecting at least one operation
+  // satisfies the "service selected" guard.
+  await selectFirstAvailableOperation(page);
 
-  // Select each requested service
-  for (const serviceName of serviceNames) {
-    // brake-fluid has no options -> direct toggle
-    if (serviceName === 'Wechsel Bremsflüssigkeit' || serviceName === 'Brake Fluid Change') {
-      await selectService(page, serviceName);
-    } else {
-      // Services with options need at least 1 checkbox + confirm
-      await confirmServiceWithOptions(page, serviceName, [await getFirstOptionText(page, serviceName)]);
-    }
-  }
-
-  // Click the Continue button on the services page to navigate to /home/notes
-  const continueButton = page.locator('.summary-bar__continue-button');
+  // Click the Continue button in the services bottom bar to navigate to /home/notes.
+  const continueButton = page.locator('.services-bottom-bar .btn-primary');
   await expect(continueButton).toBeVisible();
   await expect(continueButton).toBeEnabled();
   await continueButton.click();
@@ -371,25 +360,44 @@ export async function goToNotesPage(
   await waitForAngular(page);
 }
 
-/** Get the first option text for a service card (used as default selection) */
-async function getFirstOptionText(page: Page, serviceName: string): Promise<string> {
-  const card = getServiceCard(page, serviceName);
+/**
+ * Select a service operation in the REQ-026 service detail panel.
+ *
+ * Prefers the "Inspektion"/"Inspection" operation: it is reliably offered for the
+ * default brand (Audi) at the default branch on the SoftNet INT system and returns
+ * available appointment slots. Falls back to any operation if it is not present.
+ * Walks the category carousel because operations only render for the active category.
+ */
+async function selectFirstAvailableOperation(page: Page): Promise<void> {
+  const categoryCards = page.locator('app-service-card');
+  const cardCount = await categoryCards.count();
 
-  // Expand card if not already expanded
-  const options = card.locator('.service-card__options');
-  if (!(await options.isVisible())) {
-    await card.click();
-    await waitForAngular(page);
+  const preferred = page
+    .locator('.service-option', { hasText: /inspektion|inspection/i })
+    .locator('input[type="checkbox"]')
+    .first();
+  const anyOption = page.locator('.service-option input[type="checkbox"]').first();
+
+  // Pass 0: try to find the preferred ("Inspektion") service; pass 1: any operation.
+  for (let pass = 0; pass < 2; pass++) {
+    const target = pass === 0 ? preferred : anyOption;
+    // i === -1 checks the auto-activated first category without re-clicking.
+    for (let i = -1; i < cardCount; i++) {
+      if (i >= 0) {
+        await categoryCards.nth(i).click();
+        await waitForAngular(page);
+      }
+      if (await target.isVisible().catch(() => false)) {
+        if (!(await target.isChecked())) {
+          await target.check({ force: true });
+          await waitForAngular(page);
+        }
+        return;
+      }
+    }
   }
 
-  const firstCheckbox = card.locator('.service-card__checkbox').first();
-  const text = (await firstCheckbox.textContent() ?? '').trim();
-
-  // Collapse the card again so we start fresh
-  await card.click();
-  await waitForAngular(page);
-
-  return text;
+  throw new Error('No selectable service operation found in the service carousel');
 }
 
 /** Type text into the notes textarea */
@@ -477,11 +485,23 @@ export async function getAppointmentTimes(page: Page): Promise<string[]> {
   return times.allTextContents().then(texts => texts.map(t => t.trim()));
 }
 
-/** Select an appointment card by index (0-based) */
+/** Select an appointment slot by index (0-based) */
 export async function selectAppointmentCard(page: Page, index: number): Promise<void> {
-  const card = page.locator('.appointment-card').nth(index);
-  await expect(card).toBeVisible();
-  await card.click();
+  // New UI (REQ-026): choose a date tile first; time-slot cards render afterwards.
+  // Walk the date strip until a date with available slots is found.
+  const dateTiles = page.locator('.date-tile');
+  const tileCount = await dateTiles.count();
+  const slots = page.locator('app-appointment-card .slot');
+  for (let i = 0; i < tileCount; i++) {
+    await dateTiles.nth(i).click();
+    await waitForAngular(page);
+    if (await slots.first().isVisible().catch(() => false)) {
+      break;
+    }
+  }
+  const slot = slots.nth(index);
+  await expect(slot).toBeVisible();
+  await slot.click();
   await waitForAngular(page);
 }
 

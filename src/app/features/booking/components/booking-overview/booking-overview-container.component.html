@@ -116,6 +116,13 @@
                 }
               </button>
 
+              @if (hasSubmitted()) {
+                <p class="booking-overview__confirmation" role="status" aria-live="polite">
+                  <i class="bi bi-check-circle-fill booking-overview__confirmation-icon" aria-hidden="true"></i>
+                  <span>{{ bookingOverview.confirmation.message | translate }}</span>
+                </p>
+              }
+
               <button
                 type="button"
                 class="btn btn-outline-secondary w-100 booking-overview__back-button"

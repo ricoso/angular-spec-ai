@@ -285,6 +285,34 @@ describe('NotesExtrasFormComponent', () => {
       expect(exposed.selectedRentCategoryId()).toBeNull();
     });
 
+    it('onRentSwitchChange(true) keeps the existing selection instead of resetting to the first', () => {
+      const cats: RentCategory[] = [
+        { id: 'cat-a', groupId: 'g1', name: 'A', description: '', brands: [], branches: [] },
+        { id: 'cat-b', groupId: 'g1', name: 'B', description: '', brands: [], branches: [] }
+      ];
+      fixture.componentRef.setInput('rentCategories', cats);
+      fixture.detectChanges();
+      const exposed = component as unknown as {
+        onRentSwitchChange: (c: boolean) => void;
+        onRentCategoryChange: (id: string | null) => void;
+        selectedRentCategoryId: () => string | null;
+      };
+      exposed.onRentCategoryChange('cat-b');
+      exposed.onRentSwitchChange(true); // already selected → keep cat-b (no reset to cat-a)
+      expect(exposed.selectedRentCategoryId()).toBe('cat-b');
+    });
+
+    it('onRentSwitchChange(true) falls back to null when no categories are available', () => {
+      fixture.componentRef.setInput('rentCategories', [] as RentCategory[]);
+      fixture.detectChanges();
+      const exposed = component as unknown as {
+        onRentSwitchChange: (c: boolean) => void;
+        selectedRentCategoryId: () => string | null;
+      };
+      exposed.onRentSwitchChange(true); // null + empty list → [0]?.id ?? null → null
+      expect(exposed.selectedRentCategoryId()).toBeNull();
+    });
+
     it('onCallbackSwitchChange maps boolean -> yes/no', () => {
       const exposed = component as unknown as {
         onCallbackSwitchChange: (b: boolean) => void;

@@ -12,16 +12,16 @@ interface RenderedHint {
 }
 
 /** Mapping rank → SVG-Icon (synchron mit ServiceCardComponent.ICON_BY_RANK). */
-const ICON_BY_RANK: Record<number, string> = {
-  0: 'assets/icons/services/inspection.svg',
-  1: 'assets/icons/services/tuv.svg',
-  2: 'assets/icons/services/brake-fluid.svg',
-  3: 'assets/icons/services/tire-change.svg',
-  4: 'assets/icons/services/actions-checks.svg',
-  5: 'assets/icons/services/repair.svg',
-  6: 'assets/icons/services/bodywork.svg',
-  99: 'assets/icons/services/pickup-delivery.svg'
-};
+const ICON_BY_RANK = new Map<number, string>([
+  [0, 'assets/icons/services/inspection.svg'],
+  [1, 'assets/icons/services/tuv.svg'],
+  [2, 'assets/icons/services/brake-fluid.svg'],
+  [3, 'assets/icons/services/tire-change.svg'],
+  [4, 'assets/icons/services/actions-checks.svg'],
+  [5, 'assets/icons/services/repair.svg'],
+  [6, 'assets/icons/services/bodywork.svg'],
+  [99, 'assets/icons/services/pickup-delivery.svg']
+]);
 
 /**
  * REQ-025 (e): Service-Hints werden ausschliesslich aus der SoftNet-API gerendert
@@ -66,7 +66,7 @@ export class ServiceHintsComponent {
         const rank = op.name === 'Hol & Bringservice' ? 99 : primaryRank;
         return {
           key: op.id,
-          iconUrl: ICON_BY_RANK[rank] ?? null,
+          iconUrl: ICON_BY_RANK.get(rank) ?? null,
           serviceName: op.name,
           hint: op.description ?? ''
         };

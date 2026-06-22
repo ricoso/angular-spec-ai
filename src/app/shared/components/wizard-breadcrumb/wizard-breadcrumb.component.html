@@ -12,7 +12,7 @@
           @if (step.status === 'done') {
             <i class="bi bi-check-lg"></i>
           } @else {
-            <i class="bi" [class]="'bi ' + step.icon"></i>
+            <i [class]="'bi ' + step.icon"></i>
           }
         </span>
         @if (step.status === 'done') {

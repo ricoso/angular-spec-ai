@@ -243,7 +243,7 @@ describe('ServiceSelectionContainerComponent', () => {
         { id: 'op-1', name: 'X', description: null, tagIds: ['c1'], order: 1, imageId: null }
       ]);
       const exposed = component as unknown as {
-        operationsByCategory: () => Record<string, unknown[]>;
+        operationsByCategory: () => Partial<Record<string, unknown[]>>;
       };
       const map = exposed.operationsByCategory();
       // map could include c1 + virtual-pickup-delivery

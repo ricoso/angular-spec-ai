@@ -34,8 +34,6 @@ export class WorkshopCalendarDatePickerComponent {
 
   protected onNgbDateSelect(ngbDate: NgbDate): void {
     // NgbDate (year/month/day) -> nativer Date (month ist in NgbDate 1-12, in Date 0-11)
-    if (ngbDate) {
-      this.onDateChange(new Date(ngbDate.year, ngbDate.month - 1, ngbDate.day));
-    }
+    this.onDateChange(new Date(ngbDate.year, ngbDate.month - 1, ngbDate.day));
   }
 }
