@@ -1,5 +1,6 @@
 package com.autohaus.backend.softnet;
 
+import com.autohaus.backend.common.logging.LogPayloadUtil;
 import com.autohaus.backend.config.SoftnetProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.util.List;
 import java.util.Map;
@@ -159,11 +161,15 @@ public class SoftnetApiClient {
 
     private String executeRequest(String method, String endpoint, Object requestBody, String groupId) {
         long startTime = System.currentTimeMillis();
-        String token = authService.getAccessToken();
         String url = (properties.baseUrl() != null ? properties.baseUrl() : "") + endpoint;
         boolean useGroupHeader = groupId != null && !groupId.isBlank();
+        String jsonBody = null;
 
         try {
+            if (requestBody != null) {
+                jsonBody = objectMapper.writeValueAsString(requestBody);
+            }
+            String token = authService.getAccessToken();
             String result = switch (method) {
                 case "GET" -> {
                     var spec = restClient.get().uri(url)
@@ -180,8 +186,7 @@ public class SoftnetApiClient {
                     if (useGroupHeader) {
                         spec = spec.header("x-nrg-group", groupId);
                     }
-                    if (requestBody != null) {
-                        String jsonBody = objectMapper.writeValueAsString(requestBody);
+                    if (jsonBody != null) {
                         yield spec.body(jsonBody).retrieve().body(String.class);
                     }
                     yield spec.retrieve().body(String.class);
@@ -208,7 +213,11 @@ public class SoftnetApiClient {
             log.debug("SoftNet {} {} - {}ms", method, endpoint, System.currentTimeMillis() - startTime);
             return result;
         } catch (Exception e) {
-            log.error("SoftNet {} {} failed after {}ms: {}", method, endpoint, System.currentTimeMillis() - startTime, e.getMessage());
+            String responseBody = e instanceof RestClientResponseException rcre
+                ? rcre.getResponseBodyAsString() : "";
+            log.error("SOFTNET_ERROR {} {} failed after {}ms: {} | requestBody={} | responseBody={}",
+                method, endpoint, System.currentTimeMillis() - startTime, e.getMessage(),
+                LogPayloadUtil.truncate(jsonBody), LogPayloadUtil.truncate(responseBody));
             throw e instanceof RuntimeException re ? re : new RuntimeException(e);
         }
     }

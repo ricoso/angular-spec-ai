@@ -294,6 +294,67 @@ Das vollstaendige Setup-Skript (Webtests + Alerts) liegt im Repo unter
 `deploy/azure/setup-monitoring.sh` (kommt in der naechsten Iteration), bis dahin
 sind die Befehle ausschliesslich in dieser Doku.
 
+### Log-basierter Alert: SOFTNET_ERROR (REQ-029)
+
+Das Backend loggt fehlgeschlagene SoftNet-Calls als ERROR-Zeile mit dem stabilen
+Marker `SOFTNET_ERROR` (inkl. Request-Body, SoftNet-Fehler-Response-Body und beim
+Reservierungs-Fehler zusaetzlich dem unveraenderten Roh-Snap — je max. 8 000 Zeichen).
+Jede Zeile traegt das Trace-ID-Praefix aus dem `X-Request-Id`-Header (MDC).
+
+**Alert-Regel anlegen** (einmalig, NACH Deploy der REQ-029-Aenderung):
+
+```bash
+SUB=044bbaf1-5d0f-44ee-bb52-c42c729c93d9
+RG=DefaultResourceGroup-DEWC
+WORKSPACE_ID="/subscriptions/$SUB/resourceGroups/$RG/providers/Microsoft.OperationalInsights/workspaces/workspacedefaultresourcegroupdewc99c4"
+ACTION_GROUP_ID="/subscriptions/$SUB/resourceGroups/$RG/providers/microsoft.insights/actionGroups/gs-app-alerts"
+
+az monitor scheduled-query create \
+  -n alert-softnet-error-logs -g "$RG" \
+  --scopes "$WORKSPACE_ID" \
+  --condition "count 'SoftnetErrors' > 0" \
+  --condition-query SoftnetErrors="ContainerAppConsoleLogs_CL | where ContainerAppName_s == 'gs-terminbuchungs-app' | where Log_s contains 'SOFTNET_ERROR'" \
+  --window-size 5m --evaluation-frequency 5m --severity 2 \
+  --mute-actions-duration PT30M \
+  --auto-mitigate false \
+  --action-groups "$ACTION_GROUP_ID" \
+  --description "SoftNet-Fehler im Backend-Log (Marker SOFTNET_ERROR) — Payload-Details im Log unter der Trace-ID"
+```
+
+> **Status:** Regel wurde am 2026-07-06 angelegt (enabled, Severity 2).
+
+- `--mute-actions-duration PT30M` verhindert Mail-Stuerme bei laengeren Ausfaellen.
+- `--auto-mitigate false` ist PFLICHT in Kombination mit `--mute-actions-duration` (Azure-API-Constraint: "Auto mitigation must be disabled when action suppression is set").
+- Kosten: Scheduled-Query-Regeln werden pro Regel abgerechnet (~1,5 USD/Monat bei 5-Min-Frequenz).
+- Ingestion-Latenz von `ContainerAppConsoleLogs_CL`: ~5–15 Min — die Mail kommt entsprechend verzoegert.
+- Empfaenger muessen die Action-Group-Bestaetigungsmail bestaetigt haben (siehe oben).
+
+**Fehler untersuchen** (Log Analytics, KQL):
+
+```kusto
+// 1. SOFTNET_ERROR-Zeilen finden (enthalten die Payloads und die Trace-ID)
+ContainerAppConsoleLogs_CL
+| where ContainerAppName_s == "gs-terminbuchungs-app"
+| where Log_s contains "SOFTNET_ERROR"
+| project TimeGenerated, Log_s
+| order by TimeGenerated desc
+
+// 2. Alle Log-Zeilen EINES Requests ueber die Trace-ID ziehen
+ContainerAppConsoleLogs_CL
+| where ContainerAppName_s == "gs-terminbuchungs-app"
+| where Log_s contains "<traceId>"
+| project TimeGenerated, Log_s
+| order by TimeGenerated asc
+```
+
+**Alert testen:** Temporaer eine ungueltige `SOFTNET_BASE_URL` als Env-Var setzen
+(oder eine Buchung mit abgelaufenem Snap ausloesen), einen Snaps-Request absetzen,
+~15–20 Min warten, E-Mail-Eingang pruefen, Env-Var zuruecksetzen.
+
+> **Datenschutz-Hinweis:** Die Fehler-Payloads enthalten Kundendaten (Name, E-Mail,
+> Adresse, Kennzeichen). Sie werden NUR im Fehlerfall geloggt; die Aufbewahrung
+> richtet sich nach der Retention des Log Analytics Workspace.
+
 ---
 
 ## 9. Verwandte Dokumente
