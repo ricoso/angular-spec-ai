@@ -1,12 +1,22 @@
 package com.autohaus.backend.softnet;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.autohaus.backend.config.SoftnetProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.client.HttpServerErrorException;
+
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -160,6 +170,50 @@ class SoftnetApiClientTest {
     void getSnaps_whenConnectionFails_throwsException() {
         when(authService.getAccessToken()).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.getSnaps(java.util.Map.of("branchId", "b1"), "group-1"));
+    }
+
+    @Test
+    void createAppointment_when502_logsSoftnetErrorWithRequestAndResponseBody() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/api/planning/appointments", exchange -> {
+            exchange.getRequestBody().readAllBytes();
+            byte[] body = "{\"error\":\"upstream boom\"}".getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(502, body.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(body);
+            }
+        });
+        server.start();
+
+        ch.qos.logback.classic.Logger logger =
+            (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(SoftnetApiClient.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            SoftnetProperties props = new SoftnetProperties(
+                "http://localhost:" + server.getAddress().getPort(), "http://auth", "/fp", null, 1000
+            );
+            SoftnetApiClient localClient = new SoftnetApiClient(authService, props, objectMapper);
+            when(authService.getAccessToken()).thenReturn("fake-token");
+
+            assertThrows(HttpServerErrorException.class,
+                () -> localClient.createAppointment(java.util.Map.of("snapId", "s1"), "group-1"));
+
+            String errorLine = appender.list.stream()
+                .filter(event -> event.getLevel() == Level.ERROR)
+                .map(ILoggingEvent::getFormattedMessage)
+                .findFirst()
+                .orElse("");
+            assertTrue(errorLine.contains("SOFTNET_ERROR"), errorLine);
+            assertTrue(errorLine.contains("\"snapId\":\"s1\""), errorLine);
+            assertTrue(errorLine.contains("upstream boom"), errorLine);
+        } finally {
+            logger.detachAppender(appender);
+            server.stop(0);
+        }
     }
 
     @Test

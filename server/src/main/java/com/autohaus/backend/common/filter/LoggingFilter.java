@@ -27,12 +27,10 @@ public class LoggingFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             long duration = System.currentTimeMillis() - startTime;
-            String requestId = (String) request.getAttribute(RequestIdFilter.REQUEST_ID_ATTRIBUTE);
             String correlationId = request.getHeader("X-Correlation-Id");
             String sessionId = request.getHeader("X-Session-Id");
 
-            log.info("{\"requestId\":\"{}\",\"correlationId\":\"{}\",\"sessionId\":\"{}\",\"method\":\"{}\",\"url\":\"{}\",\"statusCode\":{},\"duration\":\"{}ms\"}",
-                requestId != null ? requestId : "unknown",
+            log.info("{\"correlationId\":\"{}\",\"sessionId\":\"{}\",\"method\":\"{}\",\"url\":\"{}\",\"statusCode\":{},\"duration\":\"{}ms\"}",
                 correlationId != null ? correlationId : "",
                 sessionId != null ? sessionId : "",
                 request.getMethod(),

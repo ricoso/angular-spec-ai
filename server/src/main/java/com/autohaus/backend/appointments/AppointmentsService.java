@@ -2,6 +2,7 @@ package com.autohaus.backend.appointments;
 
 import com.autohaus.backend.appointments.dto.AppointmentResponseDto;
 import com.autohaus.backend.appointments.dto.CreateAppointmentRequest;
+import com.autohaus.backend.common.logging.LogPayloadUtil;
 import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.snaps.SnapCache;
 import com.autohaus.backend.softnet.SoftnetApiClient;
@@ -45,7 +46,8 @@ public class AppointmentsService {
 
         String groupId = setupService.resolveGroupId(dto.branchId(), dto.variant());
 
-        ObjectNode snap = (ObjectNode) rawSnap;
+        // Patch a copy so the pristine SoftNet snap stays available for error logging.
+        ObjectNode snap = ((ObjectNode) rawSnap).deepCopy();
         patchSnapWithBookingData(snap, dto);
 
         String branchLabel = "";
@@ -57,8 +59,14 @@ public class AppointmentsService {
         log.debug("Creating appointment for snap {}, branch {}", dto.snapId(), branchLabel);
 
         Map<String, Object> snapMap = objectMapper.convertValue(snap, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
-        JsonNode result = softnetApi.createAppointment(snapMap, groupId);
-        return mapAppointmentResponse(result, dto);
+        try {
+            JsonNode result = softnetApi.createAppointment(snapMap, groupId);
+            return mapAppointmentResponse(result, dto);
+        } catch (RuntimeException e) {
+            log.error("SOFTNET_ERROR appointment creation failed for snap {} | rawSnap={}",
+                dto.snapId(), LogPayloadUtil.truncate(rawSnap.toString()));
+            throw e;
+        }
     }
 
     public AppointmentResponseDto getAppointment(String appointmentId, String branchId, String variant) {

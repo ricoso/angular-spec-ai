@@ -29,7 +29,7 @@ logging:
     com.autohaus.backend: DEBUG
     org.springframework.boot.autoconfigure.security: OFF
   pattern:
-    console: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} - %X{traceId:-system}: %msg%n"
 
 spring:
   jackson:

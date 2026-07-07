@@ -1,5 +1,8 @@
 package com.autohaus.backend.appointments;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.autohaus.backend.appointments.dto.AppointmentResponseDto;
 import com.autohaus.backend.appointments.dto.CreateAppointmentRequest;
 import com.autohaus.backend.config.setup.SetupService;
@@ -14,6 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
@@ -171,6 +177,38 @@ class AppointmentsServiceTest {
         assertEquals(Boolean.TRUE, wishlist.get("isFleet"));
         assertEquals("rentObject", wishlist.get("fleetType"));
         assertEquals("cat-abc", wishlist.get("fleetCategoryid"));
+    }
+
+    @Test
+    void createAppointment_whenSoftnetFails_logsUnpatchedRawSnapAndRethrows() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-err")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id")))
+            .thenThrow(new HttpServerErrorException(HttpStatus.BAD_GATEWAY));
+
+        ch.qos.logback.classic.Logger logger =
+            (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(AppointmentsService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            assertThrows(HttpServerErrorException.class,
+                () -> service.createAppointment(buildDto("snap-err", null, null)));
+
+            String errorLine = appender.list.stream()
+                .filter(event -> event.getLevel() == Level.ERROR)
+                .map(ILoggingEvent::getFormattedMessage)
+                .findFirst()
+                .orElse("");
+            assertTrue(errorLine.contains("SOFTNET_ERROR"), errorLine);
+            assertTrue(errorLine.contains("snap-err"), errorLine);
+            assertTrue(errorLine.contains("Filiale X"), errorLine);
+            assertFalse(errorLine.contains("test@test.de"),
+                "raw snap in log must not contain patched customer data: " + errorLine);
+        } finally {
+            logger.detachAppender(appender);
+        }
     }
 
     // ─── helpers ───

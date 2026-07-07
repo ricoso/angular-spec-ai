@@ -40,7 +40,7 @@ public class GlobalExceptionHandler {
         List<ErrorResponse.ValidationError> details = ex.getBindingResult().getFieldErrors().stream()
             .map(err -> new ErrorResponse.ValidationError(err.getField(), "error.validationFailed", err.getDefaultMessage()))
             .toList();
-        logError(requestId, 400, "Validation failed", ex);
+        logError(400, "Validation failed", ex);
         return ResponseEntity.badRequest().body(
             ErrorResponse.withDetails(400, "error.validationFailed", "Validation failed", details, requestId));
     }
@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
         String requestId = getRequestId(request);
         int status = ex.getStatusCode().value();
         String messageKey = MESSAGE_KEY_MAP.getOrDefault(status, "error.internalError");
-        logError(requestId, status, ex.getReason(), ex);
+        logError(status, ex.getReason(), ex);
         return ResponseEntity.status(status).body(
             ErrorResponse.of(status, messageKey, ex.getReason() != null ? ex.getReason() : "An error occurred", requestId));
     }
@@ -58,7 +58,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceAccessException.class)
     public ResponseEntity<ErrorResponse> handleTimeout(ResourceAccessException ex, HttpServletRequest request) {
         String requestId = getRequestId(request);
-        logError(requestId, 504, "SoftNet API did not respond in time", ex);
+        logError(504, "SoftNet API did not respond in time", ex);
         return ResponseEntity.status(504).body(
             ErrorResponse.of(504, "error.upstreamTimeout", "SoftNet API did not respond in time", requestId));
     }
@@ -81,14 +81,14 @@ public class GlobalExceptionHandler {
             message = "Invalid request to upstream API";
         }
 
-        logError(requestId, status, message, ex);
+        logError(status, message, ex);
         return ResponseEntity.status(status).body(ErrorResponse.of(status, messageKey, message, requestId));
     }
 
     @ExceptionHandler(HttpServerErrorException.class)
     public ResponseEntity<ErrorResponse> handleServerError(HttpServerErrorException ex, HttpServletRequest request) {
         String requestId = getRequestId(request);
-        logError(requestId, 502, "SoftNet API returned an error", ex);
+        logError(502, "SoftNet API returned an error", ex);
         return ResponseEntity.status(502).body(
             ErrorResponse.of(502, "error.upstreamError", "SoftNet API returned an error", requestId));
     }
@@ -96,7 +96,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex, HttpServletRequest request) {
         String requestId = getRequestId(request);
-        logError(requestId, 500, ex.getMessage(), ex);
+        logError(500, ex.getMessage(), ex);
         return ResponseEntity.status(500).body(
             ErrorResponse.of(500, "error.internalError", "An unexpected error occurred", requestId));
     }
@@ -106,8 +106,8 @@ public class GlobalExceptionHandler {
         return id != null ? id.toString() : "unknown";
     }
 
-    private void logError(String requestId, int status, String message, Exception ex) {
-        log.error("{\"requestId\":\"{}\",\"statusCode\":{},\"message\":\"{}\",\"exception\":\"{}\"}",
-            requestId, status, message, ex.getClass().getSimpleName());
+    private void logError(int status, String message, Exception ex) {
+        log.error("{\"statusCode\":{},\"message\":\"{}\",\"exception\":\"{}\"}",
+            status, message, ex.getClass().getSimpleName());
     }
 }
