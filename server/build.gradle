@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '4.1.0-SNAPSHOT'
+	id 'org.springframework.boot' version '4.1.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'jacoco'
 }
@@ -20,6 +20,13 @@ repositories {
 }
 
 dependencies {
+	// REQ-030: Spring AI 2.0 (BOM manages versions) — OpenAI-compatible ChatClient
+	// with structured output + StructuredOutputValidationAdvisor. Log Analytics access
+	// uses the existing RestClient + managed-identity token (no Azure SDK) to avoid
+	// Jackson 2/3 conflicts with Spring Boot 4.
+	implementation platform('org.springframework.ai:spring-ai-bom:2.0.0')
+	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'

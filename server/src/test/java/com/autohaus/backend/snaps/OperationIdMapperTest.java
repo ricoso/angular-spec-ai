@@ -129,4 +129,28 @@ class OperationIdMapperTest {
         // three calls, same group — should only fetch once
         org.mockito.Mockito.verify(softnetApi, org.mockito.Mockito.times(1)).getOperations(GROUP);
     }
+
+    // --- REQ-030: reverse resolution (operation ID -> plain-text name) ---
+
+    @Test
+    void resolveOperationNames_returnsTitleCasedNames() {
+        List<String> names = mapper.resolveOperationNames(GROUP, List.of(ID_INSPEKTION, ID_TUEV));
+        assertEquals(2, names.size());
+        assertEquals("Inspektion", names.get(0));
+        assertTrue(names.get(1).toLowerCase().contains("tüv"));
+    }
+
+    @Test
+    void resolveOperationNames_unknownIdFallsBackToRawId() {
+        List<String> names = mapper.resolveOperationNames(GROUP, List.of("690000000000000000000000"));
+        assertEquals(List.of("690000000000000000000000"), names);
+    }
+
+    @Test
+    void resolveOperationNames_emptyOrNullInputs() {
+        assertTrue(mapper.resolveOperationNames(GROUP, List.of()).isEmpty());
+        assertTrue(mapper.resolveOperationNames(GROUP, null).isEmpty());
+        assertTrue(mapper.resolveOperationNames(null, List.of("x")).isEmpty());
+        assertTrue(mapper.resolveOperationNames("", List.of("x")).isEmpty());
+    }
 }

@@ -23,6 +23,17 @@ setup:
 features:
   radwechsel-enabled: ${RADWECHSEL_ENABLED:true}
 
+# REQ-030: daily AI error report. The scheduler + LLM beans only activate when
+# LLM_API_KEY AND LLM_MODEL are set (see ErrorReportingConfiguration
+# @ConditionalOnExpression). Managed identity for Log Analytics needs no secret.
+reporting:
+  workspace-id: ${LOG_WORKSPACE_ID:f4bd94f3-490e-44e2-b5e3-f98bcc5aea38}
+  cron: ${REPORT_CRON:0 0 3 * * *}
+  zone: ${REPORT_ZONE:Europe/Berlin}
+  admin:
+    user: ${REPORT_ADMIN_USER:admin}
+    password: ${REPORT_ADMIN_PASSWORD:}
+
 logging:
   level:
     root: INFO
@@ -38,3 +49,13 @@ spring:
     restart:
       enabled: true
       additional-exclude: "static/**,dist/**"
+  # Spring AI — OpenAI-compatible endpoint. Defaults keep the app booting even
+  # without secrets; the reporting feature stays inactive until LLM_API_KEY +
+  # LLM_MODEL are provided (ErrorReportingConfiguration toggle).
+  ai:
+    openai:
+      api-key: ${LLM_API_KEY:not-configured}
+      base-url: ${LLM_BASE_URL:https://api.openai.com}
+      chat:
+        options:
+          model: ${LLM_MODEL:gpt-4o-mini}
