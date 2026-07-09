@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
@@ -30,6 +30,8 @@ export class LocationSelectionContainerComponent {
   protected readonly selectedGroupIdOverride = this.store.deepLinkGroupId;
   protected readonly isLoading = this.store.isLoading;
   protected readonly error = this.store.error;
+  /** REQ-030: hide the internal report button when embedded in a customer iframe. */
+  protected readonly isEmbedded = signal(this.detectEmbedded());
 
   protected onBranchSelect(selection: BranchSelection): void {
     this.store.selectBranch(selection.branch);
@@ -39,5 +41,18 @@ export class LocationSelectionContainerComponent {
 
   protected onRetry(): void {
     this.store.loadBranches();
+  }
+
+  /** REQ-030: open the internal error report (Basic Auth) in a new tab. */
+  protected onOpenReport(): void {
+    window.open('/internal/report', '_blank', 'noopener');
+  }
+
+  private detectEmbedded(): boolean {
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
   }
 }

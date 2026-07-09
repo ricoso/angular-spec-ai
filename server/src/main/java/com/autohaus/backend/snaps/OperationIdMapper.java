@@ -125,6 +125,39 @@ public class OperationIdMapper {
         return result;
     }
 
+    /**
+     * REQ-030: resolves SoftNet operation IDs back to human-readable service names for
+     * the given group (reverse of the name→id lookup, reusing the same 10-min cache).
+     * Unknown IDs are returned unchanged as a fallback; names are title-cased for display.
+     */
+    public List<String> resolveOperationNames(String groupId, List<String> operationIds) {
+        if (operationIds == null || operationIds.isEmpty() || groupId == null || groupId.isBlank()) {
+            return List.of();
+        }
+        Map<String, String> nameToId = loadOperationsForGroup(groupId);
+        Map<String, String> idToName = new LinkedHashMap<>();
+        for (Map.Entry<String, String> e : nameToId.entrySet()) {
+            idToName.put(e.getValue(), e.getKey());
+        }
+        List<String> names = new ArrayList<>();
+        for (String id : operationIds) {
+            String name = idToName.get(id);
+            names.add(name != null ? titleCase(name) : id);
+        }
+        return names;
+    }
+
+    private static String titleCase(String s) {
+        StringBuilder sb = new StringBuilder(s.length());
+        boolean capNext = true;
+        for (char c : s.toCharArray()) {
+            if (c == ' ') { capNext = true; sb.append(c); }
+            else if (capNext) { sb.append(Character.toUpperCase(c)); capNext = false; }
+            else { sb.append(c); }
+        }
+        return sb.toString();
+    }
+
     private Map<String, String> loadOperationsForGroup(String groupId) {
         long now = System.currentTimeMillis();
         CacheEntry cached = cache.get(groupId);

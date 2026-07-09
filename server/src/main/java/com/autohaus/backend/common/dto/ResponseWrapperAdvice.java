@@ -30,6 +30,14 @@ public class ResponseWrapperAdvice implements ResponseBodyAdvice<Object> {
             return body;
         }
 
+        // REQ-030: /internal/** returns raw HTML/plain-text (report page) — never wrap in JSON.
+        if (request instanceof ServletServerHttpRequest servletRequest) {
+            String path = servletRequest.getServletRequest().getRequestURI();
+            if (path != null && path.startsWith("/internal")) {
+                return body;
+            }
+        }
+
         String requestId = "unknown";
         if (request instanceof ServletServerHttpRequest servletRequest) {
             Object id = servletRequest.getServletRequest().getAttribute(RequestIdFilter.REQUEST_ID_ATTRIBUTE);

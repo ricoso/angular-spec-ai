@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fehler-Report · Terminbuchungs-App</title>
+  <meta name="description" content="Täglicher KI-gestützter Fehler-Report der Terminbuchungs-App — Auswertung der letzten 24 Stunden aus Azure Log Analytics." />
+
+  <!-- Bootstrap Icons (Icon-System der App) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+
+  <style>
+    /* =========================================================================
+       DESIGN-SYSTEM — 1:1 aus src/styles/_variables.scss übernommen
+       ========================================================================= */
+    :root {
+      /* Brand Colors */
+      --color-primary: #667eea;
+      --color-primary-hover: #5a67d8;
+      --color-secondary: #764ba2;
+      --color-accent: #ed8936;
+
+      /* Text Colors (WCAG AA geprüft) */
+      --color-text-primary: #1a1a1a;
+      --color-text-secondary: #595959;
+      --color-text-muted: #767676;
+      --color-text-on-primary: #ffffff;
+      --color-text-on-dark: #ffffff;
+
+      /* Background Colors */
+      --color-background-page: #f8f9fa;
+      --color-background-surface: #ffffff;
+      --color-background-hover: #f5f5f5;
+
+      /* Border & Divider */
+      --color-border: #e0e0e0;
+      --color-divider: #eeeeee;
+
+      /* Semantic Colors (Status & Feedback) — getrennt vom Marken-Akzent */
+      --color-error: #c62828;
+      --color-success: #2e7d32;
+      --color-warning: #e65100;
+      --color-info: #1565c0;
+      --color-info-bg: #e3f2fd;
+      --color-info-border: #90caf9;
+
+      /* Focus */
+      --color-focus-ring: #005fcc;
+
+      /* Shadows */
+      --shadow-small: 0 0.0625em 0.125em rgba(0, 0, 0, 0.1);
+      --shadow-medium: 0 0.25em 0.5em rgba(0, 0, 0, 0.1);
+      --shadow-large: 0 0.5em 1em rgba(0, 0, 0, 0.15);
+
+      /* Typography */
+      --font-size-base: 1em;
+      --font-size-xs: 0.875em;
+      --font-size-sm: 1em;
+      --font-size-md: 1.125em;
+      --font-size-lg: 1.25em;
+      --font-size-xl: 1.5em;
+      --font-size-2xl: 2em;
+      --font-size-3xl: 2.5em;
+
+      --line-height-tight: 1.25;
+      --line-height-normal: 1.5;
+      --line-height-relaxed: 1.75;
+
+      /* Spacing (em-basiert) */
+      --spacing-xs: 0.25em;
+      --spacing-sm: 0.5em;
+      --spacing-md: 1em;
+      --spacing-lg: 1.5em;
+      --spacing-xl: 2em;
+
+      /* Border Radius */
+      --radius-sm: 0.25em;
+      --radius-md: 0.5em;
+      --radius-lg: 0.75em;
+      --radius-xl: 1em;
+      --radius-full: 50%;
+
+      /* Touch Targets */
+      --touch-target-min: 2.75em;
+
+      /* Lokale Ableitungen (für den Report, aus Design-System-Farben) */
+      --color-success-bg: #e8f5e9;
+      --color-warning-bg: #fff3e0;
+      --color-error-bg: #fdecea;
+      --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+      --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* =========================================================================
+       RESET / BASE
+       ========================================================================= */
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--color-background-page);
+      color: var(--color-text-primary);
+      font-family: var(--font-sans);
+      font-size: 100%;
+      line-height: var(--line-height-normal);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--color-primary); }
+
+    /* Accessibility: sichtbarer Fokus für Tastatur-Navigation */
+    a:focus-visible,
+    button:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+      border-radius: var(--radius-sm);
+    }
+
+    .report {
+      max-width: 64em;
+      margin: 0 auto;
+      padding: clamp(var(--spacing-md), 4vw, var(--spacing-xl)) clamp(var(--spacing-md), 4vw, var(--spacing-xl)) var(--spacing-xl);
+    }
+
+    /* Icon-Rahmen — analog .icon-framed aus src/styles/_utilities.scss */
+    .icon-framed {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5em;
+      height: 2.5em;
+      background: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-small);
+      flex-shrink: 0;
+    }
+    .icon-framed--primary { border-color: var(--color-primary); color: var(--color-primary); }
+    .icon-framed--success { border-color: var(--color-success); color: var(--color-success); }
+    .icon-framed--warning { border-color: var(--color-warning); color: var(--color-warning); }
+    .icon-framed--error   { border-color: var(--color-error); color: var(--color-error); }
+    .icon-framed--lg { width: 3em; height: 3em; font-size: var(--font-size-lg); }
+
+    /* =========================================================================
+       KOPF
+       ========================================================================= */
+    .report__header {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      border-bottom: 0.125em solid var(--color-text-primary);
+      padding-bottom: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+    .report__header-text { flex: 1 1 auto; min-width: 0; }
+    .report__eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72em;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--color-secondary);
+      margin: 0 0 var(--spacing-sm);
+    }
+    .report__title {
+      font-size: clamp(var(--font-size-2xl), 5vw, var(--font-size-3xl));
+      line-height: var(--line-height-tight);
+      letter-spacing: -0.02em;
+      font-weight: 680;
+      margin: 0 0 var(--spacing-md);
+    }
+    .report__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs) var(--spacing-lg);
+      font-family: var(--font-mono);
+      font-size: 0.8em;
+      color: var(--color-text-muted);
+    }
+    .report__meta b { color: var(--color-text-secondary); font-weight: 600; }
+
+    /* =========================================================================
+       SECTION
+       ========================================================================= */
+    .report__section { margin-bottom: var(--spacing-xl); }
+
+    .report__section-title {
+      font-size: var(--font-size-md);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      font-weight: 650;
+      color: var(--color-text-primary);
+      margin: 0 0 var(--spacing-md);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    .report__section-title i { color: var(--color-primary); font-size: 0.95em; }
+    .report__lead { color: var(--color-text-secondary); max-width: 62ch; margin: 0 0 var(--spacing-md); }
+
+    /* =========================================================================
+       KI-ZUSAMMENFASSUNG
+       ========================================================================= */
+    .summary {
+      background: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-left: 0.25em solid var(--color-primary);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+      box-shadow: var(--shadow-small);
+    }
+    .summary__head {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+    .summary__head-text { min-width: 0; }
+    .summary__title {
+      font-size: var(--font-size-lg);
+      font-weight: 650;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    .summary__badge {
+      font-family: var(--font-mono);
+      font-size: 0.62em;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+      padding: 0.2em 0.55em;
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+      color: var(--color-primary-hover);
+      border: 0.0625em solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+      vertical-align: middle;
+    }
+    .summary__subtitle {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+      margin: var(--spacing-xs) 0 0;
+    }
+    .summary__body p { margin: 0 0 var(--spacing-md); color: var(--color-text-secondary); }
+    .summary__body p:last-child { margin-bottom: 0; }
+    .summary__body strong { color: var(--color-text-primary); }
+
+    .summary__label {
+      font-family: var(--font-mono);
+      font-size: 0.72em;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin: var(--spacing-lg) 0 var(--spacing-sm);
+      font-weight: 600;
+    }
+    .summary__priorities { list-style: none; margin: 0 0 var(--spacing-md); padding: 0; display: grid; gap: var(--spacing-sm); }
+    .summary__priority {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: var(--spacing-md);
+      align-items: start;
+      background: var(--color-background-page);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+    .summary__rank {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.85em;
+      padding: 0.15em 0.55em;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+    }
+    .summary__rank--1 { background: var(--color-error-bg); color: var(--color-error); }
+    .summary__rank--2 { background: var(--color-warning-bg); color: var(--color-warning); }
+    .summary__rank--3 { background: var(--color-info-bg); color: var(--color-info); }
+    .summary__priority-body { font-size: 0.92em; color: var(--color-text-secondary); }
+    .summary__priority-body b { color: var(--color-text-primary); }
+
+    .summary__recos { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--spacing-sm); }
+    .summary__reco {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-sm);
+      font-size: 0.92em;
+      color: var(--color-text-secondary);
+    }
+    .summary__reco i { color: var(--color-success); margin-top: 0.2em; flex-shrink: 0; }
+
+    /* =========================================================================
+       ÜBERSICHT / STATISTIK-BLÖCKE
+       ========================================================================= */
+    .stats { display: grid; gap: var(--spacing-md); }
+    @media (min-width: 48em) { .stats { grid-template-columns: 1fr 1fr; } }
+
+    .stat {
+      background: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-small);
+    }
+    .stat__head {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+    .stat__head-text { min-width: 0; }
+    .stat__title { font-size: var(--font-size-md); font-weight: 650; margin: 0; }
+    .stat__endpoint { font-family: var(--font-mono); font-size: 0.78em; color: var(--color-text-muted); margin: 0.1em 0 0; }
+
+    .stat__figures {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+    }
+    .stat__figure {
+      text-align: center;
+      padding: var(--spacing-sm) var(--spacing-xs);
+      border-radius: var(--radius-sm);
+      background: var(--color-background-page);
+      border: 0.0625em solid var(--color-border);
+    }
+    .stat__figure-value {
+      font-family: var(--font-mono);
+      font-size: var(--font-size-xl);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+    .stat__figure-label {
+      font-size: 0.72em;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-top: var(--spacing-xs);
+      display: block;
+    }
+    .stat__figure--total .stat__figure-value { color: var(--color-text-primary); }
+    .stat__figure--ok    .stat__figure-value { color: var(--color-success); }
+    .stat__figure--bad   .stat__figure-value { color: var(--color-error); }
+
+    /* kleiner Balken */
+    .stat__bar {
+      display: flex;
+      height: 1em;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 0.0625em solid var(--color-border);
+      margin-bottom: var(--spacing-sm);
+    }
+    .stat__bar-seg { display: block; height: 100%; }
+    .stat__bar-seg--ok  { background: var(--color-success); }
+    .stat__bar-seg--bad { background: var(--color-error); }
+
+    .stat__bar-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs) var(--spacing-md);
+      font-family: var(--font-mono);
+      font-size: 0.74em;
+      color: var(--color-text-muted);
+    }
+    .stat__bar-legend span { display: inline-flex; align-items: center; gap: 0.4em; }
+    .stat__dot { width: 0.6em; height: 0.6em; border-radius: 0.15em; display: inline-block; }
+    .stat__dot--ok  { background: var(--color-success); }
+    .stat__dot--bad { background: var(--color-error); }
+
+    /* =========================================================================
+       STATUS-PILLS (Text + Farbe, nicht nur Farbe)
+       ========================================================================= */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35em;
+      font-family: var(--font-mono);
+      font-size: 0.75em;
+      font-weight: 600;
+      padding: 0.2em 0.55em;
+      border-radius: var(--radius-sm);
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .pill i { font-size: 1em; }
+    .pill--ok   { background: var(--color-success-bg); color: var(--color-success); }
+    .pill--warn { background: var(--color-warning-bg); color: var(--color-warning); }
+    .pill--bad  { background: var(--color-error-bg); color: var(--color-error); }
+
+    /* =========================================================================
+       FEHLERLISTE (Karten)
+       ========================================================================= */
+    .errors { display: grid; gap: var(--spacing-md); }
+
+    .error-card {
+      background: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-left: 0.25em solid var(--color-error);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-small);
+    }
+    .error-card--warn { border-left-color: var(--color-warning); }
+
+    .error-card__head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--spacing-sm) var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+    .error-card__brand {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-weight: 650;
+      font-size: var(--font-size-md);
+    }
+    .error-card__brand-name { font-family: var(--font-mono); }
+    .error-card__spacer { flex: 1 1 auto; }
+    .error-card__count {
+      font-family: var(--font-mono);
+      font-size: 0.78em;
+      color: var(--color-text-muted);
+    }
+
+    .error-card__meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(11em, 1fr));
+      gap: 0.0625em;
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--color-border);
+      margin-bottom: var(--spacing-md);
+    }
+    .error-card__meta-item { background: var(--color-background-surface); padding: var(--spacing-sm) var(--spacing-md); }
+    .error-card__meta-key {
+      font-family: var(--font-mono);
+      font-size: 0.68em;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-bottom: 0.15em;
+    }
+    .error-card__meta-value {
+      font-size: 0.9em;
+      color: var(--color-text-primary);
+      word-break: break-word;
+    }
+    .error-card__meta-value--mono { font-family: var(--font-mono); font-size: 0.82em; }
+
+    /* Payload-Panels */
+    .payloads { display: grid; grid-template-columns: 1fr; gap: var(--spacing-md); }
+    @media (min-width: 48em) { .payloads { grid-template-columns: 1fr 1fr; } }
+
+    .payload__title {
+      margin: 0 0 var(--spacing-sm);
+      font-size: 0.78em;
+      font-family: var(--font-mono);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    .payload--sent .payload__title { color: var(--color-secondary); }
+    .payload--recv .payload__title { color: var(--color-error); }
+
+    .payload__code {
+      margin: 0;
+      background: var(--color-text-primary);
+      color: #d7dee4;
+      font-family: var(--font-mono);
+      font-size: 0.78em;
+      line-height: var(--line-height-normal);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-sm);
+      overflow-x: auto;
+      tab-size: 2;
+    }
+    .payload__code .k   { color: #9ab6ff; }
+    .payload__code .hot { color: #ffb59e; font-weight: 600; }
+    .payload__code .g   { color: #9fd6ab; }
+    .payload__code .d   { color: #8a97a1; }
+
+    /* =========================================================================
+       FOOTER
+       ========================================================================= */
+    .report__footer {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-md);
+      border-top: 0.0625em solid var(--color-border);
+      font-family: var(--font-mono);
+      font-size: 0.74em;
+      color: var(--color-text-muted);
+      line-height: var(--line-height-relaxed);
+    }
+
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="report" role="main" aria-labelledby="report-title">
+
+    <!-- ============================================================= -->
+    <!-- 1. KOPF                                                       -->
+    <!-- ============================================================= -->
+    <header class="report__header">
+      <span class="icon-framed icon-framed--lg icon-framed--primary" aria-hidden="true">
+        <i class="bi bi-clipboard-data"></i>
+      </span>
+      <div class="report__header-text">
+        <p class="report__eyebrow">Interne Statusseite · Terminbuchungs-App</p>
+        <h1 class="report__title" id="report-title">Fehler-Report</h1>
+        <div class="report__meta">
+          <span><b>Erstellt am</b> 09.07.2026, 03:00 Uhr</span>
+          <span><b>Auswertungszeitraum</b> letzte 24 Stunden</span>
+          <span><b>Quelle</b> Azure Log Analytics</span>
+          <span><b>System</b> gs-terminbuchungs-app</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============================================================= -->
+    <!-- 2. KI-ZUSAMMENFASSUNG                                         -->
+    <!-- ============================================================= -->
+    <section class="summary" aria-labelledby="summary-title">
+      <div class="summary__head">
+        <span class="icon-framed icon-framed--primary" aria-hidden="true">
+          <i class="bi bi-robot"></i>
+        </span>
+        <div class="summary__head-text">
+          <h2 class="summary__title" id="summary-title">
+            KI-Zusammenfassung
+            <span class="summary__badge">automatisch generiert</span>
+          </h2>
+          <p class="summary__subtitle">Formuliert aus den aggregierten Kennzahlen — ohne rohe Kundendaten.</p>
+        </div>
+      </div>
+
+      <div class="summary__body">
+        <p>
+          Der Betrieb war in den letzten 24 Stunden <strong>überwiegend stabil</strong>: 96 % aller
+          Verfügbarkeitsabfragen wurden erfolgreich beantwortet. Auffällig ist dagegen der
+          <strong>Buchungsabschluss</strong> — hier scheiterten <strong>170 von 210 Versuchen (81 %)</strong>.
+          Ursache ist fast durchgängig ein <strong>fehlgeschlagenes Operations-/Marken-Matching auf
+          SoftNet-Seite</strong> (<code>No match (operation/brand)</code>), das gehäuft bei der Marke
+          <strong>volkswagen</strong> und dem Standort <strong>Volkswagen Essen-Kray</strong> auftritt.
+          Die gesendeten Payloads sind korrekt aufgebaut; der Fehler entsteht erst bei der internen
+          Auflösung im Fremdsystem.
+        </p>
+
+        <p class="summary__label">Priorisierte Top-Probleme</p>
+        <ol class="summary__priorities">
+          <li class="summary__priority">
+            <span class="summary__rank summary__rank--1">P1</span>
+            <span class="summary__priority-body">
+              <b>Buchungsabschlüsse brechen ab (170 Fälle).</b> Nahezu alle betroffenen
+              <code>/appointments</code>-Requests laufen in ein <em>No match (operation/brand)</em>.
+              Schwerpunkt: Marke <b>volkswagen</b>, Standort <b>Volkswagen Essen-Kray</b>.
+            </span>
+          </li>
+          <li class="summary__priority">
+            <span class="summary__rank summary__rank--2">P2</span>
+            <span class="summary__priority-body">
+              <b>153 fehlgeschlagene Verfügbarkeitsabfragen (4 %).</b> Gleiches Fehlerbild wie bei den
+              Buchungen — deutet auf ein systematisches Katalog-Mapping-Problem, nicht auf Einzelfälle.
+            </span>
+          </li>
+          <li class="summary__priority">
+            <span class="summary__rank summary__rank--3">P3</span>
+            <span class="summary__priority-body">
+              <b>Vereinzelte Validierungsfehler beim Speichern.</b> Wenige
+              <em>Save to database validation errors</em> bei Standort <b>Audi Zentrum München</b> —
+              Beobachten, aktuell keine akute Häufung.
+            </span>
+          </li>
+        </ol>
+
+        <p class="summary__label">Handlungsempfehlungen</p>
+        <ul class="summary__recos">
+          <li class="summary__reco">
+            <i class="bi bi-arrow-right-circle-fill" aria-hidden="true"></i>
+            <span>SoftNet-Ticket mit den betroffenen Operations-IDs für <b>volkswagen / Essen-Kray</b>
+              öffnen — warum wird die aus dem eigenen Katalog gelieferte Operation nicht zur Marke gematcht?</span>
+          </li>
+          <li class="summary__reco">
+            <i class="bi bi-arrow-right-circle-fill" aria-hidden="true"></i>
+            <span>Prüfen, ob dieselbe Marke an anderen Standorten erfolgreich bucht — grenzt die Ursache
+              auf Standort vs. Marke ein.</span>
+          </li>
+          <li class="summary__reco">
+            <i class="bi bi-arrow-right-circle-fill" aria-hidden="true"></i>
+            <span>Validierungsfehler in München über die nächsten Läufe beobachten; erst bei Häufung eskalieren.</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- 3. ÜBERSICHT                                                  -->
+    <!-- ============================================================= -->
+    <section class="report__section" aria-labelledby="overview-title">
+      <h2 class="report__section-title" id="overview-title">
+        <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
+        Übersicht
+      </h2>
+      <p class="report__lead">
+        Gestartete, erfolgreiche und fehlgeschlagene Buchungsabschlüsse der letzten 24 Stunden.
+      </p>
+
+      <div class="stats">
+        <!-- Buchungen -->
+        <article class="stat" aria-labelledby="stat-appts-title">
+          <div class="stat__head">
+            <span class="icon-framed icon-framed--warning" aria-hidden="true">
+              <i class="bi bi-calendar-check"></i>
+            </span>
+            <div class="stat__head-text">
+              <h3 class="stat__title" id="stat-appts-title">Buchungen</h3>
+              <p class="stat__endpoint">POST /appointments</p>
+            </div>
+          </div>
+
+          <div class="stat__figures">
+            <div class="stat__figure stat__figure--total">
+              <div class="stat__figure-value">210</div>
+              <span class="stat__figure-label">Gestartet</span>
+            </div>
+            <div class="stat__figure stat__figure--ok">
+              <div class="stat__figure-value">40</div>
+              <span class="stat__figure-label">Erfolgreich</span>
+            </div>
+            <div class="stat__figure stat__figure--bad">
+              <div class="stat__figure-value">170</div>
+              <span class="stat__figure-label">Fehlgeschlagen</span>
+            </div>
+          </div>
+
+          <div class="stat__bar" role="img" aria-label="19 Prozent erfolgreich, 81 Prozent fehlgeschlagen">
+            <span class="stat__bar-seg stat__bar-seg--ok" style="width: 19%"></span>
+            <span class="stat__bar-seg stat__bar-seg--bad" style="width: 81%"></span>
+          </div>
+          <div class="stat__bar-legend">
+            <span><span class="stat__dot stat__dot--ok" aria-hidden="true"></span>Erfolgreich · 19 %</span>
+            <span><span class="stat__dot stat__dot--bad" aria-hidden="true"></span>Fehlgeschlagen · 81 %</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- 4. FEHLERLISTE                                                -->
+    <!-- ============================================================= -->
+    <section class="report__section" aria-labelledby="errors-title">
+      <h2 class="report__section-title" id="errors-title">
+        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+        Fehlerliste
+      </h2>
+      <p class="report__lead">
+        Je Fehler: Marke, Standort, Fehlertyp sowie die gesendeten (Request) und empfangenen (Response)
+        Daten aus dem Backend-Log.
+      </p>
+
+      <div class="errors">
+
+        <!-- Fehler 1 -->
+        <article class="error-card" aria-labelledby="err-1-title">
+          <div class="error-card__head">
+            <span class="error-card__brand" id="err-1-title">
+              <span class="icon-framed" aria-hidden="true"><i class="bi bi-car-front"></i></span>
+              <span class="error-card__brand-name">volkswagen</span>
+            </span>
+            <span class="pill pill--bad">
+              <i class="bi bi-x-octagon-fill" aria-hidden="true"></i>
+              No match (operation/brand)
+            </span>
+            <span class="error-card__spacer"></span>
+            <span class="error-card__count">138 &times; · HTTP 502</span>
+          </div>
+
+          <div class="error-card__meta">
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Standort</div>
+              <div class="error-card__meta-value">Volkswagen Essen-Kray</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Services</div>
+              <div class="error-card__meta-value">Inspektion, Ölwechsel</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Endpoint</div>
+              <div class="error-card__meta-value error-card__meta-value--mono">POST /appointments</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Erstes Auftreten</div>
+              <div class="error-card__meta-value error-card__meta-value--mono">08.07.2026 06:14</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Trace-ID (Beispiel)</div>
+              <div class="error-card__meta-value error-card__meta-value--mono">e936f6ca-4fec-4d8d</div>
+            </div>
+          </div>
+
+          <div class="payloads">
+            <div class="payload payload--sent">
+              <p class="payload__title">
+                <i class="bi bi-arrow-up-right-square" aria-hidden="true"></i>
+                Gesendet · Request
+              </p>
+              <pre class="payload__code" tabindex="0" role="group" aria-label="Gesendetes Request-JSON"><span class="d">{</span>
+  <span class="k">"brand"</span>: <span class="hot">"volkswagen"</span>,
+  <span class="k">"car"</span>: { <span class="k">"brand"</span>: <span class="hot">"volkswagen"</span> },
+  <span class="k">"operations"</span>: [<span class="g">"690c6704bd7493c1448d55b1"</span>],
+  <span class="k">"preferredBranch"</span>: <span class="d">"68f60e658d2bb4389eed1f03"</span>,
+  <span class="k">"checkInDatePreference"</span>: <span class="d">"asSoonAsPossible"</span>,
+  <span class="k">"notifications"</span>: { <span class="k">"SMS"</span>: <span class="d">false</span>, <span class="k">"SMTP"</span>: <span class="d">true</span> }
+<span class="d">}</span></pre>
+            </div>
+            <div class="payload payload--recv">
+              <p class="payload__title">
+                <i class="bi bi-arrow-down-left-square" aria-hidden="true"></i>
+                Empfangen · Response
+              </p>
+              <pre class="payload__code" tabindex="0" role="group" aria-label="Empfangenes Response-JSON"><span class="d">{</span>
+  <span class="k">"code"</span>: <span class="hot">"InternalServerError"</span>,
+  <span class="k">"original"</span>: {
+    <span class="k">"message"</span>: <span class="d">"No match could be found</span>
+       <span class="d">for operation</span> <span class="hot">682b2b9a5899e553734236ed</span>
+       <span class="d">and brand</span> <span class="hot">volkswagen</span><span class="d">",</span>
+    <span class="k">"name"</span>: <span class="d">"nogBzlError",</span>
+    <span class="k">"code"</span>: <span class="d">"generic"</span>
+  }
+<span class="d">}</span></pre>
+            </div>
+          </div>
+        </article>
+
+        <!-- Fehler 2 -->
+        <article class="error-card" aria-labelledby="err-2-title">
+          <div class="error-card__head">
+            <span class="error-card__brand" id="err-2-title">
+              <span class="icon-framed" aria-hidden="true"><i class="bi bi-car-front"></i></span>
+              <span class="error-card__brand-name">volkswagen</span>
+            </span>
+            <span class="pill pill--bad">
+              <i class="bi bi-x-octagon-fill" aria-hidden="true"></i>
+              No match (operation/brand)
+            </span>
+            <span class="error-card__spacer"></span>
+            <span class="error-card__count">153 &times; · HTTP 502</span>
+          </div>
+
+          <div class="error-card__meta">
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Standort</div>
+              <div class="error-card__meta-value">Volkswagen Essen-Kray</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Services</div>
+              <div class="error-card__meta-value">Allgemeine Diagnosearbeiten</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Endpoint</div>
+              <div class="error-card__meta-value error-card__meta-value--mono">POST /snaps</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Erstes Auftreten</div>
+              <div class="error-card__meta-value error-card__meta-value--mono">08.07.2026 05:41</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Trace-ID (Beispiel)</div>
+              <div class="error-card__meta-value error-card__meta-value--mono">a17c9d02-11bf-4e6a</div>
+            </div>
+          </div>
+
+          <div class="payloads">
+            <div class="payload payload--sent">
+              <p class="payload__title">
+                <i class="bi bi-arrow-up-right-square" aria-hidden="true"></i>
+                Gesendet · Request
+              </p>
+              <pre class="payload__code" tabindex="0" role="group" aria-label="Gesendetes Request-JSON"><span class="d">{</span>
+  <span class="k">"groupid"</span>: <span class="d">"690c6704bd7493c1448d559a"</span>,
+  <span class="k">"brand"</span>: <span class="hot">"volkswagen"</span>,
+  <span class="k">"car"</span>: { <span class="k">"brand"</span>: <span class="hot">"volkswagen"</span> },
+  <span class="k">"operations"</span>: [<span class="g">"690c6704bd7493c1448d55b1"</span>],
+  <span class="k">"preferredBranch"</span>: <span class="d">"68f60e658d2bb4389eed1f03"</span>
+<span class="d">}</span></pre>
+            </div>
+            <div class="payload payload--recv">
+              <p class="payload__title">
+                <i class="bi bi-arrow-down-left-square" aria-hidden="true"></i>
+                Empfangen · Response
+              </p>
+              <pre class="payload__code" tabindex="0" role="group" aria-label="Empfangenes Response-JSON"><span class="d">{</span>
+  <span class="k">"code"</span>: <span class="hot">"InternalServerError"</span>,
+  <span class="k">"original"</span>: {
+    <span class="k">"message"</span>: <span class="d">"No match could be found</span>
+       <span class="d">for operation</span> <span class="hot">682b2b9a5899e553734236ed</span>
+       <span class="d">and brand</span> <span class="hot">volkswagen</span><span class="d">",</span>
+    <span class="k">"name"</span>: <span class="d">"nogBzlError"</span>
+  }
+<span class="d">}</span></pre>
+            </div>
+          </div>
+        </article>
+
+        <!-- Fehler 3 (Warnung) -->
+        <article class="error-card error-card--warn" aria-labelledby="err-3-title">
+          <div class="error-card__head">
+            <span class="error-card__brand" id="err-3-title">
+              <span class="icon-framed" aria-hidden="true"><i class="bi bi-car-front"></i></span>
+              <span class="error-card__brand-name">audi</span>
+            </span>
+            <span class="pill pill--warn">
+              <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+              Save to database validation errors
+            </span>
+            <span class="error-card__spacer"></span>
+            <span class="error-card__count">32 &times; · HTTP 502</span>
+          </div>
+
+          <div class="error-card__meta">
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Standort</div>
+              <div class="error-card__meta-value">Audi Zentrum München</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Services</div>
+              <div class="error-card__meta-value">Hauptuntersuchung (HU/AU), Klimaservice</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Endpoint</div>
+              <div class="error-card__meta-value error-card__meta-value--mono">POST /appointments</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Erstes Auftreten</div>
+              <div class="error-card__meta-value error-card__meta-value--mono">08.07.2026 09:22</div>
+            </div>
+            <div class="error-card__meta-item">
+              <div class="error-card__meta-key">Trace-ID (Beispiel)</div>
+              <div class="error-card__meta-value error-card__meta-value--mono">7b02f4aa-9c31-40de</div>
+            </div>
+          </div>
+
+          <div class="payloads">
+            <div class="payload payload--sent">
+              <p class="payload__title">
+                <i class="bi bi-arrow-up-right-square" aria-hidden="true"></i>
+                Gesendet · Request
+              </p>
+              <pre class="payload__code" tabindex="0" role="group" aria-label="Gesendetes Request-JSON"><span class="d">{</span>
+  <span class="k">"brand"</span>: <span class="hot">"audi"</span>,
+  <span class="k">"operations"</span>: [<span class="g">"71ad4402ce8402d1559e66c2"</span>],
+  <span class="k">"preferredBranch"</span>: <span class="d">"70bd12aa4f1cc5490ffe2a11"</span>,
+  <span class="k">"wishlist"</span>: { <span class="k">"note"</span>: <span class="d">"Bitte Ersatzwagen"</span> },
+  <span class="k">"checkInTimePreference"</span>: <span class="hot">"PM"</span>
+<span class="d">}</span></pre>
+            </div>
+            <div class="payload payload--recv">
+              <p class="payload__title">
+                <i class="bi bi-arrow-down-left-square" aria-hidden="true"></i>
+                Empfangen · Response
+              </p>
+              <pre class="payload__code" tabindex="0" role="group" aria-label="Empfangenes Response-JSON"><span class="d">{</span>
+  <span class="k">"code"</span>: <span class="hot">"InternalServerError"</span>,
+  <span class="k">"original"</span>: {
+    <span class="k">"message"</span>: <span class="d">"Save to database validation errors",</span>
+    <span class="k">"name"</span>: <span class="d">"ValidationError",</span>
+    <span class="k">"details"</span>: [<span class="d">"checkInDatePreference is required"</span>]
+  }
+<span class="d">}</span></pre>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- FOOTER                                                        -->
+    <!-- ============================================================= -->
+    <footer class="report__footer">
+      Datenbasis: Azure Log Analytics · ContainerAppConsoleLogs_CL · gs-terminbuchungs-app ·
+      24-Stunden-Fenster bis 09.07.2026 03:00 Uhr (Europe/Berlin). KI-Zusammenfassung aus aggregierten
+      Kennzahlen (keine rohen Kundendaten). Payloads aus dem Fehler-Logging gemäß REQ-029.
+      Zugriff nur intern über Basic Auth.
+    </footer>
+
+  </main>
+</body>
+</html>

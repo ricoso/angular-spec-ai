@@ -344,7 +344,9 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
         brandLabel: 'Marke',
         servicesLabel: 'Leistungen',
         appointmentLabel: 'Termin',
-        emptySelection: 'Noch keine Auswahl getroffen.'
+        emptySelection: 'Noch keine Auswahl getroffen.',
+        reportLabel: 'Fehler-Report',
+        reportTooltip: 'Täglichen Fehler-Report öffnen'
       }
     }
   },
@@ -686,7 +688,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
         brandLabel: 'Brand',
         servicesLabel: 'Services',
         appointmentLabel: 'Appointment',
-        emptySelection: 'No selections made yet.'
+        emptySelection: 'No selections made yet.',
+        reportLabel: 'Error report',
+        reportTooltip: 'Open daily error report'
       }
     }
   },
@@ -1026,7 +1030,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
         brandLabel: 'Марка',
         servicesLabel: 'Послуги',
         appointmentLabel: 'Запис',
-        emptySelection: 'Ще нічого не обрано.'
+        emptySelection: 'Ще нічого не обрано.',
+        reportLabel: 'Звіт про помилки',
+        reportTooltip: 'Відкрити щоденний звіт про помилки'
       }
     }
   },
@@ -1366,7 +1372,9 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
         brandLabel: 'Marque',
         servicesLabel: 'Services',
         appointmentLabel: 'Rendez-vous',
-        emptySelection: 'Aucune sélection effectuée.'
+        emptySelection: 'Aucune sélection effectuée.',
+        reportLabel: 'Rapport d’erreurs',
+        reportTooltip: 'Ouvrir le rapport d’erreurs quotidien'
       }
     }
   },
@@ -1706,7 +1714,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم 
         brandLabel: 'العلامة التجارية',
         servicesLabel: 'الخدمات',
         appointmentLabel: 'الموعد',
-        emptySelection: 'لم يتم الاختيار بعد.'
+        emptySelection: 'لم يتم الاختيار بعد.',
+        reportLabel: 'تقرير الأخطاء',
+        reportTooltip: 'فتح تقرير الأخطاء اليومي'
       }
     }
   }

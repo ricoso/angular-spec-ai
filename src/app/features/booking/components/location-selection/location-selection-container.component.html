@@ -1,6 +1,18 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
 <section class="page-wrap location-selection">
+  @if (!isEmbedded()) {
+    <div class="d-flex justify-content-end mb-2">
+      <button
+        type="button"
+        class="btn btn-primary btn-sm report-status-button"
+        (click)="onOpenReport()"
+        [title]="booking.overlay.reportTooltip | translate">
+        <i class="bi bi-clipboard-data me-1" aria-hidden="true"></i>
+        {{ booking.overlay.reportLabel | translate }}
+      </button>
+    </div>
+  }
   <h1 class="page-title">{{ booking.location.title | translate }}</h1>
   <p class="page-subtitle">{{ booking.location.subtitle | translate }}</p>
 
