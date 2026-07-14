@@ -32,6 +32,10 @@ public class ReportAggregator {
 
     private static final Pattern TRACE_ID = Pattern.compile("- ([0-9a-fA-F-]{36}):");
     private static final Pattern ENDPOINT = Pattern.compile("(POST|GET|PUT|DELETE) (/api/planning/[a-zA-Z]+)");
+    /** SoftNet operation IDs are 24-char hex ObjectIds — used to catch any that survive name resolution. */
+    private static final Pattern OPERATION_ID = Pattern.compile("^[a-f0-9]{24}$");
+    /** Shown in place of a raw operation ID when no plain-text service name can be resolved. */
+    private static final String UNRESOLVED_SERVICE = "Service (unbekannt)";
 
     private static final String BOOKING_STATS_KQL = """
         ContainerAppConsoleLogs_CL
@@ -211,13 +215,38 @@ public class ReportAggregator {
         if (operationIds.isEmpty()) {
             return List.of();
         }
+        List<String> resolved;
         try {
             List<String> names = operationIdMapper.resolveOperationNames(groupId, operationIds);
-            return names.isEmpty() ? operationIds : names;
+            resolved = names.isEmpty() ? operationIds : names;
         } catch (RuntimeException e) {
             log.debug("Operation name resolution failed for group {}: {}", groupId, e.getMessage());
-            return operationIds;
+            resolved = operationIds;
         }
+        return sanitizeServiceNames(resolved);
+    }
+
+    /**
+     * Safety net: the report must never surface a raw SoftNet operation ID. Any entry that still
+     * looks like a 24-hex ObjectId — because the groupid was missing, the ID was absent from the
+     * group, or the SoftNet lookup failed — is replaced with a neutral placeholder. The placeholder
+     * is collapsed to a single entry (the opaque IDs carry no distinguishing meaning for a reader;
+     * the raw request payload below the card still holds them for tracing).
+     */
+    private static List<String> sanitizeServiceNames(List<String> operations) {
+        List<String> out = new ArrayList<>(operations.size());
+        boolean placeholderAdded = false;
+        for (String op : operations) {
+            if (op != null && OPERATION_ID.matcher(op).matches()) {
+                if (!placeholderAdded) {
+                    out.add(UNRESOLVED_SERVICE);
+                    placeholderAdded = true;
+                }
+            } else {
+                out.add(op);
+            }
+        }
+        return out;
     }
 
     private String classifyError(String responseBody) {

@@ -39,6 +39,9 @@ class ReportAggregatorTest {
     private final ObjectMapper om = new ObjectMapper();
     private ReportAggregator aggregator;
 
+    /** The error log line returned by the mocked LogAnalytics client; overridable per test. */
+    private String errorLogLine = LOG_LINE;
+
     @BeforeEach
     void setUp() {
         aggregator = new ReportAggregator(logClient, setupService, operationIdMapper, om, new PiiRedactor(om));
@@ -90,6 +93,50 @@ class ReportAggregatorTest {
         assertNull(aggregator.aggregate().summary());
     }
 
+    @Test
+    void unresolvedOperationIdBecomesPlaceholderInsteadOfRawId() {
+        String hexId = "6908807454f4bb2b69b03ffc";
+        errorLogLine = errorLine("g1", "[\"" + hexId + "\"]");
+        // Simulates OperationIdMapper's per-ID fallback (unknown ID returned unchanged).
+        when(operationIdMapper.resolveOperationNames("g1", List.of(hexId))).thenReturn(List.of(hexId));
+
+        ErrorEntry e = aggregator.aggregate().errors().get(0);
+        assertEquals(List.of("Service (unbekannt)"), e.operations());
+    }
+
+    @Test
+    void blankGroupIdYieldsPlaceholderInsteadOfRawId() {
+        String hexId = "6908807454f4bb2b69b03ffc";
+        errorLogLine = errorLine("", "[\"" + hexId + "\"]");
+        // resolveOperationNames("", ...) returns an empty list → aggregator falls back to raw IDs.
+
+        ErrorEntry e = aggregator.aggregate().errors().get(0);
+        assertEquals(List.of("Service (unbekannt)"), e.operations());
+    }
+
+    @Test
+    void resolutionFailureYieldsPlaceholderInsteadOfRawId() {
+        String hexId = "6908807454f4bb2b69b03ffc";
+        errorLogLine = errorLine("g1", "[\"" + hexId + "\"]");
+        when(operationIdMapper.resolveOperationNames("g1", List.of(hexId)))
+            .thenThrow(new RuntimeException("SoftNet unreachable"));
+
+        ErrorEntry e = aggregator.aggregate().errors().get(0);
+        assertEquals(List.of("Service (unbekannt)"), e.operations());
+    }
+
+    @Test
+    void mixedResolvedAndUnresolvedKeepsNamesAndCollapsesPlaceholder() {
+        String hexId1 = "6908807454f4bb2b69b03ffc";
+        String hexId2 = "6908807454f4bb2b69b03ff8";
+        errorLogLine = errorLine("g1", "[\"" + hexId1 + "\",\"" + hexId2 + "\"]");
+        when(operationIdMapper.resolveOperationNames("g1", List.of(hexId1, hexId2)))
+            .thenReturn(List.of("Inspektion", hexId2)); // second ID stays unresolved
+
+        ErrorEntry e = aggregator.aggregate().errors().get(0);
+        assertEquals(List.of("Inspektion", "Service (unbekannt)"), e.operations());
+    }
+
     private JsonNode statsResponse() {
         ObjectNode root = om.createObjectNode();
         ArrayNode rows = root.putArray("tables").addObject().putArray("rows");
@@ -105,7 +152,17 @@ class ReportAggregatorTest {
         ArrayNode rows = root.putArray("tables").addObject().putArray("rows");
         ArrayNode row = rows.addArray();
         row.add("2026-07-07T05:14:08.061Z");
-        row.add(LOG_LINE);
+        row.add(errorLogLine);
         return root;
+    }
+
+    /** Builds a SOFTNET_ERROR log line for /snaps with the given groupid + operations JSON array. */
+    private static String errorLine(String groupId, String operationsJson) {
+        return "2026-07-07 05:14:08,061 [http-nio-3000-exec-8] ERROR c.a.backend.softnet.SoftnetApiClient "
+            + "- e936f6ca-4fec-4d8d-9556-54617f21f60f: SOFTNET_ERROR POST /api/planning/snaps failed after 336ms: "
+            + "500 Internal Server Error: \"...\" "
+            + "| requestBody={\"groupid\":\"" + groupId + "\",\"brand\":\"volkswagen\",\"operations\":"
+            + operationsJson + ",\"preferredBranch\":\"b1\"} "
+            + "| responseBody={\"code\":\"InternalServerError\",\"original\":{\"message\":\"No match could be found\"}}";
     }
 }
