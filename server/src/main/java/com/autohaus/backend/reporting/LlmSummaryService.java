@@ -45,32 +45,31 @@ public class LlmSummaryService {
      * Builds the prompt from aggregates only — no request/response payloads, no customer data.
      */
     private String buildPrompt(ReportModel model) {
-        BookingStats s = model.stats();
+        BookingStats snaps = model.snaps();
+        BookingStats appointments = model.appointments();
 
         Map<String, Integer> byType = new LinkedHashMap<>();
-        Map<String, Integer> byBrand = new LinkedHashMap<>();
-        Map<String, Integer> byLocation = new LinkedHashMap<>();
         for (ErrorEntry e : model.errors()) {
             String t = nz(e.errorType());
             byType.put(t, byType.getOrDefault(t, 0) + 1);
-            String b = nz(e.brand());
-            byBrand.put(b, byBrand.getOrDefault(b, 0) + 1);
-            String l = nz(e.location());
-            byLocation.put(l, byLocation.getOrDefault(l, 0) + 1);
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append("Du bist ein technischer Betriebsassistent für ein Autohaus-Terminbuchungssystem. ")
             .append("Erstelle eine sachliche, deutsche Zusammenfassung der Fehlerlage der letzten 24 Stunden. ")
             .append("Nutze ausschließlich die folgenden aggregierten Kennzahlen — keine erfundenen Zahlen.\n\n");
+        sb.append("Terminsuchen (POST /snaps): ")
+            .append(snaps.started()).append(" gestartet, ")
+            .append(snaps.succeeded()).append(" erfolgreich, ")
+            .append(snaps.failed()).append(" fehlgeschlagen.\n");
         sb.append("Buchungen (POST /appointments): ")
-            .append(s.started()).append(" gestartet, ")
-            .append(s.succeeded()).append(" erfolgreich, ")
-            .append(s.failed()).append(" fehlgeschlagen.\n");
+            .append(appointments.started()).append(" gestartet, ")
+            .append(appointments.succeeded()).append(" erfolgreich, ")
+            .append(appointments.failed()).append(" fehlgeschlagen.\n");
         sb.append("Fehler gesamt: ").append(model.errors().size()).append("\n");
         sb.append("Fehler nach Typ: ").append(byType).append("\n");
-        sb.append("Fehler nach Marke: ").append(byBrand).append("\n");
-        sb.append("Fehler nach Standort: ").append(byLocation).append("\n\n");
+        sb.append("Fehler nach Marke: ").append(model.errorsByBrand()).append("\n");
+        sb.append("Fehler nach Standort: ").append(model.errorsByLocation()).append("\n\n");
         sb.append("Liefere: eine kurze Überschrift, eine Gesamtbewertung, die wichtigsten ")
             .append("priorisierten Probleme (mit Schweregrad, betroffenen Marken/Standorten und einer ")
             .append("Ursachenhypothese) sowie konkrete Handlungsempfehlungen.");

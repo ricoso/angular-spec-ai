@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Orchestrates report generation (REQ-030): query → aggregate → LLM summary → HTML → store.
@@ -47,15 +48,19 @@ public class ErrorReportScheduler {
         try {
             ReportModel base = aggregator.aggregate();
             AiErrorReportSummary summary = llmSummaryService.summarize(base);
-            ReportModel full = new ReportModel(base.generatedAt(), base.stats(), base.errors(), summary);
+            ReportModel full = new ReportModel(base.generatedAt(), base.snaps(), base.appointments(),
+                base.errorsByBrand(), base.errorsByLocation(), base.errors(), summary);
             store.update(htmlGenerator.generate(full), full.generatedAt());
-            log.info("REQ-030 report generated: {} bookings started, {} errors",
-                base.stats().started(), base.errors().size());
+            log.info("REQ-030 report generated: {} snap searches, {} bookings, {} errors",
+                base.snaps().started(), base.appointments().started(), base.errors().size());
         } catch (LogAnalyticsClient.LogAnalyticsUnavailableException e) {
             log.warn("Log Analytics unavailable — storing fallback report: {}", e.getMessage());
             ReportModel fallback = new ReportModel(
                 Instant.now(),
                 new BookingStats(0, 0, 0),
+                new BookingStats(0, 0, 0),
+                Map.of(),
+                Map.of(),
                 List.of(),
                 new AiErrorReportSummary(
                     "Datenquelle derzeit nicht erreichbar",

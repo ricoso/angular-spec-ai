@@ -1,10 +1,11 @@
 package com.autohaus.backend.reporting;
 
 /**
- * Overview counters for bookings (POST /appointments) over the report window (REQ-030).
+ * Overview counters for one funnel category over the report window (REQ-030): appointment
+ * searches (POST /snaps) or booking completions (POST /appointments).
  */
 public record BookingStats(
-    long started,     // total booking attempts
+    long started,     // total attempts
     long succeeded,   // 2xx
     long failed       // 4xx + 5xx
 ) {}

@@ -11,16 +11,19 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Builds the deterministic part of the daily report (REQ-030): the booking overview
- * (POST /appointments) and the error list. Brands come straight from the logs; branch
- * IDs are resolved to location names via {@link SetupService}; operation IDs are resolved
- * to plain-text service names via {@link OperationIdMapper}. No LLM involved here — the
- * summary is attached later.
+ * Builds the deterministic part of the daily report (REQ-030): the per-category status
+ * overview (snaps + appointments), the brand/location error distribution and the error list.
+ * Brands come straight from the logs; branch IDs are resolved to location names via
+ * {@link SetupService}; operation IDs are resolved to plain-text service names via
+ * {@link OperationIdMapper}; request/response payloads are PII-masked via {@link PiiRedactor}
+ * before they enter an {@link ErrorEntry}. No LLM involved here — the summary is attached later.
  */
 @Component
 public class ReportAggregator {
@@ -39,26 +42,40 @@ public class ReportAggregator {
         | summarize started=count(), succeeded=countif(Status < 400), failed=countif(Status >= 400)
         """;
 
+    private static final String SNAPS_STATS_KQL = """
+        ContainerAppConsoleLogs_CL
+        | where TimeGenerated > ago(24h)
+        | where Log_s has 'INFO  HTTP' and Log_s has '"method":"POST"' and Log_s has '/api/v1/snaps'
+        | extend Status = toint(extract('"statusCode":([0-9]+)', 1, Log_s))
+        | where Status > 0
+        | summarize started=count(), succeeded=countif(Status < 400), failed=countif(Status >= 400)
+        """;
+
+    // High safety cap rather than a small page size, so the error list matches the tile
+    // counts (a small "take" would make "Fehler (N)" contradict the failure totals).
     private static final String ERRORS_KQL = """
         ContainerAppConsoleLogs_CL
         | where TimeGenerated > ago(24h)
         | where Log_s has 'SOFTNET_ERROR' and Log_s has 'requestBody'
         | project TimeGenerated, Log_s
         | order by TimeGenerated desc
-        | take 100
+        | take 1000
         """;
 
     private final LogAnalyticsClient logClient;
     private final SetupService setupService;
     private final OperationIdMapper operationIdMapper;
     private final ObjectMapper objectMapper;
+    private final PiiRedactor piiRedactor;
 
     public ReportAggregator(LogAnalyticsClient logClient, SetupService setupService,
-                            OperationIdMapper operationIdMapper, ObjectMapper objectMapper) {
+                            OperationIdMapper operationIdMapper, ObjectMapper objectMapper,
+                            PiiRedactor piiRedactor) {
         this.logClient = logClient;
         this.setupService = setupService;
         this.operationIdMapper = operationIdMapper;
         this.objectMapper = objectMapper;
+        this.piiRedactor = piiRedactor;
     }
 
     /**
@@ -67,18 +84,47 @@ public class ReportAggregator {
      * can produce a graceful fallback report.
      */
     public ReportModel aggregate() {
-        BookingStats stats = queryBookingStats();
+        BookingStats snaps = queryStats(SNAPS_STATS_KQL);
+        BookingStats appointments = queryStats(BOOKING_STATS_KQL);
         List<ErrorEntry> errors = queryErrors();
-        return new ReportModel(Instant.now(), stats, errors, null);
+        Map<String, Long> errorsByBrand = new LinkedHashMap<>();
+        Map<String, Long> errorsByLocation = new LinkedHashMap<>();
+        for (ErrorEntry e : errors) {
+            addCount(errorsByBrand, e.brand());
+            addCount(errorsByLocation, e.location());
+        }
+        return new ReportModel(Instant.now(), snaps, appointments,
+            sortByCountDesc(errorsByBrand), sortByCountDesc(errorsByLocation), errors, null);
     }
 
-    private BookingStats queryBookingStats() {
-        List<List<String>> rows = LogAnalyticsClient.rows(logClient.query(BOOKING_STATS_KQL));
+    private BookingStats queryStats(String kql) {
+        List<List<String>> rows = LogAnalyticsClient.rows(logClient.query(kql));
         if (rows.isEmpty() || rows.get(0).size() < 3) {
             return new BookingStats(0, 0, 0);
         }
         List<String> r = rows.get(0);
         return new BookingStats(parseLong(r.get(0)), parseLong(r.get(1)), parseLong(r.get(2)));
+    }
+
+    /** Adds one to the count for {@code key} in the given map; blank/null keys are skipped. */
+    private static void addCount(Map<String, Long> counts, String key) {
+        if (key != null && !key.isBlank()) {
+            counts.put(key, counts.getOrDefault(key, 0L) + 1L);
+        }
+    }
+
+    /**
+     * Returns the counts as an insertion-ordered map, sorted by descending count, so the HTML
+     * top-list for brands / locations keeps that order.
+     */
+    private static Map<String, Long> sortByCountDesc(Map<String, Long> counts) {
+        List<Map.Entry<String, Long>> entries = new ArrayList<>(counts.entrySet());
+        entries.sort((a, b) -> Long.compare(b.getValue(), a.getValue()));
+        Map<String, Long> sorted = new LinkedHashMap<>();
+        for (Map.Entry<String, Long> en : entries) {
+            sorted.put(en.getKey(), en.getValue());
+        }
+        return sorted;
     }
 
     private List<ErrorEntry> queryErrors() {
@@ -132,6 +178,11 @@ public class ReportAggregator {
         List<String> operations = resolveOperations(groupId, operationIds);
         String errorType = classifyError(responseBody);
 
+        // Mask PII for display only — the metadata above (brand / branch / operations /
+        // error type) was already extracted from the original, unmasked payloads.
+        String safeRequestBody = piiRedactor.redact(requestBody);
+        String safeResponseBody = piiRedactor.redact(responseBody);
+
         return new ErrorEntry(
             parseInstant(timeGenerated),
             traceId,
@@ -140,8 +191,8 @@ public class ReportAggregator {
             operations,
             errorType,
             endpoint,
-            requestBody,
-            responseBody
+            safeRequestBody,
+            safeResponseBody
         );
     }
 

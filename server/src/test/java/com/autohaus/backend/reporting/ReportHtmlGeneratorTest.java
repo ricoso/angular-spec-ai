@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,7 +13,8 @@ class ReportHtmlGeneratorTest {
     private final ReportHtmlGenerator generator = new ReportHtmlGenerator();
 
     private ReportModel sampleModel(String requestBody) {
-        BookingStats stats = new BookingStats(100, 80, 20);
+        BookingStats appointments = new BookingStats(100, 80, 20);
+        BookingStats snaps = new BookingStats(200, 130, 70);
         ErrorEntry error = new ErrorEntry(
             Instant.parse("2026-07-09T02:10:00Z"),
             "trace-123",
@@ -29,7 +31,8 @@ class ReportHtmlGeneratorTest {
             List.of(new AiErrorReportSummary.PrioritizedIssue(
                 "VW No-match", "high", "volkswagen", "Essen-Kray", "SoftNet-Katalog")),
             List.of("SoftNet-Ticket eröffnen"));
-        return new ReportModel(Instant.parse("2026-07-09T03:00:00Z"), stats, List.of(error), summary);
+        return new ReportModel(Instant.parse("2026-07-09T03:00:00Z"), snaps, appointments,
+            Map.of("volkswagen", 3L), Map.of("Volkswagen Essen-Kray", 3L), List.of(error), summary);
     }
 
     @Test
@@ -45,6 +48,30 @@ class ReportHtmlGeneratorTest {
         assertTrue(html.contains("80"));
         assertTrue(html.contains("20"));
         assertTrue(html.contains("trace-123"));
+        // Iteration 2: category status overview + PII note
+        assertTrue(html.contains("Status-Übersicht"));
+        assertTrue(html.contains("Terminsuchen"));
+        assertTrue(html.contains("Buchungen"));
+        assertTrue(html.contains("Marken"));
+        assertTrue(html.contains("Standorte"));
+        assertTrue(html.contains("Payloads PII-maskiert"));
+    }
+
+    @Test
+    void rendersErrorFilterBarWithCountsAndDataAttributes() {
+        String html = generator.generate(sampleModel("{\"brand\":\"volkswagen\"}"));
+        // filter bar + radios present
+        assertTrue(html.contains("class=\"filters\""), "filter bar must be rendered");
+        assertTrue(html.contains("id=\"flt-all\""));
+        assertTrue(html.contains("Alle (1)"));
+        assertTrue(html.contains("id=\"flt-ep-snaps\""));
+        assertTrue(html.contains("Terminsuchen (1)"));
+        // cards carry the filterable endpoint attribute
+        assertTrue(html.contains("data-ep=\"snaps\""));
+        // no appointment filter button (sample has no appointment error)
+        assertFalse(html.contains("id=\"flt-ep-appointments\""));
+        // no error-type filter buttons (filter by endpoint only)
+        assertFalse(html.contains("id=\"flt-ty-"));
     }
 
     @Test
@@ -59,6 +86,9 @@ class ReportHtmlGeneratorTest {
         ReportModel model = new ReportModel(
             Instant.parse("2026-07-09T03:00:00Z"),
             new BookingStats(0, 0, 0),
+            new BookingStats(0, 0, 0),
+            Map.of(),
+            Map.of(),
             List.of(),
             AiErrorReportSummary.unavailable());
         String html = generator.generate(model);
@@ -69,7 +99,8 @@ class ReportHtmlGeneratorTest {
     @Test
     void toleratesNullSummary() {
         ReportModel model = new ReportModel(
-            Instant.parse("2026-07-09T03:00:00Z"), new BookingStats(1, 1, 0), List.of(), null);
+            Instant.parse("2026-07-09T03:00:00Z"), new BookingStats(1, 1, 0), new BookingStats(1, 1, 0),
+            Map.of(), Map.of(), List.of(), null);
         String html = generator.generate(model);
         assertNotNull(html);
         assertTrue(html.contains("<!doctype html>"));

@@ -41,7 +41,7 @@ class ReportAggregatorTest {
 
     @BeforeEach
     void setUp() {
-        aggregator = new ReportAggregator(logClient, setupService, operationIdMapper, om);
+        aggregator = new ReportAggregator(logClient, setupService, operationIdMapper, om, new PiiRedactor(om));
         when(logClient.query(anyString())).thenAnswer(inv -> {
             String kql = inv.getArgument(0);
             return kql.contains("summarize") ? statsResponse() : errorsResponse();
@@ -56,9 +56,18 @@ class ReportAggregatorTest {
     @Test
     void aggregatesBookingStats() {
         ReportModel model = aggregator.aggregate();
-        assertEquals(100, model.stats().started());
-        assertEquals(80, model.stats().succeeded());
-        assertEquals(20, model.stats().failed());
+        assertEquals(100, model.appointments().started());
+        assertEquals(80, model.appointments().succeeded());
+        assertEquals(20, model.appointments().failed());
+        // snaps stats use the same summarize-mock → same counters
+        assertEquals(100, model.snaps().started());
+    }
+
+    @Test
+    void aggregatesErrorDistributionByBrandAndLocation() {
+        ReportModel model = aggregator.aggregate();
+        assertEquals(1L, model.errorsByBrand().get("volkswagen"));
+        assertEquals(1L, model.errorsByLocation().get("Volkswagen Essen-Kray"));
     }
 
     @Test

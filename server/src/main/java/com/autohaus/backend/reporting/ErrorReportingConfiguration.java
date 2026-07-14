@@ -8,6 +8,7 @@ import org.springframework.ai.chat.client.advisor.StructuredOutputValidationAdvi
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 
 import java.util.List;
 
@@ -26,9 +27,13 @@ public class ErrorReportingConfiguration {
 
     @Bean
     public ChatClient reportChatClient(ChatClient.Builder builder) {
-        log.info("REQ-030: LLM configured — wiring ChatClient with structured-output validation (retry=3) + guardrail");
+        log.info("REQ-030: LLM configured — wiring ChatClient with PII redaction + structured-output validation (retry=3) + guardrail");
         return builder
             .defaultAdvisors(
+                // PII redaction runs first (highest precedence) so no clear-text names,
+                // e-mails, phone numbers, licence plates or VINs ever reach the model.
+                // Spring AI 2.0 has no built-in DataMinimizationAdvisor — this is our own.
+                new PiiRedactionAdvisor(Ordered.HIGHEST_PRECEDENCE + 100),
                 StructuredOutputValidationAdvisor.builder()
                     .outputType(AiErrorReportSummary.class)
                     .maxRepeatAttempts(3)

@@ -61,6 +61,10 @@ Dieses Requirement führt eine **selbst betriebene, tägliche Fehlerauswertung a
 - [ ] AC-7: Ans LLM gehen **nur Aggregate + Fehlertypen**, niemals rohe Kundendaten-Payloads.
 - [ ] AC-8: In der App erscheint ein Statusbutton, der `/internal/report` in einem neuen Tab öffnet; im iFrame (eingebettete Kunden) ist der Button **nicht sichtbar** (`@if (!isEmbedded())`).
 - [ ] AC-9: Fällt das LLM oder Log Analytics aus, liefert die Seite trotzdem einen validen Report (Fallback ohne KI-Text bzw. mit Hinweis).
+- [ ] AC-10: Die Übersicht zeigt **vier Kategorien** mit Ampel-Status (grün/gelb/rot) — **Terminsuchen** (`/snaps`), **Buchungen** (`/appointments`), **Marken** und **Standorte** — sodass auf einen Blick erkennbar ist, wo Probleme auftreten. Marken/Standorte mit Top-Liste der betroffenen Werte + Fehleranzahl.
+- [ ] AC-11: In den angezeigten Request-/Response-Payloads werden **personenbezogene Daten deterministisch maskiert** (Name, E-Mail, Adresse, Telefon/Mobil, PLZ, Ort, Kennzeichen, VIN → `***`); es erscheinen **keine Klartext-Kundendaten** im Report.
+- [ ] AC-12: Der Spring-AI-ChatClient nutzt zusätzlich einen **PII-Redaction-Advisor** (`DataMinimizationAdvisor` bzw. eigener `CallAdvisor`) als zweite Schicht, sodass auch auf dem LLM-Pfad keine personenbezogenen Daten verarbeitet werden.
+- [ ] AC-13: Die Fehlerliste besitzt eine **Filter-Leiste nach Endpoint** (Alle / Terminsuchen / Buchungen / Sonstige, je mit Anzahl); ein Klick blendet die nicht passenden Einträge aus. Umsetzung **CSS-only** (versteckte Radios + Sibling-Selektoren, kein JavaScript → CSP-fest).
 
 ---
 
@@ -113,6 +117,8 @@ Dieses Requirement führt eine **selbst betriebene, tägliche Fehlerauswertung a
 **Step 3: Aggregation + Standort-Auflösung**
 - **System:** `ReportAggregator` bildet deterministisch die **Buchungs-Übersicht** (`POST /appointments`): gestartet / erfolgreich (2xx) / fehlgeschlagen (4xx+5xx). Für jede Fehlerzeile extrahiert er Marke (Log-Klartext), Fehlertyp (`No match` / `Save to database validation errors` / `Read timed out` / …), Trace-ID, gesendeten Request-Body und empfangenen Response-Body. Branch-IDs werden per `SetupService.findByBranchId` in Standort-Namen aufgelöst; die `operations`-IDs aus dem Request-Body werden per `OperationIdMapper`/`JobTypesService` (SoftNet-Group-Katalog, gecacht) in **Klartext-Servicenamen** aufgelöst.
 - **Expected:** Vollständiges `ReportModel` mit `BookingStats` + `List<ErrorEntry>` (Operationen als Klartext).
+
+> **Iteration 2 (Kategorien-Status + PII):** Zusätzlich zu den Buchungen aggregiert der `ReportAggregator` eine **zweite Übersicht für Terminsuchen** (`/snaps`, eigene KQL) sowie deterministisch die **Fehlerverteilung nach Marke und Standort** (Gruppierung der `errors`-Liste, sortiert) — Grundlage der 4-Kategorien-Ampel (Terminsuchen / Buchungen / Marken / Standorte). Vor der Übernahme in `ErrorEntry` werden Request-/Response-Payloads durch den `PiiRedactor` **PII-maskiert** (Name, E-Mail, Adresse, Telefon, PLZ/Ort, Kennzeichen, VIN → `***`).
 
 **Step 4: Spring-AI-Zusammenfassung (Structured Output + Validation)**
 - **System:** `LlmSummaryService` ruft den Spring-AI-`ChatClient` mit den **Aggregaten + Fehlertypen** (keine rohen Payloads) auf und lässt sich die Antwort als Java-Record `AiErrorReportSummary` typisieren (`.entity(AiErrorReportSummary.class)`). Der `StructuredOutputValidationAdvisor` prüft die Antwort gegen das Schema; bei Verletzung erneuter, self-correcting Call (`.maxRepeatAttempts(3)`). Ein `SafeGuardAdvisor` (Guardrail) filtert unerwünschte Inhalte.
@@ -228,6 +234,7 @@ Dieses Requirement führt eine **selbst betriebene, tägliche Fehlerauswertung a
 
 ### Security
 - **Datenschutz:** Kundendaten (Payloads) werden ausschließlich in der Detail-Liste des HTML gezeigt und sind **nur hinter Basic Auth** abrufbar. Das LLM erhält **keine** rohen Payloads — nur Aggregate + Fehlertypen. Das LLM ist zudem eine eigene, interne Instanz (`LLM_BASE_URL`).
+- **PII-Maskierung (Iteration 2):** Die angezeigten Request-/Response-Payloads werden vor der Speicherung deterministisch **PII-maskiert** (`PiiRedactor`: `firstName, lastName, email, mobile, phone, address, zipCode, city, license, VIN` → `***`) — auch hinter Basic Auth erscheinen **keine Klartext-Kundendaten** (Name, Adresse, Telefonnummer). Als zweite Schicht auf dem LLM-Pfad filtert ein **`DataMinimizationAdvisor`** (bzw. eigener `PiiRedactionAdvisor` als Fallback) personenbezogene Daten aus der User-Message — Defense-in-Depth, da der Prompt ohnehin nur Aggregate enthält.
 - **Managed Identity:** Azure-Zugriff ohne Secret/Login über `DefaultAzureCredential`; Rolle „Log Analytics Reader" ist read-only.
 - **Guardrails:** Spring-AI-`SafeGuardAdvisor` (Content-Filter) schützt gegen unerwünschte/gefährliche Ausgaben; `StructuredOutputValidationAdvisor` erzwingt schema-konforme Antworten (Self-Correction, max. 3 Versuche).
 - **Zugriffsschutz:** dedizierte `SecurityFilterChain` mit `securityMatcher("/internal/**")` + `httpBasic`. Die bestehende API-/CSP-Konfiguration bleibt unangetastet (`@Order`-Trennung).
@@ -287,9 +294,9 @@ public record ErrorEntry(
 ) {}
 
 // server/.../reporting/BookingStats.java
-/** Overview counters for bookings (POST /appointments). */
+/** Overview counters for one funnel category (started / succeeded / failed). */
 public record BookingStats(
-    long started,     // total booking attempts
+    long started,     // total attempts
     long succeeded,   // 2xx
     long failed       // 4xx + 5xx
 ) {}
@@ -298,10 +305,32 @@ public record BookingStats(
 /** Aggregated report input for HTML generation + LLM prompt. */
 public record ReportModel(
     java.time.Instant generatedAt,
-    BookingStats stats,
+    BookingStats snaps,                  // Iteration 2: appointment-search category (/snaps)
+    BookingStats appointments,           // booking category (POST /appointments)
+    Map<String, Long> errorsByBrand,     // Iteration 2: error count per brand (sorted desc)
+    Map<String, Long> errorsByLocation,  // Iteration 2: error count per location (sorted desc)
     List<ErrorEntry> errors,
-    AiErrorReportSummary summary   // null when LLM unavailable (fallback)
+    AiErrorReportSummary summary         // null when LLM unavailable (fallback)
 ) {}
+```
+
+**Iteration 2 — PII-Redaction (Utility + Advisor):**
+
+```java
+// server/.../reporting/PiiRedactor.java
+/**
+ * Deterministically masks PII fields in request/response JSON before they are
+ * shown in the report. Uses the shared Jackson ObjectMapper, recursively
+ * overwriting sensitive field values with "***" (JSON structure stays readable).
+ * Deterministische PII-Maskierung der angezeigten Payloads.
+ */
+public final class PiiRedactor {
+    // client.{firstName,lastName,email,mobile,phone,address,zipCode,city}, car.{license,VIN}
+    public String redact(String json) { /* ... */ }
+}
+
+// server/.../reporting/PiiRedactionAdvisor.java  (fallback if DataMinimizationAdvisor unavailable)
+/** Spring AI CallAdvisor that strips PII from the user message before the LLM call. */
 ```
 
 ### 10.3 Config Properties
@@ -355,8 +384,9 @@ public record ErrorReportingProperties(
 |---------|--------|
 | Kopf | Titel, Zeitstempel des letzten Laufs, Berichtszeitraum (letzte 24 h) |
 | KI-Zusammenfassung | `headline`, `overallAssessment`, priorisierte Issues (Severity-Badge, betroffene Marken/Standorte, Root-Cause-Hypothese), Empfehlungen. Fallback-Banner, falls LLM nicht verfügbar. |
-| Übersicht Buchungen | gestartet / erfolgreich / fehlgeschlagen (`POST /appointments`) |
-| Fehlerliste | Tabelle: Marke, Standort, **Services (Klartext)**, Fehlertyp, Trace-ID, gesendeter Request-Body, empfangener Response-Body |
+| Kategorien-Status (Iteration 2) | 4 Ampel-Kacheln — **Terminsuchen** (`/snaps`), **Buchungen** (`/appointments`), **Marken**, **Standorte** — je mit Kennzahl (gestartet/fehlgeschlagen bzw. betroffene Anzahl) + grün/gelb/rot; Marken/Standorte zusätzlich mit Top-Liste der betroffenen Werte. Schwellen: grün 0 %, gelb < 5 %, rot ≥ 5 % Fehlerquote |
+| Filter (Iteration 3) | CSS-only-Filterleiste über der Fehlerliste: nach **Endpoint** (Alle / Terminsuchen / Buchungen / Sonstige, je mit Anzahl); aktiver Filter farbig hervorgehoben |
+| Fehlerliste | Tabelle: Marke, Standort, **Services (Klartext)**, Fehlertyp, Trace-ID, gesendeter Request-Body, empfangener Response-Body — **Payloads PII-maskiert** (keine Klartext-Kundendaten) |
 
 Die Report-Seite hat **keine Formularfelder** (read-only Statusseite).
 
@@ -567,3 +597,10 @@ Siehe `.claude/skills/bilingual-code.md` für Details:
 - **Managed Identity** über `DefaultAzureCredential` — kein Secret für Azure. Beim ersten Lauf verifizieren, dass der Container `api.loganalytics.io` / `login.microsoftonline.com` erreicht.
 - **Datenschutz-Grenze strikt einhalten:** Payloads erscheinen nur im HTML (hinter Basic Auth), nie im LLM-Prompt.
 - **Persistenz bewusst weggelassen:** Report lebt im Speicher, Startup-Generierung überbrückt Neustarts (Projekt hat keine DB, kein Persistent Volume).
+
+**Iteration 2 (Kategorien-Status + PII) & Live-Härtung:**
+- **Kategorien-Status-Übersicht:** 4 Ampel-Kacheln (Terminsuchen / Buchungen / Marken / Standorte) ersetzen die einzelne Buchungs-Kachel — rein deterministisch aggregiert (keine zusätzlichen LLM-Kosten). Ampel-Schwellen: grün 0 %, gelb < 5 %, rot ≥ 5 % Fehlerquote.
+- **PII-Schutz (kritisch):** `PiiRedactor` maskiert die Payload-Felder (Name/E-Mail/Adresse/Telefon/PLZ/Ort/Kennzeichen/VIN → `***`) vor der Anzeige. Als zweite Schicht im Advisor-Chain filtert ein PII-Advisor die User-Message. **Spring AI 2.0.0 bringt keinen `DataMinimizationAdvisor` mit** (Klassen-Check im Jar bestätigt) → daher der eigene `PiiRedactionAdvisor` (`BaseAdvisor`, höchste Precedence, Regex für E-Mail/Telefon/Kennzeichen/VIN). **Keine Referenz auf Klartext-Kundendaten** im Report oder LLM-Pfad.
+- **Live-Fix 1 — ResponseBodyAdvice:** `ResponseWrapperAdvice` umhüllt normalerweise alle Responses in `{data, meta}`. Das kollidierte mit dem `text/html` der Report-Seite (→ 500). Fix: `/internal/**`-Pfade vom Wrapping ausnehmen.
+- **Live-Fix 2 — Jackson 2 vs. 3:** Unter Spring Boot 4 ist der Default-HTTP-Converter Jackson 3; `LogAnalyticsClient` konnte nicht direkt auf `com.fasterxml.jackson.databind.JsonNode` (Jackson 2) binden. Fix: Response als `String` lesen und per (Jackson-2-)`ObjectMapper.readTree(...)` parsen.
+- **Live-Fix 3 — LLM `base-url`:** Spring AI 2.0 hängt `/chat/completions` an die `base-url` an. Ohne `/v1` liefert das interne Gateway `405`. Fix: `LLM_BASE_URL` muss auf `…/v1` enden.

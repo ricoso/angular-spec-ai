@@ -169,6 +169,8 @@ gesetzten LLM-Secrets erfordert — nachzuholen bei der ersten echten Report-Gen
 
 **Status:** ✅ Ready for PR (Score 95, keine Fehler, 9/9 ACs erfüllt)
 
+> **Iteration 2 (2026-07-13):** Scope um **Kategorien-Status-Übersicht** (Snaps / Buchungen / Marken / Standorte) und **PII-Schutz** erweitert (neue AC-10/11/12). Umgesetzt: `PiiRedactor`, `PiiRedactionAdvisor` (Fallback, da Spring AI 2.0.0 keinen `DataMinimizationAdvisor` hat), `ReportModel`/`ReportAggregator`/`ReportHtmlGenerator` erweitert. **Backend-Tests: 277 grün** inkl. neuem `PiiRedactorTest` (5). **Deployed** (Revision `--0000025`, Image `req-030-iter2-202607131158`) und **live-verifiziert**: 4 Kategorie-Kacheln sichtbar, KI-Text echt, **0 Klartext-PII** im Report (90 `***`-Maskierungen auf echten Payloads). Erneuter `/check-all` optional offen.
+
 **Begründung:**
 - Alle Pflicht-Gates grün: Implementierung, Unit-Tests, technische Checks, E2E (3 Viewports).
 - Alle 9 Akzeptanzkriterien nachweisbar erfüllt.
@@ -177,6 +179,7 @@ gesetzten LLM-Secrets erfordert — nachzuholen bei der ersten echten Report-Gen
 **Nächste Schritte:**
 - [ ] Für Prod-Betrieb: SP-freie Secrets setzen (`LLM_API_KEY`, `LLM_MODEL`, `LLM_BASE_URL`, `REPORT_ADMIN_USER`, `REPORT_ADMIN_PASSWORD`) auf der Container App
 - [ ] Live-Screenshots nach erster Report-Generierung nachreichen
+- [ ] **Iteration 2 umsetzen** (Code via Ultraplan): Kategorien-Status-Übersicht + PII-Maskierung (`PiiRedactor`) + PII-Advisor; danach AC-10/11/12 verifizieren und `/check-all` erneut (Ziel ≥ 90)
 - [ ] Commit + PR (durch User)
 
 ---
@@ -186,3 +189,8 @@ gesetzten LLM-Secrets erfordert — nachzuholen bei der ersten echten Report-Gen
 | Datum | Score | Änderungen |
 |-------|-------|------------|
 | 2026-07-09 | 95/100 | Initiale Prüfung — Backend-Feature, 9/9 ACs, E2E 3 Viewports grün |
+| 2026-07-13 | offen | Iteration 2 spezifiziert: Kategorien-Status-Übersicht (Snaps/Buchungen/Marken/Standorte) + PII-Maskierung (neu: AC-10/11/12). Live-Härtung deployed (ResponseWrapper `/internal`, Jackson-2 `readTree`, LLM `base-url` `/v1`) |
+| 2026-07-13 | Backend grün | Iteration 2 umgesetzt: 4 Kategorie-Ampel-Kacheln + `PiiRedactor` + `PiiRedactionAdvisor` (eigener `BaseAdvisor`, da `DataMinimizationAdvisor` in Spring AI 2.0.0 fehlt). Backend-Tests 277 grün (5 reporting-Klassen) |
+| 2026-07-13 | live ✅ | Deployed (Revision `--0000025`) + live-verifiziert: 4 Kacheln sichtbar, KI-Headline echt, Basic Auth 200, **0 Klartext-PII** (90 `***`-Maskierungen). AC-10/11/12 erfüllt |
+| 2026-07-13 | live ✅ | Iteration 3: CSS-only-**Endpoint-Filter** für die Fehlerliste (Alle / Terminsuchen / Buchungen, je mit Anzahl, kein JS). Deployed (Revision `--0000026`, `req-030-iter3-202607131411`), live-verifiziert: Filterleiste sichtbar (Alle 100 / Terminsuchen 94 / Buchungen 6), 0 Klartext-PII. AC-13 erfüllt |
+| 2026-07-13 | live ✅ | Fehlerlisten-Kappung 100 → 1000 (hohes Sicherheitsnetz), damit die Listenzahl nicht mehr den Kachel-Fehlerzahlen widerspricht. Deployed (Revision `--0000027`, `req-030-iter4-202607131445`), live-verifiziert: Fehler (265), Filter Terminsuchen 255 + Buchungen 10 = 265 (konsistent mit Kacheln 254/10), 0 Klartext-PII |
