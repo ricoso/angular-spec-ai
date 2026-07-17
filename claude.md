@@ -161,7 +161,22 @@ cd server && ./gradlew jacocoTestReport # Backend Coverage
 
 # E2E (IMMER mit Backend!)
 npm run e2e:backend    # Build + Backend + Playwright (3 Viewports)
+
+# Lokaler Test-Runner (scripts/test-local.sh) — EMPFOHLEN fuer Smoke/E2E
+# Erzwingt die richtige Reihenfolge: killt altes Backend auf :3000, baut das
+# Frontend NEU, startet dann ein frisches Backend gegen das aktuelle dist/.
+# Verhindert den Stale-Bundle-Fehler (Backend serviert alte index.html ->
+# main-XXXX.js 404 -> App laedt nicht -> E2E scheitert an `.location-card`),
+# der auftritt, wenn man das Frontend neu baut waehrend das Backend laeuft.
+npm run test:local:smoke              # Build + Backend + Health-/Root-Check (~1 min)
+npm run test:local                    # Build + frisches Backend + Playwright (3 Viewports)
+npm run test:local -- REQ-031         # Nur passende Specs (Filter -> Playwright)
+npm run test:local:serve              # Build + Backend hochfahren + laufen lassen (manuelles Testen)
 ```
+
+> **WICHTIG (Step 6.5):** Frontend NIE neu bauen, waehrend ein Backend auf :3000
+> laeuft — sonst serviert es eine veraltete `index.html`. Immer `npm run test:local`
+> nutzen (killt + baut + startet frisch) statt Build und Backend getrennt zu starten.
 
 ---
 

@@ -31,15 +31,16 @@
         [placeholder]="carinformation.form.mileage.placeholder | translate"
         autocomplete="off"
         inputmode="numeric"
-        min="0"
+        min="10"
         aria-required="true"
         [attr.aria-invalid]="form().get('mileage')?.invalid && form().get('mileage')?.touched ? 'true' : null"
-        aria-describedby="vehicle-mileage-error"
+        aria-describedby="vehicle-mileage-hint vehicle-mileage-error"
       />
       <label for="vehicle-mileage">{{ carinformation.form.mileage.label | translate }} *</label>
       @if (mileageErrors(); as error) {
         <div class="invalid-feedback" id="vehicle-mileage-error" role="alert">{{ error | translate }}</div>
       }
+      <div class="form-text" id="vehicle-mileage-hint">{{ carinformation.form.mileage.hint | translate }}</div>
     </div>
   </div>
 

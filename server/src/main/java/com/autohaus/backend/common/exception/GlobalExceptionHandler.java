@@ -28,6 +28,7 @@ public class GlobalExceptionHandler {
         403, "error.invalidSessionToken",
         404, "error.notFound",
         408, "error.requestTimeout",
+        410, "error.snapGone",
         429, "error.rateLimitExceeded",
         502, "error.upstreamError",
         503, "error.serviceUnavailable",
@@ -71,7 +72,13 @@ public class GlobalExceptionHandler {
         String messageKey;
         String message;
 
-        if (softnetStatus == 401 || softnetStatus == 403) {
+        if (softnetStatus == 410) {
+            // REQ-031: snap was taken in the meantime — pass 410 through so the
+            // frontend can trigger the reselect flow instead of a generic error
+            status = 410;
+            messageKey = "error.snapGone";
+            message = "Requested time slot is no longer available";
+        } else if (softnetStatus == 401 || softnetStatus == 403) {
             status = 503;
             messageKey = "error.serviceUnavailable";
             message = "SoftNet API configuration error";

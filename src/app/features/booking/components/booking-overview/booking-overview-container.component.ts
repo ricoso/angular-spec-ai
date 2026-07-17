@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe, TranslateService } from '@core/i18n';
@@ -45,6 +45,17 @@ export class BookingOverviewContainerComponent {
   protected readonly services = this.store.selectedServices;
   protected readonly customerInfo = this.store.customerInfo;
   protected readonly vehicleInfo = this.store.vehicleInfo;
+
+  constructor() {
+    // REQ-031: booking failed with 410 (snap taken in the meantime) — send the
+    // user back to the appointment page to pick a fresh slot; all other wizard
+    // data stays in the store.
+    effect(() => {
+      if (this.store.hasSnapConflict()) {
+        void this.router.navigate(['/home/appointment']);
+      }
+    });
+  }
 
   protected readonly resolvedBrandName = computed(() => {
     const brand = this.store.selectedBrand();

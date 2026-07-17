@@ -1,15 +1,11 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
-import type { NgbDate, NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
-import { NgbDateAdapter, NgbDateNativeAdapter, NgbDatepickerModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-workshop-calendar-date-picker',
   standalone: true,
-  imports: [TranslatePipe, FormsModule, NgbDatepickerModule],
-  providers: [{ provide: NgbDateAdapter, useClass: NgbDateNativeAdapter }],
+  imports: [TranslatePipe],
   templateUrl: './workshop-calendar-date-picker.component.html',
   styleUrl: './workshop-calendar-date-picker.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -19,21 +15,26 @@ export class WorkshopCalendarDatePickerComponent {
   public readonly dateSelected = output<Date>();
 
   protected readonly booking = i18nKeys.booking;
-  protected readonly today = new Date();
-  protected readonly minDate: NgbDateStruct = {
-    year: this.today.getFullYear(),
-    month: this.today.getMonth() + 1,
-    day: this.today.getDate()
-  };
 
-  protected onDateChange(date: Date | null): void {
-    if (date) {
-      this.dateSelected.emit(date);
-    }
+  private readonly today = new Date();
+  // Native date input bounds as ISO strings (YYYY-MM-DD). The native picker
+  // provides fast month/year navigation the ng-bootstrap popup did not render.
+  protected readonly minIso = this.toIso(this.today);
+  protected readonly maxIso = this.toIso(
+    new Date(this.today.getFullYear() + 1, this.today.getMonth(), this.today.getDate())
+  );
+
+  protected onNativeDateChange(event: Event): void {
+    const value = (event.target as HTMLInputElement).value; // "YYYY-MM-DD" or ""
+    if (!value) { return; }
+    const [year, month, day] = value.split('-').map(Number);
+    this.dateSelected.emit(new Date(year, month - 1, day));
   }
 
-  protected onNgbDateSelect(ngbDate: NgbDate): void {
-    // NgbDate (year/month/day) -> nativer Date (month ist in NgbDate 1-12, in Date 0-11)
-    this.onDateChange(new Date(ngbDate.year, ngbDate.month - 1, ngbDate.day));
+  private toIso(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

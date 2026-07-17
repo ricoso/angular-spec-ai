@@ -1,0 +1,58 @@
+.snap-conflict-banner {
+  border-left: 0.3125em solid var(--color-warning);
+  margin-bottom: 1.5em;
+
+  &__icon {
+    color: var(--color-warning);
+  }
+
+  &__title {
+    display: block;
+    margin-bottom: 0.25em;
+  }
+
+  &__message {
+    margin: 0 0 0.75em;
+  }
+
+  &__countdown {
+    height: 0.25em;
+    border-radius: 0.125em;
+    background-color: var(--color-background-surface);
+    overflow: hidden;
+  }
+
+  &__countdown-bar {
+    height: 100%;
+    background-color: var(--color-warning);
+    animation: snap-conflict-countdown 30s linear forwards;
+  }
+
+  &__auto-dismiss-note {
+    margin: 0.5em 0 0;
+    font-size: 0.875em;
+    color: var(--color-text-secondary);
+  }
+
+  &__close {
+    // WCAG touch target (2.75em) despite Bootstrap's compact default
+    min-width: 2.75em;
+    min-height: 2.75em;
+
+    &:focus-visible {
+      outline: 0.125em solid var(--color-primary);
+      outline-offset: 0.125em;
+    }
+  }
+}
+
+@keyframes snap-conflict-countdown {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snap-conflict-banner__countdown-bar {
+    animation: none;
+  }
+}

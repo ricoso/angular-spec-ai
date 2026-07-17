@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { computed, inject } from '@angular/core';
 
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
@@ -43,6 +44,8 @@ interface BookingState {
   bookingSubmitted: boolean;
   bookingSubmitting: boolean;
   bookingError: string | null;
+  /** REQ-031: true, wenn die Buchung mit HTTP 410 fehlschlug (Snap zwischenzeitlich belegt). */
+  snapConflict: boolean;
   appointmentId: string | null;
   rentCategories: RentCategory[];
   selectedRentCategoryId: string | null;
@@ -80,6 +83,7 @@ const INITIAL_STATE: BookingState = {
   bookingSubmitted: false,
   bookingSubmitting: false,
   bookingError: null,
+  snapConflict: false,
   appointmentId: null,
   rentCategories: [],
   selectedRentCategoryId: null,
@@ -113,7 +117,7 @@ export const BookingStore = signalStore(
 
   withState<BookingState>(INITIAL_STATE),
 
-  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, appointmentId, notesExtras, rentCategories, selectedRentCategoryId, categories, operations, deepLinkGroupId }) => ({
+  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, snapConflict, appointmentId, notesExtras, rentCategories, selectedRentCategoryId, categories, operations, deepLinkGroupId }) => ({
     hasBranchSelected: computed(() => selectedBranch() !== null),
     selectedBranchBrands: computed(() => {
       const branch = selectedBranch();
@@ -167,6 +171,8 @@ export const BookingStore = signalStore(
     hasBookingSubmitted: computed(() => bookingSubmitted()),
     isBookingSubmitting: computed(() => bookingSubmitting()),
     hasBookingError: computed(() => bookingError() !== null),
+    /** REQ-031: steuert Snap-Conflict-Banner + Redirect zur Terminauswahl. */
+    hasSnapConflict: computed(() => snapConflict()),
     submittedAppointmentId: computed(() => appointmentId()),
     selectedVariant: computed<'default' | 'tireChange'>(() => {
       // Variant = `'tireChange'` NUR wenn Boxenstopp-Deep-Link aktiv ist (deepLinkGroupId
@@ -691,6 +697,16 @@ export const BookingStore = signalStore(
               });
             }),
             catchError((err: unknown) => {
+              if (err instanceof HttpErrorResponse && err.status === 410) {
+                // REQ-031: snap was taken in the meantime — trigger the redirect flow
+                // (banner on the appointment page) instead of the generic inline error.
+                patchState(store, {
+                  bookingSubmitting: false,
+                  snapConflict: true,
+                  selectedAppointment: null,
+                });
+                return EMPTY;
+              }
               const message = err instanceof Error ? err.message : 'Booking submission failed';
               patchState(store, {
                 bookingSubmitting: false,
@@ -705,6 +721,11 @@ export const BookingStore = signalStore(
 
     resetBookingSubmission(): void {
       patchState(store, { bookingError: null, bookingSubmitted: false });
+    },
+
+    /** REQ-031: setzt das Snap-Conflict-Flag zurück (Timer, X-Klick, Weiter, Destroy). */
+    clearSnapConflict(): void {
+      patchState(store, { snapConflict: false });
     },
 
     loadRentCategories: rxMethod<void>(

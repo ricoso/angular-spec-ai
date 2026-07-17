@@ -6,6 +6,10 @@
     {{ booking.appointment.title | translate }}
   </h1>
 
+  @if (hasSnapConflict()) {
+    <app-snap-conflict-banner (closed)="onSnapConflictBannerClosed()" />
+  }
+
   @if (isLoading()) {
     <div class="appointment-selection__loading text-center py-5" role="status" aria-live="polite">
       <div class="spinner-border text-primary" role="status">

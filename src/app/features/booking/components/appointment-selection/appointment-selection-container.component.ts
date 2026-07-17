@@ -1,15 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 import { WizardBreadcrumbComponent } from '@shared/components/wizard-breadcrumb/wizard-breadcrumb.component';
 import { WIZARD_STEPS } from '@shared/components/wizard-breadcrumb/wizard-steps.config';
 import { convertToBerlinTime } from '@shared/pipes/berlin-time.pipe';
+import { EMPTY, switchMap, timer } from 'rxjs';
 
 import type { AppointmentSlot, DayAbbreviation } from '../../models/appointment.model';
 import { BookingStore } from '../../stores/booking.store';
 
 import { AppointmentCardComponent } from './appointment-card.component';
+import { SNAP_CONFLICT_BANNER_TIMEOUT_MS, SnapConflictBannerComponent } from './snap-conflict-banner/snap-conflict-banner.component';
 
 const DAY_FULL_NAMES = new Map<DayAbbreviation, string>([
   ['Mo', 'Montag'],
@@ -25,7 +28,7 @@ const MONTH_NAMES_DE = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug',
 @Component({
   selector: 'app-appointment-selection-container',
   standalone: true,
-  imports: [TranslatePipe, WizardBreadcrumbComponent, AppointmentCardComponent],
+  imports: [TranslatePipe, WizardBreadcrumbComponent, AppointmentCardComponent, SnapConflictBannerComponent],
   templateUrl: './appointment-selection-container.component.html',
   styleUrl: './appointment-selection-container.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -33,6 +36,7 @@ const MONTH_NAMES_DE = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug',
 export class AppointmentSelectionContainerComponent {
   private readonly store = inject(BookingStore);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly booking = i18nKeys.booking;
   protected readonly wizardSteps = WIZARD_STEPS;
@@ -42,6 +46,23 @@ export class AppointmentSelectionContainerComponent {
   protected readonly hasAppointmentSelected = this.store.hasAppointmentSelected;
   protected readonly isLoading = this.store.isLoading;
   protected readonly error = this.store.error;
+  /** REQ-031: steuert das Snap-Conflict-Banner. */
+  protected readonly hasSnapConflict = this.store.hasSnapConflict;
+
+  constructor() {
+    // REQ-031 BR-3: banner auto-dismiss after 30s; timer restarts on every new conflict
+    toObservable(this.hasSnapConflict).pipe(
+      switchMap((active) => active ? timer(SNAP_CONFLICT_BANNER_TIMEOUT_MS) : EMPTY),
+      takeUntilDestroyed()
+    ).subscribe(() => { this.store.clearSnapConflict(); });
+
+    // REQ-031 BR-3: flag must never survive the page — clear on container destroy
+    this.destroyRef.onDestroy(() => {
+      if (this.store.hasSnapConflict()) {
+        this.store.clearSnapConflict();
+      }
+    });
+  }
 
   /**
    * UI-only signal: which date is currently being viewed in the date-strip.
@@ -141,7 +162,12 @@ export class AppointmentSelectionContainerComponent {
   }
 
   protected onContinue(): void {
+    this.store.clearSnapConflict();
     void this.router.navigate(['/home/carinformation']);
+  }
+
+  protected onSnapConflictBannerClosed(): void {
+    this.store.clearSnapConflict();
   }
 
   protected onBack(): void {
