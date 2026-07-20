@@ -13,11 +13,11 @@
         role="radio"
         [class.time-slot-btn--selected]="selectedSlotId() === slot.id"
         [attr.aria-checked]="selectedSlotId() === slot.id"
-        [attr.aria-label]="slot.displayTime"
+        [attr.aria-label]="slot.displayTime | berlinTime: day().date"
         (click)="onSlotClick(slot)"
         (keydown)="onSlotKeydown($event, slot)"
       >
-        {{ slot.displayTime }}
+        {{ slot.displayTime | berlinTime: day().date }}
       </button>
     }
   </div>

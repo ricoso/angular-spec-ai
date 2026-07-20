@@ -1,0 +1,30 @@
+<div
+  class="snap-conflict-banner alert alert-warning alert-dismissible d-flex align-items-start gap-3"
+  role="alert"
+  aria-labelledby="snap-conflict-banner-title"
+  aria-describedby="snap-conflict-banner-message"
+>
+  <i class="bi bi-exclamation-triangle-fill snap-conflict-banner__icon fs-4" aria-hidden="true"></i>
+
+  <div class="snap-conflict-banner__content flex-grow-1">
+    <strong class="snap-conflict-banner__title" id="snap-conflict-banner-title">
+      {{ snapConflict.title | translate }}
+    </strong>
+    <p class="snap-conflict-banner__message" id="snap-conflict-banner-message">
+      {{ snapConflict.message | translate }}
+    </p>
+    <div class="snap-conflict-banner__countdown" aria-hidden="true">
+      <div class="snap-conflict-banner__countdown-bar"></div>
+    </div>
+    <p class="snap-conflict-banner__auto-dismiss-note">
+      {{ snapConflict.autoDismissNote | translate }}
+    </p>
+  </div>
+
+  <button
+    type="button"
+    class="btn-close snap-conflict-banner__close"
+    [attr.aria-label]="snapConflict.closeAriaLabel | translate"
+    (click)="onClose()"
+  ></button>
+</div>

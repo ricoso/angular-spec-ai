@@ -24,7 +24,8 @@ describe('VehicleFormComponent', () => {
 
     const form = fb.group({
       licensePlate: ['', [Validators.required, Validators.pattern(/^[A-ZÄÖÜ]{1,3}-[A-Z]{1,2}\s?\d{1,4}$/i)]],
-      mileage: [null as number | null, [Validators.required, Validators.min(0)]],
+      // REQ-031 BR-6: spiegelt die echten Container-Validators (ganze Zahl >= 10)
+      mileage: [null as number | null, [Validators.required, Validators.pattern(/^[0-9]+$/), Validators.min(10)]],
       vin: ['', [Validators.minLength(17), Validators.maxLength(17)]]
     });
 
@@ -94,7 +95,7 @@ describe('VehicleFormComponent', () => {
       expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.required');
     });
 
-    it('should return mileage error key when mileage is negative', () => {
+    it('should return digitsOnly error key when mileage is negative (pattern fails)', () => {
       const exposed = component as unknown as {
         mileageErrors: () => string | null;
         form: () => ReturnType<FormBuilder['group']>;
@@ -103,6 +104,61 @@ describe('VehicleFormComponent', () => {
       ctrl?.setValue(-1);
       ctrl?.markAsTouched();
       expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.digitsOnly');
+    });
+
+    it('should return digitsOnly error key for decimal mileage (REQ-031)', () => {
+      const exposed = component as unknown as {
+        mileageErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('mileage');
+      ctrl?.setValue(10.5);
+      ctrl?.markAsTouched();
+      expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.digitsOnly');
+    });
+
+    it('should return digitsOnly error key for non-numeric mileage (REQ-031)', () => {
+      const exposed = component as unknown as {
+        mileageErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('mileage');
+      ctrl?.setValue('abc');
+      ctrl?.markAsTouched();
+      expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.digitsOnly');
+    });
+
+    it('should return min error key when mileage is 0 (REQ-031 BR-6)', () => {
+      const exposed = component as unknown as {
+        mileageErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('mileage');
+      ctrl?.setValue(0);
+      ctrl?.markAsTouched();
+      expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.min');
+    });
+
+    it('should return min error key when mileage is 9 (REQ-031 BR-6)', () => {
+      const exposed = component as unknown as {
+        mileageErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('mileage');
+      ctrl?.setValue(9);
+      ctrl?.markAsTouched();
+      expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.min');
+    });
+
+    it('should return null mileageErrors when mileage is 10 (lower boundary)', () => {
+      const exposed = component as unknown as {
+        mileageErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('mileage');
+      ctrl?.setValue(10);
+      ctrl?.markAsTouched();
+      expect(exposed.mileageErrors()).toBeNull();
     });
 
     it('should return null mileageErrors when valid', () => {

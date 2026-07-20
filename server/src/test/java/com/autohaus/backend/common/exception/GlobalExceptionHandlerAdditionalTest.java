@@ -103,6 +103,56 @@ class GlobalExceptionHandlerAdditionalTest {
         assertEquals(400, response.getStatusCode().value());
     }
 
+    // === REQ-031: 410 Gone pass-through (snap taken in the meantime) ===
+
+    @Test
+    void handleClientError_410_returns410WithSnapGoneKey() {
+        HttpClientErrorException ex = HttpClientErrorException.create(
+            HttpStatus.GONE, "Gone", HttpHeaders.EMPTY, null, null
+        );
+
+        ResponseEntity<ErrorResponse> response = handler.handleClientError(ex, createRequest());
+
+        assertEquals(410, response.getStatusCode().value());
+        assertEquals("error.snapGone", response.getBody().messageKey());
+        assertEquals("Requested time slot is no longer available", response.getBody().message());
+        assertEquals("test-req-id", response.getBody().meta().requestId());
+    }
+
+    @Test
+    void handleClientError_410_withoutRequestId_usesUnknown() {
+        HttpClientErrorException ex = HttpClientErrorException.create(
+            HttpStatus.GONE, "Gone", HttpHeaders.EMPTY, null, null
+        );
+
+        ResponseEntity<ErrorResponse> response = handler.handleClientError(ex, createRequestWithoutId());
+
+        assertEquals(410, response.getStatusCode().value());
+        assertEquals("unknown", response.getBody().meta().requestId());
+    }
+
+    @Test
+    void handleClientError_404_returns400WithValidationKey() {
+        HttpClientErrorException ex = HttpClientErrorException.create(
+            HttpStatus.NOT_FOUND, "Not Found", HttpHeaders.EMPTY, null, null
+        );
+
+        ResponseEntity<ErrorResponse> response = handler.handleClientError(ex, createRequest());
+
+        assertEquals(400, response.getStatusCode().value());
+        assertEquals("error.validationFailed", response.getBody().messageKey());
+        assertEquals("Invalid request to upstream API", response.getBody().message());
+    }
+
+    @Test
+    void handleResponseStatus_410_usesSnapGoneKey() {
+        ResponseEntity<ErrorResponse> response = handler.handleResponseStatus(
+            new ResponseStatusException(HttpStatus.GONE, "Slot gone"), createRequest()
+        );
+        assertEquals(410, response.getStatusCode().value());
+        assertEquals("error.snapGone", response.getBody().messageKey());
+    }
+
     // === handleResponseStatus with various status codes ===
 
     @Test

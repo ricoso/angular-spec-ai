@@ -172,7 +172,13 @@ export const translations = {
         backButton: 'Zurück',
         continueButton: 'Weiter',
         ariaGroupLabel: 'Terminvorschläge',
-        navAriaLabel: 'Seitennavigation'
+        navAriaLabel: 'Seitennavigation',
+        snapConflict: {
+          title: 'Wunschtermin nicht mehr verfügbar',
+          message: 'In der Zwischenzeit wurde Ihr Wunschtermin leider bereits belegt (hohe Nachfrage). Bitte wählen Sie einen neuen Termin aus. Ihre eingegebenen Daten bleiben erhalten.',
+          autoDismissNote: 'Dieser Hinweis wird in ca. 30 Sekunden automatisch ausgeblendet.',
+          closeAriaLabel: 'Hinweis schließen'
+        }
       },
       workshopCalendar: {
         title: 'Hier sehen Sie weitere freie Termine in unserem Werkstattkalender',
@@ -264,8 +270,9 @@ export const translations = {
             error: { required: 'Bitte geben Sie Ihre Mobilfunknummer ein.', digitsOnly: 'Mobilfunknummer darf nur Zahlen enthalten.', startsWithZero: 'Mobilfunknummer muss mit 0 oder +49 beginnen.' } },
           licensePlate: { label: 'Kfz. Kennzeichen', placeholder: 'XX-XX1234',
             error: { required: 'Bitte geben Sie Ihr Kfz-Kennzeichen ein.', invalidFormat: 'Bitte geben Sie ein gültiges Kennzeichen ein (z.B. B-MS1234).' } },
-          mileage: { label: 'Kilometerstand', placeholder: '5000',
-            error: { required: 'Bitte geben Sie den Kilometerstand ein.', digitsOnly: 'Kilometerstand darf nur Zahlen enthalten.' } },
+          mileage: { label: 'Kilometerstand', placeholder: 'Bitte Werte ab 10 km eingeben',
+            hint: 'Bitte Werte ab 10 km eingeben',
+            error: { required: 'Bitte geben Sie den Kilometerstand ein.', digitsOnly: 'Kilometerstand darf nur Zahlen enthalten.', min: 'Bitte geben Sie einen Kilometerstand von mindestens 10 km ein.' } },
 vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der FIN',
             error: { required: 'Bitte geben Sie die Fahrzeugidentifikationsnummer ein.', invalidLength: 'Die FIN muss genau 17 Zeichen enthalten.', invalidFormat: 'Die FIN darf nur Buchstaben und Zahlen enthalten.' } },
           privacy: { consent: 'Ich willige in die Verarbeitung meiner personenbezogenen Daten zum Zwecke der Online-Terminvereinbarung ein. Informationen',
@@ -516,7 +523,13 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
         backButton: 'Back',
         continueButton: 'Continue',
         ariaGroupLabel: 'Appointment suggestions',
-        navAriaLabel: 'Page navigation'
+        navAriaLabel: 'Page navigation',
+        snapConflict: {
+          title: 'Preferred appointment no longer available',
+          message: 'Unfortunately, your preferred appointment has been taken in the meantime (high demand). Please select a new appointment. Your entered data has been preserved.',
+          autoDismissNote: 'This notice will be dismissed automatically in about 30 seconds.',
+          closeAriaLabel: 'Dismiss notice'
+        }
       },
       workshopCalendar: {
         title: 'Here you can see further available appointments in our workshop calendar',
@@ -608,8 +621,9 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
             error: { required: 'Please enter your mobile phone number.', digitsOnly: 'Mobile number may only contain digits.', startsWithZero: 'Mobile number must start with 0 or +49.' } },
           licensePlate: { label: 'License Plate', placeholder: 'XX-XX1234',
             error: { required: 'Please enter your license plate.', invalidFormat: 'Please enter a valid license plate (e.g. B-MS1234).' } },
-          mileage: { label: 'Mileage', placeholder: '5000',
-            error: { required: 'Please enter the current mileage.', digitsOnly: 'Mileage may only contain digits.' } },
+          mileage: { label: 'Mileage', placeholder: 'Please enter a value of at least 10 km',
+            hint: 'Please enter a value of at least 10 km',
+            error: { required: 'Please enter the current mileage.', digitsOnly: 'Mileage may only contain digits.', min: 'Please enter a mileage of at least 10 km.' } },
 vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of VIN',
             error: { required: 'Please enter the vehicle identification number.', invalidLength: 'The VIN must be exactly 17 characters.', invalidFormat: 'The VIN may only contain letters and digits.' } },
           privacy: { consent: 'I consent to the processing of my personal data for the purpose of online appointment booking. More information',
@@ -860,7 +874,13 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
         backButton: 'Назад',
         continueButton: 'Далі',
         ariaGroupLabel: 'Пропозиції записів',
-        navAriaLabel: 'Навігація по сторінках'
+        navAriaLabel: 'Навігація по сторінках',
+        snapConflict: {
+          title: 'Бажаний запис більше недоступний',
+          message: 'На жаль, ваш бажаний запис тим часом уже зайнято (високий попит). Будь ласка, оберіть новий запис. Введені вами дані збережено.',
+          autoDismissNote: 'Це повідомлення автоматично зникне приблизно через 30 секунд.',
+          closeAriaLabel: 'Закрити повідомлення'
+        }
       },
       workshopCalendar: {
         title: 'Тут ви можете побачити додаткові вільні записи у нашому календарі майстерні',
@@ -952,8 +972,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
             error: { required: 'Будь ласка, введіть номер мобільного телефону.', digitsOnly: 'Номер може містити лише цифри.', startsWithZero: 'Номер мобільного телефону має починатися з 0.' } },
           licensePlate: { label: 'Номерний знак', placeholder: 'XX-XX1234',
             error: { required: 'Будь ласка, введіть номерний знак.', invalidFormat: 'Будь ласка, введіть дійсний номерний знак (напр. B-MS1234).' } },
-          mileage: { label: 'Пробіг', placeholder: '5000',
-            error: { required: 'Будь ласка, введіть пробіг.', digitsOnly: 'Пробіг може містити лише цифри.' } },
+          mileage: { label: 'Пробіг', placeholder: 'Будь ласка, вводьте значення від 10 км',
+            hint: 'Будь ласка, вводьте значення від 10 км',
+            error: { required: 'Будь ласка, введіть пробіг.', digitsOnly: 'Пробіг може містити лише цифри.', min: 'Будь ласка, введіть пробіг щонайменше 10 км.' } },
 vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснення VIN',
             error: { required: 'Будь ласка, введіть ідентифікаційний номер автомобіля.', invalidLength: 'VIN має складатися рівно з 17 символів.', invalidFormat: 'VIN може містити лише літери та цифри.' } },
           privacy: { consent: 'Я погоджуюся на обробку моїх персональних даних з метою онлайн-запису на технічне обслуговування. Детальніше в нашій',
@@ -1202,7 +1223,13 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
         backButton: 'Retour',
         continueButton: 'Continuer',
         ariaGroupLabel: 'Propositions de rendez-vous',
-        navAriaLabel: 'Navigation par page'
+        navAriaLabel: 'Navigation par page',
+        snapConflict: {
+          title: 'Le rendez-vous souhaité n\'est plus disponible',
+          message: 'Malheureusement, votre rendez-vous souhaité a été réservé entre-temps (forte demande). Veuillez sélectionner un nouveau rendez-vous. Les données que vous avez saisies sont conservées.',
+          autoDismissNote: 'Cet avis disparaîtra automatiquement dans environ 30 secondes.',
+          closeAriaLabel: 'Fermer l\'avis'
+        }
       },
       workshopCalendar: {
         title: 'Consultez ici les créneaux disponibles dans notre calendrier d\'atelier',
@@ -1294,8 +1321,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
             error: { required: 'Veuillez saisir votre numéro de téléphone mobile.', digitsOnly: 'Le numéro ne peut contenir que des chiffres.', startsWithZero: 'Le numéro de mobile doit commencer par 0.' } },
           licensePlate: { label: 'Plaque d\'immatriculation', placeholder: 'XX-XX1234',
             error: { required: 'Veuillez saisir votre plaque d\'immatriculation.', invalidFormat: 'Veuillez saisir une plaque valide (ex. B-MS1234).' } },
-          mileage: { label: 'Kilométrage', placeholder: '5000',
-            error: { required: 'Veuillez saisir le kilométrage.', digitsOnly: 'Le kilométrage ne peut contenir que des chiffres.' } },
+          mileage: { label: 'Kilométrage', placeholder: 'Veuillez saisir une valeur d\'au moins 10 km',
+            hint: 'Veuillez saisir une valeur d\'au moins 10 km',
+            error: { required: 'Veuillez saisir le kilométrage.', digitsOnly: 'Le kilométrage ne peut contenir que des chiffres.', min: 'Veuillez saisir un kilométrage d\'au moins 10 km.' } },
 vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du NIV',
             error: { required: 'Veuillez saisir le numéro d\'identification du véhicule.', invalidLength: 'Le NIV doit comporter exactement 17 caractères.', invalidFormat: 'Le NIV ne peut contenir que des lettres et des chiffres.' } },
           privacy: { consent: 'Je consens au traitement de mes données personnelles aux fins de la prise de rendez-vous en ligne. Pour en savoir plus, consultez notre',
@@ -1544,7 +1572,13 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
         backButton: 'رجوع',
         continueButton: 'متابعة',
         ariaGroupLabel: 'اقتراحات المواعيد',
-        navAriaLabel: 'التنقل بين الصفحات'
+        navAriaLabel: 'التنقل بين الصفحات',
+        snapConflict: {
+          title: 'الموعد المفضل لم يعد متاحًا',
+          message: 'للأسف، تم حجز موعدك المفضل في هذه الأثناء (طلب مرتفع). يرجى اختيار موعد جديد. البيانات التي أدخلتها محفوظة.',
+          autoDismissNote: 'سيتم إخفاء هذا التنبيه تلقائيًا خلال حوالي 30 ثانية.',
+          closeAriaLabel: 'إغلاق التنبيه'
+        }
       },
       workshopCalendar: {
         title: 'هنا يمكنك رؤية المزيد من المواعيد المتاحة في تقويم الورشة',
@@ -1636,8 +1670,9 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
             error: { required: 'يرجى إدخال رقم هاتفك المحمول.', digitsOnly: 'الرقم يجب أن يحتوي على أرقام فقط.', startsWithZero: 'يجب أن يبدأ رقم الهاتف المحمول بـ 0.' } },
           licensePlate: { label: 'لوحة الترخيص', placeholder: 'XX-XX1234',
             error: { required: 'يرجى إدخال لوحة الترخيص.', invalidFormat: 'يرجى إدخال لوحة ترخيص صحيحة (مثال: B-MS1234).' } },
-          mileage: { label: 'عداد المسافات', placeholder: '5000',
-            error: { required: 'يرجى إدخال قراءة عداد المسافات.', digitsOnly: 'عداد المسافات يجب أن يحتوي على أرقام فقط.' } },
+          mileage: { label: 'عداد المسافات', placeholder: 'يرجى إدخال قيمة لا تقل عن 10 كم',
+            hint: 'يرجى إدخال قيمة لا تقل عن 10 كم',
+            error: { required: 'يرجى إدخال قراءة عداد المسافات.', digitsOnly: 'عداد المسافات يجب أن يحتوي على أرقام فقط.', min: 'يرجى إدخال قراءة عداد لا تقل عن 10 كم.' } },
 vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم VIN',
             error: { required: 'يرجى إدخال رقم تعريف السيارة.', invalidLength: 'يجب أن يتكون رقم VIN من 17 حرفاً بالضبط.', invalidFormat: 'رقم VIN يجب أن يحتوي على أحرف وأرقام فقط.' } },
           privacy: { consent: 'أوافق على معالجة بياناتي الشخصية لغرض حجز موعد عبر الإنترنت. لمزيد من المعلومات راجع',

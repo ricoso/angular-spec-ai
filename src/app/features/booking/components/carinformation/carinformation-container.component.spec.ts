@@ -1,5 +1,6 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import type { FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AVAILABLE_BRANDS } from '../../models/brand.model';
@@ -137,6 +138,106 @@ describe('CarinformationContainerComponent', () => {
       expect(store.vehicleInfo()?.licensePlate).toBe('B-AB 1234');
       expect(store.privacyConsent()).toBe(true);
       expect(router.navigate).toHaveBeenCalledWith(['/home/booking-overview']);
+    });
+  });
+
+  // REQ-031 BR-6: Kilometerstand muss eine ganze Zahl >= 10 sein
+  // (SoftNet interpretiert 0 als "nicht gesetzt").
+  describe('mileage validation (REQ-031 BR-6)', () => {
+    function mileageControl(): ReturnType<FormGroup['get']> {
+      const exposed = component as unknown as { vehicleForm: FormGroup };
+      return exposed.vehicleForm.get('mileage');
+    }
+
+    it('should require a value (null)', () => {
+      const ctrl = mileageControl();
+      ctrl?.setValue(null);
+      expect(ctrl?.hasError('required')).toBe(true);
+      expect(ctrl?.valid).toBe(false);
+    });
+
+    it('should require a value (empty string)', () => {
+      const ctrl = mileageControl();
+      ctrl?.setValue('');
+      expect(ctrl?.hasError('required')).toBe(true);
+      expect(ctrl?.valid).toBe(false);
+    });
+
+    it('should reject 0 with a min error (SoftNet treats 0 as "not set")', () => {
+      const ctrl = mileageControl();
+      ctrl?.setValue(0);
+      expect(ctrl?.hasError('min')).toBe(true);
+      expect(ctrl?.hasError('pattern')).toBe(false);
+      expect(ctrl?.hasError('required')).toBe(false);
+      expect(ctrl?.valid).toBe(false);
+    });
+
+    it('should reject 9 with a min error (below threshold of 10)', () => {
+      const ctrl = mileageControl();
+      ctrl?.setValue(9);
+      expect(ctrl?.hasError('min')).toBe(true);
+      expect(ctrl?.hasError('pattern')).toBe(false);
+      expect(ctrl?.valid).toBe(false);
+    });
+
+    it('should accept 10 (lower boundary)', () => {
+      const ctrl = mileageControl();
+      ctrl?.setValue(10);
+      expect(ctrl?.valid).toBe(true);
+    });
+
+    it('should accept 50000', () => {
+      const ctrl = mileageControl();
+      ctrl?.setValue(50000);
+      expect(ctrl?.valid).toBe(true);
+    });
+
+    it('should reject decimals (10.5) with a pattern error', () => {
+      const ctrl = mileageControl();
+      ctrl?.setValue(10.5);
+      expect(ctrl?.hasError('pattern')).toBe(true);
+      expect(ctrl?.valid).toBe(false);
+    });
+
+    it('should reject negative values (-50) with a pattern error', () => {
+      const ctrl = mileageControl();
+      ctrl?.setValue(-50);
+      expect(ctrl?.hasError('pattern')).toBe(true);
+      expect(ctrl?.valid).toBe(false);
+    });
+
+    it('should reject non-numeric input ("abc") with a pattern error', () => {
+      const ctrl = mileageControl();
+      ctrl?.setValue('abc');
+      expect(ctrl?.hasError('pattern')).toBe(true);
+      expect(ctrl?.valid).toBe(false);
+    });
+
+    it('should block onSubmit when mileage is below 10', () => {
+      const exposed = component as unknown as {
+        onSubmit: (e: Event) => void;
+        customerForm: { setValue: (v: unknown) => void };
+        vehicleForm: { setValue: (v: unknown) => void };
+        privacyControl: { setValue: (v: unknown) => void };
+      };
+
+      exposed.customerForm.setValue({
+        email: 'test@example.com',
+        salutation: 'mr',
+        firstName: 'Max',
+        lastName: 'Mustermann',
+        street: 'Musterstraße 1',
+        postalCode: '12345',
+        city: 'Musterstadt',
+        mobilePhone: '017012345678'
+      });
+      exposed.vehicleForm.setValue({ licensePlate: 'B-AB 1234', mileage: 5 });
+      exposed.privacyControl.setValue(true);
+
+      exposed.onSubmit({ preventDefault: jest.fn() } as unknown as Event);
+
+      expect(store.vehicleInfo()).toBeNull();
+      expect(router.navigate).not.toHaveBeenCalled();
     });
   });
 

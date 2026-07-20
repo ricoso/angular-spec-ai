@@ -7,28 +7,13 @@
     {{ booking.workshopCalendar.desiredDateLabel | translate }}
   </label>
 
-  <div class="date-picker-card__input-row input-group">
-    <input
-      type="text"
-      class="form-control date-picker-card__field"
-      id="workshop-date-input"
-      ngbDatepicker
-      #dp="ngbDatepicker"
-      [minDate]="minDate"
-      [attr.aria-label]="booking.workshopCalendar.dateInputAriaLabel | translate"
-      [placeholder]="booking.workshopCalendar.datePlaceholder | translate"
-      (dateSelect)="onNgbDateSelect($event)"
-      readonly
-    />
-    <button
-      type="button"
-      class="btn btn-outline-secondary date-picker-card__toggle"
-      [attr.aria-label]="booking.workshopCalendar.dateInputAriaLabel | translate"
-      (click)="dp.toggle()"
-    >
-      <span class="icon-framed icon-framed--sm" aria-hidden="true">
-        <i class="bi bi-calendar"></i>
-      </span>
-    </button>
-  </div>
+  <input
+    type="date"
+    class="form-control date-picker-card__field"
+    id="workshop-date-input"
+    [min]="minIso"
+    [max]="maxIso"
+    [attr.aria-label]="booking.workshopCalendar.dateInputAriaLabel | translate"
+    (change)="onNativeDateChange($event)"
+  />
 </div>

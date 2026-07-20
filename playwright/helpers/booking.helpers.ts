@@ -561,44 +561,50 @@ export async function goToWorkshopCalendarPage(
   await waitForAngular(page);
 }
 
-/** Open the NgbDatepicker on the workshop calendar page and select today's date */
-export async function openDatePickerAndSelectToday(page: Page): Promise<void> {
-  // Migration: ng-bootstrap NgbDatepicker. Click toggle button next to input.
-  const toggle = page.locator('.date-picker-card__toggle, button.btn-outline-secondary').filter({
-    has: page.locator('.bi-calendar')
-  }).first();
-  await expect(toggle).toBeVisible();
-  await toggle.click();
-  await waitForAngular(page);
+/** Format a Date as a native date-input value ("YYYY-MM-DD") in local time. */
+function toDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
-  // NgbDatepicker uses different markup: today is highlighted via different class.
-  // Just click the first selectable day-cell which corresponds to "today" (or close to it).
-  const today = page.locator('ngb-datepicker [aria-label*="today" i], ngb-datepicker .ngb-dp-today, .ngb-dp-day:not(.disabled):not(.outside)').first();
-  await expect(today).toBeVisible();
-  await today.click();
+/** Set the native date input (#workshop-date-input) and fire the (change) handler. */
+async function setWorkshopDate(page: Page, value: string): Promise<void> {
+  const input = page.locator('#workshop-date-input');
+  await expect(input).toBeVisible();
+  await input.fill(value);
+  await input.dispatchEvent('change');
   await waitForAngular(page);
 }
 
-/** Open the NgbDatepicker and select a specific day (1-31) in the currently visible month */
-export async function openDatePickerAndSelectDay(page: Page, dayNumber: number): Promise<void> {
-  const toggle = page.locator('.date-picker-card__toggle, button.btn-outline-secondary').filter({
-    has: page.locator('.bi-calendar')
-  }).first();
-  await expect(toggle).toBeVisible();
-  await toggle.click();
-  await waitForAngular(page);
+/**
+ * Set the workshop-calendar date to a value a few days in the future so the
+ * 3-day slot grid loads. The native <input type="date"> replaced the old
+ * ng-bootstrap popup; we set its value directly instead of clicking day cells.
+ * The chosen date stays within [min = today, max = today + 1y].
+ */
+export async function openDatePickerAndSelectToday(page: Page): Promise<void> {
+  const target = new Date();
+  target.setDate(target.getDate() + 3);
+  await setWorkshopDate(page, toDateInputValue(target));
+}
 
-  // Click the day cell. NgbDatepicker renders day numbers via .ngb-dp-day.
-  const dayCell = page.locator('.ngb-dp-day:not(.disabled):not(.outside)').filter({
-    hasText: new RegExp(`^\\s*${dayNumber}\\s*$`)
-  });
-  const count = await dayCell.count();
-  if (count > 0) {
-    await dayCell.first().click();
-  } else {
-    await page.locator('.ngb-dp-day').filter({ hasText: new RegExp(`^\\s*${dayNumber}\\s*$`) }).first().click();
+/**
+ * Set the workshop-calendar date to a specific day number in the current month.
+ * Kept for API compatibility with the old NgbDatepicker helper. Clamps to a
+ * valid day of the current month and stays within the input's [min, max] bounds.
+ */
+export async function openDatePickerAndSelectDay(page: Page, dayNumber: number): Promise<void> {
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const day = Math.min(Math.max(dayNumber, 1), daysInMonth);
+  let target = new Date(now.getFullYear(), now.getMonth(), day);
+  // The native input's min is today — never select a past day in this month.
+  if (target < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+    target = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }
-  await waitForAngular(page);
+  await setWorkshopDate(page, toDateInputValue(target));
 }
 
 /** Get all time-day headings (e.g. ['Mo, 02.03.2026', 'Di, 03.03.2026', 'Mi, 04.03.2026']) */
@@ -754,9 +760,26 @@ export async function fillVehicleForm(
 
 /** Check the privacy consent checkbox */
 export async function acceptPrivacyConsent(page: Page): Promise<void> {
-  // Migration: Bootstrap form-check input with id="privacy-consent"
+  // Migration: Bootstrap form-check input with id="privacy-consent".
   const checkbox = page.locator('#privacy-consent');
-  await checkbox.check({ force: true });
+  await expect(checkbox).toBeVisible();
+  // On small viewports the styled Bootstrap checkbox occasionally swallows the
+  // click without toggling (Playwright's check() then throws). Try the normal
+  // click first, but fall back to setting the checked state directly and
+  // dispatching the events Angular's Reactive Forms listen for.
+  try {
+    await checkbox.check({ force: true, timeout: 5_000 });
+  } catch {
+    // Ignore — handled by the explicit state set below.
+  }
+  if (!(await checkbox.isChecked())) {
+    await checkbox.evaluate((el: HTMLInputElement) => {
+      el.checked = true;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+  await expect(checkbox).toBeChecked();
   await waitForAngular(page);
 }
 

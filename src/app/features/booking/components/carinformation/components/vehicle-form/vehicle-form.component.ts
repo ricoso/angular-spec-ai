@@ -1,10 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
 import type { FormGroup } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
-import { merge, startWith, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-vehicle-form',
@@ -22,15 +20,28 @@ export class VehicleFormComponent {
 
   protected readonly carinformation = i18nKeys.booking.carinformation;
 
-  private readonly formEvents = toSignal(
-    toObservable(this.form).pipe(
-      switchMap(f => merge(f.valueChanges, f.statusChanges).pipe(startWith(null)))
-    ),
-    { initialValue: null }
-  );
+  // Synchronous form-state ticker driving the error computeds. We subscribe to
+  // each CHILD control's events (incl. TouchedChangeEvent) — NOT the group's —
+  // and NOT via toObservable():
+  //  - Group events miss a single field's touched change once the group is
+  //    already touched (e.g. after another field blurred). On submit the
+  //    group's markAllAsTouched() then emits no group-level event, so the error
+  //    would never show. Child-level events fire per control every time.
+  //  - toObservable() emits on the async effect scheduler, landing after the
+  //    submit's change-detection pass; a direct subscription ticks synchronously
+  //    within the same pass.
+  private readonly formStateTick = signal(0);
+
+  constructor() {
+    effect((onCleanup) => {
+      const subs = Object.values(this.form().controls)
+        .map(control => control.events.subscribe(() => { this.formStateTick.update(v => v + 1); }));
+      onCleanup(() => { subs.forEach(s => { s.unsubscribe(); }); });
+    });
+  }
 
   protected readonly licensePlateErrors = computed(() => {
-    this.formEvents();
+    this.formStateTick();
     const ctrl = this.form().get('licensePlate');
     if (!ctrl || !ctrl.touched || ctrl.valid) { return null; }
     if (ctrl.hasError('required')) { return this.carinformation.form.licensePlate.error.required; }
@@ -38,10 +49,12 @@ export class VehicleFormComponent {
   });
 
   protected readonly mileageErrors = computed(() => {
-    this.formEvents();
+    this.formStateTick();
     const ctrl = this.form().get('mileage');
     if (!ctrl || !ctrl.touched || ctrl.valid) { return null; }
     if (ctrl.hasError('required')) { return this.carinformation.form.mileage.error.required; }
+    if (ctrl.hasError('pattern')) { return this.carinformation.form.mileage.error.digitsOnly; }
+    if (ctrl.hasError('min')) { return this.carinformation.form.mileage.error.min; }
     return this.carinformation.form.mileage.error.digitsOnly;
   });
 

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
 import type { AppointmentSlot } from '../models/appointment.model';
@@ -60,6 +61,11 @@ describe('BookingStore', () => {
 
     it('should have no error', () => {
       expect(store.error()).toBeNull();
+    });
+
+    it('should have no snap conflict (REQ-031)', () => {
+      expect(store.snapConflict()).toBe(false);
+      expect(store.hasSnapConflict()).toBe(false);
     });
   });
 
@@ -533,6 +539,141 @@ describe('BookingStore', () => {
       store.loadOperationsForBranch('b1');
       await new Promise(r => setTimeout(r, 0));
       expect(store.error()).toBeTruthy();
+    });
+  });
+
+  describe('submitBooking — REQ-031 snap conflict (HTTP 410)', () => {
+    const MOCK_APPOINTMENT: AppointmentSlot = {
+      id: '2026-02-25-09-00',
+      date: '2026-02-25',
+      displayDate: '25.02.2026',
+      dayAbbreviation: 'Mi',
+      time: '09:00',
+      displayTime: '09:00 Uhr'
+    };
+
+    let appointmentApi: { createAppointment: jest.Mock };
+
+    beforeEach(() => {
+      appointmentApi = TestBed.inject(AppointmentApiService) as unknown as {
+        createAppointment: jest.Mock;
+      };
+    });
+
+    /** Seeds a fully filled wizard so AC-8 (state must survive a 410) can be asserted. */
+    function seedWizardState(): void {
+      // setLocation resets brand/services/appointment/notesExtras → must run first
+      store.setLocation(LOCATIONS_BY_BRAND.audi[0]);
+      store.setBrand('audi');
+      store.toggleService('tuv');
+      store.setBookingNote('Bitte Winterreifen mitbringen');
+      store.setNotesExtras({ appointmentPreference: 'morning', callbackOption: 'yes', notificationChannel: 'email' });
+      store.selectAppointment(MOCK_APPOINTMENT);
+      store.setCustomerInfo({
+        email: 'max@example.com',
+        salutation: 'mr',
+        firstName: 'Max',
+        lastName: 'Mustermann',
+        street: 'Musterstraße 1',
+        postalCode: '80331',
+        city: 'München',
+        mobilePhone: '017012345678'
+      });
+      store.setVehicleInfo({ licensePlate: 'M-AB 1234', mileage: 45000 });
+      store.setPrivacyConsent(true);
+      store.setSelectedRentCategoryId('rc-1');
+    }
+
+    async function submitWithRejection(err: unknown): Promise<void> {
+      appointmentApi.createAppointment.mockRejectedValueOnce(err);
+      store.submitBooking();
+      await new Promise<void>(resolve => setTimeout(resolve, 0));
+    }
+
+    it('sets snapConflict and clears selectedAppointment on HTTP 410', async () => {
+      seedWizardState();
+      await submitWithRejection(new HttpErrorResponse({ status: 410, statusText: 'Gone' }));
+
+      expect(store.snapConflict()).toBe(true);
+      expect(store.hasSnapConflict()).toBe(true);
+      expect(store.selectedAppointment()).toBeNull();
+      expect(store.bookingSubmitting()).toBe(false);
+      expect(store.bookingSubmitted()).toBe(false);
+    });
+
+    it('does NOT set bookingError on HTTP 410 (banner instead of inline error)', async () => {
+      seedWizardState();
+      await submitWithRejection(new HttpErrorResponse({ status: 410, statusText: 'Gone' }));
+
+      expect(store.bookingError()).toBeNull();
+      expect(store.hasBookingError()).toBe(false);
+    });
+
+    it('keeps all remaining wizard state untouched on HTTP 410 (AC-8)', async () => {
+      seedWizardState();
+      await submitWithRejection(new HttpErrorResponse({ status: 410, statusText: 'Gone' }));
+
+      expect(store.customerInfo()?.email).toBe('max@example.com');
+      expect(store.vehicleInfo()).toEqual({ licensePlate: 'M-AB 1234', mileage: 45000 });
+      expect(store.selectedServices()).toEqual([{ serviceId: 'tuv', selectedOptionIds: [] }]);
+      expect(store.selectedBrand()).toBe('audi');
+      expect(store.selectedLocation()).toEqual(LOCATIONS_BY_BRAND.audi[0]);
+      expect(store.bookingNote()).toBe('Bitte Winterreifen mitbringen');
+      expect(store.notesExtras()).toEqual({ appointmentPreference: 'morning', callbackOption: 'yes', notificationChannel: 'email' });
+      expect(store.privacyConsent()).toBe(true);
+      expect(store.selectedRentCategoryId()).toBe('rc-1');
+    });
+
+    it('treats a non-410 HttpErrorResponse as a regular booking error', async () => {
+      seedWizardState();
+      await submitWithRejection(new HttpErrorResponse({ status: 502, statusText: 'Bad Gateway' }));
+
+      expect(store.snapConflict()).toBe(false);
+      expect(store.hasSnapConflict()).toBe(false);
+      // HttpErrorResponse implements (but does not extend) Error → generic fallback message
+      expect(store.bookingError()).toBe('Booking submission failed');
+      expect(store.hasBookingError()).toBe(true);
+      expect(store.bookingSubmitting()).toBe(false);
+      // non-410 must NOT clear the selected appointment
+      expect(store.selectedAppointment()).toEqual(MOCK_APPOINTMENT);
+    });
+
+    it('sets bookingError from a generic Error rejection without snap conflict', async () => {
+      seedWizardState();
+      await submitWithRejection(new Error('server down'));
+
+      expect(store.snapConflict()).toBe(false);
+      expect(store.bookingError()).toBe('server down');
+      expect(store.bookingSubmitting()).toBe(false);
+      expect(store.selectedAppointment()).toEqual(MOCK_APPOINTMENT);
+    });
+
+    it('marks bookingSubmitted on success and never flags a snap conflict', async () => {
+      seedWizardState();
+      store.submitBooking();
+      await new Promise<void>(resolve => setTimeout(resolve, 0));
+
+      expect(store.bookingSubmitted()).toBe(true);
+      expect(store.appointmentId()).toBe('test-apt-1');
+      expect(store.snapConflict()).toBe(false);
+      expect(store.bookingError()).toBeNull();
+    });
+
+    it('clearSnapConflict resets the flag', async () => {
+      seedWizardState();
+      await submitWithRejection(new HttpErrorResponse({ status: 410, statusText: 'Gone' }));
+      expect(store.snapConflict()).toBe(true);
+
+      store.clearSnapConflict();
+
+      expect(store.snapConflict()).toBe(false);
+      expect(store.hasSnapConflict()).toBe(false);
+    });
+
+    it('clearSnapConflict is idempotent when no conflict is active', () => {
+      expect(store.snapConflict()).toBe(false);
+      store.clearSnapConflict();
+      expect(store.snapConflict()).toBe(false);
     });
   });
 

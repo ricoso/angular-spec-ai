@@ -23,7 +23,10 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
-const BASE_URL = 'http://localhost:4200';
+// Default to the Angular dev server, but allow pointing at any host that serves
+// the app + /api (e.g. the Spring Boot backend on :3000, which serves the built
+// SPA together with the API) via SCREENSHOT_BASE_URL.
+const BASE_URL = process.env.SCREENSHOT_BASE_URL || 'http://localhost:4200';
 const HASH = `${BASE_URL}/#`;
 const DOCS = path.resolve(__dirname, '..', 'docs', 'requirements');
 
@@ -435,6 +438,92 @@ const SCREENSHOT_CONFIG = {
       // Wait for the confirmation to appear (mocked POST resolves instantly).
       await page.locator('.booking-overview__confirmation').waitFor({ state: 'visible', timeout: 15000 });
       await page.waitForTimeout(500);
+    },
+  },
+
+  'REQ-031-Booking-Bugfixes': {
+    route: '/home/carinformation',
+    // REQ-031 Bugfix 2 (mileage validation): screenshot the vehicle-data form on
+    // /home/carinformation with the mileage field (#vehicle-mileage) and its
+    // permanent hint "Bitte Werte ab 10 km eingeben". The snap-conflict banner
+    // (Bugfix 1) only appears on a real HTTP 410 and cannot be surfaced without a
+    // mock here, so the responsive doc screenshots focus on the mileage feature.
+    // Runs the full wizard against the real backend (no POST is triggered).
+    setup: async (page) => {
+      // REQ-013 wizard order: Location (Step 1) -> Brand (Step 2) -> Services -> Notes -> Appointment -> Car Info.
+      await page.goto(`${HASH}/home/location`);
+      await page.waitForLoadState('networkidle');
+      await page.locator('.location-card').first().click();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(300);
+      if (!page.url().includes('/home/brand')) {
+        await page.goto(`${HASH}/home/brand`);
+        await page.waitForLoadState('networkidle');
+      }
+      await page.locator('.brand-card').first().click();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(300);
+
+      // Services (REQ-026): category carousel + detail panel with operation checkboxes.
+      // Prefer "Inspektion" (reliably bookable on INT); fall back to any operation.
+      await page.locator('app-service-card').first().waitFor({ state: 'visible', timeout: 15000 });
+      const categoryCards = page.locator('app-service-card');
+      const cardCount = await categoryCards.count();
+      const preferred = page
+        .locator('.service-option', { hasText: /inspektion|inspection/i })
+        .locator('input[type="checkbox"]')
+        .first();
+      const anyOption = page.locator('.service-option input[type="checkbox"]').first();
+      let operationSelected = false;
+      for (let pass = 0; pass < 2 && !operationSelected; pass++) {
+        const target = pass === 0 ? preferred : anyOption;
+        for (let i = -1; i < cardCount && !operationSelected; i++) {
+          if (i >= 0) {
+            await categoryCards.nth(i).click();
+            await page.waitForTimeout(200);
+          }
+          if (await target.isVisible().catch(() => false)) {
+            if (!(await target.isChecked())) {
+              await target.check({ force: true });
+              await page.waitForTimeout(200);
+            }
+            operationSelected = true;
+          }
+        }
+      }
+      // Continue to notes via the services bottom bar.
+      await page.locator('.services-bottom-bar .btn-primary').click();
+      await page.locator('.notes').waitFor({ state: 'visible', timeout: 10000 });
+      await page.waitForTimeout(300);
+
+      // Notes -> continue.
+      await page.locator('.notes__continue-button').click();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(500);
+
+      // Appointment (REQ-026): pick a date tile, then the first available slot.
+      const dateTiles = page.locator('.date-tile');
+      const tileCount = await dateTiles.count();
+      const slots = page.locator('app-appointment-card .slot');
+      for (let i = 0; i < tileCount; i++) {
+        await dateTiles.nth(i).click();
+        await page.waitForTimeout(300);
+        if (await slots.first().isVisible().catch(() => false)) {
+          break;
+        }
+      }
+      await slots.first().click();
+      await page.waitForTimeout(300);
+      await page.locator('.appointment-selection__continue-button').click();
+      await page.locator('.carinformation').waitFor({ state: 'visible', timeout: 10000 });
+      await page.waitForTimeout(500);
+
+      // Fill the vehicle form so the mileage field (>= 10) and its permanent hint
+      // are both visible in the screenshot. No submit — this is the feature state.
+      await page.locator('input[formcontrolname="licensePlate"]').fill('E-RQ0031');
+      await page.locator('#vehicle-mileage').fill('54321');
+      await page.locator('#vehicle-mileage-hint').waitFor({ state: 'visible', timeout: 5000 });
+      await page.waitForTimeout(300);
     },
   },
 };

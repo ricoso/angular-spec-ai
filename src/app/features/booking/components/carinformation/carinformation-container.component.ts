@@ -48,7 +48,8 @@ export class CarinformationContainerComponent {
 
   protected readonly vehicleForm = this.fb.group({
     licensePlate: ['', [Validators.required]],
-    mileage: [null as number | null, [Validators.required, Validators.min(0)]]
+    // REQ-031 BR-6: whole number >= 10 — SoftNet treats 0 as "not set"
+    mileage: [null as number | null, [Validators.required, Validators.pattern(/^[0-9]+$/), Validators.min(10)]]
   });
 
   protected readonly privacyControl = new FormControl(false, [Validators.requiredTrue]);

@@ -30,7 +30,9 @@ public record CreateAppointmentRequest(
 
     public record VehicleDto(
         @NotBlank String licensePlate,
-        @Min(0) int mileage,
+        // REQ-031: Integer statt int — fehlender JSON-Wert wird nicht still 0,
+        // sondern von @NotNull abgefangen; SoftNet wertet 0 als "nicht gesetzt"
+        @NotNull @Min(10) Integer mileage,
         String vin,
         String model,
         String firstRegMonth,

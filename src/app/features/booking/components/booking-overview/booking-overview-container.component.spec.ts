@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -324,6 +325,71 @@ describe('BookingOverviewContainerComponent', () => {
     it('returns empty string when no location selected', () => {
       const exposed = component as unknown as { resolvedLocationName: () => string };
       expect(exposed.resolvedLocationName()).toBe('');
+    });
+  });
+
+  // REQ-031: 410-Fehler (Snap zwischenzeitlich belegt) → effect() im Constructor
+  // navigiert zurück zur Terminauswahl statt den generischen Inline-Fehler zu zeigen.
+  describe('REQ-031 snap conflict redirect', () => {
+    let createAppointmentMock: jest.Mock;
+
+    beforeEach(() => {
+      createAppointmentMock = (
+        TestBed.inject(AppointmentApiService) as unknown as { createAppointment: jest.Mock }
+      ).createAppointment;
+    });
+
+    it('navigates to /home/appointment when the booking fails with HTTP 410', async () => {
+      const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+      createAppointmentMock.mockRejectedValueOnce(
+        new HttpErrorResponse({ status: 410, statusText: 'Gone' })
+      );
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges(); // flush the effect()
+
+      expect(store.hasSnapConflict()).toBe(true);
+      expect(navigateSpy).toHaveBeenCalledWith(['/home/appointment']);
+    });
+
+    it('does not show the generic inline error on HTTP 410', async () => {
+      jest.spyOn(router, 'navigate').mockResolvedValue(true);
+      createAppointmentMock.mockRejectedValueOnce(
+        new HttpErrorResponse({ status: 410, statusText: 'Gone' })
+      );
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+
+      const exposed = component as unknown as { submitError: () => boolean };
+      expect(exposed.submitError()).toBe(false);
+    });
+
+    it('does not navigate when the booking fails with a non-410 error', async () => {
+      const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+      createAppointmentMock.mockRejectedValueOnce(
+        new HttpErrorResponse({ status: 502, statusText: 'Bad Gateway' })
+      );
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+
+      expect(store.hasSnapConflict()).toBe(false);
+      expect(navigateSpy).not.toHaveBeenCalledWith(['/home/appointment']);
+    });
+
+    it('does not navigate on a successful submission', async () => {
+      const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+
+      expect(store.hasSnapConflict()).toBe(false);
+      expect(navigateSpy).not.toHaveBeenCalledWith(['/home/appointment']);
     });
   });
 });

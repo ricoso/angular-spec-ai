@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter,Router } from '@angular/router';
@@ -7,6 +8,7 @@ import { AppointmentApiService } from '../../services/appointment-api.service';
 import { BookingStore } from '../../stores/booking.store';
 
 import { AppointmentSelectionContainerComponent } from './appointment-selection-container.component';
+import { SNAP_CONFLICT_BANNER_TIMEOUT_MS } from './snap-conflict-banner/snap-conflict-banner.component';
 
 const MOCK_APPOINTMENTS: AppointmentSlot[] = [
   {
@@ -267,6 +269,86 @@ describe('AppointmentSelectionContainerComponent', () => {
       expect(summary).toContain('26.02.2026');
       // 14:00 UTC im Februar (Winterzeit, UTC+1) → 15:00 Berliner Zeit
       expect(summary).toContain('15:00 Uhr');
+    });
+  });
+
+  // REQ-031: Snap-Conflict-Banner (Buchung schlug mit HTTP 410 fehl, weil der
+  // Snap zwischenzeitlich belegt wurde) — Auto-Dismiss, X-Klick, Weiter, Destroy.
+  describe('REQ-031 snap conflict banner', () => {
+    /** Triggers the real 410 flow so `snapConflict` becomes true in the store. */
+    async function triggerSnapConflict(): Promise<void> {
+      mockAppointmentApiService.createAppointment.mockRejectedValueOnce(
+        new HttpErrorResponse({ status: 410, statusText: 'Gone' })
+      );
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    }
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should expose hasSnapConflict from store (initially false)', () => {
+      const exposed = component as unknown as { hasSnapConflict: () => boolean };
+      expect(exposed.hasSnapConflict()).toBe(false);
+    });
+
+    it('should auto-dismiss the banner after 30 seconds (BR-3)', async () => {
+      jest.useFakeTimers();
+
+      mockAppointmentApiService.createAppointment.mockRejectedValueOnce(
+        new HttpErrorResponse({ status: 410, statusText: 'Gone' })
+      );
+      store.submitBooking();
+      await jest.advanceTimersByTimeAsync(0); // flush the rejected promise
+      expect(store.hasSnapConflict()).toBe(true);
+
+      fixture.detectChanges(); // flush toObservable effect → 30s timer starts
+      await jest.advanceTimersByTimeAsync(SNAP_CONFLICT_BANNER_TIMEOUT_MS - 1);
+      expect(store.hasSnapConflict()).toBe(true); // not yet
+
+      await jest.advanceTimersByTimeAsync(1);
+      expect(store.hasSnapConflict()).toBe(false);
+    });
+
+    it('should clear the conflict when the banner close output fires', async () => {
+      await triggerSnapConflict();
+      expect(store.hasSnapConflict()).toBe(true);
+
+      const exposed = component as unknown as { onSnapConflictBannerClosed: () => void };
+      exposed.onSnapConflictBannerClosed();
+
+      expect(store.hasSnapConflict()).toBe(false);
+    });
+
+    it('should clear the conflict and navigate forward on continue', async () => {
+      await triggerSnapConflict();
+      expect(store.hasSnapConflict()).toBe(true);
+
+      const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+      const exposed = component as unknown as { onContinue: () => void };
+      exposed.onContinue();
+
+      expect(store.hasSnapConflict()).toBe(false);
+      expect(navigateSpy).toHaveBeenCalledWith(['/home/carinformation']);
+    });
+
+    it('should clear an active conflict when the container is destroyed (BR-3)', async () => {
+      await triggerSnapConflict();
+      expect(store.hasSnapConflict()).toBe(true);
+
+      fixture.destroy();
+
+      expect(store.hasSnapConflict()).toBe(false);
+    });
+
+    it('should not call clearSnapConflict on destroy when no conflict is active', () => {
+      const clearSpy = jest.spyOn(store, 'clearSnapConflict');
+      expect(store.hasSnapConflict()).toBe(false);
+
+      fixture.destroy();
+
+      expect(clearSpy).not.toHaveBeenCalled();
     });
   });
 });
