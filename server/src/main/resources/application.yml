@@ -58,4 +58,4 @@ spring:
       base-url: ${LLM_BASE_URL:https://api.openai.com}
       chat:
         options:
-          model: ${LLM_MODEL:gpt-4o-mini}
+          model: ${LLM_MODEL:get-5-mini}
