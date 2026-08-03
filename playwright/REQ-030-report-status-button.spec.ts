@@ -3,12 +3,19 @@ import { expect, test } from '@playwright/test';
 import { setLanguage, waitForAngular } from './helpers/app.helpers';
 
 /**
- * REQ-030 / AC-8: the internal report status button (FAB) is visible on a direct
+ * REQ-030 / AC-8: the internal report status button is visible on a direct
  * call but hidden for customers viewing the app inside an iframe.
  *
- * FloatingOverlayComponent renders the button only `@if (!isEmbedded())`, where
- * isEmbedded = `window.self !== window.top`. So inside an iframe the `.report-status-button`
- * element must not be present in the DOM at all.
+ * LocationSelectionContainerComponent renders the button only `@if (!isEmbedded())`,
+ * where isEmbedded = `window.self !== window.top`. So inside an iframe the
+ * `.report-status-button` element must not be present in the DOM at all.
+ *
+ * Note: the "Direct call" case navigates to plain `/home/location` (no
+ * branchId/groupId) — a valid branchId+groupId makes the REQ-023 Deep-Link Guard
+ * skip location selection entirely and redirect to /home/brand, where this
+ * button (only rendered by LocationSelectionContainerComponent) could never be
+ * found. The iframe case keeps the deep-link params since it only asserts the
+ * button is absent, which holds regardless of which page the guard lands on.
  */
 
 const VALID_BRANCH_ID = '68f606798d2bb4389ed1af51'; // Audi Mettmann
@@ -17,9 +24,10 @@ const DEEP_LINK = `/home/location?branchId=${VALID_BRANCH_ID}&groupId=6908807454
 test.describe('REQ-030: report status button (iframe-aware)', () => {
   test('Direct call: report status button is visible', async ({ page }) => {
     await setLanguage(page, 'de');
-    await page.goto(DEEP_LINK);
+    await page.goto('/home/location');
     await waitForAngular(page);
 
+    await expect(page.locator('app-location-selection-container')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('.report-status-button')).toBeVisible();
   });
 

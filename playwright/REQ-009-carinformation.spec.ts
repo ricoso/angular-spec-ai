@@ -1,7 +1,10 @@
 import { expect, type Page,test } from '@playwright/test';
 
-// REQ-023: SKIPPED — Spec war fuer altes UI (vor REQ-013/REQ-015 Refactor) geschrieben.
-// Reaktivieren nach Selektor-Update — siehe REQ-024 (Test-Suite-Stabilisierung).
+// REQ-024: Reaktiviert — Selektoren auf REQ-026-Bootstrap-Markup aktualisiert
+// (mat-select/mat-option/mat-checkbox -> native select/option/checkbox). Tests fuer
+// Features, die im aktuellen UI nicht (mehr) existieren (REQ-016 returning-customer
+// banner: still Draft; VIN/FIN-Feld: aus VehicleFormComponent entfernt) sind einzeln
+// per test.skip() markiert und dort begruendet, statt entfernt zu werden.
 
 import { getCurrentRoute, navigateTo, setLanguage, waitForAngular } from './helpers/app.helpers';
 import {
@@ -44,7 +47,7 @@ async function navigateToCarinformation(page: Page): Promise<void> {
 // TESTS
 // =============================================
 
-test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () => {
+test.describe('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () => {
 
   // =============================================
   // EXCEPTION FLOW: Guard Test (Section 6.1)
@@ -70,7 +73,7 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
 
   test.describe('Main Flow', () => {
 
-    test('TC-1: page loads with title, returning customer banner, customer form and vehicle form (DE)', async ({ page }) => {
+    test('TC-1: page loads with title, customer form and vehicle form (DE)', async ({ page }) => {
       await setLanguage(page, 'de');
       await navigateToCarinformation(page);
 
@@ -83,17 +86,9 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       // Title should be about appointment information
       expect(title.length).toBeGreaterThan(5);
 
-      // AC-2: Returning customer banner is visible
-      const returningBanner = page.locator('.carinformation__returning-banner');
-      await expect(returningBanner).toBeVisible();
-
-      // Returning customer title
-      const returningTitle = page.locator('.carinformation__returning-title');
-      await expect(returningTitle).toBeVisible();
-
-      // Returning customer button "Jetzt Daten abrufen!"
-      const returningButton = page.locator('.carinformation__returning-button');
-      await expect(returningButton).toBeVisible();
+      // NOTE: The "returning customer" banner (REQ-016: User-Lookup) is not part
+      // of this test — REQ-016 is still Draft (REQUIREMENTS.md) and not implemented
+      // in CarinformationContainerComponent's current template.
     });
 
     test('TC-1b: customer form (Kundendaten) section is visible', async ({ page }) => {
@@ -108,8 +103,8 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       const emailInput = page.locator('input[type="email"], input[formcontrolname="email"]');
       await expect(emailInput.first()).toBeVisible();
 
-      // Salutation select (mat-select)
-      const salutationSelect = page.locator('mat-select[formcontrolname="salutation"]');
+      // Salutation select (native <select>, REQ-026 Bootstrap migration)
+      const salutationSelect = page.locator('select[formcontrolname="salutation"]');
       await expect(salutationSelect).toBeVisible();
 
       // First name
@@ -137,9 +132,8 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       const mileageInput = page.locator('input[formcontrolname="mileage"]');
       await expect(mileageInput).toBeVisible();
 
-      // VIN / FIN
-      const vinInput = page.locator('input[formcontrolname="vin"]');
-      await expect(vinInput).toBeVisible();
+      // NOTE: The VIN/FIN field was removed from VehicleFormComponent's current
+      // template (only licensePlate + mileage remain) — no longer asserted here.
     });
 
     test('TC-1d: DSGVO privacy checkbox is visible', async ({ page }) => {
@@ -150,8 +144,8 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       const privacySection = page.locator('.carinformation__privacy');
       await expect(privacySection).toBeVisible();
 
-      // mat-checkbox
-      const privacyCheckbox = page.locator('mat-checkbox');
+      // Native checkbox (REQ-026 Bootstrap migration)
+      const privacyCheckbox = page.locator('#privacy-consent');
       await expect(privacyCheckbox).toBeVisible();
     });
 
@@ -192,7 +186,6 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       // Fill in valid vehicle data
       await page.locator('input[formcontrolname="licensePlate"]').fill('B-MS1234');
       await page.locator('input[formcontrolname="mileage"]').fill('5000');
-      await page.locator('input[formcontrolname="vin"]').fill('WDB8XXXXXXA123456');
 
       // Do NOT check privacy checkbox
 
@@ -206,7 +199,7 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       expect(route).toBe('/home/carinformation');
 
       // Privacy error should appear
-      const privacyError = page.locator('.carinformation__privacy-error');
+      const privacyError = page.locator('#privacy-consent-error');
       await expect(privacyError).toBeVisible();
     });
 
@@ -227,7 +220,9 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       expect(route).toMatch(/\/home\/(appointment|workshop-calendar)/);
     });
 
-    test('TC-2: AC-2 returning customer banner visible with correct button text (DE)', async ({ page }) => {
+    // REQ-016 (User-Lookup / returning-customer banner) is still Draft (REQUIREMENTS.md) —
+    // not implemented in CarinformationContainerComponent's current template.
+    test.skip('TC-2: AC-2 returning customer banner visible with correct button text (DE)', async ({ page }) => {
       await setLanguage(page, 'de');
       await navigateToCarinformation(page);
 
@@ -254,20 +249,17 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       await setLanguage(page, 'de');
       await navigateToCarinformation(page);
 
-      // Open the salutation select
-      const salutationSelect = page.locator('mat-select[formcontrolname="salutation"]');
-      await salutationSelect.click();
-      await waitForAngular(page);
-
-      // Check options are visible
-      const options = page.locator('mat-option');
-      const optionTexts = await options.allTextContents();
+      // Native <select> (REQ-026 Bootstrap migration) — options are read directly, no need to open it
+      const salutationSelect = page.locator('select[formcontrolname="salutation"]');
+      const optionTexts = await salutationSelect.locator('option').allTextContents();
       const trimmed = optionTexts.map(t => t.trim());
       expect(trimmed).toContain('Herr');
       expect(trimmed).toContain('Frau');
     });
 
-    test('TC-3: VIN field accepts only 17 alphanumeric chars (AC-12, BR-9)', async ({ page }) => {
+    // The VIN/FIN field + explanation link were removed from VehicleFormComponent's
+    // current template (only licensePlate + mileage remain) — no longer applicable.
+    test.skip('TC-3: VIN field accepts only 17 alphanumeric chars (AC-12, BR-9)', async ({ page }) => {
       await setLanguage(page, 'de');
       await navigateToCarinformation(page);
 
@@ -279,7 +271,7 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       expect(maxLength).toBe('17');
     });
 
-    test('TC-4: VIN link "Erklärung der FIN" is visible (AC-12)', async ({ page }) => {
+    test.skip('TC-4: VIN link "Erklärung der FIN" is visible (AC-12)', async ({ page }) => {
       await setLanguage(page, 'de');
       await navigateToCarinformation(page);
 
@@ -297,7 +289,7 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       await waitForAngular(page);
 
       // Privacy error should appear
-      const privacyError = page.locator('.carinformation__privacy-error');
+      const privacyError = page.locator('#privacy-consent-error');
       await expect(privacyError).toBeVisible();
     });
 
@@ -407,9 +399,6 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       // Main section
       await expect(page.locator('.carinformation')).toBeVisible();
 
-      // Returning banner
-      await expect(page.locator('.carinformation__returning-banner')).toBeVisible();
-
       // Customer form
       await expect(page.locator('.customer-form')).toBeVisible();
 
@@ -463,7 +452,9 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
 
   test.describe('Alternative Flows', () => {
 
-    test('5.1: returning customer button click does not crash (placeholder)', async ({ page }) => {
+    // REQ-016 (User-Lookup / returning-customer banner) is still Draft (REQUIREMENTS.md) —
+    // not implemented in CarinformationContainerComponent's current template.
+    test.skip('5.1: returning customer button click does not crash (placeholder)', async ({ page }) => {
       await setLanguage(page, 'de');
       await navigateToCarinformation(page);
 
@@ -479,7 +470,9 @@ test.describe.skip('REQ-009: Car Information (Kundendaten & Fahrzeugdaten)', () 
       expect(route).toBe('/home/carinformation');
     });
 
-    test('5.3: VIN explanation link placeholder does not navigate away', async ({ page }) => {
+    // The VIN/FIN field + explanation link were removed from VehicleFormComponent's
+    // current template — no longer applicable.
+    test.skip('5.3: VIN explanation link placeholder does not navigate away', async ({ page }) => {
       await setLanguage(page, 'de');
       await navigateToCarinformation(page);
 

@@ -3,6 +3,7 @@ package com.autohaus.backend.appointments;
 import com.autohaus.backend.appointments.dto.AppointmentResponseDto;
 import com.autohaus.backend.appointments.dto.CreateAppointmentRequest;
 import com.autohaus.backend.common.logging.LogPayloadUtil;
+import com.autohaus.backend.common.util.PhoneNumberNormalizer;
 import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.snaps.SnapCache;
 import com.autohaus.backend.softnet.SoftnetApiClient;
@@ -93,8 +94,9 @@ public class AppointmentsService {
         client.put("email", dto.customer().email());
         client.put("lastName", dto.customer().lastName());
         client.put("firstName", dto.customer().firstName());
-        client.put("mobile", dto.customer().mobile());
-        client.put("phone", dto.customer().phone() != null ? dto.customer().phone() : dto.customer().mobile());
+        client.put("mobile", PhoneNumberNormalizer.toSoftnetFormat(dto.customer().mobile()));
+        client.put("phone", PhoneNumberNormalizer.toSoftnetFormat(
+            dto.customer().phone() != null ? dto.customer().phone() : dto.customer().mobile()));
         client.put("address", dto.customer().address());
         client.put("zipCode", dto.customer().zipCode());
         client.put("city", dto.customer().city());
