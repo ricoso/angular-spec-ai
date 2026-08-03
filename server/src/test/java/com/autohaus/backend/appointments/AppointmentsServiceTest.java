@@ -180,6 +180,48 @@ class AppointmentsServiceTest {
     }
 
     @Test
+    void createAppointment_mobileWithLeadingZero_normalizedToPlus49InClientMap() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-phone")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        CreateAppointmentRequest dto = new CreateAppointmentRequest(
+            "snap-phone", "branch-1", null,
+            new CreateAppointmentRequest.CustomerDto(
+                "test@test.de", "Petra", "Voß", "017012345678", null,
+                "Wuppertaler Str. 12", "42103", "Wuppertal", "DE", "de", null),
+            new CreateAppointmentRequest.VehicleDto("W-TEST-99", 45000, null, "A4", "03", "2023"),
+            null, null, null, null
+        );
+        service.createAppointment(dto);
+
+        Map<String, Object> client = captureSentClient();
+        assertEquals("+4917012345678", client.get("mobile"));
+        assertEquals("+4917012345678", client.get("phone"));
+    }
+
+    @Test
+    void createAppointment_mobileAlreadyInternational_unchangedInClientMap() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-intl")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        CreateAppointmentRequest dto = new CreateAppointmentRequest(
+            "snap-intl", "branch-1", null,
+            new CreateAppointmentRequest.CustomerDto(
+                "test@test.de", "Petra", "Voß", "+491701234567", "+4989123456",
+                "Wuppertaler Str. 12", "42103", "Wuppertal", "DE", "de", null),
+            new CreateAppointmentRequest.VehicleDto("W-TEST-99", 45000, null, "A4", "03", "2023"),
+            null, null, null, null
+        );
+        service.createAppointment(dto);
+
+        Map<String, Object> client = captureSentClient();
+        assertEquals("+491701234567", client.get("mobile"));
+        assertEquals("+4989123456", client.get("phone"));
+    }
+
+    @Test
     void createAppointment_whenSoftnetFails_logsUnpatchedRawSnapAndRethrows() {
         ObjectNode snap = baseSnap();
         when(snapCache.getRawSnap("snap-err")).thenReturn(snap);
@@ -255,5 +297,12 @@ class AppointmentsServiceTest {
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(softnetApi).createAppointment(captor.capture(), eq("mock-group-id"));
         return captor.getValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> captureSentClient() {
+        Map<String, Object> sent = captureSentSnap();
+        Map<String, Object> wishlist = (Map<String, Object>) sent.get("wishlist");
+        return (Map<String, Object>) wishlist.get("client");
     }
 }

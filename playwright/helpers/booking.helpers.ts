@@ -30,6 +30,14 @@ export async function goToBrandSelection(page: Page): Promise<void> {
   }
 }
 
+/** Click the Back button on the brand selection page (navigates to /home/location) */
+export async function clickBrandBack(page: Page): Promise<void> {
+  const backButton = page.locator('.brand-selection__back-button');
+  await expect(backButton).toBeVisible();
+  await backButton.click();
+  await waitForAngular(page);
+}
+
 /** Select the first available brand dynamically */
 export async function selectFirstBrand(page: Page): Promise<string> {
   await goToBrandSelection(page);
@@ -47,7 +55,7 @@ export async function selectFirstLocation(page: Page): Promise<string> {
   // Migration: location-cards uses radio + label pattern. Click the first card label.
   const card = page.locator('.location-card').first();
   await expect(card).toBeVisible({ timeout: 15000 });
-  const locationName = (await card.locator('.location-card__name, h3, .h3').first().textContent() ?? '').trim();
+  const locationName = (await card.locator('.location-card__address').first().textContent() ?? '').trim();
   await card.click();
   await waitForAngular(page);
   return locationName;
@@ -81,7 +89,7 @@ export async function getBrandButtonTexts(page: Page): Promise<string[]> {
 
 /** Get all visible location names */
 export async function getLocationButtonTexts(page: Page): Promise<string[]> {
-  const names = page.locator('.location-card__name, .location-card h3');
+  const names = page.locator('.location-card__address');
   return names.allTextContents().then(texts => texts.map(t => t.trim()));
 }
 
@@ -154,7 +162,7 @@ export async function goToServiceSelection(
  */
 export async function selectService(page: Page, serviceName: string): Promise<void> {
   const card = page.locator('.service-card').filter({
-    has: page.locator('.service-card__title', { hasText: serviceName })
+    has: page.locator('.service-card-mini__title', { hasText: serviceName })
   });
   await expect(card).toBeVisible();
   await card.click();
@@ -164,13 +172,13 @@ export async function selectService(page: Page, serviceName: string): Promise<vo
 /** Get the service card locator by its title text (precise match via __title) */
 export function getServiceCard(page: Page, serviceName: string) {
   return page.locator('.service-card').filter({
-    has: page.locator('.service-card__title', { hasText: serviceName })
+    has: page.locator('.service-card-mini__title', { hasText: serviceName })
   });
 }
 
 /** Get visible service card title texts */
 export async function getServiceCardTitles(page: Page): Promise<string[]> {
-  const titles = page.locator('.service-card__title');
+  const titles = page.locator('.service-card-mini__title');
   return titles.allTextContents().then(texts => texts.map(t => t.trim()));
 }
 

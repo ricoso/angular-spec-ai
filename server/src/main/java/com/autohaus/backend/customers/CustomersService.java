@@ -1,5 +1,6 @@
 package com.autohaus.backend.customers;
 
+import com.autohaus.backend.common.util.PhoneNumberNormalizer;
 import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.customers.dto.CreateCustomerRequest;
 import com.autohaus.backend.customers.dto.CustomerResponseDto;
@@ -33,7 +34,7 @@ public class CustomersService {
         data.put("street", dto.street());
         data.put("zip", dto.postalCode());
         data.put("city", dto.city());
-        data.put("mobilePhone", dto.mobilePhone());
+        data.put("mobilePhone", PhoneNumberNormalizer.toSoftnetFormat(dto.mobilePhone()));
 
         JsonNode result = softnetApi.createVaultItem(data, groupId);
         return new CustomerResponseDto(
