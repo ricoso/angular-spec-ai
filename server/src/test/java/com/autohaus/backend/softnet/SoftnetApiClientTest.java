@@ -217,6 +217,62 @@ class SoftnetApiClientTest {
     }
 
     @Test
+    void createAppointment_whenError_redactsPiiInRequestBodyLog() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/api/planning/appointments", exchange -> {
+            exchange.getRequestBody().readAllBytes();
+            byte[] body = "{\"code\":\"ValidationError\"}".getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(502, body.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(body);
+            }
+        });
+        server.start();
+
+        ch.qos.logback.classic.Logger logger =
+            (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(SoftnetApiClient.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            SoftnetProperties props = new SoftnetProperties(
+                "http://localhost:" + server.getAddress().getPort(), "http://auth", "/fp", null, 1000
+            );
+            SoftnetApiClient localClient = new SoftnetApiClient(authService, props, objectMapper);
+            when(authService.getAccessToken()).thenReturn("fake-token");
+
+            java.util.Map<String, Object> requestWithPii = java.util.Map.of(
+                "snapId", "s1",
+                "wishlist", java.util.Map.of(
+                    "client", java.util.Map.of("firstName", "Max", "email", "max@example.com"),
+                    "car", java.util.Map.of("license", "AB-CD 1234", "VIN", "WVWZZZ1JZXW000001")));
+
+            assertThrows(Exception.class, () -> localClient.createAppointment(requestWithPii, "group-1"));
+
+            String errorLine = appender.list.stream()
+                .filter(event -> event.getLevel() == Level.ERROR)
+                .map(ILoggingEvent::getFormattedMessage)
+                .findFirst()
+                .orElse("");
+
+            assertTrue(errorLine.contains("SOFTNET_ERROR"), errorLine);
+            // PII from the outbound body must NOT appear in the log line.
+            assertFalse(errorLine.contains("Max"), errorLine);
+            assertFalse(errorLine.contains("max@example.com"), errorLine);
+            assertFalse(errorLine.contains("AB-CD 1234"), errorLine);
+            assertFalse(errorLine.contains("WVWZZZ1JZXW000001"), errorLine);
+            assertTrue(errorLine.contains("***"), errorLine);
+            // Technical, non-PII fields survive for analysis.
+            assertTrue(errorLine.contains("\"snapId\":\"s1\""), errorLine);
+        } finally {
+            logger.detachAppender(appender);
+            server.stop(0);
+        }
+    }
+
+    @Test
     void constructor_withNullBaseUrl_doesNotThrow() {
         SoftnetProperties props = new SoftnetProperties(
             null, "http://auth", "/fp", null, 1000

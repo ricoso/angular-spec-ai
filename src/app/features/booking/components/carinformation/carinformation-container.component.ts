@@ -47,7 +47,11 @@ export class CarinformationContainerComponent {
   });
 
   protected readonly vehicleForm = this.fb.group({
-    licensePlate: ['', [Validators.required]],
+    // License plate: only blank / whitespace-only is invalid (trim, then must not be empty);
+    // any other value is accepted. Angular's `required` alone would let a lone space through,
+    // so `pattern(/\S/)` enforces "must contain at least one non-whitespace char".
+    // Kennzeichen: nur leer / reines Leerzeichen ungültig, jeder andere Wert erlaubt.
+    licensePlate: ['', [Validators.required, Validators.pattern(/\S/)]],
     // REQ-031 BR-6: whole number >= 10 — SoftNet treats 0 as "not set"
     mileage: [null as number | null, [Validators.required, Validators.pattern(/^[0-9]+$/), Validators.min(10)]]
   });

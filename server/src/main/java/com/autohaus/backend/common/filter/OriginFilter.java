@@ -1,6 +1,7 @@
 package com.autohaus.backend.common.filter;
 
 import com.autohaus.backend.common.dto.ErrorResponse;
+import com.autohaus.backend.common.logging.LogSanitizer;
 import com.autohaus.backend.config.AppProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -71,8 +72,10 @@ public class OriginFilter extends OncePerRequestFilter {
             }
         }
 
+        // REQ-034: mask the client IP (personal data under GDPR) and sanitize the referer
+        // (may carry query-string PII). Origin is host-only, path excludes the query string.
         log.warn("Blocked request from unauthorized origin: origin=\"{}\" referer=\"{}\" path=\"{}\" ip=\"{}\"",
-            origin, referer, request.getRequestURI(), request.getRemoteAddr());
+            origin, LogSanitizer.redact(referer), request.getRequestURI(), LogSanitizer.maskIp(request.getRemoteAddr()));
 
         String requestId = (String) request.getAttribute(RequestIdFilter.REQUEST_ID_ATTRIBUTE);
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);

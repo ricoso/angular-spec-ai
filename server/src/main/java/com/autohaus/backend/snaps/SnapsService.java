@@ -68,7 +68,8 @@ public class SnapsService {
             softnetRequest.put("notifications", notifications);
         }
 
-        log.debug("SoftNet snaps request: {}", softnetRequest);
+        // REQ-034: log technical metadata only, never the full request object.
+        log.debug("SoftNet snaps request: group={}, {} operations, mode={}", groupId, mappedOps.size(), request.mode());
         List<JsonNode> rawSnaps = softnetApi.getSnaps(softnetRequest, groupId);
         log.debug("SoftNet snaps response: {} items", rawSnaps.size());
 

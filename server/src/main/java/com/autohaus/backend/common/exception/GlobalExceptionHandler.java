@@ -2,6 +2,7 @@ package com.autohaus.backend.common.exception;
 
 import com.autohaus.backend.common.dto.ErrorResponse;
 import com.autohaus.backend.common.filter.RequestIdFilter;
+import com.autohaus.backend.common.logging.LogSanitizer;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,7 +115,9 @@ public class GlobalExceptionHandler {
     }
 
     private void logError(int status, String message, Exception ex) {
+        // REQ-034: sanitize the message — third-party exceptions may embed PII (e.g. an upstream
+        // response body). Static messages contain no PII and pass through unchanged.
         log.error("{\"statusCode\":{},\"message\":\"{}\",\"exception\":\"{}\"}",
-            status, message, ex.getClass().getSimpleName());
+            status, LogSanitizer.redact(message), ex.getClass().getSimpleName());
     }
 }

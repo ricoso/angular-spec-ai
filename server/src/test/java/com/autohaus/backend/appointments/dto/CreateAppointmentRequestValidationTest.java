@@ -107,6 +107,36 @@ class CreateAppointmentRequestValidationTest {
         assertEquals("vehicle.mileage", violations.iterator().next().getPropertyPath().toString());
     }
 
+    // === VehicleDto.licensePlate (@NotBlank: only blank / whitespace-only is rejected) ===
+
+    private CreateAppointmentRequest.VehicleDto vehicleWithPlate(String plate) {
+        return new CreateAppointmentRequest.VehicleDto(plate, 50000, null, null, null, null);
+    }
+
+    private long plateViolations(String plate) {
+        return validator.validate(vehicleWithPlate(plate)).stream()
+            .filter(v -> v.getPropertyPath().toString().equals("licensePlate"))
+            .count();
+    }
+
+    @Test
+    void licensePlate_singleSpace_isInvalid() {
+        assertTrue(plateViolations(" ") > 0, "a lone space must be rejected");
+    }
+
+    @Test
+    void licensePlate_empty_isInvalid() {
+        assertTrue(plateViolations("") > 0);
+    }
+
+    @Test
+    void licensePlate_anyNonBlankValue_isValid() {
+        // Per requirement: only a lone/blank space is forbidden — everything else is accepted.
+        assertEquals(0, plateViolations("M AB 1234"));
+        assertEquals(0, plateViolations("B-MS1234"));
+        assertEquals(0, plateViolations("aa"));
+    }
+
     @Test
     void createAppointmentRequest_validVehicleMileage_hasNoViolations() {
         CreateAppointmentRequest request = new CreateAppointmentRequest(

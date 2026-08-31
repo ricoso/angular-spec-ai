@@ -104,6 +104,51 @@ class AppointmentsServiceTest {
     }
 
     @Test
+    void createAppointment_success_logsBookingWithPiiRemovedButLengthKept() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-happy")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        ch.qos.logback.classic.Logger logger =
+            (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(AppointmentsService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            CreateAppointmentRequest dto = new CreateAppointmentRequest(
+                "snap-happy", "branch-1", null,
+                new CreateAppointmentRequest.CustomerDto(
+                    "max@example.com", "Max", "Mustermann", "017012345678", null,
+                    "Hauptstr 1", "45127", "Essen", "DE", "de", null),
+                new CreateAppointmentRequest.VehicleDto(
+                    "AB-CD 1234", 45000, "WVWZZZ1JZXW000001", "Golf", "01", "2020"),
+                null, null, null, null);
+
+            service.createAppointment(dto);
+
+            String infoLine = appender.list.stream()
+                .filter(event -> event.getLevel() == Level.INFO)
+                .map(ILoggingEvent::getFormattedMessage)
+                .filter(msg -> msg.contains("BOOKING_CREATED"))
+                .findFirst()
+                .orElse("");
+
+            assertTrue(infoLine.contains("BOOKING_CREATED"), infoLine);
+            assertTrue(infoLine.contains("apt-x"), infoLine);            // technical id present
+            // PII removed from the happy-case log ...
+            assertFalse(infoLine.contains("max@example.com"), infoLine);
+            assertFalse(infoLine.contains("Mustermann"), infoLine);
+            assertFalse(infoLine.contains("WVWZZZ1JZXW000001"), infoLine);
+            assertFalse(infoLine.contains("AB-CD 1234"), infoLine);
+            // ... but the char-count annotation is kept.
+            assertTrue(infoLine.contains("***("), infoLine);
+        } finally {
+            logger.detachAppender(appender);
+        }
+    }
+
+    @Test
     void cancelAppointment_setsStatusToCancelled() {
         ObjectNode result = om.createObjectNode();
         result.put("id", "apt-2");
