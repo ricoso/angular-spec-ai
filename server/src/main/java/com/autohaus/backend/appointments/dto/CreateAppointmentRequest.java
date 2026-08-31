@@ -29,6 +29,9 @@ public record CreateAppointmentRequest(
     ) {}
 
     public record VehicleDto(
+        // Kennzeichen: nur leer / reines Leerzeichen ist ungültig, jeder andere Wert ist erlaubt.
+        // @NotBlank leistet genau das (trimmt und lehnt Whitespace-only ab).
+        // License plate: only blank / whitespace-only is invalid, any other value is accepted.
         @NotBlank String licensePlate,
         // REQ-031: Integer statt int — fehlender JSON-Wert wird nicht still 0,
         // sondern von @NotNull abgefangen; SoftNet wertet 0 als "nicht gesetzt"

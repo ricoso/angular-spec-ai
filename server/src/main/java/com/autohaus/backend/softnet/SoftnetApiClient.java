@@ -1,6 +1,6 @@
 package com.autohaus.backend.softnet;
 
-import com.autohaus.backend.common.logging.LogPayloadUtil;
+import com.autohaus.backend.common.logging.LogSanitizer;
 import com.autohaus.backend.config.SoftnetProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -216,8 +216,8 @@ public class SoftnetApiClient {
             String responseBody = e instanceof RestClientResponseException rcre
                 ? rcre.getResponseBodyAsString() : "";
             log.error("SOFTNET_ERROR {} {} failed after {}ms: {} | requestBody={} | responseBody={}",
-                method, endpoint, System.currentTimeMillis() - startTime, e.getMessage(),
-                LogPayloadUtil.truncate(jsonBody), LogPayloadUtil.truncate(responseBody));
+                method, endpoint, System.currentTimeMillis() - startTime, LogSanitizer.redact(e.getMessage()),
+                LogSanitizer.redactAndTruncate(jsonBody), LogSanitizer.redactAndTruncate(responseBody));
             throw e instanceof RuntimeException re ? re : new RuntimeException(e);
         }
     }

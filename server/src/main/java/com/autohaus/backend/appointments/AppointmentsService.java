@@ -2,7 +2,7 @@ package com.autohaus.backend.appointments;
 
 import com.autohaus.backend.appointments.dto.AppointmentResponseDto;
 import com.autohaus.backend.appointments.dto.CreateAppointmentRequest;
-import com.autohaus.backend.common.logging.LogPayloadUtil;
+import com.autohaus.backend.common.logging.LogSanitizer;
 import com.autohaus.backend.common.util.PhoneNumberNormalizer;
 import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.snaps.SnapCache;
@@ -62,10 +62,17 @@ public class AppointmentsService {
         Map<String, Object> snapMap = objectMapper.convertValue(snap, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
         try {
             JsonNode result = softnetApi.createAppointment(snapMap, groupId);
+            // REQ-034: happy-case observability — a successful booking is now logged too, but with
+            // PII removed. Values are replaced by their char count ("***(12)"), so a booking stays
+            // traceable end-to-end via the trace ID without leaking name/e-mail/phone/plate/VIN.
+            log.info("BOOKING_CREATED appointment={} branch={} | client={} | car={}",
+                result.path("id").asText(""), branchLabel,
+                LogSanitizer.redact(snap.path("wishlist").path("client").toString()),
+                LogSanitizer.redact(snap.path("wishlist").path("car").toString()));
             return mapAppointmentResponse(result, dto);
         } catch (RuntimeException e) {
             log.error("SOFTNET_ERROR appointment creation failed for snap {} | rawSnap={}",
-                dto.snapId(), LogPayloadUtil.truncate(rawSnap.toString()));
+                dto.snapId(), LogSanitizer.redactAndTruncate(rawSnap.toString()));
             throw e;
         }
     }
