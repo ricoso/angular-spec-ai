@@ -37,7 +37,7 @@ public class OperationIdMapper {
         Map.entry("brake-check",             List.of("bremsen prüfen")),
         Map.entry("wiper-blades",            List.of("wischerblätter")),
         Map.entry("tuv",                     List.of("tüv")),
-        Map.entry("tire-change",             List.of("radwechsel ohne einlagerung")),
+        Map.entry("tire-change",             List.of("radwechsel ohne einlagerung", "bringe meine räder mit")),
         Map.entry("actions-checks",          List.of("sicherheits", "carcheck")),
         Map.entry("repair",                  List.of("diagnosearbeiten")),
         Map.entry("brake-fluid",             List.of("bremsflüssigkeit")),
@@ -47,10 +47,10 @@ public class OperationIdMapper {
         Map.entry("emergency-oil",           List.of("notfallöl")),
         Map.entry("uvv-inspection",          List.of("uvv")),
         Map.entry("ac-cleaning",             List.of("klimaanlagenreinigung")),
-        Map.entry("bring-own-tires",         List.of("radwechsel ohne einlagerung")),
-        Map.entry("stored-tires",            List.of("radwechsel mit einlagerung")),
+        Map.entry("bring-own-tires",         List.of("bringe meine räder mit", "radwechsel ohne einlagerung")),
+        Map.entry("stored-tires",            List.of("räder sind eingelagert", "radwechsel mit einlagerung")),
         Map.entry("pickup-delivery",         List.of("hol")),
-        Map.entry("store-tires",             List.of("radwechsel mit einlagerung")),
+        Map.entry("store-tires",             List.of("sollen bitte eingelagert", "angelieferten räder")),
         Map.entry("warranty-check",          List.of("herstellergarantie")),
         Map.entry("safety-check",            List.of("sicherheits")),
         Map.entry("fluid-check",             List.of("flüssigkeitsstände")),
@@ -180,10 +180,22 @@ public class OperationIdMapper {
     }
 
     private String findOperationByKeywords(Map<String, String> nameToId, List<String> keywords) {
+        // Pass 1 (AND): a name containing ALL keywords wins — matches compound names
+        // like "Sicherheits-CarCheck" for ["sicherheits", "carcheck"].
         for (Map.Entry<String, String> entry : nameToId.entrySet()) {
             String name = entry.getKey();
             boolean allMatch = keywords.stream().allMatch(kw -> name.contains(kw.toLowerCase(Locale.ROOT)));
             if (allMatch) return entry.getValue();
+        }
+        // Pass 2 (ordered OR): keywords act as fallback alternatives — needed because
+        // tireChange groups name the same service differently than default groups
+        // (REQ-035: "Räderwechsel - ich bringe meine Räder mit." vs
+        // "Radwechsel ohne Einlagerung").
+        for (String keyword : keywords) {
+            String kw = keyword.toLowerCase(Locale.ROOT);
+            for (Map.Entry<String, String> entry : nameToId.entrySet()) {
+                if (entry.getKey().contains(kw)) return entry.getValue();
+            }
         }
         return null;
     }

@@ -30,7 +30,7 @@ export class WorkshopCalendarApiService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  public async getWorkshopCalendarDays(fromDate: string, branchId: string, serviceIds: string[], brandName?: string): Promise<WorkshopCalendarDay[]> {
+  public async getWorkshopCalendarDays(fromDate: string, branchId: string, serviceIds: string[], brandName?: string, variant?: 'default' | 'tireChange'): Promise<WorkshopCalendarDay[]> {
     const toDate = new Date(`${fromDate}T00:00:00`);
     toDate.setDate(toDate.getDate() + 14);
     const toDateStr = this.formatIsoDate(toDate);
@@ -45,6 +45,9 @@ export class WorkshopCalendarApiService {
         // (SoftNet `asSoonAsPossible` scannt breiter).
         mode: 'next-available',
         brandName: brandName ?? '',
+        // Ohne variant loest das Backend die Default-Group auf — im tireChange-Flow
+        // lehnt SoftNet die Kombination aus Default-Group + Radwechsel-Operation ab (400).
+        variant: variant ?? 'default',
         // KEIN timePreference → alle Slots (vor- und nachmittags)
       })
     );

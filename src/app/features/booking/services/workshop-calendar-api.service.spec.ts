@@ -246,4 +246,24 @@ describe('WorkshopCalendarApiService', () => {
     req.flush(mockSnapResponse);
     await promise;
   });
+
+  it('should send variant "tireChange" when passed (REQ-035: calendar must hit the tireChange group)', async () => {
+    const promise = service.getWorkshopCalendarDays('2026-03-02', 'branch-1', ['stored-tires'], 'volkswagen', 'tireChange');
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+
+    expect(req.request.body.variant).toBe('tireChange');
+
+    req.flush(mockSnapResponse);
+    await promise;
+  });
+
+  it('should default variant to "default" when omitted', async () => {
+    const promise = service.getWorkshopCalendarDays('2026-03-02', 'branch-1', ['inspection']);
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+
+    expect(req.request.body.variant).toBe('default');
+
+    req.flush(mockSnapResponse);
+    await promise;
+  });
 });

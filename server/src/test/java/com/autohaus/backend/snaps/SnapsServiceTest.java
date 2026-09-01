@@ -57,7 +57,7 @@ class SnapsServiceTest {
 
         when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of(snap1, snap2, snap3));
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", "BMW", null, null, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("690000000000000000000001"), "2026-04-15", "2026-04-29", "next-available", "BMW", null, null, null, null);
 
         List<SnapResponseDto> result = service.getSnaps(request);
 
@@ -81,7 +81,7 @@ class SnapsServiceTest {
     void getSnaps_dateRangeMode() {
         when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of());
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("oil-change"), "2026-04-15", "2026-04-29", "date-range", null, null, null, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("690000000000000000000002"), "2026-04-15", "2026-04-29", "date-range", null, null, null, null, null);
         List<SnapResponseDto> result = service.getSnaps(request);
         assertTrue(result.isEmpty());
     }
@@ -90,7 +90,7 @@ class SnapsServiceTest {
     void getSnaps_withTimePreferenceAndReplacementCar() {
         when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of());
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", "BMW", "AM", true, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("690000000000000000000001"), "2026-04-15", "2026-04-29", "next-available", "BMW", "AM", true, null, null);
         List<SnapResponseDto> result = service.getSnaps(request);
         assertTrue(result.isEmpty());
         verify(softnetApi).getSnaps(any(), eq("mock-group-id"));
@@ -104,9 +104,24 @@ class SnapsServiceTest {
 
         when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of(snap));
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("tuv"), "2026-04-15", "2026-04-29", "next-available", null, null, null, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("690000000000000000000003"), "2026-04-15", "2026-04-29", "next-available", null, null, null, null, null);
         List<SnapResponseDto> result = service.getSnaps(request);
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getSnaps_unresolvableServices_failFastWith400InsteadOfCallingSoftnet() {
+        // REQ-035: frontend key that matches no operation in the group → mapper yields
+        // an empty list. SoftNet would answer an opaque 400 ("Missing operations list!"),
+        // so the service must fail fast with a clear message and never call SoftNet.
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("stored-tires"), "2026-04-15", "2026-04-29", "next-available", "BMW", null, null, null, null);
+
+        var ex = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+            () -> service.getSnaps(request));
+
+        assertEquals(400, ex.getStatusCode().value());
+        assertTrue(String.valueOf(ex.getReason()).contains("mock-group-id"));
+        verify(softnetApi, never()).getSnaps(any(), anyString());
     }
 
     @Test
@@ -118,7 +133,7 @@ class SnapsServiceTest {
 
         when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of(snap));
 
-        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("inspection"), "2026-04-15", "2026-04-29", "next-available", null, null, null, null, null);
+        SnapRequestDto request = new SnapRequestDto("branch-1", List.of("690000000000000000000001"), "2026-04-15", "2026-04-29", "next-available", null, null, null, null, null);
         List<SnapResponseDto> result = service.getSnaps(request);
 
         assertEquals(1, result.size());

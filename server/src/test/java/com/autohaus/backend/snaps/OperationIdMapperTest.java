@@ -130,6 +130,52 @@ class OperationIdMapperTest {
         org.mockito.Mockito.verify(softnetApi, org.mockito.Mockito.times(1)).getOperations(GROUP);
     }
 
+    // --- REQ-035: tire-change keys against the real tireChange-group naming ---
+    // 25 of 27 branches use exactly these operation names (verified against prod).
+
+    private static final String TC_GROUP        = "group-tirechange";
+    private static final String ID_BRING_OWN    = "690cbc4c9e5d1205e2f21b2c";
+    private static final String ID_STORED       = "690cbc4c9e5d1205e2f21b2f";
+    private static final String ID_STORE        = "690cbc4c9e5d1205e2f21b2d";
+
+    private List<JsonNode> fakeTireChangeOperations() {
+        ArrayNode arr = om.createArrayNode();
+        addOp(arr, ID_BRING_OWN, "Räderwechsel - ich bringe meine Räder mit.");
+        addOp(arr, ID_STORED,    "Räderwechsel - meine Räder sind eingelagert");
+        addOp(arr, ID_STORE,     "Meine angelieferten Räder sollen bitte eingelagert werden.");
+        addOp(arr, "op-hol",     "Hol & Bringservice");
+        return List.of(arr.get(0), arr.get(1), arr.get(2), arr.get(3));
+    }
+
+    @Test
+    void tireChangeKeys_resolveToThreeDistinctOperationsInTireChangeGroup() {
+        when(softnetApi.getOperations(TC_GROUP)).thenReturn(fakeTireChangeOperations());
+
+        List<String> result = mapper.mapToSoftnetOperations(
+            TC_GROUP, List.of("bring-own-tires", "stored-tires", "store-tires"));
+
+        assertEquals(List.of(ID_BRING_OWN, ID_STORED, ID_STORE), result);
+    }
+
+    @Test
+    void tireChangeKeys_stillResolveInDefaultGroupNaming() {
+        ArrayNode arr = om.createArrayNode();
+        addOp(arr, "op-ohne", "Radwechsel ohne Einlagerung");
+        addOp(arr, "op-mit",  "Radwechsel mit Einlagerung");
+        when(softnetApi.getOperations("group-default")).thenReturn(List.of(arr.get(0), arr.get(1)));
+
+        assertEquals(List.of("op-ohne"), mapper.mapToSoftnetOperations("group-default", List.of("bring-own-tires")));
+        assertEquals(List.of("op-mit"),  mapper.mapToSoftnetOperations("group-default", List.of("stored-tires")));
+        assertEquals(List.of("op-ohne"), mapper.mapToSoftnetOperations("group-default", List.of("tire-change")));
+    }
+
+    @Test
+    void genericTireChangeKey_fallsBackToBringOwnInTireChangeGroup() {
+        when(softnetApi.getOperations(TC_GROUP)).thenReturn(fakeTireChangeOperations());
+
+        assertEquals(List.of(ID_BRING_OWN), mapper.mapToSoftnetOperations(TC_GROUP, List.of("tire-change")));
+    }
+
     // --- REQ-030: reverse resolution (operation ID -> plain-text name) ---
 
     @Test

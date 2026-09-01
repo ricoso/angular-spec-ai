@@ -598,7 +598,7 @@ export const BookingStore = signalStore(
           const branchId = store.selectedLocation()?.id ?? '';
           const serviceIds = store.selectedServices().map(s => s.serviceId);
           const brandName = store.selectedBrand() ?? '';
-          return from(workshopCalendarApi.getWorkshopCalendarDays(fromDate, branchId, serviceIds, brandName)).pipe(
+          return from(workshopCalendarApi.getWorkshopCalendarDays(fromDate, branchId, serviceIds, brandName, store.selectedVariant())).pipe(
             tap((workshopCalendarDays) => {
               patchState(store, { workshopCalendarDays, isLoading: false });
             }),
