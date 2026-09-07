@@ -285,6 +285,83 @@ describe('AppointmentApiService', () => {
     await promise;
   });
 
+  // REQ-035: Boxenstopp — Samstage sind fuer den Radwechsel reserviert, deshalb
+  // bevorzugt die Schnellauswahl im tireChange-Flow die naechsten 3 Samstage.
+  describe('tireChange Saturday preference (REQ-035)', () => {
+    const day = (date: string, abbr: string, slotId: string): object => ({
+      date,
+      displayDate: date.split('-').reverse().join('.'),
+      dayAbbreviation: abbr,
+      slots: [{ id: slotId, time: '08:00', displayTime: '08:00 Uhr', available: true }],
+    });
+
+    it('should list the next 3 Saturdays first, then fill with earliest weekday', async () => {
+      const response = { data: [
+        day('2026-10-05', 'Mo', 'mo-1'),
+        day('2026-10-06', 'Di', 'di-1'),
+        day('2026-10-10', 'Sa', 'sa-1'),
+        day('2026-10-12', 'Mo', 'mo-2'),
+        day('2026-10-17', 'Sa', 'sa-2'),
+        day('2026-10-24', 'Sa', 'sa-3'),
+        day('2026-10-31', 'Sa', 'sa-4'),
+      ] };
+      const promise = service.getAppointments('branch-1', ['stored-tires'], 'volkswagen', 'tireChange');
+      const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+      req.flush(response);
+
+      const slots = await promise;
+      expect(slots.map(s => s.id)).toEqual(['sa-1', 'sa-2', 'sa-3', 'mo-1']);
+    });
+
+    it('should fill with weekdays when fewer than 3 Saturdays have slots', async () => {
+      const response = { data: [
+        day('2026-10-05', 'Mo', 'mo-1'),
+        day('2026-10-06', 'Di', 'di-1'),
+        day('2026-10-07', 'Mi', 'mi-1'),
+        day('2026-10-10', 'Sa', 'sa-1'),
+        day('2026-10-12', 'Mo', 'mo-2'),
+      ] };
+      const promise = service.getAppointments('branch-1', ['stored-tires'], 'volkswagen', 'tireChange');
+      const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+      req.flush(response);
+
+      const slots = await promise;
+      expect(slots.map(s => s.id)).toEqual(['sa-1', 'mo-1', 'di-1', 'mi-1']);
+    });
+
+    it('should fall back to earliest 4 days when no Saturday has slots', async () => {
+      const response = { data: [
+        day('2026-10-05', 'Mo', 'mo-1'),
+        day('2026-10-06', 'Di', 'di-1'),
+        day('2026-10-07', 'Mi', 'mi-1'),
+        day('2026-10-08', 'Do', 'do-1'),
+        day('2026-10-09', 'Fr', 'fr-1'),
+      ] };
+      const promise = service.getAppointments('branch-1', ['stored-tires'], 'volkswagen', 'tireChange');
+      const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+      req.flush(response);
+
+      const slots = await promise;
+      expect(slots.map(s => s.id)).toEqual(['mo-1', 'di-1', 'mi-1', 'do-1']);
+    });
+
+    it('should NOT reorder days for the default variant (behaviour unchanged)', async () => {
+      const response = { data: [
+        day('2026-10-05', 'Mo', 'mo-1'),
+        day('2026-10-06', 'Di', 'di-1'),
+        day('2026-10-10', 'Sa', 'sa-1'),
+        day('2026-10-12', 'Mo', 'mo-2'),
+        day('2026-10-17', 'Sa', 'sa-2'),
+      ] };
+      const promise = service.getAppointments('branch-1', ['inspection'], 'volkswagen', 'default');
+      const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+      req.flush(response);
+
+      const slots = await promise;
+      expect(slots.map(s => s.id)).toEqual(['mo-1', 'di-1', 'sa-1', 'mo-2']);
+    });
+  });
+
   it('should create appointment via POST with new DTO format', async () => {
     const request = {
       snapId: 'snap-123',

@@ -7,7 +7,9 @@ import com.autohaus.backend.softnet.SoftnetApiClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -38,6 +40,14 @@ public class SnapsService {
     public List<SnapResponseDto> getSnaps(SnapRequestDto request) {
         String groupId = setupService.resolveGroupId(request.branchId(), request.variant());
         List<String> mappedOps = operationIdMapper.mapToSoftnetOperations(groupId, request.jobTypeIds());
+
+        // SoftNet rejects an empty operations list with an opaque 400 ("Missing operations
+        // list!"). Fail fast with a clear message instead of forwarding a broken request.
+        if (mappedOps.isEmpty() && request.jobTypeIds() != null && !request.jobTypeIds().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "No SoftNet operations resolved for requested services " + request.jobTypeIds()
+                    + " in group \"" + groupId + "\"");
+        }
 
         Map<String, Object> softnetRequest = new LinkedHashMap<>();
         softnetRequest.put("groupid", groupId);

@@ -118,18 +118,29 @@ export class AppointmentApiService {
       return available[0];
     };
 
-    return response.data
+    const candidates = response.data
       .map(day => ({ day, slot: pickSlot(day.slots) }))
-      .filter((entry): entry is { day: SnapDayDto; slot: NonNullable<ReturnType<typeof pickSlot>> } => entry.slot !== undefined)
-      .slice(0, 4)
-      .map(({ day, slot }) => ({
-        id: slot.id,
-        date: day.date,
-        displayDate: day.displayDate,
-        dayAbbreviation: day.dayAbbreviation as DayAbbreviation,
-        time: slot.time,
-        displayTime: slot.displayTime,
-      }));
+      .filter((entry): entry is { day: SnapDayDto; slot: NonNullable<ReturnType<typeof pickSlot>> } => entry.slot !== undefined);
+
+    // Boxenstopp: Samstage sind fuer Radwechsel reserviert — im tireChange-Flow
+    // die naechsten 3 Samstage zuerst anbieten, danach mit den fruehesten
+    // Werktagen auf 4 Vorschlaege auffuellen. Default-Flow bleibt unveraendert.
+    const selected = variant === 'tireChange'
+      ? (() => {
+          const saturdays = candidates.filter(entry => entry.day.dayAbbreviation === 'Sa').slice(0, 3);
+          const weekdays = candidates.filter(entry => entry.day.dayAbbreviation !== 'Sa');
+          return [...saturdays, ...weekdays].slice(0, 4);
+        })()
+      : candidates.slice(0, 4);
+
+    return selected.map(({ day, slot }) => ({
+      id: slot.id,
+      date: day.date,
+      displayDate: day.displayDate,
+      dayAbbreviation: day.dayAbbreviation as DayAbbreviation,
+      time: slot.time,
+      displayTime: slot.displayTime,
+    }));
   }
 
   public async createAppointment(request: CreateAppointmentRequest): Promise<AppointmentResponse> {
