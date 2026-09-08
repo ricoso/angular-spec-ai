@@ -35,6 +35,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AppointmentsServiceTest {
 
+    /** Real 24-char SoftNet rent-category id ("Kleinwagen", Gottfried Schultz Velbert). */
+    private static final String RENT_CATEGORY_ID = "682ad3dc6969db66dd27f6c3";
+
     @Mock private SoftnetApiClient softnetApi;
     @Mock private SnapCache snapCache;
     @Mock private SetupService setupService;
@@ -207,13 +210,15 @@ class AppointmentsServiceTest {
         assertFalse(wishlist.containsKey("callbackPreference"));
     }
 
+    // REQ-036: the id comes from /api/planning/rentcategories, so it must travel in
+    // "rentCategoryid" — "fleetCategoryid" points at a different SoftNet collection.
     @Test
-    void createAppointment_withRentCategory_setsFleetFields() {
+    void createAppointment_withRentCategory_sendsRentCategoryidNotFleetCategoryid() {
         ObjectNode snap = baseSnap();
         when(snapCache.getRawSnap("snap-fleet")).thenReturn(snap);
         when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
 
-        CreateAppointmentRequest dto = buildDto("snap-fleet", "cat-abc", null);
+        CreateAppointmentRequest dto = buildDto("snap-fleet", RENT_CATEGORY_ID, null);
         service.createAppointment(dto);
 
         Map<String, Object> sent = captureSentSnap();
@@ -221,7 +226,89 @@ class AppointmentsServiceTest {
         Map<String, Object> wishlist = (Map<String, Object>) sent.get("wishlist");
         assertEquals(Boolean.TRUE, wishlist.get("isFleet"));
         assertEquals("rentObject", wishlist.get("fleetType"));
-        assertEquals("cat-abc", wishlist.get("fleetCategoryid"));
+        assertEquals(RENT_CATEGORY_ID, wishlist.get("rentCategoryid"));
+        assertFalse(wishlist.containsKey("fleetCategoryid"));
+    }
+
+    @Test
+    void createAppointment_rentCategoryWithWrongLength_isNotSentAtAll() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-bad-cat")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        // "cat-abc" is not a 24-char SoftNet id — sending it would be rejected downstream.
+        CreateAppointmentRequest dto = buildDto("snap-bad-cat", "cat-abc", null);
+        service.createAppointment(dto);
+
+        Map<String, Object> sent = captureSentSnap();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> wishlist = (Map<String, Object>) sent.get("wishlist");
+        assertFalse(wishlist.containsKey("isFleet"));
+        assertFalse(wishlist.containsKey("fleetType"));
+        assertFalse(wishlist.containsKey("rentCategoryid"));
+        assertFalse(wishlist.containsKey("fleetCategoryid"));
+    }
+
+    @Test
+    void createAppointment_withoutRentCategory_setsNoMobilityFields() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-no-cat")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        service.createAppointment(buildDto("snap-no-cat", null, null));
+
+        Map<String, Object> sent = captureSentSnap();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> wishlist = (Map<String, Object>) sent.get("wishlist");
+        assertFalse(wishlist.containsKey("isFleet"));
+        assertFalse(wishlist.containsKey("fleetType"));
+        assertFalse(wishlist.containsKey("rentCategoryid"));
+    }
+
+    @Test
+    void createAppointment_logsMobilityFields_soASuccessfulBookingIsTraceable() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-mob-log")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        ch.qos.logback.classic.Logger logger =
+            (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(AppointmentsService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            service.createAppointment(buildDto("snap-mob-log", RENT_CATEGORY_ID, null));
+
+            String infoLine = bookingLogLine(appender);
+            assertTrue(infoLine.contains("mobility="), infoLine);
+            assertTrue(infoLine.contains(RENT_CATEGORY_ID), infoLine);   // id is not PII
+            assertTrue(infoLine.contains("\"isFleet\":true"), infoLine);
+            assertTrue(infoLine.contains("\"fleetType\":\"rentObject\""), infoLine);
+        } finally {
+            logger.detachAppender(appender);
+        }
+    }
+
+    @Test
+    void createAppointment_withoutMobility_logsEmptyMobilityObject() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-mob-empty")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        ch.qos.logback.classic.Logger logger =
+            (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(AppointmentsService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            service.createAppointment(buildDto("snap-mob-empty", null, null));
+
+            assertTrue(bookingLogLine(appender).contains("mobility={}"), bookingLogLine(appender));
+        } finally {
+            logger.detachAppender(appender);
+        }
     }
 
     @Test
@@ -335,6 +422,15 @@ class AppointmentsServiceTest {
             callbackRequested,
             null
         );
+    }
+
+    private String bookingLogLine(ListAppender<ILoggingEvent> appender) {
+        return appender.list.stream()
+            .filter(event -> event.getLevel() == Level.INFO)
+            .map(ILoggingEvent::getFormattedMessage)
+            .filter(msg -> msg.contains("BOOKING_CREATED"))
+            .findFirst()
+            .orElse("");
     }
 
     @SuppressWarnings("unchecked")
