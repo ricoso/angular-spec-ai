@@ -25,6 +25,12 @@ public class AppointmentsService {
 
     private static final Logger log = LoggerFactory.getLogger(AppointmentsService.class);
 
+    /** SoftNet spec: wishlist.rentCategoryid has minLength == maxLength == 24. */
+    private static final int RENT_CATEGORY_ID_LENGTH = 24;
+
+    /** REQ-036: non-PII wishlist fields added to the happy-path booking log. */
+    private static final List<String> MOBILITY_LOG_FIELDS = List.of("isFleet", "fleetType", "rentCategoryid");
+
     private final SoftnetApiClient softnetApi;
     private final SnapCache snapCache;
     private final ObjectMapper objectMapper;
@@ -65,10 +71,11 @@ public class AppointmentsService {
             // REQ-034: happy-case observability — a successful booking is now logged too, but with
             // PII removed. Values are replaced by their char count ("***(12)"), so a booking stays
             // traceable end-to-end via the trace ID without leaking name/e-mail/phone/plate/VIN.
-            log.info("BOOKING_CREATED appointment={} branch={} | client={} | car={}",
+            log.info("BOOKING_CREATED appointment={} branch={} | client={} | car={} | mobility={}",
                 result.path("id").asText(""), branchLabel,
                 LogSanitizer.redact(snap.path("wishlist").path("client").toString()),
-                LogSanitizer.redact(snap.path("wishlist").path("car").toString()));
+                LogSanitizer.redact(snap.path("wishlist").path("car").toString()),
+                mobilityLogFields(snap.path("wishlist")));
             return mapAppointmentResponse(result, dto);
         } catch (RuntimeException e) {
             log.error("SOFTNET_ERROR appointment creation failed for snap {} | rawSnap={}",
@@ -89,6 +96,21 @@ public class AppointmentsService {
         AppointmentResponseDto mapped = mapAppointmentResponse(result, null);
         return new AppointmentResponseDto(mapped.id(), "cancelled", mapped.date(), mapped.time(),
             mapped.branchName(), mapped.services(), mapped.customerName(), mapped.licensePlate());
+    }
+
+    /**
+     * REQ-036: mobility part of the booking log. Only ids and booleans, so no PII and no
+     * redaction — unlike the client/car sections. Stays an empty object when the customer
+     * booked without a rental car, keeping the log line greppable either way.
+     */
+    private String mobilityLogFields(JsonNode wishlist) {
+        ObjectNode mobility = objectMapper.createObjectNode();
+        for (String field : MOBILITY_LOG_FIELDS) {
+            if (wishlist.has(field)) {
+                mobility.set(field, wishlist.get(field));
+            }
+        }
+        return mobility.toString();
     }
 
     private void patchSnapWithBookingData(ObjectNode snap, CreateAppointmentRequest dto) {
@@ -132,10 +154,20 @@ public class AppointmentsService {
             wishlist.put("note", dto.note());
         }
 
-        if (dto.rentCategoryId() != null && !dto.rentCategoryId().isBlank()) {
-            wishlist.put("isFleet", true);
-            wishlist.put("fleetType", "rentObject");
-            wishlist.put("fleetCategoryid", dto.rentCategoryId());
+        // REQ-036: the customer picks from /api/planning/rentcategories, so the id belongs in
+        // "rentCategoryid". It used to go into "fleetCategoryid", which SoftNet resolves against
+        // the separate fleetcategory collection — that one needs the scope.api.planning.rent.service
+        // scope we do not hold, so the category was silently unresolvable downstream.
+        String rentCategoryId = dto.rentCategoryId();
+        if (rentCategoryId != null && !rentCategoryId.isBlank()) {
+            if (rentCategoryId.length() == RENT_CATEGORY_ID_LENGTH) {
+                wishlist.put("isFleet", true);
+                wishlist.put("fleetType", "rentObject");
+                wishlist.put("rentCategoryid", rentCategoryId);
+            } else {
+                log.warn("Ignoring rent category id: expected {} chars, got {}",
+                    RENT_CATEGORY_ID_LENGTH, rentCategoryId.length());
+            }
         }
 
         if (Boolean.TRUE.equals(dto.callbackRequested())) {
