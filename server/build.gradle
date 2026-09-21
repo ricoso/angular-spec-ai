@@ -34,6 +34,11 @@ dependencies {
 	implementation 'com.bucket4j:bucket4j_jdk17-core:8.14.0'
 	implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	// REQ-037: JavaTimeModule for the usage blob round-trip (Instant/LocalDate).
+	// Declared explicitly instead of relying on transitive resolution — the module is
+	// registered on UsageBlobClient's own local mapper, the global ObjectMapper bean
+	// stays unchanged. Still no Azure SDK: blob access is plain RestClient (see above).
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 

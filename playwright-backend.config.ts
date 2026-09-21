@@ -49,6 +49,11 @@ export default defineConfig({
 
   webServer: {
     command: 'cd server && ./gradlew bootRun',
+    // REQ-037: fixed local credentials for the Basic-Auth protected status page
+    // (/internal/report). Local/test only — production uses the Azure secret store.
+    env: {
+      REPORT_ADMIN_PASSWORD: process.env['REPORT_ADMIN_PASSWORD'] ?? 'e2e-local-secret',
+    },
     url: 'http://localhost:3000/api/v1/health',
     reuseExistingServer: !process.env['CI'],
     timeout: 60_000,

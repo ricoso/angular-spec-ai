@@ -8,6 +8,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -25,8 +26,22 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper;
 
-    public RateLimitFilter(ObjectMapper objectMapper) {
+    /**
+     * Requests per window and IP / Requests pro Zeitfenster und IP. Production default is
+     * unchanged (500 per 15 min). Made configurable because the Playwright suite drives several
+     * hundred API calls from a single IP within minutes and would otherwise hit 429 mid-run —
+     * {@code scripts/test-local.sh} raises it for local E2E only. / Nur konfigurierbar gemacht,
+     * damit die E2E-Suite nicht in das Limit läuft; der Produktionswert bleibt unverändert.
+     */
+    private final long capacity;
+    private final long refillMinutes;
+
+    public RateLimitFilter(ObjectMapper objectMapper,
+                           @Value("${app.rate-limit.capacity:500}") long capacity,
+                           @Value("${app.rate-limit.refill-minutes:15}") long refillMinutes) {
         this.objectMapper = objectMapper;
+        this.capacity = capacity;
+        this.refillMinutes = refillMinutes;
     }
 
     @Override
@@ -56,7 +71,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private Bucket createBucket() {
         return Bucket.builder()
-            .addLimit(Bandwidth.builder().capacity(500).refillGreedy(500, Duration.ofMinutes(15)).build())
+            .addLimit(Bandwidth.builder().capacity(capacity)
+                .refillGreedy(capacity, Duration.ofMinutes(refillMinutes)).build())
             .build();
     }
 }

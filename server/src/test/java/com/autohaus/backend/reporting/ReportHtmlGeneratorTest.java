@@ -105,4 +105,63 @@ class ReportHtmlGeneratorTest {
         assertNotNull(html);
         assertTrue(html.contains("<!doctype html>"));
     }
+
+    // -------------------------------------------------------------------------------------
+    // REQ-037 §14.2: page frame and report fragment are separate / Seitenrahmen und Fragment
+    // sind getrennt. The store holds a fragment, renderPage(...) adds the frame — otherwise a
+    // full document would end up nested inside the page (TC-17).
+    // -------------------------------------------------------------------------------------
+
+    @Test
+    void reportFragmentCarriesNoDocumentFrame() {
+        ReportModel model = new ReportModel(
+            Instant.parse("2026-07-09T03:00:00Z"),
+            new BookingStats(0, 0, 0), new BookingStats(0, 0, 0),
+            Map.of(), Map.of(), List.of(), AiErrorReportSummary.unavailable());
+
+        String fragment = generator.reportFragment(model);
+
+        assertFalse(fragment.contains("<!doctype"), "a fragment must not open a document");
+        assertFalse(fragment.contains("<html"), "a fragment must not open <html>");
+        assertFalse(fragment.contains("<style"), "the page stylesheet belongs to renderPage(...)");
+        assertTrue(fragment.startsWith("<section class=\"ai\""), "the fragment starts with the AI section");
+    }
+
+    @Test
+    void reportFragmentWithErrorsStillCarriesNoDocumentFrame() {
+        String fragment = generator.reportFragment(sampleModel("{\"brand\":\"volkswagen\"}"));
+
+        assertFalse(fragment.contains("<!doctype"));
+        assertFalse(fragment.contains("<html"));
+        // The only <style> a fragment may carry is the per-report CSS-only error filter kept from
+        // REQ-030 (one selector per filter button); the page stylesheet is never part of it. /
+        // Nur der Filter-Style des Fehler-Reports, nie das Seiten-CSS.
+        assertFalse(fragment.contains(":root{--ink:"), "the page stylesheet must stay in renderPage(...)");
+    }
+
+    @Test
+    void renderPagePlacesUsageStatisticsBeforeTheAiSection() {
+        String fragment = generator.reportFragment(sampleModel("{\"brand\":\"volkswagen\"}"));
+
+        String html = generator.renderPage(com.autohaus.backend.usage.UsageStats.unavailable(), fragment);
+
+        int header = html.indexOf("<header class=\"hd\">");
+        int usage = html.indexOf("class=\"us\"");
+        int ai = html.indexOf("<section class=\"ai\"");
+        assertTrue(header > -1, "page header must be rendered");
+        assertTrue(usage > -1, "AC-2: the usage section must be rendered");
+        assertTrue(ai > -1, "the report fragment must be embedded");
+        assertTrue(header < usage, "AC-2: the statistics follow the page header");
+        assertTrue(usage < ai, "AC-2: the statistics precede the KI-Zusammenfassung");
+        assertTrue(html.startsWith("<!doctype html>"), "renderPage(...) still produces a full document");
+    }
+
+    @Test
+    void renderPageDropsTheUsageSectionWhenTheFeatureIsOff() {
+        String html = generator.renderPage(null, "<section class=\"ai\">x</section>");
+
+        assertFalse(html.contains("class=\"us\""), "AC-22: the section is dropped");
+        assertFalse(html.contains("nicht verf\u00fcgbar"), "AC-22: without any replacement hint");
+        assertTrue(html.contains("<section class=\"ai\">x</section>"), "the fragment is still embedded");
+    }
 }

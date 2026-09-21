@@ -17,7 +17,9 @@ class RateLimitFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new RateLimitFilter(objectMapper);
+        // Production values (500 per 15 min) pinned explicitly, so these tests keep asserting
+        // the real limit even though it is configurable since REQ-037. / Produktionswerte fixiert.
+        filter = new RateLimitFilter(objectMapper, 500L, 15L);
     }
 
     @Test

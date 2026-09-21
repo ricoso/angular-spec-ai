@@ -41,6 +41,16 @@ kill_backend_on_port() {
 
 start_backend() {
   echo "▶ Starte frisches Backend (gradle bootRun)…"
+  # REQ-037: fixed local credentials so the E2E spec can open the Basic-Auth protected
+  # status page (/internal/report). Without this the backend generates a random UUID
+  # password on every start and the spec could never authenticate. Local/test only —
+  # in production REPORT_ADMIN_PASSWORD comes from the Azure secret store.
+  export REPORT_ADMIN_PASSWORD="${REPORT_ADMIN_PASSWORD:-e2e-local-secret}"
+  # The Playwright suite drives several hundred /api/ calls from one IP within minutes and
+  # would hit the production rate limit (500 per 15 min) mid-run — that is what makes the
+  # booking specs fail with "Fehler beim Laden" (HTTP 429), not a product defect.
+  # Local test runs only; production keeps the default.
+  export APP_RATE_LIMIT_CAPACITY="${APP_RATE_LIMIT_CAPACITY:-100000}"
   ( cd server && ./gradlew bootRun > /tmp/gs-backend-test.log 2>&1 ) &
   BACKEND_PID=$!
   echo "▶ Warte auf Health ($HEALTH_URL)…"

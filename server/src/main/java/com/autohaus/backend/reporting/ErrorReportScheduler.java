@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Orchestrates report generation (REQ-030): query → aggregate → LLM summary → HTML → store.
+ * Orchestrates report generation (REQ-030): query → aggregate → LLM summary → HTML fragment →
+ * store (REQ-037 §14.2: the page frame is added by {@code ReportController}).
  * Runs nightly (cron) and once on startup (bridges container restarts). Created as a bean
  * only when the feature toggle is on (see {@code ErrorReportingConfiguration}).
  */
@@ -50,7 +51,9 @@ public class ErrorReportScheduler {
             AiErrorReportSummary summary = llmSummaryService.summarize(base);
             ReportModel full = new ReportModel(base.generatedAt(), base.snaps(), base.appointments(),
                 base.errorsByBrand(), base.errorsByLocation(), base.errors(), summary);
-            store.update(htmlGenerator.generate(full), full.generatedAt());
+            // REQ-037 §14.2: the store holds a fragment, the page frame is composed by
+            // ReportController via renderPage(usage, fragment). / Fragment statt Vollseite.
+            store.update(htmlGenerator.reportFragment(full), full.generatedAt());
             log.info("REQ-030 report generated: {} snap searches, {} bookings, {} errors",
                 base.snaps().started(), base.appointments().started(), base.errors().size());
         } catch (LogAnalyticsClient.LogAnalyticsUnavailableException e) {
@@ -68,7 +71,10 @@ public class ErrorReportScheduler {
                         + "wieder besteht, wird beim nächsten Lauf ein vollständiger Report erstellt.",
                     List.of(),
                     List.of()));
-            store.update(htmlGenerator.generate(fallback), fallback.generatedAt());
+            // REQ-037 §14.2 / TC-17: the fallback path stores a fragment as well — a full
+            // document here would end up nested inside renderPage(...) exactly during an
+            // outage. / Auch der Fallback speichert ein Fragment.
+            store.update(htmlGenerator.reportFragment(fallback), fallback.generatedAt());
         } catch (RuntimeException e) {
             log.error("REQ-030 report generation failed unexpectedly: {}", e.getMessage(), e);
         }
