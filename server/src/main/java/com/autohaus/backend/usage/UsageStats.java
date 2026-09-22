@@ -28,7 +28,9 @@ import java.util.Locale;
  * @param liveAsOf last successful Log Analytics refresh, {@code null} when never / null, wenn nie
  * @param liveAvailable {@code false} → hint „Live-Daten derzeit nicht verfügbar"
  * @param historyAvailable {@code false} → hint „Historie derzeit nicht verfügbar"
- * @param collectingSince first persisted day, {@code null} when the history is empty
+ * @param collectingSince the day from which the numbers are meaningful: the later of the
+ *     configured {@code usage.collecting-since} (BR-15) and the first persisted day, {@code null}
+ *     when neither is set / das spätere von konfiguriertem Beginn und erstem Blob-Tag
  * @param lastRollupDay most recent day in the blob; older than 3 days → {@code .us-warn} (§9)
  */
 public record UsageStats(

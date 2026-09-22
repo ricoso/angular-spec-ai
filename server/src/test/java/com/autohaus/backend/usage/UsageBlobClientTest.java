@@ -570,6 +570,6 @@ class UsageBlobClientTest {
 
     private static UsageStatsProperties properties(String account) {
         return new UsageStatsProperties(true, "0 */15 * * * *", "0 30 3 * * *", "Europe/Berlin",
-            24, 60, new UsageStatsProperties.Storage(account, "usage-stats", "usage-daily.json"));
+            null, 24, 60, new UsageStatsProperties.Storage(account, "usage-stats", "usage-daily.json"));
     }
 }

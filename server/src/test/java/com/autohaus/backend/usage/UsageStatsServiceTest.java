@@ -232,16 +232,151 @@ class UsageStatsServiceTest {
         assertEquals(LocalDate.of(2026, 10, 31), months.get(Month.OCTOBER.getValue() - 1).rangeTo());
     }
 
+    // ---- BR-15: the collection start / Erfassungsbeginn ----
+
+    /**
+     * BR-15: days before the configured start are not counted anywhere — not in the month, not in
+     * the year, not in the monthly series. The reason is concrete: before the feature went live the
+     * {@code device} log field did not exist, so those visits would all land in „unbekannt" (BR-1)
+     * and the page would show thousands of visits without a usable device split. / Tage davor
+     * zählen nirgends.
+     */
+    @Test
+    void doesNotCountDaysBeforeTheConfiguredCollectionStart() {
+        UsageStatsService service = service("2026-09-22T10:00:00Z", LocalDate.of(2026, 9, 21));
+        Map<LocalDate, DailyUsage> blob = new LinkedHashMap<>();
+        // 8000 visits without a device field — exactly the misleading number BR-15 removes.
+        blob.put(LocalDate.of(2026, 8, 15), day(4000, 0, 0, 0));
+        blob.put(LocalDate.of(2026, 9, 10), day(4000, 0, 0, 0));
+        blob.put(LocalDate.of(2026, 9, 21), day(120, 10, 4, 3));
+        blob.put(LocalDate.of(2026, 9, 22), day(80, 6, 2, 1));
+
+        UsageStats stats = service.buildPeriods(history(blob), true, Map.of(), true, null);
+
+        assertEquals(200L, stats.month().visitCount(), "only 21.09. and 22.09. count");
+        assertEquals(200L, stats.year().visitCount(), "the year is clamped by the same rule");
+        assertEquals(200L, stats.months().get(Month.SEPTEMBER.getValue() - 1).visitCount());
+        assertFalse(stats.months().get(Month.AUGUST.getValue() - 1).hasData(),
+            "August is entirely before the start and must render as „—\"");
+        // Month, year and the twelve rows are clamped at one single place and cannot disagree.
+        assertEquals(stats.year().visitCount(),
+            stats.months().stream().mapToLong(PeriodUsage::visitCount).sum());
+    }
+
+    /**
+     * BR-15: the month the start falls into begins at the start day, not at the first of the month
+     * — otherwise the range label „01.09.2026 – 22.09.2026" would claim three weeks the page
+     * deliberately does not count. / Der Zeitraum beginnt am Erfassungsbeginn.
+     */
+    @Test
+    void theMonthContainingTheStartBeginsAtTheStartDayNotAtTheFirst() {
+        UsageStatsService service = service("2026-09-22T10:00:00Z", LocalDate.of(2026, 9, 21));
+
+        UsageStats stats = service.buildPeriods(UsageHistory.empty(), true, Map.of(), true, null);
+
+        assertEquals(LocalDate.of(2026, 9, 21), stats.month().rangeFrom());
+        assertEquals(LocalDate.of(2026, 9, 22), stats.month().rangeTo());
+        assertTrue(stats.month().rangeLabel().startsWith("21.09.2026 – 22.09.2026"));
+        assertEquals(LocalDate.of(2026, 9, 21), stats.year().rangeFrom(),
+            "the year block starts at the collection start, not on 01.01.");
+        assertEquals(LocalDate.of(2026, 9, 21),
+            stats.months().get(Month.SEPTEMBER.getValue() - 1).rangeFrom());
+    }
+
+    /**
+     * BR-15/AC-12: a month entirely before the start has {@code hasData == false} and therefore
+     * renders as „—", not as „0". „No data" and „nothing happened" are different statements. /
+     * „keine Daten", nicht „0".
+     */
+    @Test
+    void monthsEntirelyBeforeTheStartHaveNoDataRatherThanZero() {
+        UsageStatsService service = service("2026-09-22T10:00:00Z", LocalDate.of(2026, 9, 21));
+        Map<LocalDate, DailyUsage> blob = new LinkedHashMap<>();
+        for (Month month : List.of(Month.JUNE, Month.JULY, Month.AUGUST)) {
+            blob.put(LocalDate.of(2026, month, 5), day(500, 100, 20, 10));
+        }
+        blob.put(LocalDate.of(2026, 9, 22), day(80, 6, 2, 1));
+
+        List<PeriodUsage> months =
+            service.buildPeriods(history(blob), true, Map.of(), true, null).months();
+
+        for (Month month : List.of(Month.JUNE, Month.JULY, Month.AUGUST)) {
+            PeriodUsage row = months.get(month.getValue() - 1);
+            assertFalse(row.hasData(), month + " lies before the collection start");
+            assertEquals(0L, row.visitCount());
+            // The calendar bounds stay intact — the row is empty, not a one-day range (§12.2).
+            assertEquals(LocalDate.of(2026, month, 1), row.rangeFrom());
+        }
+        assertTrue(months.get(Month.SEPTEMBER.getValue() - 1).hasData());
+    }
+
+    /**
+     * Regression: without a configured start nothing changes at all — the same history yields the
+     * same numbers and the same ranges as before BR-15 existed. / Ohne Konfiguration unverändert.
+     */
+    @Test
+    void withoutAConfiguredStartTheBehaviourIsUnchanged() {
+        Map<LocalDate, DailyUsage> blob = new LinkedHashMap<>();
+        blob.put(LocalDate.of(2026, 8, 15), day(4000, 0, 0, 0));
+        blob.put(LocalDate.of(2026, 9, 10), day(4000, 0, 0, 0));
+        blob.put(LocalDate.of(2026, 9, 22), day(80, 6, 2, 1));
+
+        UsageStats stats = service("2026-09-22T10:00:00Z")
+            .buildPeriods(history(blob), true, Map.of(), true, null);
+
+        assertEquals(4080L, stats.month().visitCount());
+        assertEquals(8080L, stats.year().visitCount());
+        assertEquals(LocalDate.of(2026, 9, 1), stats.month().rangeFrom());
+        assertEquals(LocalDate.of(2026, 1, 1), stats.year().rangeFrom());
+        assertTrue(stats.months().get(Month.AUGUST.getValue() - 1).hasData());
+        assertEquals(LocalDate.of(2026, 8, 15), stats.collectingSince(),
+            "without the property the first persisted day still wins");
+    }
+
+    /**
+     * BR-15: the „Erfassung seit" date. The configured start wins when the history is still empty
+     * — which is exactly the state right after going live — and when both are known the
+     * <b>later</b> of the two wins, because before that there is demonstrably no usable data. /
+     * Das spätere von Property und erstem Blob-Tag.
+     */
+    @Test
+    void reportsTheLaterOfConfiguredStartAndFirstPersistedDay() {
+        // History still empty: the configured start is what the page must announce.
+        UsageStats empty = service("2026-09-22T10:00:00Z", LocalDate.of(2026, 9, 21))
+            .buildPeriods(UsageHistory.empty(), true, Map.of(), true, null);
+        assertEquals(LocalDate.of(2026, 9, 21), empty.collectingSince());
+        assertNull(empty.lastRollupDay());
+
+        // Blob reaches further back than the property → the property wins (later date).
+        UsageStats propertyWins = service("2026-09-22T10:00:00Z", LocalDate.of(2026, 9, 21))
+            .buildPeriods(history(Map.of(LocalDate.of(2026, 8, 1), day(10, 0, 0, 0))),
+                true, Map.of(), true, null);
+        assertEquals(LocalDate.of(2026, 9, 21), propertyWins.collectingSince());
+
+        // Blob starts after the property → the blob day wins (later date).
+        UsageStats blobWins = service("2026-09-22T10:00:00Z", LocalDate.of(2026, 9, 1))
+            .buildPeriods(history(Map.of(LocalDate.of(2026, 9, 21), day(10, 0, 0, 0))),
+                true, Map.of(), true, null);
+        assertEquals(LocalDate.of(2026, 9, 21), blobWins.collectingSince());
+    }
+
     // ---- helpers ----
 
     private static UsageStatsService service(String nowUtc) {
-        return new UsageStatsService(properties(),
+        return new UsageStatsService(properties(null),
             Clock.fixed(Instant.parse(nowUtc), BERLIN));
     }
 
-    private static UsageStatsProperties properties() {
+    /** BR-15: the same service, but with a configured collection start. / mit Erfassungsbeginn. */
+    private static UsageStatsService service(String nowUtc, LocalDate collectingSince) {
+        return new UsageStatsService(properties(collectingSince),
+            Clock.fixed(Instant.parse(nowUtc), BERLIN));
+    }
+
+    private static UsageStatsProperties properties(LocalDate collectingSince) {
         return new UsageStatsProperties(true, "0 */15 * * * *", "0 30 3 * * *", "Europe/Berlin",
-            24, 60, new UsageStatsProperties.Storage("", "usage-stats", "usage-daily.json"));
+            collectingSince, 24, 60,
+            new UsageStatsProperties.Storage("", "usage-stats", "usage-daily.json"));
     }
 
     /** Blob history with ISO date keys — the day is exclusively the map key (§10.3). */

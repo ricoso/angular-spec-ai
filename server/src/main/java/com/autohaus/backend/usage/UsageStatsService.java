@@ -44,6 +44,14 @@ import java.util.TreeMap;
  * built purely by summing the very same day rows (AC-18). They need no additional query and are
  * therefore no new data category. / Keine zusätzliche Datenquelle.
  *
+ * <p><b>Collection start (BR-15) / Erfassungsbeginn:</b> when {@code usage.collecting-since} is
+ * set, every day before that date is dropped from the merged day rows <b>before</b> anything is
+ * summed. Month, year and the twelve month rows are therefore clamped at exactly one place and can
+ * never disagree. The reason is concrete: the {@code device} log field only exists since the
+ * feature went live, so older log lines would all be counted as „unbekannt" (BR-1) — a visit count
+ * whose device split means nothing is more misleading than no number at all (AC-12 spirit). /
+ * Tage vor dem Erfassungsbeginn werden an genau einer Stelle entfernt.
+ *
  * <p>The bean is unconditional — without the scheduler it is simply never fed (Alt Flow C). /
  * Bean ist unbedingt.
  */
@@ -72,16 +80,28 @@ public class UsageStatsService {
     private final ZoneId zone;
     private final Clock clock;
 
+    /** First day that is counted at all (BR-15), {@code null} = no lower bound. / Erfassungsbeginn. */
+    private final LocalDate collectingSince;
+
+    /**
+     * The production constructor / produktiver Konstruktor.
+     *
+     * <p>{@code @Autowired} is mandatory here: this bean has two constructors, and without the
+     * annotation Spring cannot decide which one to use and the backend fails to start — a break the
+     * unit tests would not notice. / Zwei Konstruktoren ⇒ {@code @Autowired} ist Pflicht.
+     */
     @Autowired
     public UsageStatsService(UsageStatsProperties properties) {
         this.zone = resolveZone(properties);
         this.clock = Clock.system(this.zone);
+        this.collectingSince = properties == null ? null : properties.collectingSince();
     }
 
     /** Visible for testing / für Tests: lets TC-5 and TC-18 pin "today" to a fixed instant. */
     UsageStatsService(UsageStatsProperties properties, Clock clock) {
         this.zone = resolveZone(properties);
         this.clock = clock;
+        this.collectingSince = properties == null ? null : properties.collectingSince();
     }
 
     /**
@@ -89,9 +109,15 @@ public class UsageStatsService {
      * availability flags / baut das vollständige Render-Eingabemodell.
      *
      * <p>Blob days and live days are merged per BR-9 before anything is summed, so no day is
-     * counted twice. {@code collectingSince} and {@code lastRollupDay} describe the <b>persisted</b>
-     * history only — they say how far the blob reaches, not how far the page can see. / Blob-Tage
-     * und Live-Tage werden nach BR-9 zusammengeführt.
+     * counted twice. Days before the configured collection start are then dropped (BR-15), once,
+     * for all three views. {@code lastRollupDay} describes the <b>persisted</b> history only — it
+     * says how far the blob reaches, not how far the page can see; {@code collectingSince} is the
+     * later of the configured start and the first persisted day. / Blob- und Live-Tage nach BR-9
+     * zusammengeführt, dann nach BR-15 beschnitten.
+     *
+     * <p>The clamp is display only: the nightly rollup keeps persisting every day it sees, so
+     * relaxing the configuration later brings the older days back rather than having lost them. /
+     * Die Klemmung betrifft nur die Anzeige, nicht die Persistenz.
      *
      * @param history the deserialized blob file, may be {@link UsageHistory#empty()} or
      *     {@code null} / deserialisierte Blob-Datei
@@ -107,10 +133,11 @@ public class UsageStatsService {
                                    Instant liveAsOf) {
         LocalDate today = today();
         SortedMap<LocalDate, DailyUsage> blobDays = parseHistory(history);
-        SortedMap<LocalDate, DailyUsage> days = merge(blobDays, liveDays, today);
+        SortedMap<LocalDate, DailyUsage> days = dropBeforeCollectionStart(
+            merge(blobDays, liveDays, today));
 
-        LocalDate monthFrom = today.withDayOfMonth(1);
-        LocalDate yearFrom = today.withDayOfYear(1);
+        LocalDate monthFrom = clampFrom(today.withDayOfMonth(1), today);
+        LocalDate yearFrom = clampFrom(today.withDayOfYear(1), today);
 
         PeriodUsage month = buildPeriod(
             "Aktueller Monat (" + monthName(today.getMonth()) + " " + today.getYear() + ")",
@@ -124,7 +151,7 @@ public class UsageStatsService {
             liveAsOf,
             liveAvailable,
             historyAvailable,
-            blobDays.isEmpty() ? null : blobDays.firstKey(),
+            resolveCollectingSince(blobDays.isEmpty() ? null : blobDays.firstKey()),
             blobDays.isEmpty() ? null : blobDays.lastKey());
     }
 
@@ -134,7 +161,9 @@ public class UsageStatsService {
      *
      * <p>Built by summing the same day rows that already feed month and year — no additional
      * query. Months before collection started and future months carry {@code hasData == false} and
-     * render as „—", not as „0" (AC-12). The running month ends at {@code today}, past and future
+     * render as „—", not as „0" (AC-12). A month that lies entirely before the configured start
+     * (BR-15) keeps its natural calendar range but holds no day row, so it too renders as „—"; the
+     * month the start falls into begins at the start day, not at the first (§12.2). The running month ends at {@code today}, past and future
      * months at their last calendar day (§12.2). / Reine Summation derselben Tageszeilen.
      *
      * @param days merged day rows (blob + live), keyed by calendar day / zusammengeführte Tage
@@ -149,7 +178,7 @@ public class UsageStatsService {
             LocalDate to = month == today.getMonth()
                 ? today
                 : from.withDayOfMonth(from.lengthOfMonth());
-            months.add(buildPeriod(monthName(month), days, from, to));
+            months.add(buildPeriod(monthName(month), days, clampFrom(from, to), to));
         }
         return List.copyOf(months);
     }
@@ -203,6 +232,64 @@ public class UsageStatsService {
     }
 
     // ---- internals ----
+
+    /**
+     * Drops every day before the configured collection start (BR-15) / entfernt alle Tage vor dem
+     * Erfassungsbeginn.
+     *
+     * <p>This is the single clamp of the whole feature: month, year and the twelve month rows are
+     * all summed from this very map afterwards, so they cannot possibly disagree. Without a
+     * configured start the map is handed back untouched — the behaviour stays exactly as before. /
+     * Genau eine Klemmstelle; ohne Konfiguration unverändert.
+     */
+    private SortedMap<LocalDate, DailyUsage> dropBeforeCollectionStart(
+        SortedMap<LocalDate, DailyUsage> days) {
+        if (collectingSince == null || days.isEmpty()) {
+            return days;
+        }
+        // tailMap is inclusive of the start day — the start day itself still counts.
+        return new TreeMap<>(days.tailMap(collectingSince));
+    }
+
+    /**
+     * Raises a range start to the collection start so the range label tells the truth (BR-15) /
+     * hebt den Zeitraumbeginn auf den Erfassungsbeginn an.
+     *
+     * <p>„01.09.2026 – 22.09.2026" would claim three weeks of data the page deliberately does not
+     * count; „22.09.2026 – 22.09.2026" is what actually happened. A range that lies entirely before
+     * the start keeps its calendar bounds — it holds no day row anyway and renders as „—", and
+     * keeping the bounds avoids an inverted range in {@code subMap}. / Zeiträume ganz vor dem
+     * Beginn bleiben unverändert und sind leer.
+     */
+    private LocalDate clampFrom(LocalDate from, LocalDate to) {
+        if (collectingSince == null
+            || !collectingSince.isAfter(from)
+            || collectingSince.isAfter(to)) {
+            return from;
+        }
+        return collectingSince;
+    }
+
+    /**
+     * The „Erfassung seit" date of the page (BR-15) / das angezeigte Startdatum.
+     *
+     * <p>The configured start wins over the first persisted blob day, and when both are set the
+     * <b>later</b> of the two is shown: before that date there is demonstrably no usable data —
+     * either nothing was persisted yet, or what was persisted lacks the device field. / Bei beiden
+     * gewinnt das spätere Datum.
+     *
+     * @param firstPersistedDay first day in the blob, {@code null} when the history is empty
+     */
+    private LocalDate resolveCollectingSince(LocalDate firstPersistedDay) {
+        if (collectingSince == null) {
+            return firstPersistedDay;
+        }
+        if (firstPersistedDay == null) {
+            return collectingSince;
+        }
+        return firstPersistedDay.isAfter(collectingSince) ? firstPersistedDay : collectingSince;
+    }
+
 
     private static SortedMap<LocalDate, DailyUsage> merge(SortedMap<LocalDate, DailyUsage> blobDays,
                                                           Map<LocalDate, DailyUsage> liveDays,

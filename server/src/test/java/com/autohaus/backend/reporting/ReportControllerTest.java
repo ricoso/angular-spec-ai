@@ -193,6 +193,7 @@ class ReportControllerTest {
             "0 */15 * * * *",
             "0 30 3 * * *",
             "Europe/Berlin",
+            null,
             24,
             refreshMinInterval,
             new UsageStatsProperties.Storage("", "usage-stats", "usage-daily.json"));

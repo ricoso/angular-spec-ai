@@ -2,6 +2,8 @@ package com.autohaus.backend.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.time.LocalDate;
+
 /**
  * Configuration for the anonymous usage statistics on the status page (REQ-037, §10.4).
  *
@@ -19,6 +21,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param refreshCron {@code USAGE_REFRESH_CRON} — live refresh from Log Analytics
  * @param rollupCron {@code USAGE_ROLLUP_CRON} — nightly rollup into the blob
  * @param zone {@code USAGE_ZONE} — time zone of all day/month/year boundaries (BR-7)
+ * @param collectingSince {@code USAGE_COLLECTING_SINCE} — first day that is counted at all (BR-15),
+ *     ISO date e.g. {@code 2026-09-22}; {@code null}/empty means no lower bound. Days before it are
+ *     dropped entirely because the {@code device} log field did not exist yet and every visit would
+ *     be counted as „unbekannt" — a visit count without its device split says something other than
+ *     it suggests (AC-12 spirit). / Tage davor werden gar nicht gezählt.
  * @param retentionMonths {@code USAGE_RETENTION_MONTHS} — months of day rows kept in the blob
  *     (NFR-Datenschutz-7)
  * @param refreshMinIntervalSeconds {@code USAGE_REFRESH_MIN_INTERVAL_SECONDS} — throttle for the
@@ -31,6 +38,7 @@ public record UsageStatsProperties(
     String refreshCron,
     String rollupCron,
     String zone,
+    LocalDate collectingSince,
     int retentionMonths,
     int refreshMinIntervalSeconds,
     Storage storage

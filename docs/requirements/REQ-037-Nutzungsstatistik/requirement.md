@@ -327,6 +327,8 @@ Dieses Requirement ergänzt die Statusseite um einen **anonymen Nutzungsstatisti
 - **BR-13 (Kill-Switch gated auch die Erhebung):** `usage.enabled=false` schaltet **Erhebung, Aggregation, Rendering und Endpoint** gemeinsam ab. `LoggingFilter` liest die beiden Header dann gar nicht erst. Es wird **nichts** „auf Vorrat" für einen möglicherweise später reaktivierten Zweck erhoben (Zweckbindung, Art. 5 Abs. 1 lit. b DSGVO). Praktisch heißt das: Nach dem Wiedereinschalten beginnt die Geräteerfassung ab diesem Zeitpunkt — die drei übrigen Kennzahlen lassen sich weiterhin aus dem Bestandslog nachziehen (AC-9).
 - **BR-14 (Monatsreihe ohne neue Datenquelle):** Die Monatstabelle im Jahresblock (AC-18) wird ausschließlich durch Summation derselben Tageszeilen gebildet, die schon Monat und Jahr speisen (`UsageStatsService.buildMonthlySeries()`). Sie erhebt nichts Zusätzliches, erzeugt keine KQL-Abfrage und ist damit keine neue Datenkategorie. Monate ohne Tageszeilen haben `hasData == false` und erscheinen als „—" (AC-12), nicht als „0".
 
+- **BR-15 (Erfassungsbeginn):** Ist `usage.collecting-since` (ISO-Datum, `USAGE_COLLECTING_SINCE`) gesetzt, werden **alle Tage vor diesem Datum gar nicht gezählt** — weder im Monatsblock, noch im Jahresblock, noch in der Monatsreihe. Leer bzw. nicht gesetzt bedeutet **keine Begrenzung** (Verhalten wie zuvor). **Begründung:** Das Log-Feld `device` existiert erst seit dem Produktivgang des Features; ältere Log-Zeilen tragen es nicht und werden per BR-1 vollständig auf `unknown` abgebildet. Eine Besuchszahl, deren zugehörige Geräteverteilung zu 100 % „unbekannt" lautet, sagt etwas anderes aus, als sie suggeriert — mehrere tausend Besuche ohne jede Gerätekennung sind irreführender als gar keine Zahl. Es gilt derselbe Grundsatz wie in AC-12: **lieber „keine Daten" als eine Zahl mit stillschweigend anderer Bedeutung.** **Umsetzung an genau einer Stelle:** `UsageStatsService.buildPeriods()` entfernt die betroffenen Tage direkt nach dem Merge aus der `SortedMap`, bevor irgendetwas summiert wird — Monat, Jahr und Monatsreihe sind dadurch konstruktionsbedingt konsistent und können nicht auseinanderlaufen. Zusätzlich wird der Zeitraumbeginn von Monat und Jahr auf den Erfassungsbeginn angehoben, damit das Zeitraum-Label die Wahrheit sagt (`22.09.2026 – 22.09.2026` statt `01.09.2026 – 22.09.2026`). Monate, die **vollständig** vor dem Erfassungsbeginn liegen, behalten ihre Kalendergrenzen, haben aber `hasData == false` und erscheinen als „—", nicht als „0" (AC-12). Das angezeigte „Erfassung seit …" ist das **spätere** von konfiguriertem Beginn und erstem persistierten Blob-Tag; ist nur die Property gesetzt (Zustand unmittelbar nach dem Produktivgang), gewinnt sie. **Die Klemmung betrifft ausschließlich die Anzeige, nicht die Persistenz:** Der nächtliche Rollup schreibt weiterhin jeden Tag, den er sieht — eine spätere Lockerung der Konfiguration holt die älteren Tage zurück, statt sie verloren zu haben.
+
 ---
 
 ## 9. Non-Functional Requirements
@@ -566,6 +568,7 @@ public record UsageStatsProperties(
     String refreshCron,              // USAGE_REFRESH_CRON
     String rollupCron,               // USAGE_ROLLUP_CRON
     String zone,                     // USAGE_ZONE (Europe/Berlin)
+    LocalDate collectingSince,       // USAGE_COLLECTING_SINCE (BR-15, leer = keine Begrenzung)
     int retentionMonths,             // USAGE_RETENTION_MONTHS
     int refreshMinIntervalSeconds,   // USAGE_REFRESH_MIN_INTERVAL_SECONDS (AC-21)
     Storage storage
@@ -581,6 +584,9 @@ usage:
   refresh-cron: ${USAGE_REFRESH_CRON:0 */15 * * * *}
   rollup-cron: ${USAGE_ROLLUP_CRON:0 30 3 * * *}
   zone: ${USAGE_ZONE:Europe/Berlin}
+  # BR-15: erster Tag, der ueberhaupt gezaehlt wird. Tage DAVOR werden nicht gezaehlt,
+  # weil dort das Log-Feld "device" noch nicht existierte. Leer = keine Begrenzung.
+  collecting-since: ${USAGE_COLLECTING_SINCE:}
   retention-months: ${USAGE_RETENTION_MONTHS:24}
   refresh-min-interval-seconds: ${USAGE_REFRESH_MIN_INTERVAL_SECONDS:60}
   storage:
@@ -1088,6 +1094,8 @@ If-Match: "0x8DC…"          (beim Erstanlegen stattdessen: If-None-Match: *)
 - **Kein Azure SDK.** `azure-storage-blob` zöge Netty und einen zweiten HTTP-Stack ins Image und widerspräche dem Entscheid in `server/build.gradle:23-26`. Blob-REST über `RestClient` ist die konsistente Wahl — inklusive des Jackson-2-Parsings über `String` (Spring-Boot-4-Fallstrick).
 - **Erwartungsmanagement in der UI:** „Besuche" sind App-Aufrufe, keine Nutzer; die Live-Zahlen hinken 5-15 min nach; Tablets werden durch iPadOS-Desktop-Modus leicht unterzählt; die Jahresübersicht ist in den ersten 12 Monaten unvollständig („Erfassung seit …"). Diese vier Einschränkungen gehören **sichtbar auf die Seite**, nicht nur in dieses Dokument.
 - **Verifikation nach dem Deploy:** `npm run test:local:serve`, Seite aufrufen, Statistik-Sektion prüfen (lokal erwartet: „Live-Daten derzeit nicht verfügbar" + „Historie derzeit nicht verfügbar", Seite lädt trotzdem) — anschließend in Azure `POST /internal/report/refresh` auslösen und die Zahlen gegen `GET /internal/report/usage.json` gegenprüfen.
+- **Erfassungsbeginn nachgezogen (BR-15, 22.09.2026):** Nach dem Produktivgang am **21.09.2026, ca. 15:42** zeigte der Monatsblock mehrere tausend Besuche, von denen praktisch alle in der Geräteklasse „unbekannt" landeten — das Feld `device` existierte für die älteren Log-Zeilen schlicht noch nicht, und BR-1 bildet sie korrekt, aber eben vollständig auf `unknown` ab. Die Zahl war technisch richtig und fachlich irreführend. Eingeführt wurde daher `usage.collecting-since` (`USAGE_COLLECTING_SINCE`): Tage davor werden **gar nicht** gezählt, die Seite startet bei null und wächst ab dem echten Erfassungsbeginn. Das ist bewusst eine **Konfiguration und kein fest verdrahtetes Datum** — beim nächsten Feature, das ein neues Log-Feld einführt, greift derselbe Hebel ohne Code-Änderung, und das Zurückdrehen (leerer Wert) stellt das alte Verhalten wieder her. Geklemmt wird an **einer** Stelle im `UsageStatsService`, damit Monat, Jahr und Monatsreihe nicht auseinanderlaufen können. Die Persistenz bleibt unberührt (BR-15), die Historie geht also nicht verloren.
+- **`@Autowired` bei zwei Konstruktoren:** `UsageStatsService` hat einen produktiven und einen paketprivaten Test-Konstruktor. Der produktive **muss** `@Autowired` tragen, sonst startet das Backend nicht — und keiner der Unit-Tests merkt das, weil hier bewusst kein Spring-Context geladen wird. Aus demselben Grund prüft `PropertiesTest` das Binding des `usage`-Blocks mit dem echten Spring-`Binder`: Ein leeres `USAGE_COLLECTING_SINCE` muss auf `null` binden, nicht in eine `DateTimeParseException` beim Start laufen.
 - **KQL-Dialekt:** `count_distinctif(...)` ist in Log Analytics verfügbar, war aber zeitweise als Preview markiert. Sollte der Workspace es ablehnen, ist **ohne Diskussion** die zweistufige `summarize by SessionId`-Form aus §12.4 zu verwenden — `dcount()`/`dcountif()` bleiben in jedem Fall ausgeschlossen (BR-4).
 
 ### Offene Punkte / dokumentierte Einwände aus dem Review

@@ -50,6 +50,14 @@ usage:
   refresh-cron: ${USAGE_REFRESH_CRON:0 */15 * * * *}
   rollup-cron: ${USAGE_ROLLUP_CRON:0 30 3 * * *}
   zone: ${USAGE_ZONE:Europe/Berlin}
+  # BR-15: first day that is counted at all (ISO, e.g. 2026-09-22). Days BEFORE this date are
+  # not counted at all -- back then the "device" log field did not exist yet, so every visit
+  # would land in the "unbekannt" bucket and the numbers would suggest something they do not
+  # mean. Empty = no lower bound (behaviour as before).
+  # BR-15: erster Tag, der ueberhaupt gezaehlt wird (ISO, z. B. 2026-09-22). Tage DAVOR werden
+  # gar nicht gezaehlt -- damals gab es das Log-Feld "device" noch nicht, alles erschiene als
+  # "unbekannt". Leer = keine Begrenzung (Verhalten wie bisher).
+  collecting-since: ${USAGE_COLLECTING_SINCE:}
   retention-months: ${USAGE_RETENTION_MONTHS:24}
   refresh-min-interval-seconds: ${USAGE_REFRESH_MIN_INTERVAL_SECONDS:60}
   storage:

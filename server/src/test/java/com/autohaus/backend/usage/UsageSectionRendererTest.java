@@ -48,6 +48,29 @@ class UsageSectionRendererTest {
         assertTrue(html.contains("Historie derzeit nicht verfügbar"));
     }
 
+    /**
+     * REQ-037 BR-15: right after going live the blob history is still empty, but a collection start
+     * is configured. The page must then name that date — „Erfassung seit 22.09.2026" — instead of
+     * claiming „Erfassung noch nicht begonnen", which would be wrong the moment the first visit is
+     * counted. / Der konfigurierte Beginn erscheint auch ohne Historie.
+     */
+    @Test
+    void namesTheConfiguredCollectionStartEvenWithoutAnyHistory() {
+        LocalDate start = LocalDate.of(2026, 9, 22);
+        PeriodUsage month = emptyPeriod("Aktueller Monat (September 2026)", start, start);
+        PeriodUsage year = emptyPeriod("Jahresübersicht 2026", start, start);
+        UsageStats usage = new UsageStats(month, year, List.of(), null, true, true, start, null);
+
+        String html = renderer.render(usage);
+
+        assertTrue(html.contains("Erfassung seit 22.09.2026"),
+            "the configured start must be named even while the history is empty");
+        assertFalse(html.contains("Erfassung noch nicht begonnen"),
+            "collection has begun — only the persisted history is still empty");
+        assertTrue(html.contains("class=\"us-empty\""),
+            "no rows yet means „Keine Daten\", not „0\"");
+    }
+
     @Test
     void switchedOffFeatureRendersNothing() {
         // AC-22: usage == null drops the section without any replacement / ersatzlos.

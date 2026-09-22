@@ -1,6 +1,15 @@
 package com.autohaus.backend.config;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.ConfigurationPropertySource;
+import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
+import org.springframework.boot.convert.ApplicationConversionService;
+
+import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -117,5 +126,53 @@ class PropertiesTest {
         AppProperties a1 = new AppProperties(s1, c1);
         AppProperties a2 = new AppProperties(s2, c2);
         assertEquals(a1, a2);
+    }
+
+    // === UsageStatsProperties: BR-15 collection start / Erfassungsbeginn ===
+
+    /**
+     * REQ-037 BR-15: {@code collecting-since: ${USAGE_COLLECTING_SINCE:}} must bind to {@code null}
+     * when the environment variable is unset. Without this the backend would fail to start the
+     * moment the variable is left empty — and no unit test would notice, because nothing else here
+     * loads the Spring context. / Leerer Wert muss auf {@code null} binden, sonst startet das
+     * Backend nicht.
+     */
+    @Test
+    void usageStatsProperties_collectingSince_bindsEmptyValueToNull() {
+        UsageStatsProperties props = bindUsage("");
+
+        assertNull(props.collectingSince(), "an unset USAGE_COLLECTING_SINCE means: no lower bound");
+        assertTrue(props.enabled());
+        assertEquals("Europe/Berlin", props.zone());
+    }
+
+    /** BR-15: an ISO date binds to {@link LocalDate} without any custom converter. */
+    @Test
+    void usageStatsProperties_collectingSince_bindsIsoDate() {
+        assertEquals(LocalDate.of(2026, 9, 22), bindUsage("2026-09-22").collectingSince());
+    }
+
+    /**
+     * Binds the {@code usage} block exactly the way Spring Boot does at startup — same relaxed
+     * binder, same conversion service — so a binding break shows up here instead of in production.
+     */
+    private static UsageStatsProperties bindUsage(String collectingSince) {
+        Map<String, Object> properties = new LinkedHashMap<>();
+        properties.put("usage.enabled", "true");
+        properties.put("usage.refresh-cron", "0 */15 * * * *");
+        properties.put("usage.rollup-cron", "0 30 3 * * *");
+        properties.put("usage.zone", "Europe/Berlin");
+        properties.put("usage.collecting-since", collectingSince);
+        properties.put("usage.retention-months", "24");
+        properties.put("usage.refresh-min-interval-seconds", "60");
+        properties.put("usage.storage.account", "");
+        properties.put("usage.storage.container", "usage-stats");
+        properties.put("usage.storage.blob", "usage-daily.json");
+
+        ConfigurationPropertySource source = new MapConfigurationPropertySource(properties);
+        Binder binder = new Binder(List.of(source), null,
+            ApplicationConversionService.getSharedInstance());
+        return binder.bind("usage", UsageStatsProperties.class)
+            .orElseThrow(() -> new AssertionError("usage block did not bind"));
     }
 }

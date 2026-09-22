@@ -289,7 +289,7 @@ class UsageStatsAggregatorTest {
     }
 
     private static UsageStatsProperties properties(String zone) {
-        return new UsageStatsProperties(true, "0 */15 * * * *", "0 30 3 * * *", zone, 24, 60,
+        return new UsageStatsProperties(true, "0 */15 * * * *", "0 30 3 * * *", zone, null, 24, 60,
             new UsageStatsProperties.Storage("", "usage-stats", "usage-daily.json"));
     }
 }

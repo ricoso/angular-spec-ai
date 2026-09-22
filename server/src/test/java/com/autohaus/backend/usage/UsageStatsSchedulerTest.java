@@ -255,7 +255,7 @@ class UsageStatsSchedulerTest {
     }
 
     private static UsageStatsProperties properties(int retentionMonths) {
-        return new UsageStatsProperties(true, "0 */15 * * * *", "0 30 3 * * *", "Europe/Berlin",
+        return new UsageStatsProperties(true, "0 */15 * * * *", "0 30 3 * * *", "Europe/Berlin", null,
             retentionMonths, 60,
             new UsageStatsProperties.Storage("gsterminbuchungstats", "usage-stats", "usage-daily.json"));
     }
