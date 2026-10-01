@@ -4,19 +4,21 @@ import com.autohaus.backend.appointments.dto.AppointmentResponseDto;
 import com.autohaus.backend.appointments.dto.CreateAppointmentRequest;
 import com.autohaus.backend.common.logging.LogSanitizer;
 import com.autohaus.backend.common.util.PhoneNumberNormalizer;
+import com.autohaus.backend.config.UsageInsightsProperties;
 import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.snaps.SnapCache;
 import com.autohaus.backend.softnet.SoftnetApiClient;
+import com.autohaus.backend.usage.insights.UsageEventLogger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,12 +38,40 @@ public class AppointmentsService {
     private final ObjectMapper objectMapper;
     private final SetupService setupService;
 
+    /**
+     * REQ-038 K2: collector of the anonymous booking events, {@code null} = off. It only buffers;
+     * the {@code USAGE_BOOKING} lines are written by its daily shuffled flush, decoupled from this
+     * request. / Sammelt nur; die Zeilen schreibt der tägliche, gemischte Flush.
+     */
+    private final UsageEventLogger usageEventLogger;
+
+    /**
+     * REQ-038 kill switch {@code usage.insights.enabled} (AC-13, AC-31): with {@code false} no
+     * booking event is buffered and hence no {@code USAGE_BOOKING} line is ever written — nothing
+     * is collected "just in case". / Kill-Switch: bei {@code false} wird nichts gepuffert.
+     */
+    private final boolean usageInsightsEnabled;
+
+    /**
+     * Pre-REQ-038 constructor, kept for existing callers and tests / Konstruktor wie vor REQ-038:
+     * the booking insights stay off. / Die Buchungs-Insights bleiben aus.
+     */
     public AppointmentsService(SoftnetApiClient softnetApi, SnapCache snapCache, ObjectMapper objectMapper,
                                SetupService setupService) {
+        this(softnetApi, snapCache, objectMapper, setupService, null, null);
+    }
+
+    @Autowired
+    public AppointmentsService(SoftnetApiClient softnetApi, SnapCache snapCache, ObjectMapper objectMapper,
+                               SetupService setupService, UsageEventLogger usageEventLogger,
+                               UsageInsightsProperties usageInsightsProperties) {
         this.softnetApi = softnetApi;
         this.snapCache = snapCache;
         this.objectMapper = objectMapper;
         this.setupService = setupService;
+        this.usageEventLogger = usageEventLogger;
+        this.usageInsightsEnabled = usageEventLogger != null
+            && usageInsightsProperties != null && usageInsightsProperties.enabled();
     }
 
     public AppointmentResponseDto createAppointment(CreateAppointmentRequest dto) {
@@ -76,6 +106,7 @@ public class AppointmentsService {
                 LogSanitizer.redact(snap.path("wishlist").path("client").toString()),
                 LogSanitizer.redact(snap.path("wishlist").path("car").toString()),
                 mobilityLogFields(snap.path("wishlist")));
+            logUsageBooking(dto, groupId, rawSnap, snap);
             return mapAppointmentResponse(result, dto);
         } catch (RuntimeException e) {
             log.error("SOFTNET_ERROR appointment creation failed for snap {} | rawSnap={}",
@@ -96,6 +127,33 @@ public class AppointmentsService {
         AppointmentResponseDto mapped = mapAppointmentResponse(result, null);
         return new AppointmentResponseDto(mapped.id(), "cancelled", mapped.date(), mapped.time(),
             mapped.branchName(), mapped.services(), mapped.customerName(), mapped.licensePlate());
+    }
+
+    /**
+     * REQ-038 K2 (AC-13, BR-6): hands the booking to the anonymous event buffer after a successful
+     * booking / übergibt die Buchung nach Erfolg an den anonymen Ereignispuffer.
+     *
+     * <p>Only in the success branch, after {@code BOOKING_CREATED}, and only while
+     * {@code usage.insights.enabled}. {@link UsageEventLogger#logBooking} validates and buffers the
+     * event but writes <b>no</b> line in this request: the {@code USAGE_BOOKING} line is written by
+     * the daily, shuffled flush under MDC {@code job.usagebooking}, so it shares neither trace id,
+     * millisecond nor thread with {@code BOOKING_CREATED} (PO decision: never know who). The call
+     * sits in its <b>own</b> {@code try/catch}: without it the outer {@code catch} would log a
+     * {@code SOFTNET_ERROR} and report the successful booking as a failure (E10). The warning names
+     * the exception class only — no message text, no values (REQ-034 BR-6). / Nur Puffern, keine
+     * Zeile im Request; eigener {@code try/catch}, die Buchungsantwort bleibt unverändert, die
+     * Warnung trägt keine Werte.
+     */
+    private void logUsageBooking(CreateAppointmentRequest dto, String groupId, JsonNode rawSnap, ObjectNode snap) {
+        if (!usageInsightsEnabled) {
+            return;
+        }
+        try {
+            usageEventLogger.logBooking(dto.branchId(), groupId, rawSnap,
+                snap.path("wishlist").hasNonNull("rentCategoryid"));
+        } catch (RuntimeException e) {
+            log.warn("USAGE_BOOKING skipped: {}", e.getClass().getSimpleName());
+        }
     }
 
     /**

@@ -5,30 +5,42 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.autohaus.backend.appointments.dto.AppointmentResponseDto;
 import com.autohaus.backend.appointments.dto.CreateAppointmentRequest;
+import com.autohaus.backend.common.filter.RequestIdFilter;
+import com.autohaus.backend.config.UsageInsightsProperties;
+import com.autohaus.backend.config.UsageStatsProperties;
+import com.autohaus.backend.config.setup.BranchSetup;
+import com.autohaus.backend.config.setup.GroupEntry;
 import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.snaps.SnapCache;
 import com.autohaus.backend.softnet.SoftnetApiClient;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.autohaus.backend.usage.insights.UsageEventLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,9 +50,22 @@ class AppointmentsServiceTest {
     /** Real 24-char SoftNet rent-category id ("Kleinwagen", Gottfried Schultz Velbert). */
     private static final String RENT_CATEGORY_ID = "682ad3dc6969db66dd27f6c3";
 
+    /** REQ-038: whitelisted 24-hex branch / group of the USAGE_BOOKING tests (§10.2). */
+    private static final String HEX_BRANCH = "68f0a1b2c3d4e5f6a7b8c9d0";
+    private static final String HEX_GROUP = "6908a1b2c3d4e5f6a7b8c9d1";
+
+    /** REQ-038: trace id of the booking request (RequestIdFilter) / Trace-ID des Buchungs-Requests. */
+    private static final String REQUEST_TRACE_ID = "3f2a9c1e-7b44-4d0e-9a51-0c6d2e8f1b77";
+
+    private static final UsageInsightsProperties INSIGHTS_ON =
+        new UsageInsightsProperties(true, null, "0 45 3 * * *", "usage-insights.json");
+    private static final UsageInsightsProperties INSIGHTS_OFF =
+        new UsageInsightsProperties(false, null, "0 45 3 * * *", "usage-insights.json");
+
     @Mock private SoftnetApiClient softnetApi;
     @Mock private SnapCache snapCache;
     @Mock private SetupService setupService;
+    @Mock private UsageEventLogger usageEventLogger;
     private final ObjectMapper om = new ObjectMapper();
     private AppointmentsService service;
 
@@ -149,6 +174,44 @@ class AppointmentsServiceTest {
         } finally {
             logger.detachAppender(appender);
         }
+    }
+
+    @Test
+    void getAppointment_mapsCustomerAndPlateFromTheSoftnetResult() {
+        ObjectNode result = om.createObjectNode();
+        result.put("id", "apt-3");
+        result.put("checkInTime", "2026-04-15T10:00:00Z");
+        result.withObject("userid").put("firstName", "Erika").put("lastName", "Musterfrau");
+        result.withObject("carid").put("license", "E-AB 123");
+        result.withObject("branch").put("name", "Filiale Y");
+        when(softnetApi.getAppointment("apt-3", "mock-group-id")).thenReturn(result);
+
+        AppointmentResponseDto response = service.getAppointment("apt-3", "branch-1", null);
+
+        assertEquals("apt-3", response.id());
+        assertEquals("confirmed", response.status());
+        assertEquals("2026-04-15", response.date());
+        assertEquals("10:00", response.time());
+        assertEquals("Filiale Y", response.branchName());
+        assertEquals("Erika Musterfrau", response.customerName());
+        assertEquals("E-AB 123", response.licensePlate());
+    }
+
+    @Test
+    void createAppointment_withNotifications_forwardsBothChannels() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-notify")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+        CreateAppointmentRequest base = buildDto("snap-notify", null, null);
+
+        service.createAppointment(new CreateAppointmentRequest(base.snapId(), base.branchId(), null,
+            base.customer(), base.vehicle(), null, null, null,
+            new CreateAppointmentRequest.NotificationsDto(true, null)));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> notifications = (Map<String, Object>) captureSentSnap().get("notifications");
+        assertEquals(Boolean.TRUE, notifications.get("SMS"));
+        assertEquals(Boolean.FALSE, notifications.get("SMTP"));
     }
 
     @Test
@@ -385,7 +448,192 @@ class AppointmentsServiceTest {
         }
     }
 
+    // ─── REQ-038 K2: USAGE_BOOKING (AC-13, BR-6, E10, TC-14) ───
+
+    @Test
+    @DisplayName("AC-13: a successful booking hands branch, group, pristine snap and mobility to the event buffer")
+    void createAppointment_insightsEnabled_logsUsageBookingWithPristineSnap() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-usage")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+        AppointmentsService withInsights = serviceWithInsights(INSIGHTS_ON);
+
+        withInsights.createAppointment(buildDto("snap-usage", RENT_CATEGORY_ID, null));
+        withInsights.createAppointment(buildDto("snap-usage", null, null));
+
+        // same(snap): the cached SoftNet snap itself — the service patches a deep copy only.
+        verify(usageEventLogger).logBooking(eq("branch-1"), eq("mock-group-id"), same(snap), eq(true));
+        verify(usageEventLogger).logBooking(eq("branch-1"), eq("mock-group-id"), same(snap), eq(false));
+        assertFalse(snap.path("wishlist").has("client"), "the logger never sees patched customer data");
+    }
+
+    @Test
+    @DisplayName("AC-13: no USAGE_BOOKING line in the booking request — exactly one after the flush, under job.usagebooking")
+    void createAppointment_insightsEnabled_writesNoLineInTheRequestAndOneAfterTheFlush() {
+        ObjectNode snap = baseSnap();
+        snap.put("checkInTime", "2026-10-24T07:30:00Z");
+        snap.withObject("wishlist").putArray("operations").add("6908a1b2c3d4e5f6a7b8c9e2");
+        when(snapCache.getRawSnap("snap-line")).thenReturn(snap);
+        when(setupService.resolveGroupId(HEX_BRANCH, null)).thenReturn(HEX_GROUP);
+        when(setupService.findByBranchId(HEX_BRANCH)).thenReturn(new BranchSetup(HEX_BRANCH, "Filiale X",
+            null, List.of(new GroupEntry("default", HEX_GROUP, "Filiale X Werkstatt"))));
+        when(softnetApi.createAppointment(any(), eq(HEX_GROUP))).thenReturn(baseResult());
+        // The Spring constructor (zone from usage.zone) — the assertions below do not depend on "now".
+        UsageEventLogger realLogger = new UsageEventLogger(setupService,
+            new UsageStatsProperties(true, "-", "-", "Europe/Berlin", null, 24, 60, null));
+        AppointmentsService withInsights = new AppointmentsService(softnetApi, snapCache, om, setupService,
+            realLogger, INSIGHTS_ON);
+
+        // Captures MDC and thread at logging time (LoggingEvent reads both lazily).
+        ListAppender<ILoggingEvent> appender = new ListAppender<>() {
+            @Override
+            protected void append(ILoggingEvent event) {
+                event.prepareForDeferredProcessing();
+                super.append(event);
+            }
+        };
+        appender.start();
+        for (Class<?> type : List.of(AppointmentsService.class, UsageEventLogger.class)) {
+            ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(type)).addAppender(appender);
+        }
+        MDC.put(RequestIdFilter.TRACE_ID_MDC_KEY, REQUEST_TRACE_ID);
+        try {
+            CreateAppointmentRequest base = buildDto("snap-line", RENT_CATEGORY_ID, null);
+            withInsights.createAppointment(new CreateAppointmentRequest(base.snapId(), HEX_BRANCH, null,
+                base.customer(), base.vehicle(), null, RENT_CATEGORY_ID, null, null));
+            MDC.remove(RequestIdFilter.TRACE_ID_MDC_KEY);   // end of the request / Request-Ende
+
+            List<String> inRequest = appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
+            assertTrue(indexOfPrefix(inRequest, "BOOKING_CREATED") >= 0, inRequest.toString());
+            assertTrue(inRequest.stream().noneMatch(m -> m.contains("USAGE_BOOKING")),
+                "no USAGE_BOOKING line next to BOOKING_CREATED: " + inRequest);
+
+            assertEquals(1, realLogger.flush());
+
+            List<ILoggingEvent> usageEvents = appender.list.stream()
+                .filter(e -> e.getFormattedMessage().startsWith("USAGE_BOOKING {")).toList();
+            assertEquals(1, usageEvents.size(), inRequest.toString());
+            ILoggingEvent usage = usageEvents.getFirst();
+            ILoggingEvent created = appender.list.stream()
+                .filter(e -> e.getFormattedMessage().startsWith("BOOKING_CREATED")).findFirst().orElseThrow();
+            assertEquals(REQUEST_TRACE_ID, created.getMDCPropertyMap().get(RequestIdFilter.TRACE_ID_MDC_KEY));
+            assertEquals(UsageEventLogger.TRACE_ID, usage.getMDCPropertyMap().get(RequestIdFilter.TRACE_ID_MDC_KEY),
+                "the line carries the job marker, not the trace id of the booking");
+            String line = usage.getFormattedMessage();
+            assertTrue(line.startsWith("USAGE_BOOKING {\"v\":2,\"day\":\""), line);
+            assertTrue(line.contains("\"branch\":\"" + HEX_BRANCH + "\""), line);
+            assertTrue(line.contains("\"mobility\":true"), line);
+            assertFalse(line.contains("apt-x"), "no appointment id: " + line);
+            assertFalse(line.contains("snap-x"), "no snap id: " + line);
+            assertFalse(line.contains("@"), "no customer data: " + line);
+            assertFalse(line.contains(REQUEST_TRACE_ID), line);
+        } finally {
+            MDC.remove(RequestIdFilter.TRACE_ID_MDC_KEY);
+            detachAppender(appender, AppointmentsService.class, UsageEventLogger.class);
+        }
+    }
+
+    @Test
+    @DisplayName("TC-14 (a): with usage.insights.enabled=false no line is written")
+    void createAppointment_insightsDisabled_writesNoUsageBookingLine() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-off")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        serviceWithInsights(INSIGHTS_OFF).createAppointment(buildDto("snap-off", null, null));
+        new AppointmentsService(softnetApi, snapCache, om, setupService, usageEventLogger, null)
+            .createAppointment(buildDto("snap-off", null, null));
+        new AppointmentsService(softnetApi, snapCache, om, setupService, null, INSIGHTS_ON)
+            .createAppointment(buildDto("snap-off", null, null));
+
+        verify(usageEventLogger, never()).logBooking(any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    @DisplayName("TC-14 (b): a failed SoftNet booking writes no line and logs SOFTNET_ERROR as before")
+    void createAppointment_softnetFails_writesNoUsageBookingLine() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-fail")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id")))
+            .thenThrow(new HttpServerErrorException(HttpStatus.BAD_GATEWAY));
+        AppointmentsService withInsights = serviceWithInsights(INSIGHTS_ON);
+
+        ListAppender<ILoggingEvent> appender = attachAppender(AppointmentsService.class);
+        try {
+            assertThrows(HttpServerErrorException.class,
+                () -> withInsights.createAppointment(buildDto("snap-fail", null, null)));
+
+            verify(usageEventLogger, never()).logBooking(any(), any(), any(), anyBoolean());
+            assertTrue(appender.list.stream().anyMatch(e -> e.getLevel() == Level.ERROR
+                && e.getFormattedMessage().contains("SOFTNET_ERROR")), "SOFTNET_ERROR as before");
+            assertTrue(appender.list.stream().noneMatch(e -> e.getFormattedMessage().contains("USAGE_BOOKING")));
+        } finally {
+            detachAppender(appender, AppointmentsService.class);
+        }
+    }
+
+    @Test
+    @DisplayName("TC-14 (c): a failing logger never changes the response and never raises SOFTNET_ERROR")
+    void createAppointment_usageLoggerThrows_keepsResponseAndWarnsWithoutValues() {
+        ObjectNode snap = baseSnap();
+        when(snapCache.getRawSnap("snap-boom")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+        doThrow(new IllegalStateException("secret branch-1 snap-boom test@test.de"))
+            .when(usageEventLogger).logBooking(any(), any(), any(), anyBoolean());
+        AppointmentResponseDto withoutLogger = service.createAppointment(buildDto("snap-boom", RENT_CATEGORY_ID, null));
+        AppointmentsService withInsights = serviceWithInsights(INSIGHTS_ON);
+
+        ListAppender<ILoggingEvent> appender = attachAppender(AppointmentsService.class);
+        try {
+            AppointmentResponseDto response = withInsights.createAppointment(buildDto("snap-boom", RENT_CATEGORY_ID, null));
+
+            assertEquals(withoutLogger, response, "the booking response is identical to the one without logger");
+            List<String> warnings = appender.list.stream()
+                .filter(e -> e.getLevel() == Level.WARN)
+                .map(ILoggingEvent::getFormattedMessage)
+                .toList();
+            assertEquals(List.of("USAGE_BOOKING skipped: IllegalStateException"), warnings);
+            assertTrue(appender.list.stream().noneMatch(e -> e.getLevel() == Level.ERROR), "no SOFTNET_ERROR");
+            assertTrue(appender.list.stream().noneMatch(e -> e.getFormattedMessage().contains("SOFTNET_ERROR")));
+            assertTrue(appender.list.stream().noneMatch(e -> e.getFormattedMessage().contains("secret")),
+                "neither the message text nor values are logged");
+            assertTrue(appender.list.stream().allMatch(e -> e.getThrowableProxy() == null),
+                "no stack trace that could carry values");
+        } finally {
+            detachAppender(appender, AppointmentsService.class);
+        }
+    }
+
     // ─── helpers ───
+
+    private AppointmentsService serviceWithInsights(UsageInsightsProperties properties) {
+        return new AppointmentsService(softnetApi, snapCache, om, setupService, usageEventLogger, properties);
+    }
+
+    private static ListAppender<ILoggingEvent> attachAppender(Class<?>... loggers) {
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        for (Class<?> type : loggers) {
+            ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(type)).addAppender(appender);
+        }
+        return appender;
+    }
+
+    private static void detachAppender(ListAppender<ILoggingEvent> appender, Class<?>... loggers) {
+        for (Class<?> type : loggers) {
+            ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(type)).detachAppender(appender);
+        }
+        appender.stop();
+    }
+
+    private static int indexOfPrefix(List<String> messages, String prefix) {
+        for (int i = 0; i < messages.size(); i++) {
+            if (messages.get(i).startsWith(prefix)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     private ObjectNode baseSnap() {
         ObjectNode snap = om.createObjectNode();

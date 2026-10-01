@@ -57,10 +57,22 @@ public class ReportAggregator {
 
     // High safety cap rather than a small page size, so the error list matches the tile
     // counts (a small "take" would make "Fehler (N)" contradict the failure totals).
-    private static final String ERRORS_KQL = """
+    // REQ-038 BR-15 (§12.8): SOFTNET_ERROR lines of the background jobs (capacity scan, insights
+    // rollup — every MDC marker "job.*") are excluded by the trace id of the REAL log prefix
+    // "%logger - %X{traceId}: SOFTNET_ERROR": extract() returns the FIRST match, and the real
+    // prefix precedes every customer value of the line, so a customer field such as
+    // car.model = "x - job.capacityprobe: SOFTNET_ERROR" inside the requestBody can no longer hide
+    // a real customer error (a plain substring test could). The dot lies outside the X-Request-Id
+    // whitelist of RequestIdFilter, so no client request can carry a "job." trace id — a customer
+    // request with "X-Request-Id: capacityprobe" stays in the list. / Ausschluss über die Trace-ID
+    // des echten Präfixes (erstes Vorkommen); Kundenfelder im requestBody blenden nichts aus.
+    // Package-private for TC-36 / für TC-36 paketsichtbar.
+    static final String ERRORS_KQL = """
         ContainerAppConsoleLogs_CL
         | where TimeGenerated > ago(24h)
         | where Log_s has 'SOFTNET_ERROR' and Log_s has 'requestBody'
+        | extend TraceId = extract(@' - ([A-Za-z0-9_.-]{0,64}): SOFTNET_ERROR', 1, Log_s)
+        | where TraceId !startswith_cs 'job.'
         | project TimeGenerated, Log_s
         | order by TimeGenerated desc
         | take 1000

@@ -16,6 +16,11 @@
 #   scripts/test-local.sh e2e          # Build + frisches Backend + Playwright (3 Viewports)
 #   scripts/test-local.sh e2e REQ-031  # Nur passende Specs (Filter wird an Playwright durchgereicht)
 #   scripts/test-local.sh serve        # Build + Backend starten und laufen lassen (manuelles Testen)
+#   E2E_SEED_SET=thin scripts/test-local.sh serve   # REQ-038: Statusseite mit Seed-Set thin|fail
+#
+# Das Backend startet immer im Profil e2e-seed (REQ-038): die Statistik-Stores werden beim Start
+# aus playwright/fixtures/req038/<E2E_SEED_SET>/ befüllt (Default full). Ein anderes Set braucht
+# einen Neustart, weil die Stores nur beim Start befüllt werden.
 #
 set -euo pipefail
 
@@ -30,8 +35,11 @@ BACKEND_PID=""
 
 kill_backend_on_port() {
   # Kill any process still bound to :3000 so we never serve a stale bundle.
+  # Only the LISTENING server — a plain `lsof -ti:3000` also returns clients with an open
+  # connection to :3000 (e.g. the REQ-038 screenshot script's keep-alive fetch) and would
+  # kill the caller itself.
   local pids
-  pids="$(lsof -ti:3000 2>/dev/null || true)"
+  pids="$(lsof -ti:3000 -sTCP:LISTEN 2>/dev/null || true)"
   if [ -n "$pids" ]; then
     echo "▶ Stoppe altes Backend auf :3000 ($pids)"
     echo "$pids" | xargs kill -9 2>/dev/null || true
@@ -51,6 +59,20 @@ start_backend() {
   # booking specs fail with "Fehler beim Laden" (HTTP 429), not a product defect.
   # Local test runs only; production keeps the default.
   export APP_RATE_LIMIT_CAPACITY="${APP_RATE_LIMIT_CAPACITY:-100000}"
+  # REQ-038 (§14.2): statistics tab with seeded fixtures instead of Azure. The e2e-seed profile
+  # loads playwright/fixtures/req038/<E2E_SEED_SET>/ (full | thin | fail, default full) into the
+  # stores and refuses to start while USAGE_STORAGE_ACCOUNT is set. All statistics sources are
+  # on; both crons are disabled ("-"), so no scan or rollup calls SoftNet or Log Analytics.
+  # Keep in sync with playwright-backend.config.ts (webServer.env).
+  export SPRING_PROFILES_ACTIVE="e2e-seed"
+  export USAGE_INSIGHTS_ENABLED="true"
+  export USAGE_FUNNEL_ENABLED="true"
+  export USAGE_DROPOFF_ENABLED="true"
+  export CAPACITY_SCAN_ENABLED="true"
+  export CAPACITY_SCAN_CRON="-"
+  export USAGE_INSIGHTS_ROLLUP_CRON="-"
+  export E2E_SEED_SET="${E2E_SEED_SET:-full}"
+  echo "▶ Seed-Set für die Statusseite: ${E2E_SEED_SET} (Profil e2e-seed)"
   ( cd server && ./gradlew bootRun > /tmp/gs-backend-test.log 2>&1 ) &
   BACKEND_PID=$!
   echo "▶ Warte auf Health ($HEALTH_URL)…"

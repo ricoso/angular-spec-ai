@@ -53,6 +53,19 @@ export default defineConfig({
     // (/internal/report). Local/test only — production uses the Azure secret store.
     env: {
       REPORT_ADMIN_PASSWORD: process.env['REPORT_ADMIN_PASSWORD'] ?? 'e2e-local-secret',
+      // REQ-038 (§14.2): the statistics tab needs data without Azure. The e2e-seed profile loads
+      // playwright/fixtures/req038/<E2E_SEED_SET>/ into the stores (and refuses to start while
+      // USAGE_STORAGE_ACCOUNT is set); all statistics sources are on, both crons are disabled so
+      // no scan or rollup ever calls SoftNet or Log Analytics. Keep in sync with
+      // scripts/test-local.sh (start_backend).
+      SPRING_PROFILES_ACTIVE: 'e2e-seed',
+      USAGE_INSIGHTS_ENABLED: 'true',
+      USAGE_FUNNEL_ENABLED: 'true',
+      USAGE_DROPOFF_ENABLED: 'true',
+      CAPACITY_SCAN_ENABLED: 'true',
+      CAPACITY_SCAN_CRON: '-',
+      USAGE_INSIGHTS_ROLLUP_CRON: '-',
+      E2E_SEED_SET: process.env['E2E_SEED_SET'] ?? 'full',
     },
     url: 'http://localhost:3000/api/v1/health',
     reuseExistingServer: !process.env['CI'],

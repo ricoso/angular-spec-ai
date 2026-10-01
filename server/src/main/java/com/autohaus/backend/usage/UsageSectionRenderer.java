@@ -3,13 +3,11 @@ package com.autohaus.backend.usage;
 import com.autohaus.backend.reporting.ReportHtmlGenerator;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Renders the usage statistics section of the internal status page (REQ-037 §11.2, AC-2) /
@@ -511,28 +509,32 @@ public class UsageSectionRenderer {
     // Formatting / Formatierung
     // -----------------------------------------------------------------------------------------
 
+    // REQ-038 §14.1: the formatters moved verbatim to StatFormat so every section of the status
+    // page formats identically (TC-39); markup and behaviour here are unchanged. / Formatter nach
+    // StatFormat extrahiert, Verhalten unverändert.
+
     /** German thousands separators, e.g. {@code 1.122} / deutsche Tausendertrennung. */
     private static String num(long value) {
-        return String.format(Locale.GERMANY, "%,d", value);
+        return StatFormat.num(value);
     }
 
     /** One decimal with a German comma, e.g. {@code 66,3} / eine Nachkommastelle mit Komma. */
     private static String decimal(double value) {
-        return String.format(Locale.GERMANY, "%.1f", value);
+        return StatFormat.decimal(value);
     }
 
     /** Visible percentage, {@code null} renders „—" (AC-13) / sichtbarer Prozentwert. */
     private static String percent(Double value) {
-        return value == null ? DASH : decimal(value) + "&nbsp;%";
+        return StatFormat.percent(value);
     }
 
     /**
      * Bar width for the style attribute — CSS needs a dot as decimal separator, so this value is
-     * formatted with {@link Locale#ROOT} and never with the display locale. / Balkenbreite mit
-     * Punkt als Dezimaltrennzeichen.
+     * formatted with {@code Locale.ROOT} ({@link StatFormat#cssWidth(Double)}) and never with the
+     * display locale. / Balkenbreite mit Punkt als Dezimaltrennzeichen.
      */
     private static String cssWidth(Double value) {
-        return value == null ? "0.0" : String.format(Locale.ROOT, "%.1f", value);
+        return StatFormat.cssWidth(value);
     }
 
     /**

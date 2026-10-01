@@ -64,6 +64,32 @@ usage:
     account: ${USAGE_STORAGE_ACCOUNT:}
     container: ${USAGE_STORAGE_CONTAINER:usage-stats}
     blob: ${USAGE_STORAGE_BLOB:usage-daily.json}
+  # REQ-038 K2: booking insights (USAGE_BOOKING line, KQL 1+2, S0/S2-S4, insights.json).
+  # Delivered OFF (AC-31) — switching on requires gates S-2 and G-VVT (§14.5).
+  insights:
+    enabled: ${USAGE_INSIGHTS_ENABLED:false}
+    collecting-since: ${USAGE_INSIGHTS_COLLECTING_SINCE:}
+    rollup-cron: ${USAGE_INSIGHTS_ROLLUP_CRON:0 45 3 * * *}
+    blob: ${USAGE_INSIGHTS_BLOB:usage-insights.json}
+  # REQ-038 K3: global booking funnel (F-1..F-3, S6). Delivered OFF — gate G-DSB.
+  funnel:
+    enabled: ${USAGE_FUNNEL_ENABLED:false}
+    collecting-since: ${USAGE_FUNNEL_COLLECTING_SINCE:}
+  # REQ-038 N1: drop-off scenarios (F-4, access-line field "hits"). Only effective together
+  # with usage.enabled AND usage.funnel.enabled. Delivered OFF — gate G-DSB.
+  dropoff:
+    enabled: ${USAGE_DROPOFF_ENABLED:false}
+    collecting-since: ${USAGE_DROPOFF_COLLECTING_SINCE:}
+
+# REQ-038 K1: nightly capacity scan against SoftNet (S1, capacity.json).
+# Delivered OFF (AC-31) — switching on requires gate S-1 (§14.5). CAPACITY_SCAN_CRON=- disables
+# the cron (local/E2E).
+capacity:
+  enabled: ${CAPACITY_SCAN_ENABLED:false}
+  scan-cron: ${CAPACITY_SCAN_CRON:0 30 22 * * *}
+  reference-service: ${CAPACITY_REFERENCE_SERVICE:wiper-blades}
+  show-slot-count: ${CAPACITY_SHOW_SLOT_COUNT:false}
+  blob: ${CAPACITY_BLOB:capacity-daily.json}
 
 logging:
   level:
@@ -74,6 +100,12 @@ logging:
     console: "%d{ISO8601} [%thread] %-5level %logger{36} - %X{traceId:-system}: %msg%n"
 
 spring:
+  # REQ-038 §9: two scheduler threads — without a second thread the up-to-20-minute capacity
+  # scan would block the 15-minute usage refresh from REQ-037.
+  task:
+    scheduling:
+      pool:
+        size: 2
   jackson:
     default-property-inclusion: non_null
   devtools:

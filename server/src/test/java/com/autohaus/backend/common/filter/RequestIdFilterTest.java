@@ -2,12 +2,16 @@ package com.autohaus.backend.common.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.MDC;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -99,5 +103,51 @@ class RequestIdFilterTest {
         assertThrows(ServletException.class, () -> filter.doFilterInternal(request, response, chain));
 
         assertNull(MDC.get(RequestIdFilter.TRACE_ID_MDC_KEY));
+    }
+
+    // ---- REQ-038 BR-15 / TC-36: job trace ids cannot be forged by clients ----
+
+    @ParameterizedTest(name = "TC-36: X-Request-Id \"{0}\" is discarded (UUID instead)")
+    @ValueSource(strings = {"job.capacityprobe", "job.insightsrollup"})
+    @DisplayName("TC-36: the job trace ids lie outside the whitelist and are replaced by a UUID")
+    void discardsTheTraceIdsOfTheBackgroundJobs(String jobTraceId) throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Request-Id", jobTraceId);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+        AtomicReference<String> mdcDuringChain = new AtomicReference<>();
+        doAnswer(invocation -> {
+            mdcDuringChain.set(MDC.get(RequestIdFilter.TRACE_ID_MDC_KEY));
+            return null;
+        }).when(chain).doFilter(request, response);
+
+        filter.doFilterInternal(request, response, chain);
+
+        String requestId = (String) request.getAttribute(RequestIdFilter.REQUEST_ID_ATTRIBUTE);
+        assertNotEquals(jobTraceId, requestId);
+        assertEquals(requestId, UUID.fromString(requestId).toString(), "a generated UUID replaces the header");
+        assertEquals(requestId, mdcDuringChain.get(), "the log prefix never carries the job id");
+        assertFalse(mdcDuringChain.get().startsWith("job."), mdcDuringChain.get());
+        assertEquals(requestId, response.getHeader("X-Request-Id"));
+    }
+
+    @Test
+    @DisplayName("TC-36: a customer X-Request-Id \"capacityprobe\" is accepted as before")
+    void acceptsTheCapacityProbeWordWithoutTheJobPrefix() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Request-Id", "capacityprobe");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+        AtomicReference<String> mdcDuringChain = new AtomicReference<>();
+        doAnswer(invocation -> {
+            mdcDuringChain.set(MDC.get(RequestIdFilter.TRACE_ID_MDC_KEY));
+            return null;
+        }).when(chain).doFilter(request, response);
+
+        filter.doFilterInternal(request, response, chain);
+
+        assertEquals("capacityprobe", request.getAttribute(RequestIdFilter.REQUEST_ID_ATTRIBUTE));
+        assertEquals("capacityprobe", mdcDuringChain.get());
+        assertEquals("capacityprobe", response.getHeader("X-Request-Id"));
     }
 }

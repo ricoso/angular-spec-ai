@@ -152,6 +152,92 @@ class PropertiesTest {
         assertEquals(LocalDate.of(2026, 9, 22), bindUsage("2026-09-22").collectingSince());
     }
 
+    // === REQ-038 TC-40: the new blocks of the real application.yml / die neuen Blöcke ===
+
+    /**
+     * TC-40 / AC-31: the shipped {@code application.yml} without any environment variable — every
+     * new switch {@code false}, every empty {@code *_COLLECTING_SINCE} (also
+     * {@code USAGE_DROPOFF_COLLECTING_SINCE}) binds to {@code null} instead of throwing a
+     * {@code DateTimeParseException}, and the REQ-037 block keeps binding unchanged although it now
+     * has nested REQ-038 keys. / Auslieferungs-Defaults aus dem echten {@code application.yml}.
+     */
+    @Test
+    void req038Properties_bindTheShippedDefaultsOfApplicationYml() throws Exception {
+        Binder binder = applicationYmlBinder(Map.of());
+
+        UsageInsightsProperties insights = bind(binder, "usage.insights", UsageInsightsProperties.class);
+        UsageFunnelProperties funnel = bind(binder, "usage.funnel", UsageFunnelProperties.class);
+        UsageDropoffProperties dropoff = bind(binder, "usage.dropoff", UsageDropoffProperties.class);
+        CapacityProperties capacity = bind(binder, "capacity", CapacityProperties.class);
+
+        assertFalse(insights.enabled());
+        assertFalse(funnel.enabled());
+        assertFalse(dropoff.enabled(), "N1: usage.dropoff.enabled ships off as well");
+        assertFalse(capacity.enabled());
+        assertFalse(capacity.showSlotCount());
+        assertNull(insights.collectingSince(), "empty USAGE_INSIGHTS_COLLECTING_SINCE → null");
+        assertNull(funnel.collectingSince(), "empty USAGE_FUNNEL_COLLECTING_SINCE → null");
+        assertNull(dropoff.collectingSince(), "empty USAGE_DROPOFF_COLLECTING_SINCE → null");
+        assertEquals("0 45 3 * * *", insights.rollupCron());
+        assertEquals("usage-insights.json", insights.blob());
+        assertEquals("0 30 22 * * *", capacity.scanCron());
+        assertEquals("wiper-blades", capacity.referenceService());
+        assertEquals("capacity-daily.json", capacity.blob());
+
+        UsageStatsProperties usage = bind(binder, "usage", UsageStatsProperties.class);
+        assertTrue(usage.enabled(), "REQ-037 binds unchanged next to the nested REQ-038 keys");
+        assertEquals("Europe/Berlin", usage.zone());
+        assertEquals(24, usage.retentionMonths());
+        assertEquals("usage-daily.json", usage.storage().blob());
+    }
+
+    /**
+     * TC-40: the E2E values bind as well — {@code CAPACITY_SCAN_CRON=-} (cron disabled), an
+     * explicitly empty {@code USAGE_DROPOFF_COLLECTING_SINCE=} and ISO dates. / Auch die E2E-Werte
+     * binden.
+     */
+    @Test
+    void req038Properties_acceptTheDisabledCronAndIsoDates() throws Exception {
+        Map<String, Object> env = new LinkedHashMap<>();
+        env.put("CAPACITY_SCAN_ENABLED", "true");
+        env.put("CAPACITY_SCAN_CRON", "-");
+        env.put("USAGE_INSIGHTS_ROLLUP_CRON", "-");
+        env.put("USAGE_INSIGHTS_COLLECTING_SINCE", "2026-10-01");
+        env.put("USAGE_DROPOFF_COLLECTING_SINCE", "");
+        Binder binder = applicationYmlBinder(env);
+
+        CapacityProperties capacity = bind(binder, "capacity", CapacityProperties.class);
+        assertTrue(capacity.enabled());
+        assertEquals("-", capacity.scanCron(), "'-' disables the cron (local/E2E)");
+        UsageInsightsProperties insights = bind(binder, "usage.insights", UsageInsightsProperties.class);
+        assertEquals("-", insights.rollupCron());
+        assertEquals(LocalDate.of(2026, 10, 1), insights.collectingSince());
+        assertNull(bind(binder, "usage.dropoff", UsageDropoffProperties.class).collectingSince());
+    }
+
+    /**
+     * A binder over the real {@code application.yml} whose placeholders resolve against the given
+     * variables only — never the process environment, so the shipped defaults decide. / Binder über
+     * das echte {@code application.yml}; Platzhalter nur gegen die übergebenen Variablen.
+     */
+    private static Binder applicationYmlBinder(Map<String, Object> variables) throws java.io.IOException {
+        org.springframework.core.env.MutablePropertySources sources =
+            new org.springframework.core.env.MutablePropertySources();
+        sources.addLast(new org.springframework.core.env.MapPropertySource("variables", variables));
+        for (org.springframework.core.env.PropertySource<?> yml : new org.springframework.boot.env
+            .YamlPropertySourceLoader().load("application.yml",
+                new org.springframework.core.io.ClassPathResource("application.yml"))) {
+            sources.addLast(yml);
+        }
+        return new Binder(org.springframework.boot.context.properties.source.ConfigurationPropertySources
+            .from(sources), new org.springframework.boot.context.properties.bind
+            .PropertySourcesPlaceholdersResolver(sources), ApplicationConversionService.getSharedInstance());
+    }
+
+    private static <T> T bind(Binder binder, String prefix, Class<T> type) {
+        return binder.bind(prefix, type).orElseThrow(() -> new AssertionError(prefix + " did not bind"));
+    }
+
     /**
      * Binds the {@code usage} block exactly the way Spring Boot does at startup — same relaxed
      * binder, same conversion service — so a binding break shows up here instead of in production.

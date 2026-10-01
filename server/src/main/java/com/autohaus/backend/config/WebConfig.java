@@ -1,12 +1,10 @@
 package com.autohaus.backend.config;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -26,7 +24,8 @@ import java.util.Arrays;
 import java.util.Base64;
 
 @Configuration
-@EnableConfigurationProperties({AppProperties.class, SoftnetProperties.class, FeatureProperties.class, ErrorReportingProperties.class, UsageStatsProperties.class})
+@EnableConfigurationProperties({AppProperties.class, SoftnetProperties.class, FeatureProperties.class, ErrorReportingProperties.class, UsageStatsProperties.class,
+    UsageInsightsProperties.class, UsageFunnelProperties.class, UsageDropoffProperties.class, CapacityProperties.class})
 public class WebConfig implements WebMvcConfigurer {
 
     @Bean
