@@ -5,6 +5,7 @@ import { AppointmentApiService } from '@app/features/booking/services/appointmen
 import { BookingApiService } from '@app/features/booking/services/booking-api.service';
 import { WorkshopCalendarApiService } from '@app/features/booking/services/workshop-calendar-api.service';
 import { BookingStore } from '@app/features/booking/stores/booking.store';
+import { TranslateService } from '@core/i18n';
 
 import { FloatingOverlayComponent } from './floating-overlay.component';
 
@@ -47,6 +48,14 @@ describe('FloatingOverlayComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should name the cart button with the item count only when items are selected', () => {
+    TestBed.inject(TranslateService).use('de');
+    const exposed = component as unknown as { cartAriaLabel: () => string };
+    expect(exposed.cartAriaLabel()).toBe('Warenkorb');
+    store.toggleService('inspection');
+    expect(exposed.cartAriaLabel()).toBe('Warenkorb, 1 Artikel im Warenkorb');
   });
 
   it('should start with collapsed state', () => {

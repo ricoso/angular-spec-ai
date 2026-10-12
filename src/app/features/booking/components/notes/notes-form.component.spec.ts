@@ -1,6 +1,8 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { TranslateService } from '@core/i18n';
+
 import { NotesFormComponent } from './notes-form.component';
 
 describe('NotesFormComponent', () => {
@@ -49,6 +51,22 @@ describe('NotesFormComponent', () => {
       const validText = 'a'.repeat(1000);
       exposed.noteControl.setValue(validText);
       expect(exposed.noteControl.valid).toBe(true);
+    });
+  });
+
+  describe('charCountLabel (screen reader text of the counter)', () => {
+    it('should follow the entered length and the UI language', () => {
+      const translate = TestBed.inject(TranslateService);
+      translate.use('de');
+      const exposed = component as unknown as {
+        noteControl: { setValue: (v: string) => void };
+        charCountLabel: () => string;
+      };
+      exposed.noteControl.setValue('Hello');
+      expect(exposed.charCountLabel()).toBe('5 von 1000 Zeichen verwendet');
+      translate.use('en');
+      expect(exposed.charCountLabel()).toBe('5 of 1000 characters used');
+      translate.use('de');
     });
   });
 

@@ -8,6 +8,7 @@ import { AVAILABLE_SERVICES } from '../models/service.model';
 import { AppointmentApiService } from '../services/appointment-api.service';
 import { BookingApiService } from '../services/booking-api.service';
 import { RentCategoryApiService } from '../services/rent-category-api.service';
+import { WorkshopCalendarApiService } from '../services/workshop-calendar-api.service';
 
 import { BookingStore, mapAppointmentPreferenceToSoftnet } from './booking.store';
 
@@ -31,7 +32,8 @@ describe('BookingStore', () => {
         BookingStore,
         { provide: BookingApiService, useValue: apiSpy },
         { provide: AppointmentApiService, useValue: { getAppointments: jest.fn().mockResolvedValue([]), createAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' }), getAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' }) } },
-        { provide: RentCategoryApiService, useValue: { getRentCategories: jest.fn().mockResolvedValue([]) } }
+        { provide: RentCategoryApiService, useValue: { getRentCategories: jest.fn().mockResolvedValue([]) } },
+        { provide: WorkshopCalendarApiService, useValue: { getWorkshopCalendarDays: jest.fn().mockResolvedValue([]) } }
       ]
     });
 
@@ -699,4 +701,199 @@ describe('BookingStore', () => {
     });
   });
 
+
+  // ─── REQ-039 Abschnitt 18: rental car availability per appointment ───
+  describe('rental car (REQ-039)', () => {
+    const SLOT: AppointmentSlot = {
+      id: 'snap-1', date: '2026-10-16', displayDate: '16.10.2026', dayAbbreviation: 'Fr',
+      time: '08:00', displayTime: '08:00 Uhr', rentalCarIncluded: true
+    };
+    const flush = (): Promise<void> => new Promise<void>(resolve => setTimeout(resolve, 0));
+
+    let appointmentApi: { getAppointments: jest.Mock; createAppointment: jest.Mock };
+    let calendarApi: { getWorkshopCalendarDays: jest.Mock };
+    let rentCategoryApi: { getRentCategories: jest.Mock };
+
+    beforeEach(() => {
+      appointmentApi = TestBed.inject(AppointmentApiService) as unknown as typeof appointmentApi;
+      calendarApi = TestBed.inject(WorkshopCalendarApiService) as unknown as typeof calendarApi;
+      rentCategoryApi = TestBed.inject(RentCategoryApiService) as unknown as typeof rentCategoryApi;
+      store.setLocation(LOCATIONS_BY_BRAND.audi[0]);
+      store.setBrand('audi');
+    });
+
+    it('defaults to "without rental car"', () => {
+      expect(store.rentalCarRequested()).toBe(false);
+      expect(store.hasNoRentalCarAppointments()).toBe(false);
+    });
+
+    it('setRentalCarRequested drops slots, calendar and selection (AC-M8)', () => {
+      store.selectAppointment(SLOT);
+      store.setWorkshopCalendarDate('2026-10-16');
+
+      store.setRentalCarRequested(true);
+
+      expect(store.rentalCarRequested()).toBe(true);
+      expect(store.selectedAppointment()).toBeNull();
+      expect(store.workshopCalendarDate()).toBeNull();
+      expect(store.workshopCalendarDays()).toEqual([]);
+    });
+
+    it('setRentalCarRequested with the same value keeps the selection', () => {
+      store.selectAppointment(SLOT);
+      store.setRentalCarRequested(false);
+      expect(store.selectedAppointment()).toEqual(SLOT);
+    });
+
+    it('loadAppointments passes the rental flag to the API (AC-M1)', async () => {
+      store.setRentalCarRequested(true);
+      store.loadAppointments();
+      await flush();
+      expect(appointmentApi.getAppointments.mock.calls.at(-1)?.[6]).toBe(true);
+    });
+
+    it('loadAppointments without rental car sends false (AC-M3)', async () => {
+      store.loadAppointments();
+      await flush();
+      expect(appointmentApi.getAppointments.mock.calls.at(-1)?.[6]).toBe(false);
+    });
+
+    it('a failed rental call shows the rental empty state, not the generic error (E-2)', async () => {
+      store.setRentalCarRequested(true);
+      appointmentApi.getAppointments.mockRejectedValueOnce(new Error('500'));
+      store.loadAppointments();
+      await flush();
+      expect(store.error()).toBeNull();
+      expect(store.hasNoRentalCarAppointments()).toBe(true);
+    });
+
+    it('a failed call without rental car keeps the generic error', async () => {
+      appointmentApi.getAppointments.mockRejectedValueOnce(new Error('boom'));
+      store.loadAppointments();
+      await flush();
+      expect(store.error()).toBe('boom');
+      expect(store.hasNoRentalCarAppointments()).toBe(false);
+    });
+
+    it('loadWorkshopCalendarDays passes the rental flag and maps an empty result (A-2)', async () => {
+      store.setRentalCarRequested(true);
+      store.loadWorkshopCalendarDays('2026-10-16');
+      await flush();
+      expect(calendarApi.getWorkshopCalendarDays.mock.calls.at(-1)?.[5]).toBe(true);
+      expect(store.hasNoRentalCarCalendarDays()).toBe(true);
+    });
+
+    it('a failed rental calendar call shows the rental empty state (E-2)', async () => {
+      store.setRentalCarRequested(true);
+      calendarApi.getWorkshopCalendarDays.mockRejectedValueOnce(new Error('500'));
+      store.loadWorkshopCalendarDays('2026-10-16');
+      await flush();
+      expect(store.error()).toBeNull();
+      expect(store.hasNoRentalCarCalendarDays()).toBe(true);
+    });
+
+    it('a failed calendar call without rental car keeps the generic error', async () => {
+      calendarApi.getWorkshopCalendarDays.mockRejectedValueOnce(new Error('kaputt'));
+      store.loadWorkshopCalendarDays('2026-10-16');
+      await flush();
+      expect(store.error()).toBe('kaputt');
+    });
+
+    it('continueWithoutRentalCar drops wish and slots but keeps the calendar date (E-1)', () => {
+      store.setRentalCarRequested(true);
+      store.setSelectedRentCategoryId('rc-1');
+      store.setWorkshopCalendarDate('2026-10-16');
+      store.selectAppointment(SLOT);
+
+      store.continueWithoutRentalCar();
+
+      expect(store.rentalCarRequested()).toBe(false);
+      expect(store.selectedRentCategoryId()).toBeNull();
+      expect(store.selectedAppointment()).toBeNull();
+      expect(store.workshopCalendarDate()).toBe('2026-10-16');
+    });
+
+    it('hasNoRentalCarOffer is only true once empty categories are known (AC-M9, no flicker)', async () => {
+      expect(store.hasNoRentalCarOffer()).toBe(false);
+      store.loadRentCategories();
+      await flush();
+      expect(store.hasNoRentalCarOffer()).toBe(true);
+    });
+
+    it('hasRentalCarOffer follows the loaded categories (BR-M8)', async () => {
+      expect(store.hasRentalCarOffer()).toBe(false);
+      rentCategoryApi.getRentCategories.mockResolvedValueOnce([
+        { id: 'rc-1', groupId: 'g', name: 'Kleinwagen', description: '', brands: [], branches: [] }
+      ]);
+      store.loadRentCategories();
+      await flush();
+      expect(store.hasRentalCarOffer()).toBe(true);
+      expect(rentCategoryApi.getRentCategories.mock.calls.at(-1)?.[1]).toBe('default');
+    });
+
+    it('hasRentalCarOffer follows the SELECTED BRAND, not just the branch (BR-M8)', async () => {
+      // A branch that offers a rental car for BMW only.
+      rentCategoryApi.getRentCategories.mockResolvedValueOnce([
+        { id: 'rc-bmw', groupId: 'g', name: 'Kleinwagen', description: '', brands: ['BMW'], branches: [] }
+      ]);
+      store.loadRentCategories();
+      await flush();
+
+      store.setBrand('bmw');
+      expect(store.hasRentalCarOffer()).toBe(true);
+      expect(store.hasNoRentalCarOffer()).toBe(false);
+      expect(store.rentCategoriesForBrand().map(category => category.id)).toEqual(['rc-bmw']);
+
+      // A brand without a matching category (the Hyundai/SEAT case) → no switch, no SoftNet probe.
+      store.setBrand('audi');
+      expect(store.hasRentalCarOffer()).toBe(false);
+      expect(store.hasNoRentalCarOffer()).toBe(true);
+      expect(store.rentCategoriesForBrand()).toEqual([]);
+    });
+
+    it('an all-brand category (empty brands array) applies to every selected brand', async () => {
+      rentCategoryApi.getRentCategories.mockResolvedValueOnce([
+        { id: 'rc-all', groupId: 'g', name: 'Kleinwagen', description: '', brands: [], branches: [] }
+      ]);
+      store.loadRentCategories();
+      await flush();
+      store.setBrand('audi');
+      expect(store.hasRentalCarOffer()).toBe(true);
+      expect(store.rentCategoriesForBrand().map(category => category.id)).toEqual(['rc-all']);
+    });
+
+    it('failing categories hide the switch instead of raising an error (E-5)', async () => {
+      rentCategoryApi.getRentCategories.mockRejectedValueOnce(new Error('403'));
+      store.loadRentCategories();
+      await flush();
+      expect(store.hasRentalCarOffer()).toBe(false);
+      expect(store.error()).toBeNull();
+    });
+
+    it('resetFromStep(<= 3) resets the rental choice (7.2 addition)', () => {
+      store.setRentalCarRequested(true);
+      store.resetFromStep(3);
+      expect(store.rentalCarRequested()).toBe(false);
+    });
+
+    it('resetFromStep(4) keeps the rental choice', () => {
+      store.setRentalCarRequested(true);
+      store.resetFromStep(4);
+      expect(store.rentalCarRequested()).toBe(true);
+    });
+
+    it('submitBooking sends the category wish only with a rental car (BR-M5)', async () => {
+      store.selectAppointment(SLOT);
+      store.setSelectedRentCategoryId('rc-1');
+      store.submitBooking();
+      await flush();
+      expect(appointmentApi.createAppointment.mock.calls.at(-1)?.[0].rentCategoryId).toBeUndefined();
+
+      store.setRentalCarRequested(true);
+      store.selectAppointment(SLOT);
+      store.submitBooking();
+      await flush();
+      expect(appointmentApi.createAppointment.mock.calls.at(-1)?.[0].rentCategoryId).toBe('rc-1');
+    });
+  });
 });

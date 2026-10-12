@@ -1,6 +1,8 @@
-<div class="brand-grid row g-3" role="radiogroup" [attr.aria-label]="booking.brand.ariaGroupLabel | translate">
+<!-- REQ-039: brand grid as in mockups/wizard.css (.brand-grid) — 2/3/6 columns, logo cards with
+     grey border, selected card with primary border. -->
+<div class="brand-grid" role="radiogroup" [attr.aria-label]="booking.brand.ariaGroupLabel | translate">
   @for (brand of enrichedBrands(); track brand.id) {
-    <div class="brand-grid__item col-6 col-md-4 col-lg-3">
+    <div class="brand-grid__item">
       <input
         type="radio"
         name="brand"
@@ -13,17 +15,14 @@
       />
       <label
         [for]="'brand-' + brand.id"
-        class="brand-card card card-pickable h-100 p-4 d-flex flex-column align-items-center justify-content-center"
+        class="brand-card"
         [class.selected]="brand.id === selectedBrand()"
       >
-        <span class="brand-card__check badge-selected" aria-hidden="true">
-          <i class="bi bi-check-lg"></i>
-        </span>
         @if (brand.logoPath) {
           <img
             [src]="brand.logoPath"
             [alt]="brand.name"
-            class="brand-card__logo brand-logo"
+            class="brand-card__logo"
             aria-hidden="true"
           />
         }

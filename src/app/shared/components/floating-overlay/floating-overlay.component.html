@@ -1,5 +1,31 @@
-<div class="floating-overlay" aria-label="Schnellzugriff">
-  <!-- Cart Panel (expanded) -->
+<!-- REQ-039: app header as in mockups/0X-*.html (.host-header) — title, accessibility and cart
+     actions on top instead of floating buttons; the close (x) is intentionally omitted. -->
+<header class="floating-overlay app-header">
+  <p class="app-header__title">{{ app.headerTitle | translate }}</p>
+
+  <div class="floating-overlay__buttons app-header__actions">
+    <button
+      type="button"
+      class="a11y-fab floating-overlay__fab app-header__action"
+      (click)="onToggleAccessibility()"
+      [attr.aria-expanded]="isA11yOpen()"
+      [attr.aria-label]="overlay.accessibilityLabel | translate">
+      <i class="bi bi-universal-access" aria-hidden="true"></i>
+    </button>
+    <button
+      type="button"
+      class="cart-fab floating-overlay__fab app-header__action"
+      (click)="onToggleCart()"
+      [attr.aria-expanded]="isExpanded()"
+      [attr.aria-label]="cartAriaLabel()">
+      <i class="bi bi-bag-fill" aria-hidden="true"></i>
+      @if (hasItems()) {
+        <span class="app-header__badge" aria-hidden="true">{{ badgeText() }}</span>
+      }
+    </button>
+  </div>
+
+  <!-- Cart Panel -->
   @if (isExpanded()) {
     <div
       class="floating-overlay__panel"
@@ -11,7 +37,7 @@
           type="button"
           class="btn-close floating-overlay__close-button"
           (click)="onCloseCart()"
-          [attr.aria-label]="overlay.cartLabel | translate">
+          [attr.aria-label]="overlay.closeLabel | translate">
         </button>
       </div>
       <div class="floating-overlay__panel-body">
@@ -65,7 +91,7 @@
           type="button"
           class="btn-close floating-overlay__close-button"
           (click)="onCloseAccessibility()"
-          aria-label="Close">
+          [attr.aria-label]="overlay.closeLabel | translate">
         </button>
       </div>
       <div class="floating-overlay__panel-body">
@@ -82,39 +108,4 @@
       </div>
     </div>
   }
-
-  <!-- FAB Buttons (Cart bottom-right via .cart-fab, A11y bottom-left via .a11y-fab) -->
-  <div class="floating-overlay__buttons">
-    <button
-      type="button"
-      class="cart-fab floating-overlay__fab"
-      (click)="onToggleCart()"
-      [attr.aria-expanded]="isExpanded()"
-      [attr.aria-label]="overlay.cartLabel | translate">
-      @if (isExpanded()) {
-        <i class="bi bi-x-lg" aria-hidden="true"></i>
-      } @else {
-        <i class="bi bi-bag-fill" aria-hidden="true"></i>
-        @if (hasItems()) {
-          <span
-            class="badge bg-light text-dark position-absolute"
-            style="top: -0.3em; right: -0.3em; font-size: 0.55em;">
-            {{ badgeText() }}
-          </span>
-        }
-      }
-    </button>
-    <button
-      type="button"
-      class="a11y-fab floating-overlay__fab"
-      (click)="onToggleAccessibility()"
-      [attr.aria-expanded]="isA11yOpen()"
-      [attr.aria-label]="overlay.accessibilityLabel | translate">
-      @if (isA11yOpen()) {
-        <i class="bi bi-x-lg" aria-hidden="true"></i>
-      } @else {
-        <i class="bi bi-universal-access" aria-hidden="true"></i>
-      }
-    </button>
-  </div>
-</div>
+</header>

@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
@@ -28,13 +29,16 @@ public class SnapsService {
     private final OperationIdMapper operationIdMapper;
     private final SnapCache snapCache;
     private final SetupService setupService;
+    private final SoftnetBrandResolver brandResolver;
 
     public SnapsService(SoftnetApiClient softnetApi, OperationIdMapper operationIdMapper,
-                        SnapCache snapCache, SetupService setupService) {
+                        SnapCache snapCache, SetupService setupService,
+                        SoftnetBrandResolver brandResolver) {
         this.softnetApi = softnetApi;
         this.operationIdMapper = operationIdMapper;
         this.snapCache = snapCache;
         this.setupService = setupService;
+        this.brandResolver = brandResolver;
     }
 
     public List<SnapResponseDto> getSnaps(SnapRequestDto request) {
@@ -49,10 +53,17 @@ public class SnapsService {
                     + " in group \"" + groupId + "\"");
         }
 
+        boolean rentalCar = Boolean.TRUE.equals(request.replacementCar());
+        // REQ-039 BR-M6: SoftNet matches rent categories case-sensitively; only the rental path
+        // needs the SoftNet spelling, the plain path stays byte-identical (AC-M3).
+        String brand = rentalCar
+            ? brandResolver.resolve(groupId, request.brandName())
+            : request.brandName();
+
         Map<String, Object> softnetRequest = new LinkedHashMap<>();
         softnetRequest.put("groupid", groupId);
-        softnetRequest.put("brand", request.brandName() != null ? request.brandName() : "");
-        softnetRequest.put("car", Map.of("brand", request.brandName() != null ? request.brandName() : ""));
+        softnetRequest.put("brand", brand != null ? brand : "");
+        softnetRequest.put("car", Map.of("brand", brand != null ? brand : ""));
         softnetRequest.put("operations", mappedOps);
         softnetRequest.put("preferredBranch", request.branchId());
         softnetRequest.put("checkInDatePreference",
@@ -66,7 +77,8 @@ public class SnapsService {
             softnetRequest.put("checkInTimePreference", request.timePreference());
         }
 
-        if (request.replacementCar() != null && request.replacementCar()) {
+        // REQ-039 BR-M2: any rent category — no rentCategoryid, SoftNet assigns the first free one.
+        if (rentalCar) {
             softnetRequest.put("replacementPreference", true);
         }
 
@@ -80,12 +92,37 @@ public class SnapsService {
 
         // REQ-034: log technical metadata only, never the full request object.
         log.debug("SoftNet snaps request: group={}, {} operations, mode={}", groupId, mappedOps.size(), request.mode());
-        List<JsonNode> rawSnaps = softnetApi.getSnaps(softnetRequest, groupId);
+        List<JsonNode> rawSnaps;
+        try {
+            rawSnaps = softnetApi.getSnaps(softnetRequest, groupId);
+        } catch (RestClientResponseException ex) {
+            // Safety net (2026-10-12): a brand without a matching rent category makes SoftNet answer
+            // 500 "No matching rent category for brand X" on the rental path. Treat it as "no rental
+            // appointments" (empty list) instead of an error — the frontend already hides the switch
+            // for such brands (BR-M8); this only catches edge cases and keeps the logs clean.
+            if (rentalCar && ex.getStatusCode().value() == 500
+                    && ex.getResponseBodyAsString().contains("No matching rent category")) {
+                log.info("Rental snaps probe: brand has no matching rent category — returning no rental slots");
+                return List.of();
+            }
+            throw ex;
+        }
         log.debug("SoftNet snaps response: {} items", rawSnaps.size());
 
         snapCache.cacheSnaps(rawSnaps);
 
-        return transformSnaps(rawSnaps);
+        if (!rentalCar) {
+            return transformSnaps(rawSnaps);
+        }
+        // REQ-039 BR-M2/AC-M2: with a rental car only snaps SoftNet reserved a car for are offered.
+        List<JsonNode> withRentalCar = rawSnaps.stream().filter(SnapsService::hasRentalCar).toList();
+        log.debug("Rental filter: {} of {} snaps carry a replacement resource", withRentalCar.size(), rawSnaps.size());
+        return transformSnaps(withRentalCar);
+    }
+
+    private static boolean hasRentalCar(JsonNode snap) {
+        JsonNode resource = snap.path("replacementResource");
+        return resource.isTextual() && !resource.asText().isBlank();
     }
 
     private List<SnapResponseDto> transformSnaps(List<JsonNode> snaps) {
@@ -105,7 +142,8 @@ public class SnapsService {
                 hours + ":" + minutes,
                 hours + ":" + minutes + " Uhr",
                 true,
-                snap.path("checkInResource").asText(null)
+                snap.path("checkInResource").asText(null),
+                hasRentalCar(snap)
             );
 
             groupedByDate.computeIfAbsent(dateKey, k -> new ArrayList<>()).add(slot);

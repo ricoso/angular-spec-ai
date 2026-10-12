@@ -44,8 +44,10 @@ test.describe('REQ-021: Rentcategory + Callback Flag', () => {
     await expect(rentSwitch).not.toBeChecked();
     await expect(page.locator('.notes-extras__switch-card.is-on .pill-group')).toHaveCount(0);
 
-    // Aktivieren -> mindestens eine Kategorie aus SoftNet geladen
-    await rentSwitch.check({ force: true });
+    // Aktivieren -> mindestens eine Kategorie aus SoftNet geladen.
+    // REQ-039: Schalter als visuell verstecktes Input + Label (Mockup) — Klick auf das Label wie ein Nutzer.
+    await page.locator('label[for="rentSwitch"]').click();
+    await expect(rentSwitch).toBeChecked();
     const categoryLabels = page.locator('.notes-extras__switch-card.is-on .pill-group label');
     await expect(categoryLabels.first()).toBeVisible({ timeout: 10_000 });
     const count = await categoryLabels.count();
@@ -71,7 +73,7 @@ test.describe('REQ-021: Rentcategory + Callback Flag', () => {
     await goToNotesPage(page);
 
     // Rueckruf-Switch aktivieren
-    await page.locator('#callbackSwitch').check({ force: true });
+    await page.locator('label[for="callbackSwitch"]').click();
     await expect(page.locator('#callbackSwitch')).toBeChecked();
 
     await clickNotesContinue(page);

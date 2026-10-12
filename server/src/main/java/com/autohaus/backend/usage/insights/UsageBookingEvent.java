@@ -35,7 +35,7 @@ import java.util.List;
  * @param slotWeekday weekday of the booked slot / Wochentag des Termins
  * @param slotDaypart daypart of the booked slot / Tagesabschnitt des Termins
  * @param leadTime lead-time bucket / Vorlauf-Bucket
- * @param mobility whether a rental car was booked ({@code rentCategoryid} set, REQ-036) / Mietwagen
+ * @param mobility whether a rental car was booked ({@code replacementPreference} + {@code replacementResource}, REQ-039 BR-M12) / Mietwagen
  */
 public record UsageBookingEvent(
     int v,

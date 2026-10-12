@@ -81,4 +81,23 @@ class RentCategoriesServiceTest {
         List<RentCategoryResponseDto> result = service.getRentCategories("branch-1");
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void getRentCategories_withVariant_loadsFromTheVariantGroup() {
+        when(setupService.resolveGroupId("branch-1", "tireChange")).thenReturn("tire-group-id");
+        when(softnetApi.getRentCategories("tire-group-id")).thenReturn(List.of());
+
+        assertTrue(service.getRentCategories("branch-1", "tireChange").isEmpty());
+
+        org.mockito.Mockito.verify(setupService).resolveGroupId("branch-1", "tireChange");
+    }
+
+    @Test
+    void getRentCategories_withoutVariant_usesDefaultGroup() {
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of());
+
+        service.getRentCategories("branch-1");
+
+        org.mockito.Mockito.verify(setupService).resolveGroupId("branch-1", "default");
+    }
 }

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marke · Werkstatttermin · REQ-039 Mockup</title>
+  <link rel="stylesheet" href="wizard.css">
+</head>
+<body class="mockup-page" data-mockup-step="1">
+  <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+  <div class="mockup-shell" data-testid="mockup-shell">
+    <header class="host-header" aria-label="Werkstatttermin – Referenz-Hostheader">
+      <p class="host-header__title">Werkstatttermin</p>
+      <details class="host-header__menu">
+        <summary class="host-header__action" aria-label="Darstellungseinstellungen"><i class="bi bi-universal-access" aria-hidden="true"></i></summary>
+        <div class="host-header__panel">
+          <p><strong>Darstellung</strong></p>
+          <label class="host-header__setting"><input id="contrast-toggle" type="checkbox"> Hoher Kontrast</label>
+          <p>Die Referenz-Kontrastpalette gilt nur für diese Vorschau.</p>
+        </div>
+      </details>
+      <details class="host-header__menu">
+        <summary class="host-header__action" aria-label="Serviceauswahl ansehen"><i class="bi bi-bag-fill" aria-hidden="true"></i></summary>
+        <div class="host-header__panel"><p><strong>Ihre Services</strong></p><p>Noch keine Services gewählt.</p></div>
+      </details>
+      <a class="host-header__action host-header__action--close" href="../mockup.html" aria-label="Zur Mockup-Galerie"><i class="bi bi-x-circle" aria-hidden="true"></i></a>
+    </header>
+    <nav class="wizard" aria-label="Buchungsfortschritt: Schritt 1 von 6" data-testid="wizard">
+      <ol class="wizard__steps">
+        <li class="wizard__step wizard__step--active" data-state="active" data-original-index="1">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-current="step" aria-label="Schritt 1 von 6: Marke, aktuell" data-testid="wizard-step-1"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Marke</span></button>
+        </li>
+        <li class="wizard__step wizard__step--future" data-state="future" data-original-index="2">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-label="Schritt 2 von 6: Serviceauswahl, noch nicht erreichbar" data-testid="wizard-step-2"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Service</span></button>
+        </li>
+        <li class="wizard__step wizard__step--future" data-state="future" data-original-index="3">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-label="Schritt 3 von 6: Hinweise, noch nicht erreichbar" data-testid="wizard-step-3"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Hinweise</span></button>
+        </li>
+        <li class="wizard__step wizard__step--future" data-state="future" data-original-index="4">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-label="Schritt 4 von 6: Termin, noch nicht erreichbar" data-testid="wizard-step-4"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Termin</span></button>
+        </li>
+        <li class="wizard__step wizard__step--future" data-state="future" data-original-index="5">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-label="Schritt 5 von 6: Kontakt- und Fahrzeugdaten, noch nicht erreichbar" data-testid="wizard-step-5"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Kontakt- &amp; Fahrzeugdaten</span></button>
+        </li>
+        <li class="wizard__step wizard__step--future" data-state="future" data-original-index="6">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-label="Schritt 6 von 6: Übersicht, noch nicht erreichbar" data-testid="wizard-step-6"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Übersicht</span></button>
+        </li>
+      </ol>
+      <p class="wizard__current" data-testid="wizard-current-title" aria-live="polite">Marke</p>
+      <p class="wizard__counter">Schritt 1 von 6</p>
+    </nav>
+    <main class="step-content step-content--brand" id="main-content" data-testid="step-content" aria-describedby="mockup-description">
+      <p class="visually-hidden" id="mockup-description">Statische Designvorschau im Deep-Link-Modus mit vorgegebenem Standort. Auswahlzustände werden nicht gespeichert. Weiter öffnet einen eigenständigen Musterzustand.</p>
+      <div class="location-banner" role="note">
+        <i class="bi bi-geo-alt location-banner__icon" aria-hidden="true"></i>
+        <div><span class="location-banner__label">Ihr Standort</span><p class="location-banner__address">ThyssenKrupp Allee 20, 45143 Essen</p></div>
+      </div>
+      <div class="step-content__heading">
+        <h1 class="step-content__title">Welche Fahrzeugmarke fahren Sie?</h1>
+        <p class="step-content__subtitle">Bitte wählen Sie die gewünschte Marke aus.</p>
+      </div>
+      <fieldset class="brand-grid">
+        <legend class="visually-hidden">Fahrzeugmarke auswählen</legend>
+        <div class="brand-grid__item">
+          <input class="choice-input brand-grid__input" type="radio" name="brand" id="brand-cupra" value="cupra">
+          <label class="brand-grid__card" for="brand-cupra"><img class="brand-grid__logo" src="assets/cupra.png" alt="Cupra"></label>
+        </div>
+        <div class="brand-grid__item">
+          <input class="choice-input brand-grid__input" type="radio" name="brand" id="brand-hyundai" value="hyundai">
+          <label class="brand-grid__card" for="brand-hyundai"><img class="brand-grid__logo" src="assets/hyundai.png" alt="Hyundai"></label>
+        </div>
+        <div class="brand-grid__item">
+          <input class="choice-input brand-grid__input" type="radio" name="brand" id="brand-seat" value="seat">
+          <label class="brand-grid__card" for="brand-seat"><img class="brand-grid__logo" src="assets/seat.png" alt="SEAT"></label>
+        </div>
+        <div class="brand-grid__item">
+          <input class="choice-input brand-grid__input" type="radio" name="brand" id="brand-volkswagen" value="volkswagen" checked>
+          <label class="brand-grid__card" for="brand-volkswagen"><img class="brand-grid__logo" src="assets/volkswagen.png" alt="Volkswagen"></label>
+        </div>
+        <div class="brand-grid__item">
+          <input class="choice-input brand-grid__input" type="radio" name="brand" id="brand-commercial" value="volkswagen-commercial">
+          <label class="brand-grid__card" for="brand-commercial"><img class="brand-grid__logo" src="assets/vw_nutzfahrzeuge.png" alt="Volkswagen Nutzfahrzeuge"></label>
+        </div>
+        <div class="brand-grid__item">
+          <input class="choice-input brand-grid__input" type="radio" name="brand" id="brand-skoda" value="skoda">
+          <label class="brand-grid__card" for="brand-skoda"><img class="brand-grid__logo" src="assets/skoda.png" alt="Škoda"></label>
+        </div>
+      </fieldset>
+    </main>
+    <nav class="step-actions step-actions--forward" aria-label="Schrittnavigation">
+      <a class="button" href="02-service.html" data-testid="wizard-next">Weiter</a>
+    </nav>
+  </div>
+</body>
+</html>

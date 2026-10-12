@@ -32,7 +32,7 @@ import { ServicesTileComponent } from './components/services-tile/services-tile.
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BookingOverviewContainerComponent {
-  protected readonly store = inject(BookingStore);
+  private readonly store = inject(BookingStore);
   private readonly router = inject(Router);
   private readonly translateService = inject(TranslateService);
 
@@ -45,6 +45,12 @@ export class BookingOverviewContainerComponent {
   protected readonly services = this.store.selectedServices;
   protected readonly customerInfo = this.store.customerInfo;
   protected readonly vehicleInfo = this.store.vehicleInfo;
+  /** Extras tile inputs (REQ-039: rental car flag + optional category wish). */
+  protected readonly rentalCarRequested = this.store.rentalCarRequested;
+  protected readonly rentCategoryWishName = this.store.selectedRentCategoryName;
+  protected readonly appointmentPreference = this.store.selectedAppointmentPreference;
+  protected readonly callbackOption = this.store.selectedCallbackOption;
+  protected readonly bookingNote = this.store.bookingNote;
 
   constructor() {
     // REQ-031: booking failed with 410 (snap taken in the meantime) — send the
@@ -63,6 +69,12 @@ export class BookingOverviewContainerComponent {
     const found = AVAILABLE_BRANDS.find(b => b.id === brand);
     return found?.name ?? brand;
   });
+
+  /** REQ-039 mockup sidebar: "<Marke> Werkstattservice". */
+  protected readonly sidebarServiceValue = computed(() =>
+    this.translateService.instant(this.bookingOverview.sidebar.serviceValue)
+      .replace('{brand}', this.resolvedBrandName())
+  );
 
   protected readonly resolvedLocationName = computed(() => {
     const location = this.store.selectedLocation();

@@ -526,6 +526,76 @@ const SCREENSHOT_CONFIG = {
       await page.waitForTimeout(300);
     },
   },
+
+  'REQ-039-Responsive-Wizard': {
+    route: '/home/notes',
+    // REQ-039: responsive wizard breadcrumb (compact on mobile, full on desktop) plus
+    // Abschnitt 18 — the rental-car switch on the notes page, switched ON so the
+    // optional category wish ("Keine Präferenz" preselected) is visible.
+    // The app uses path routing (not hash) — therefore `${BASE_URL}` instead of `${HASH}`.
+    // Runs against the real backend; no booking is submitted.
+    setup: async (page) => {
+      await page.goto(`${BASE_URL}/home/location`);
+      await page.waitForLoadState('networkidle');
+      const locationCard = page.locator('.location-card').first();
+      await locationCard.waitFor({ state: 'visible', timeout: 15000 });
+      await locationCard.click();
+      // In-app navigation only: a goto('/home/brand') would reload the app, drop the
+      // store and let the guard bounce back to /home/location.
+      try {
+        await page.waitForURL(/\/home\/brand/, { timeout: 10000 });
+      } catch {
+        await locationCard.click();
+        await page.waitForURL(/\/home\/brand/, { timeout: 15000 });
+      }
+      await page.waitForLoadState('networkidle');
+      await page.locator('.brand-card').first().waitFor({ state: 'visible', timeout: 15000 });
+      await page.locator('.brand-card').first().click();
+      await page.waitForLoadState('networkidle');
+
+      // Services (REQ-026): prefer "Inspektion", fall back to any operation.
+      await page.locator('app-service-card').first().waitFor({ state: 'visible', timeout: 15000 });
+      const categoryCards = page.locator('app-service-card');
+      const cardCount = await categoryCards.count();
+      const preferred = page
+        .locator('.service-option', { hasText: /inspektion|inspection/i })
+        .locator('input[type="checkbox"]')
+        .first();
+      const anyOption = page.locator('.service-option input[type="checkbox"]').first();
+      let operationSelected = false;
+      for (let pass = 0; pass < 2 && !operationSelected; pass++) {
+        const target = pass === 0 ? preferred : anyOption;
+        for (let i = -1; i < cardCount && !operationSelected; i++) {
+          if (i >= 0) {
+            await categoryCards.nth(i).click();
+            await page.waitForTimeout(200);
+          }
+          if (await target.isVisible().catch(() => false)) {
+            if (!(await target.isChecked())) {
+              await target.check({ force: true });
+              await page.waitForTimeout(200);
+            }
+            operationSelected = true;
+          }
+        }
+      }
+      await page.locator('.services-bottom-bar .btn-primary').click();
+      await page.locator('.notes').waitFor({ state: 'visible', timeout: 10000 });
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(300);
+
+      // Abschnitt 18: switch the rental car on (only rendered when the branch offers categories).
+      const rentSwitch = page.locator('#rentSwitch');
+      if (await rentSwitch.count() > 0) {
+        // REQ-039: switch = visually hidden input + label (mockup 03) — click the label like a user.
+        await page.locator('label[for="rentSwitch"]').click();
+        await page.locator('label[for="rentClass-none"]').waitFor({ state: 'visible', timeout: 5000 });
+      } else {
+        console.warn('    ⚠️  #rentSwitch not rendered — branch offers no rent categories');
+      }
+      await page.waitForTimeout(300);
+    },
+  },
 };
 
 // ---------------------------------------------------------------------------

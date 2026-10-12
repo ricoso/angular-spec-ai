@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -27,11 +28,23 @@ public class AppointmentsService {
 
     private static final Logger log = LoggerFactory.getLogger(AppointmentsService.class);
 
-    /** SoftNet spec: wishlist.rentCategoryid has minLength == maxLength == 24. */
+    /** SoftNet spec: rent category ids are exactly 24 chars. */
     private static final int RENT_CATEGORY_ID_LENGTH = 24;
 
-    /** REQ-036: non-PII wishlist fields added to the happy-path booking log. */
+    /** Reserved rental object fields logged in {@code BOOKING_CREATED} (no PII). */
     private static final List<String> MOBILITY_LOG_FIELDS = List.of("isFleet", "fleetType", "rentCategoryid");
+
+    /** SoftNet spec: wishlist.note holds at most 2000 chars. */
+    static final int NOTE_MAX_LENGTH = 2000;
+
+    /**
+     * REQ-039 BR-M5: fixed German prefix for the dealership — the category is only a wish, the
+     * dealership confirms it. Not a UI text, so not part of the i18n catalogue.
+     */
+    static final String RENTAL_WISH_PREFIX = "Mietwagen-Wunsch: ";
+
+    /** SoftNet placeholder when the customer leaves the optional VIN empty (unchanged since REQ-009). */
+    static final String VIN_UNKNOWN = "UNKNOWN";
 
     private final SoftnetApiClient softnetApi;
     private final SnapCache snapCache;
@@ -85,7 +98,8 @@ public class AppointmentsService {
 
         // Patch a copy so the pristine SoftNet snap stays available for error logging.
         ObjectNode snap = ((ObjectNode) rawSnap).deepCopy();
-        patchSnapWithBookingData(snap, dto);
+        patchSnapWithBookingData(snap, dto, rentalWishName(dto, groupId, rawSnap),
+            resolveRentCategoryId(dto, groupId, rawSnap));
 
         String branchLabel = "";
         JsonNode branchNode = snap.path("branch");
@@ -105,7 +119,7 @@ public class AppointmentsService {
                 result.path("id").asText(""), branchLabel,
                 LogSanitizer.redact(snap.path("wishlist").path("client").toString()),
                 LogSanitizer.redact(snap.path("wishlist").path("car").toString()),
-                mobilityLogFields(snap.path("wishlist")));
+                mobilityLogFields(snap));
             logUsageBooking(dto, groupId, rawSnap, snap);
             return mapAppointmentResponse(result, dto);
         } catch (RuntimeException e) {
@@ -149,29 +163,136 @@ public class AppointmentsService {
             return;
         }
         try {
-            usageEventLogger.logBooking(dto.branchId(), groupId, rawSnap,
-                snap.path("wishlist").hasNonNull("rentCategoryid"));
+            usageEventLogger.logBooking(dto.branchId(), groupId, rawSnap, isRentalCarBooking(snap));
         } catch (RuntimeException e) {
             log.warn("USAGE_BOOKING skipped: {}", e.getClass().getSimpleName());
         }
     }
 
     /**
-     * REQ-036: mobility part of the booking log. Only ids and booleans, so no PII and no
-     * redaction — unlike the client/car sections. Stays an empty object when the customer
-     * booked without a rental car, keeping the log line greppable either way.
+     * Mobility part of the booking log — the reserved rental object (isFleet/fleetType/rentCategoryid),
+     * no PII, no redaction. Stays an empty object for bookings without a rental car, keeping the line
+     * greppable. Hybrid (2026-10-12): back to the fields that are actually sent to SoftNet.
      */
-    private String mobilityLogFields(JsonNode wishlist) {
+    private String mobilityLogFields(JsonNode snap) {
         ObjectNode mobility = objectMapper.createObjectNode();
+        JsonNode wishlist = snap.path("wishlist");
         for (String field : MOBILITY_LOG_FIELDS) {
-            if (wishlist.has(field)) {
-                mobility.set(field, wishlist.get(field));
+            JsonNode value = wishlist.path(field);
+            if (!value.isMissingNode()) {
+                mobility.set(field, value);
             }
         }
         return mobility.toString();
     }
 
-    private void patchSnapWithBookingData(ObjectNode snap, CreateAppointmentRequest dto) {
+    /**
+     * REQ-039: the optional VIN is forwarded trimmed and upper-cased — the same canonical spelling
+     * the frontend sends — so SoftNet and the log masking (LogSanitizer) see one form. Missing or
+     * blank stays {@link #VIN_UNKNOWN} as before.
+     */
+    static String normalizeVin(String vin) {
+        if (vin == null || vin.isBlank()) {
+            return VIN_UNKNOWN;
+        }
+        return vin.trim().toUpperCase(Locale.ROOT);
+    }
+
+    /**
+     * BR-M12 (hybrid 2026-10-12): a booking counts as a rental-car booking once a concrete rental
+     * object was reserved ({@code wishlist.rentCategoryid} via the proven REQ-036 fleet path).
+     */
+    static boolean isRentalCarBooking(JsonNode snap) {
+        return snap.path("wishlist").hasNonNull("rentCategoryid");
+    }
+
+    /**
+     * REQ-039 BR-M5: resolves the optional category wish to its display name. Only relevant for a
+     * snap requested with a rental car; any lookup problem drops the wish instead of failing the
+     * booking (the category is confirmed by the dealership anyway).
+     */
+    private String rentalWishName(CreateAppointmentRequest dto, String groupId, JsonNode rawSnap) {
+        String wishId = dto.rentCategoryId();
+        if (wishId == null || wishId.isBlank()
+                || !rawSnap.path("wishlist").path("replacementPreference").asBoolean(false)) {
+            return null;
+        }
+        if (wishId.length() != RENT_CATEGORY_ID_LENGTH) {
+            log.warn("Ignoring rent category wish: expected {} chars, got {}", RENT_CATEGORY_ID_LENGTH, wishId.length());
+            return null;
+        }
+        try {
+            return softnetApi.getRentCategories(groupId).stream()
+                .filter(category -> wishId.equals(category.path("id").asText()))
+                .map(category -> category.path("name").asText(""))
+                .filter(name -> !name.isBlank())
+                .findFirst()
+                .orElse(null);
+        } catch (RuntimeException e) {
+            log.warn("Rent category wish dropped, lookup failed: {}", e.getClass().getSimpleName());
+            return null;
+        }
+    }
+
+    /**
+     * Hybrid (2026-10-12): the concrete rent category reserved for a rental booking via the proven
+     * REQ-036 fleet path. The customer's wish if set, otherwise the category SoftNet already offered
+     * for the slot ({@code replacementResource}, matched by name), otherwise the first category of the
+     * group. Returns {@code null} for a non-rental booking or when no category can be resolved — then
+     * nothing is reserved and the snap is booked as is (same as the current replacementPreference-only
+     * behaviour, so this never fails a booking).
+     */
+    private String resolveRentCategoryId(CreateAppointmentRequest dto, String groupId, JsonNode rawSnap) {
+        if (!rawSnap.path("wishlist").path("replacementPreference").asBoolean(false)) {
+            return null;
+        }
+        String wishId = dto.rentCategoryId();
+        if (wishId != null && wishId.length() == RENT_CATEGORY_ID_LENGTH) {
+            return wishId;
+        }
+        String offered = rawSnap.path("replacementResource").asText("");
+        try {
+            List<JsonNode> categories = softnetApi.getRentCategories(groupId);
+            String byName = categories.stream()
+                .filter(category -> !offered.isBlank()
+                    && offered.equalsIgnoreCase(category.path("name").asText("")))
+                .map(category -> category.path("id").asText(""))
+                .filter(id -> id.length() == RENT_CATEGORY_ID_LENGTH)
+                .findFirst()
+                .orElse(null);
+            if (byName != null) {
+                return byName;
+            }
+            return categories.stream()
+                .map(category -> category.path("id").asText(""))
+                .filter(id -> id.length() == RENT_CATEGORY_ID_LENGTH)
+                .findFirst()
+                .orElse(null);
+        } catch (RuntimeException e) {
+            log.warn("Rent category resolution failed, booking without a reserved category: {}", e.getClass().getSimpleName());
+            return null;
+        }
+    }
+
+    /**
+     * REQ-039 BR-M5: the wish goes in front of the customer note; the customer note is shortened
+     * if the total would exceed SoftNet's 2000-char limit — never the wish.
+     */
+    static String composeNote(String rentalWishName, String customerNote) {
+        String note = customerNote != null && !customerNote.isBlank() ? customerNote : null;
+        if (rentalWishName == null) {
+            return note;
+        }
+        String wish = RENTAL_WISH_PREFIX + rentalWishName;
+        if (note == null) {
+            return wish;
+        }
+        int room = NOTE_MAX_LENGTH - wish.length() - 1;
+        return room <= 0 ? wish : wish + "\n" + (note.length() > room ? note.substring(0, room) : note);
+    }
+
+    private void patchSnapWithBookingData(ObjectNode snap, CreateAppointmentRequest dto, String rentalWishName,
+                                          String rentCategoryId) {
         ObjectNode wishlist = snap.has("wishlist") && snap.get("wishlist").isObject()
             ? (ObjectNode) snap.get("wishlist")
             : objectMapper.createObjectNode();
@@ -200,7 +321,7 @@ public class AppointmentsService {
             car.put("brand", "");
         }
         car.put("license", dto.vehicle().licensePlate());
-        car.put("VIN", dto.vehicle().vin() != null ? dto.vehicle().vin() : "UNKNOWN");
+        car.put("VIN", normalizeVin(dto.vehicle().vin()));
         car.put("currentMileage", dto.vehicle().mileage());
         car.put("firstRegMonth", dto.vehicle().firstRegMonth() != null ? dto.vehicle().firstRegMonth() : "01");
         car.put("firstRegYear", dto.vehicle().firstRegYear() != null ? dto.vehicle().firstRegYear() : "2020");
@@ -208,24 +329,24 @@ public class AppointmentsService {
             : (existingCar.has("model") ? existingCar.get("model").asText("Unknown") : "Unknown"));
         wishlist.set("car", car);
 
-        if (dto.note() != null && !dto.note().isBlank()) {
-            wishlist.put("note", dto.note());
+        String note = composeNote(rentalWishName, dto.note());
+        if (note != null) {
+            wishlist.put("note", note);
         }
 
-        // REQ-036: the customer picks from /api/planning/rentcategories, so the id belongs in
-        // "rentCategoryid". It used to go into "fleetCategoryid", which SoftNet resolves against
-        // the separate fleetcategory collection — that one needs the scope.api.planning.rent.service
-        // scope we do not hold, so the category was silently unresolvable downstream.
-        String rentCategoryId = dto.rentCategoryId();
-        if (rentCategoryId != null && !rentCategoryId.isBlank()) {
-            if (rentCategoryId.length() == RENT_CATEGORY_ID_LENGTH) {
-                wishlist.put("isFleet", true);
-                wishlist.put("fleetType", "rentObject");
-                wishlist.put("rentCategoryid", rentCategoryId);
-            } else {
-                log.warn("Ignoring rent category id: expected {} chars, got {}",
-                    RENT_CATEGORY_ID_LENGTH, rentCategoryId.length());
-            }
+        // Hybrid (2026-10-12): a rental booking reserves a concrete rental object via the proven
+        // REQ-036 fleet path (isFleet/fleetType/rentCategoryid) — the mechanism that reliably
+        // reserved cars before REQ-039. The REQ-039 replacement* passthrough is removed so the
+        // payload sent to SoftNet matches that proven booking exactly. The filter (snap request with
+        // replacementCar) stays and only decides which slots are shown.
+        if (rentCategoryId != null) {
+            wishlist.put("isFleet", true);
+            wishlist.put("fleetType", "rentObject");
+            wishlist.put("rentCategoryid", rentCategoryId);
+            wishlist.remove("replacementPreference");
+            snap.remove("replacementResource");
+            snap.remove("replacementStart");
+            snap.remove("replacementEnd");
         }
 
         if (Boolean.TRUE.equals(dto.callbackRequested())) {

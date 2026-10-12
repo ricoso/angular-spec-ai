@@ -1,10 +1,11 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="appointment-selection page-wrap" aria-labelledby="appointment-title">
+<section class="page-wrap appointment-selection" aria-labelledby="appointment-title">
 
   <h1 class="appointment-selection__title page-title" id="appointment-title">
     {{ booking.appointment.title | translate }}
   </h1>
+  <p class="page-subtitle">{{ booking.appointment.subtitle | translate }}</p>
 
   @if (hasSnapConflict()) {
     <app-snap-conflict-banner (closed)="onSnapConflictBannerClosed()" />
@@ -31,14 +32,27 @@
       </button>
     </div>
   } @else {
-    <!-- Datum-Strip -->
-    <div class="card">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="m-0">
-            <i class="bi bi-calendar-week me-2 text-primary" aria-hidden="true"></i>{{ stripMonthLabel() }}
-          </h6>
-        </div>
+    @if (hasNoRentalCarAppointments()) {
+      <!-- REQ-039 E-1/E-2: kein Termin mit Mietwagen — kein stiller Fallback auf alle Termine -->
+      <app-rental-car-empty-state
+        class="appointment-selection__rental-empty"
+        [showLaterAvailable]="true"
+        (showLater)="onShowLaterAppointments()"
+        (continueWithout)="onContinueWithoutRentalCar()"
+      />
+    } @else {
+      @if (rentalCarRequested()) {
+        <p class="notice appointment-selection__rental-filter" role="status">
+          <i class="bi bi-car-front" aria-hidden="true"></i>
+          <span>{{ booking.appointment.rentalCar.filterActive | translate }}</span>
+        </p>
+      }
+
+      <!-- REQ-039: Kalenderkarte mit Datumskacheln (mockups/04-termin.html .calendar/.date-list) -->
+      <section class="calendar" aria-labelledby="calendar-heading">
+        <h2 class="calendar__heading" id="calendar-heading">
+          <i class="bi bi-calendar-event" aria-hidden="true"></i>{{ stripMonthLabel() }}
+        </h2>
         <div
           class="date-strip"
           role="radiogroup"
@@ -51,46 +65,46 @@
               role="radio"
               tabindex="0"
               [attr.aria-checked]="entry.date === selectedDate()"
-              [attr.aria-label]="entry.dayAbbreviation + ', ' + entry.day + '. ' + entry.month"
+              [attr.aria-label]="entry.ariaLabel"
               (click)="onDateSelect(entry.date)"
               (keydown.enter)="onDateSelect(entry.date); $event.preventDefault()"
               (keydown.space)="onDateSelect(entry.date); $event.preventDefault()"
             >
-              <div class="date-tile__weekday">{{ entry.dayAbbreviation }}</div>
-              <div class="date-tile__day">{{ entry.day }}</div>
-              <div class="date-tile__month">{{ entry.month }}</div>
+              <span class="date-tile__weekday">{{ entry.weekday }}</span>
+              <span class="date-tile__day">{{ entry.day }}</span>
+              <span class="date-tile__month">{{ entry.month }}</span>
             </div>
           } @empty {
-            <div class="alert alert-warning d-flex align-items-center gap-3 w-100 m-0" role="status">
-              <i class="bi bi-info-circle-fill fs-4" aria-hidden="true"></i>
-              <div class="flex-grow-1">
-                <strong>Keine Termine verfügbar.</strong>
-                Bitte versuchen Sie es erneut oder waehlen Sie eine andere Filiale/Service.
+            <div class="notice appointment-selection__empty" role="status">
+              <i class="bi bi-info-circle" aria-hidden="true"></i>
+              <div>
+                <p><strong>{{ booking.appointment.noAppointments | translate }}</strong></p>
+                <p>{{ booking.appointment.noAppointmentsHint | translate }}</p>
               </div>
-              <button type="button" class="btn btn-sm btn-primary" (click)="onRetry()">
-                <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i> Neu laden
+              <button type="button" class="btn btn-primary appointment-selection__reload-button" (click)="onRetry()">
+                {{ booking.appointment.reload | translate }}
               </button>
             </div>
           }
+          <button
+            class="appointment-selection__calendar-link date-strip__more"
+            type="button"
+            (click)="onCalendarLinkClick($event)"
+          >
+            <i class="bi bi-calendar-event" aria-hidden="true"></i>
+            <span>{{ booking.appointment.calendarLink | translate }}</span>
+          </button>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- Zeitslots -->
-    @if (selectedDate()) {
-      <div class="card mt-3">
-        <div class="card-body">
-          <h6 class="mb-3">
-            <i class="bi bi-clock me-2 text-primary" aria-hidden="true"></i>{{ selectedDateLabel() }}
-          </h6>
-
-          @if (morningSlots().length > 0) {
+      <!-- Zeitslots des gewählten Tages, getrennt nach Vormittag/Nachmittag -->
+      @if (slotSections().length > 0) {
+        <section class="time-slots" [attr.aria-label]="booking.appointment.ariaGroupLabel | translate">
+          @for (section of slotSections(); track section.key) {
             <div class="slot-section">
-              <div class="slot-section__head">
-                <i class="bi bi-sunrise" aria-hidden="true"></i> Vormittag
-              </div>
-              <div class="slot-grid">
-                @for (slot of morningSlots(); track slot.id) {
+              <h3 class="slot-section__head">{{ section.label | translate }}</h3>
+              <div class="slot-grid" role="radiogroup" [attr.aria-label]="section.label | translate">
+                @for (slot of section.slots; track slot.id) {
                   <app-appointment-card
                     [appointment]="slot"
                     [isSelected]="selectedAppointment()?.id === slot.id"
@@ -100,49 +114,24 @@
               </div>
             </div>
           }
+        </section>
+      }
 
-          @if (afternoonSlots().length > 0) {
-            <div class="slot-section">
-              <div class="slot-section__head">
-                <i class="bi bi-sunset" aria-hidden="true"></i> Nachmittag
-              </div>
-              <div class="slot-grid">
-                @for (slot of afternoonSlots(); track slot.id) {
-                  <app-appointment-card
-                    [appointment]="slot"
-                    [isSelected]="selectedAppointment()?.id === slot.id"
-                    (appointmentSelected)="onAppointmentSelect($event)"
-                  />
-                }
-              </div>
-            </div>
-          }
+      <!-- Auswahl-Hinweis (grün) -->
+      @if (hasAppointmentSelected()) {
+        <div class="notice notice--success appointment-selection__summary" role="status" aria-live="polite">
+          <i class="bi bi-check-circle" aria-hidden="true"></i>
+          <p>
+            <strong>{{ booking.appointment.selectedLabel | translate }}</strong> {{ selectedSummary() }}
+            @if (selectedIncludesRentalCar()) {
+              <span class="appointment-selection__summary-rental">— {{ booking.appointment.rentalCar.included | translate }}</span>
+            }
+          </p>
         </div>
-      </div>
+      }
     }
 
-    <!-- Auswahl-Banner -->
-    @if (hasAppointmentSelected()) {
-      <div
-        class="alert alert-success mt-3 d-flex align-items-center gap-3 appointment-selection__summary"
-        role="status"
-        aria-live="polite"
-      >
-        <i class="bi bi-check-circle-fill fs-4" aria-hidden="true"></i>
-        <div>
-          <strong>Termin gewählt:</strong> {{ selectedSummary() }}
-        </div>
-      </div>
-    }
-
-    <button
-      class="appointment-selection__calendar-link"
-      type="button"
-      (click)="onCalendarLinkClick($event)"
-    >
-      {{ booking.appointment.calendarLink | translate }}
-    </button>
-
+    <!-- Eine Aktionsleiste für Normal- und Mietwagen-Leerzustand; „Weiter“ erst nach Terminwahl -->
     <nav class="appointment-selection__nav wizard-nav" [attr.aria-label]="booking.appointment.navAriaLabel | translate">
       <button
         type="button"
@@ -150,19 +139,17 @@
         [attr.aria-label]="booking.appointment.backButton | translate"
         (click)="onBack()"
       >
-        <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
         {{ booking.appointment.backButton | translate }}
       </button>
 
       <button
         type="button"
-        class="btn btn-primary btn-lg appointment-selection__continue-button"
+        class="btn btn-primary appointment-selection__continue-button"
         [disabled]="!hasAppointmentSelected()"
         [attr.aria-label]="booking.appointment.continueButton | translate"
         (click)="onContinue()"
       >
         {{ booking.appointment.continueButton | translate }}
-        <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
       </button>
     </nav>
   }

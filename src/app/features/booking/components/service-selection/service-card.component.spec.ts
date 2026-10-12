@@ -72,39 +72,18 @@ describe('ServiceCardComponent', () => {
       expect(exposed.hasOptions()).toBe(true);
     });
 
-    it('toggle expand on card click', () => {
-      const exposed = component as unknown as { onCardClick: () => void; isExpanded: () => boolean };
-      expect(exposed.isExpanded()).toBe(false);
-      exposed.onCardClick();
-      expect(exposed.isExpanded()).toBe(true);
-      exposed.onCardClick();
-      expect(exposed.isExpanded()).toBe(false);
-    });
-
-    it('confirm emits Category-ID and selected Operation-IDs', () => {
+    it('emits serviceClicked with category-id on click', () => {
       const spy = jest.fn();
-      component.serviceConfirmed.subscribe(spy);
-      const exposed = component as unknown as {
-        onCheckboxChange: (id: string, checked: boolean) => void;
-        onConfirm: () => void;
-      };
-      exposed.onCheckboxChange('op-1', true);
-      exposed.onConfirm();
-      expect(spy).toHaveBeenCalledWith({ serviceId: 'tag-inspektion', optionIds: ['op-1'] });
-    });
-
-    it('deselect emits Category-ID and resets state', () => {
-      const spy = jest.fn();
-      component.serviceDeselected.subscribe(spy);
-      const exposed = component as unknown as {
-        onCheckboxChange: (id: string, checked: boolean) => void;
-        onDeselect: () => void;
-        selectedCheckboxOptions: () => Set<string>;
-      };
-      exposed.onCheckboxChange('op-1', true);
-      exposed.onDeselect();
+      component.serviceClicked.subscribe(spy);
+      const exposed = component as unknown as { onCardClick: () => void };
+      exposed.onCardClick();
       expect(spy).toHaveBeenCalledWith('tag-inspektion');
-      expect(exposed.selectedCheckboxOptions().size).toBe(0);
+    });
+
+    it('selectedCount follows selectedOperationIds', () => {
+      setInputs({ isSelected: true, selectedIds: ['op-1'] });
+      const exposed = component as unknown as { selectedCount: () => number };
+      expect(exposed.selectedCount()).toBe(1);
     });
   });
 
@@ -197,57 +176,6 @@ describe('ServiceCardComponent', () => {
       fixture.detectChanges();
       const exposed = component as unknown as { iconClass: () => string };
       expect(exposed.iconClass()).toBe('bi-arrow-left-right');
-    });
-  });
-
-  describe('Confirm/Deselect button visibility logic', () => {
-    it('showConfirmButton false when no options', () => {
-      setInputs({ ops: [] });
-      const exposed = component as unknown as { showConfirmButton: () => boolean };
-      expect(exposed.showConfirmButton()).toBe(false);
-    });
-
-    it('showConfirmButton true when options present + expanded + not selected', () => {
-      setInputs({ isSelected: false });
-      const exposed = component as unknown as {
-        onCardClick: () => void; showConfirmButton: () => boolean;
-      };
-      exposed.onCardClick();
-      expect(exposed.showConfirmButton()).toBe(true);
-    });
-
-    it('showDeselectButton when isSelected and expanded with same options', () => {
-      setInputs({ isSelected: true, selectedIds: ['op-1'] });
-      const exposed = component as unknown as {
-        onCardClick: () => void; showDeselectButton: () => boolean;
-      };
-      exposed.onCardClick();
-      expect(exposed.showDeselectButton()).toBe(true);
-    });
-  });
-
-  describe('Checkbox Toggle State', () => {
-    it('toggles add and remove correctly', () => {
-      setInputs();
-      const exposed = component as unknown as {
-        onCheckboxChange: (id: string, checked: boolean) => void;
-        selectedCheckboxOptions: () => Set<string>;
-      };
-      exposed.onCheckboxChange('op-1', true);
-      exposed.onCheckboxChange('op-2', true);
-      expect(exposed.selectedCheckboxOptions().size).toBe(2);
-      exposed.onCheckboxChange('op-1', false);
-      expect(exposed.selectedCheckboxOptions().size).toBe(1);
-      expect(exposed.selectedCheckboxOptions().has('op-2')).toBe(true);
-    });
-
-    it('confirm emits nothing when no options selected', () => {
-      setInputs();
-      const spy = jest.fn();
-      component.serviceConfirmed.subscribe(spy);
-      const exposed = component as unknown as { onConfirm: () => void };
-      exposed.onConfirm();
-      expect(spy).not.toHaveBeenCalled();
     });
   });
 });

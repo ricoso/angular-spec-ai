@@ -1,31 +1,42 @@
 @use 'breakpoints' as *;
 
+// REQ-039: contact step as in mockups/05-kontakt.html — two bordered panels, consent box and
+// the global action bar at the bottom of the form.
 .carinformation {
-  max-width: 70em;
-  margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
-
-  > .page-title {
-    font-size: var(--font-size-2xl);
-    font-weight: 700;
-    line-height: var(--line-height-tight);
-    color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-xl);
-    text-align: center;
+  @include desktop {
+    padding-block-start: 1.25rem;
   }
 
   &__form {
     display: flex;
+    flex: 1 0 auto;
     flex-direction: column;
-    gap: var(--spacing-lg);
+    gap: 0.875rem;
   }
 
-  &__card {
-    background: var(--color-background-surface);
+  &__consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-block-size: var(--touch-target-min);
+    padding: 0.875rem;
+    border: 0.0625rem solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-background-header);
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
   }
 
   &__privacy {
-    padding-left: 1.75em;
+    margin: 0;
+    padding-inline-start: 2rem;
+
+    .form-check-input {
+      inline-size: 1.25rem;
+      block-size: 1.25rem;
+      margin-inline-start: -2rem;
+      margin-block-start: 0.0625rem;
+    }
   }
 
   &__privacy-label {
@@ -38,66 +49,21 @@
     text-decoration: underline;
 
     &:focus-visible {
-      outline: 0.125em solid var(--color-focus-ring);
-      outline-offset: 0.125em;
+      outline: 0.1875rem solid var(--color-focus-ring);
+      outline-offset: 0.1875rem;
       border-radius: var(--radius-sm);
     }
   }
 
   &__required-hint {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
     margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
   }
 
+  // The action bar lives inside the form: auto margin pushes it to the bottom, the form gap
+  // keeps the minimum distance to the content.
   &__actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-md);
-
-    @include tablet {
-      flex-direction: row;
-      justify-content: space-between;
-    }
-  }
-
-  &__back-button,
-  &__continue-button {
-    min-height: var(--touch-target-min);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    &:focus-visible {
-      outline: 0.125em solid var(--color-focus-ring);
-      outline-offset: 0.125em;
-    }
-  }
-
-  &__back-button {
-    order: 2;
-
-    @include tablet {
-      order: 1;
-    }
-  }
-
-  &__continue-button {
-    order: 1;
-
-    @include tablet {
-      order: 2;
-    }
-  }
-}
-
-@media (max-width: 47.9375em) {
-  .carinformation {
-    padding: var(--spacing-lg) var(--spacing-sm);
-
-    > .page-title {
-      font-size: var(--font-size-xl);
-    }
+    margin-block-start: auto;
   }
 }

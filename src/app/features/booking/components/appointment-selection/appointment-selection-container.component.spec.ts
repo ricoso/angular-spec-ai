@@ -3,6 +3,8 @@ import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter,Router } from '@angular/router';
 
+import { TranslateService } from '@core/i18n';
+
 import type { AppointmentSlot } from '../../models/appointment.model';
 import { AppointmentApiService } from '../../services/appointment-api.service';
 import { BookingStore } from '../../stores/booking.store';
@@ -162,6 +164,36 @@ describe('AppointmentSelectionContainerComponent', () => {
     expect(loadSpy).toHaveBeenCalled();
   });
 
+  describe('rental car (REQ-039)', () => {
+    it('onContinueWithoutRentalCar switches off the rental car, drops the wish and reloads (E-1)', () => {
+      store.setRentalCarRequested(true);
+      store.setSelectedRentCategoryId('rc-1');
+      const loadSpy = jest.spyOn(store, 'loadAppointments');
+      const exposed = component as unknown as { onContinueWithoutRentalCar: () => void };
+      exposed.onContinueWithoutRentalCar();
+      expect(store.rentalCarRequested()).toBe(false);
+      expect(store.selectedRentCategoryId()).toBeNull();
+      expect(loadSpy).toHaveBeenCalled();
+    });
+
+    it('onShowLaterAppointments opens the workshop calendar (E-1)', () => {
+      const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+      const exposed = component as unknown as { onShowLaterAppointments: () => void };
+      exposed.onShowLaterAppointments();
+      expect(navigateSpy).toHaveBeenCalledWith(['/home/workshop-calendar']);
+    });
+
+    it('selectedIncludesRentalCar reflects the chosen slot (AC-M10)', () => {
+      const exposed = component as unknown as { selectedIncludesRentalCar: () => boolean };
+      expect(exposed.selectedIncludesRentalCar()).toBe(false);
+      store.selectAppointment({
+        id: 'snap-r', date: '2026-10-16', displayDate: '16.10.2026', dayAbbreviation: 'Fr',
+        time: '08:00', displayTime: '08:00 Uhr', rentalCarIncluded: true
+      });
+      expect(exposed.selectedIncludesRentalCar()).toBe(true);
+    });
+  });
+
   describe('Date-Strip Computed Signals', () => {
     beforeEach(() => {
       // Push appointments into store
@@ -180,11 +212,6 @@ describe('AppointmentSelectionContainerComponent', () => {
       const exposed = component as unknown as { selectedDate: () => string | null };
       const date = exposed.selectedDate();
       expect(date === null || typeof date === 'string').toBe(true);
-    });
-
-    it('should expose selectedDateLabel signal', () => {
-      const exposed = component as unknown as { selectedDateLabel: () => string };
-      expect(typeof exposed.selectedDateLabel()).toBe('string');
     });
 
     it('should expose stripMonthLabel signal', () => {
@@ -216,11 +243,46 @@ describe('AppointmentSelectionContainerComponent', () => {
 
   describe('Date-Strip with seeded appointments', () => {
     beforeEach(async () => {
+      // REQ-039: date labels follow the UI language — the expectations below are German.
+      TestBed.inject(TranslateService).use('de');
       // Push appointments into store via API mock — call loadAppointments
       mockAppointmentApiService.getAppointments.mockResolvedValue(MOCK_APPOINTMENTS);
       store.loadAppointments();
       // Wait a tick for async store-update
       await new Promise(r => setTimeout(r, 0));
+    });
+
+    it('should group the viewed day into non-empty morning/afternoon sections (REQ-039)', () => {
+      const exposed = component as unknown as {
+        onDateSelect: (date: string) => void;
+        slotSections: () => { key: string; label: string; slots: AppointmentSlot[] }[];
+      };
+      // 25.02. has only a 09:00 slot → morning only
+      expect(exposed.slotSections().map(section => section.key)).toEqual(['morning']);
+      expect(exposed.slotSections()[0].label).toBe('booking.appointment.morning');
+      // 26.02. has only a 14:00 slot → afternoon only
+      exposed.onDateSelect('2026-02-26');
+      expect(exposed.slotSections().map(section => section.key)).toEqual(['afternoon']);
+      expect(exposed.slotSections()[0].slots.map(slot => slot.id)).toEqual(['2026-02-26-14-00']);
+      // a day without slots → no section at all
+      exposed.onDateSelect('2026-12-31');
+      expect(exposed.slotSections()).toEqual([]);
+    });
+
+    it('should group by the shown Berlin time, not by the UTC time (10:00 UTC = 12:00 CEST → afternoon)', async () => {
+      mockAppointmentApiService.getAppointments.mockResolvedValue([
+        { id: 'summer-09', date: '2026-10-19', displayDate: '19.10.2026', dayAbbreviation: 'Mo', time: '09:30', displayTime: '09:30 Uhr' },
+        { id: 'summer-10', date: '2026-10-19', displayDate: '19.10.2026', dayAbbreviation: 'Mo', time: '10:00', displayTime: '10:00 Uhr' }
+      ] satisfies AppointmentSlot[]);
+      store.loadAppointments();
+      await new Promise(r => setTimeout(r, 0));
+      const exposed = component as unknown as {
+        morningSlots: () => AppointmentSlot[];
+        afternoonSlots: () => AppointmentSlot[];
+      };
+      // 09:30 UTC = 11:30 Berlin (CEST) → morning; 10:00 UTC = 12:00 Berlin → afternoon
+      expect(exposed.morningSlots().map(slot => slot.id)).toEqual(['summer-09']);
+      expect(exposed.afternoonSlots().map(slot => slot.id)).toEqual(['summer-10']);
     });
 
     it('should compute availableDates with month and day', () => {
@@ -237,11 +299,23 @@ describe('AppointmentSelectionContainerComponent', () => {
       expect(exposed.selectedDate()).toBe('2026-02-25');
     });
 
-    it('should derive selectedDateLabel with full weekday name', () => {
-      const exposed = component as unknown as { selectedDateLabel: () => string };
-      const label = exposed.selectedDateLabel();
-      expect(label).toContain('Mittwoch');
-      expect(label).toContain('25.02.2026');
+    it('should derive date tiles with weekday, day and month without abbreviation dots (REQ-039)', () => {
+      const exposed = component as unknown as {
+        availableDates: () => { weekday: string; day: string; month: string; ariaLabel: string }[];
+      };
+      const first = exposed.availableDates()[0];
+      expect(first.weekday).toBe('MI');
+      expect(first.day).toBe('25');
+      expect(first.month).toBe('Feb');
+      expect(first.ariaLabel).toContain('Mittwoch');
+    });
+
+    it('should follow a language switch (REQ-039)', () => {
+      const exposed = component as unknown as { stripMonthLabel: () => string };
+      TestBed.inject(TranslateService).use('en');
+      expect(exposed.stripMonthLabel()).toBe('February 2026');
+      TestBed.inject(TranslateService).use('de');
+      expect(exposed.stripMonthLabel()).toBe('Februar 2026');
     });
 
     it('should derive stripMonthLabel with year', () => {

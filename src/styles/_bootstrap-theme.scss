@@ -8,11 +8,19 @@
 // Bootstrap-Theme-Variablen (override Defaults)
 // ============================================================
 :root {
-  --bs-primary: #003d6b;
-  --bs-primary-rgb: 0, 61, 107;
-  --bs-link-color: #00558e;
-  --bs-link-color-rgb: 0, 85, 142;
-  --bs-link-hover-color: #003d6b;
+  --bs-primary: var(--color-primary);
+  --bs-primary-rgb: var(--color-primary-rgb);
+  --bs-link-color: var(--color-primary);
+  --bs-link-color-rgb: var(--color-primary-rgb);
+  --bs-link-hover-color: var(--color-primary-hover);
+  --bs-link-hover-color-rgb: var(--color-primary-hover-rgb);
+  --bs-body-color: var(--color-text-primary);
+  --bs-body-bg: var(--color-background-surface);
+  --bs-secondary-color: var(--color-text-secondary);
+  --bs-border-color: var(--color-border);
+  --bs-tertiary-bg: var(--color-background-header);
+  --bs-success: var(--color-success);
+  --bs-success-rgb: var(--color-success-rgb);
   --autohaus-accent: #c41e3a;
 }
 
@@ -21,15 +29,68 @@
 // ============================================================
 // btn-primary mit Autohaus-Brand-Color
 // ============================================================
+// REQ-039: button metrics as in mockups/wizard.css (.button) — one size for all wizard actions.
+.btn,
+.btn-lg {
+  --bs-btn-padding-y: 0.625rem;
+  --bs-btn-padding-x: 1rem;
+  --bs-btn-font-size: 0.9375rem;
+  --bs-btn-line-height: 1.4;
+  --bs-btn-border-radius: var(--radius-sm);
+  min-block-size: var(--touch-target-min);
+}
+
 .btn-primary {
+  --bs-btn-color: var(--color-text-on-primary);
   --bs-btn-bg: var(--bs-primary);
   --bs-btn-border-color: var(--bs-primary);
-  --bs-btn-hover-bg: #002d52;
-  --bs-btn-hover-border-color: #002d52;
-  --bs-btn-active-bg: #002240;
-  --bs-btn-active-border-color: #002240;
+  --bs-btn-hover-color: var(--color-text-on-primary);
+  --bs-btn-hover-bg: var(--color-primary-hover);
+  --bs-btn-hover-border-color: var(--color-primary-hover);
+  --bs-btn-active-color: var(--color-text-on-primary);
+  --bs-btn-active-bg: var(--color-primary-hover);
+  --bs-btn-active-border-color: var(--color-primary-hover);
+  --bs-btn-disabled-color: var(--color-text-primary);
+  --bs-btn-disabled-bg: var(--color-disabled);
+  --bs-btn-disabled-border-color: var(--color-disabled);
+  --bs-btn-disabled-opacity: 1;
   font-weight: 600;
-  letter-spacing: 0.02em;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.1875em;
+  }
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--color-text-primary);
+  --bs-btn-bg: var(--color-background-surface);
+  --bs-btn-border-color: var(--color-primary);
+  --bs-btn-hover-color: var(--color-text-primary);
+  --bs-btn-hover-bg: var(--color-background-header);
+  --bs-btn-hover-border-color: var(--color-primary);
+  --bs-btn-active-color: var(--color-text-primary);
+  --bs-btn-active-bg: var(--color-background-header);
+  --bs-btn-active-border-color: var(--color-primary);
+  font-weight: 400;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.125rem var(--color-focus-ring);
+}
+
+.form-check-input:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.alert-success {
+  --bs-alert-color: var(--color-success);
+  --bs-alert-bg: var(--color-success-bg);
+  --bs-alert-border-color: var(--color-success);
 }
 
 // ============================================================
@@ -88,8 +149,8 @@
 }
 .card-pickable.selected {
   border-color: var(--bs-primary);
-  background: #eaf2f9;
-  box-shadow: 0 0 0 0.25rem rgba(0, 61, 107, 0.15);
+  background: var(--color-background-surface);
+  box-shadow: none;
 }
 .card-pickable.selected .badge-selected {
   display: inline-flex;
@@ -130,45 +191,42 @@
 }
 
 // ============================================================
-// Branch-Banner (auf Marken/Services/Notes-Pages)
+// Branch-Banner (Marken-Seite) — REQ-039: mockups/wizard.css .location-banner
 // ============================================================
 .branch-banner {
-  background: linear-gradient(135deg, var(--bs-primary) 0%, #00558e 100%);
-  color: white;
-  padding: 1.25em 1.5em;
-  border-radius: 0.6em;
-  margin-bottom: 2em;
   display: flex;
   align-items: center;
-  gap: 1em;
+  gap: 0.875rem;
+  padding: 0.75rem 1rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-header);
+  color: var(--color-primary);
+  text-align: start;
 }
 .branch-banner__icon {
-  font-size: 1.8em;
-  background: rgba(255, 255, 255, 0.15);
-  width: 2.5em;
-  height: 2.5em;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 1.25rem;
 }
 .branch-banner__title {
-  font-size: 0.85em;
-  opacity: 0.9;
-  margin-bottom: 0.1em;
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 650;
+  text-transform: uppercase;
 }
 .branch-banner__address {
-  font-size: 1.1em;
-  font-weight: 700;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
 }
 
 // ============================================================
-// Pill-Group (Radio/Checkbox als Pills — A11y-Menue, Notes)
+// Pill-Group (Radio/Checkbox als Pills — Notes, A11y-Menue)
+// REQ-039: mockups/wizard.css .pill-options
 // ============================================================
 .pill-group {
   display: flex;
-  gap: 0.5em;
   flex-wrap: wrap;
+  gap: 0.5rem;
 }
 .pill-group input[type="radio"],
 .pill-group input[type="checkbox"] {
@@ -179,56 +237,66 @@
 .pill-group label {
   display: inline-flex;
   align-items: center;
-  gap: 0.4em;
-  padding: 0.55em 1.1em;
-  border: 2px solid #d6dce0;
-  border-radius: 2em;
+  justify-content: center;
+  gap: 0.375rem;
+  min-block-size: var(--touch-target-min);
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 0.0625rem solid var(--color-disabled);
+  border-radius: 2rem;
+  background-color: var(--color-background-header);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.12s ease;
-  font-size: 0.95em;
-  background: white;
 }
 .pill-group label:hover {
-  border-color: var(--bs-primary);
-  color: var(--bs-primary);
+  border-color: var(--color-primary);
 }
 .pill-group input:checked + label {
-  background: var(--bs-primary);
-  border-color: var(--bs-primary);
-  color: white;
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
 }
 .pill-group input:focus-visible + label {
-  outline: 2px solid var(--autohaus-accent);
-  outline-offset: 2px;
+  outline: 0.1875rem solid var(--color-focus-ring);
+  outline-offset: 0.1875rem;
 }
 
 // ============================================================
-// Switch-Card (Notes — Mietwagen-Toggle, Rueckruf-Toggle)
+// Option-Card (REQ-039: mockups/wizard.css .option-card) — Notes-Optionen und Notizfeld
 // ============================================================
-.switch-card {
-  border: 2px solid #e3e6e9;
-  border-radius: 0.6em;
-  padding: 1em 1.25em;
-  transition: border-color 0.12s ease, background 0.12s ease;
+.option-card {
+  min-inline-size: 0;
+  padding: 0.875rem 1rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
 }
-.switch-card.is-on {
-  border-color: var(--bs-primary);
-  background: #f5fafd;
-}
-.switch-card__title {
+.option-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 1rem;
   font-weight: 600;
-  margin: 0;
+  line-height: 1.4;
 }
-.switch-card__hint {
-  color: #6c757d;
-  font-size: 0.85em;
-  margin: 0;
+.option-card__heading .bi {
+  color: var(--color-primary);
 }
-.switch-card__detail {
-  margin-top: 0.75em;
-  padding-top: 0.75em;
-  border-top: 1px dashed #d6dce0;
+.option-card__title {
+  display: block;
+}
+.option-card__hint {
+  display: block;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+.option-card__heading + .pill-group {
+  margin-block-start: 0.5rem;
 }
 
 // Bootstrap-Switch optisch aufgewertet
@@ -261,301 +329,185 @@
 }
 
 // ============================================================
-// Service-Card (Karussell-Mini-Tiles + Detail-Panel)
+// Notice (REQ-039: mockups/wizard.css .notice / .notice--success) — info (blue on header
+// colour) and success (green) hints used on services, notes and appointment pages.
 // ============================================================
-.service-carousel {
-  position: relative;
-  padding: 0 3em;
-}
-.service-carousel__track {
+.notice {
   display: flex;
-  gap: 1em;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  padding: 0.5em 0.25em 1em;
-  scrollbar-width: thin;
-}
-.service-carousel__item {
-  flex: 0 0 17em;
-  scroll-snap-align: start;
-}
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-header);
+  color: var(--color-primary);
+  font-size: 0.9375rem;
+  line-height: 1.45;
 
-// Mobile: schmalere Mini-Cards damit mehrere ins Viewport passen
-@media (max-width: 48em) {
-  .service-carousel__item {
-    flex: 0 0 9em;
+  > .bi {
+    margin-block-start: 0.1875rem;
+    font-size: 1.125rem;
   }
-  .service-carousel {
-    padding: 0 1.5em; // Pfeile rücken naeher
+
+  p {
+    margin: 0;
   }
-  .service-carousel__btn {
-    width: 2em;
-    height: 2em;
-    font-size: 0.9em;
+
+  p + p {
+    margin-block-start: 0.75rem;
   }
 }
-.service-carousel__btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 2.5em;
-  height: 2.5em;
-  border-radius: 50%;
-  background: white;
-  border: 1px solid #d6dce0;
-  box-shadow: 0 0.25em 0.5em rgba(0, 0, 0, 0.08);
-  color: var(--bs-primary);
-  font-size: 1.1em;
-  z-index: 2;
-}
-.service-carousel__btn--prev { left: 0; }
-.service-carousel__btn--next { right: 0; }
-.service-carousel__indicators {
-  display: flex;
-  justify-content: center;
-  gap: 0.4em;
-  margin-top: 0.5em;
-}
-.service-carousel__dot {
-  width: 0.55em;
-  height: 0.55em;
-  border-radius: 50%;
-  background: #c9ced3;
-  transition: width 0.15s ease, background 0.15s ease;
-}
-.service-carousel__dot.active {
-  width: 1.5em;
-  background: var(--bs-primary);
-  border-radius: 0.4em;
+.notice--success {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
 }
 
-.service-card-mini {
-  cursor: pointer;
-  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
-  border: 2px solid #e3e6e9;
-  border-radius: 0.6em;
-  background: white;
-  height: 11em;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 1em;
-  position: relative;
+// ============================================================
+// Termin-Auswahl — REQ-039: mockups/wizard.css .calendar / .date-list / .time-slots
+// ============================================================
+.calendar,
+.time-slots {
+  min-inline-size: 0;
+  padding: 1rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
 }
-
-@media (max-width: 48em) {
-  .service-card-mini {
-    height: 8em;
-    padding: 0.5em;
-  }
-  .service-card-mini__icon { font-size: 1.6em; margin-bottom: 0.25em; }
-  .service-card-mini__title { font-size: 0.78em; line-height: 1.15; }
-  .service-card-mini__count { font-size: 0.6em; padding: 0.1em 0.35em; }
-}
-.service-card-mini:hover {
-  transform: translateY(-2px);
-  border-color: var(--bs-primary);
-  box-shadow: 0 0.5em 1em rgba(0, 0, 0, 0.08);
-}
-.service-card-mini.selected {
-  border-color: var(--bs-primary);
-  background: #eaf2f9;
-}
-.service-card-mini__count {
-  position: absolute;
-  top: 0.5em;
-  right: 0.5em;
-  background: #f0f3f6;
-  color: #555;
-  font-size: 0.7em;
-  font-weight: 600;
-  padding: 0.15em 0.5em;
-  border-radius: 0.3em;
-}
-.service-card-mini.selected .service-card-mini__count {
-  background: var(--bs-primary);
-  color: white;
-}
-.service-card-mini__icon {
-  font-size: 2.2em;
-  color: var(--bs-primary);
-  margin-bottom: 0.4em;
-}
-.service-card-mini__title {
-  font-size: 0.95em;
-  font-weight: 600;
-  margin: 0;
-}
-
-.service-detail {
-  background: white;
-  border-radius: 0.6em;
-  border: 2px solid var(--bs-primary);
-  padding: 1.5em;
-  margin-top: 1em;
-}
-.service-detail__header {
+.calendar__heading {
   display: flex;
   align-items: center;
-  gap: 1em;
-  margin-bottom: 1em;
-  padding-bottom: 1em;
-  border-bottom: 1px solid #e3e6e9;
+  gap: 0.625rem;
+  margin: 0 0 1rem;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 650;
 }
-.service-detail__icon {
-  font-size: 2em;
-  color: var(--bs-primary);
+.calendar__heading .bi {
+  color: var(--color-primary);
 }
-.service-detail__title { font-size: 1.25em; font-weight: 700; margin: 0; }
-.service-detail__subtitle { color: #6c757d; font-size: 0.9em; margin: 0; }
-
-.service-option {
-  display: flex;
-  flex-direction: column;
-  padding: 0.5em 0.75em;
-  border-radius: 0.4em;
-}
-.service-option:hover { background: rgba(0, 61, 107, 0.04); }
-.service-option__name {
-  font-weight: 600;
-  font-size: 0.95em;
-}
-.service-option__desc {
-  font-size: 0.8em;
-  color: #6c757d;
-  line-height: 1.4;
-  margin-top: 0.2em;
-  margin-left: 1.7em;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.time-slots {
+  margin-block-start: 1.5rem;
 }
 
-// ============================================================
-// Date-Strip + Time-Slots (Termin-Auswahl)
-// ============================================================
 .date-strip {
-  display: flex;
-  gap: 0.5em;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-bottom: 0.75em;
-  scrollbar-width: thin;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@media (min-width: 48em) {
+  .date-strip {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .date-strip .date-tile {
+    flex: 0 1 5.25rem;
+    min-inline-size: 3.5rem;
+  }
 }
 .date-tile {
-  flex: 0 0 5.5em;
-  scroll-snap-align: start;
-  background: white;
-  border: 2px solid #e3e6e9;
-  border-radius: 0.6em;
-  padding: 0.75em 0.5em;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.12s ease;
-}
-.date-tile:hover {
-  border-color: var(--bs-primary);
-  transform: translateY(-2px);
-}
-.date-tile.selected {
-  background: var(--bs-primary);
-  border-color: var(--bs-primary);
-  color: white;
-}
-.date-tile.disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  background: #f0f3f6;
-}
-.date-tile__weekday {
-  font-size: 0.75em;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.2em;
-}
-.date-tile__day {
-  font-size: 1.5em;
-  font-weight: 700;
-  line-height: 1;
-}
-.date-tile__month {
-  font-size: 0.7em;
-  margin-top: 0.2em;
-  opacity: 0.85;
-}
-
-.slot-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(7em, 1fr));
-  gap: 0.5em;
-}
-.slot {
-  background: white;
-  border: 2px solid #e3e6e9;
-  border-radius: 0.5em;
-  padding: 0.7em;
-  text-align: center;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.12s ease;
-}
-.slot:hover {
-  border-color: var(--bs-primary);
-  transform: translateY(-1px);
-}
-.slot.selected {
-  background: var(--bs-primary);
-  border-color: var(--bs-primary);
-  color: white;
-}
-.slot.disabled {
-  opacity: 0.4;
-  text-decoration: line-through;
-  cursor: not-allowed;
-}
-
-// ============================================================
-// Floating Action Buttons (Cart bottom-right, A11y bottom-left)
-// FABs liegen 5em ueber dem Page-Bottom -> ueberlagern keine Nav-Buttons
-// ============================================================
-// Beide FABs minimal: transparenter Hintergrund, rotes Icon (Autohaus-Akzent).
-.cart-fab,
-.a11y-fab {
-  position: fixed;
-  bottom: 5em;
-  width: 2em;
-  height: 2em;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--autohaus-accent);
-  border: 0;
-  box-shadow: none;
-  font-size: 1.4em;
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  min-block-size: 5.5rem;
+  padding: 0.5rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: transform 0.1s ease;
 }
-.cart-fab { right: 1.5em; }
-.a11y-fab { left: 1.5em; }
-
-.cart-fab:hover,
-.a11y-fab:hover {
-  transform: scale(1.1);
+.date-tile:hover {
+  border-color: var(--color-primary);
+}
+.date-tile:focus-visible {
+  outline: 0.1875rem solid var(--color-focus-ring);
+  outline-offset: 0.1875rem;
+}
+.date-tile.selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+.date-tile__weekday,
+.date-tile__month {
+  color: var(--color-text-secondary);
+}
+.date-tile.selected .date-tile__weekday,
+.date-tile.selected .date-tile__month {
+  color: inherit;
+}
+.date-tile__day {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+// "Weitere freie Termine" as last tile of the date row (mockup .date-list__more)
+.date-strip__more {
+  display: flex;
+  flex: 1 1 6rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-block-size: var(--touch-target-min);
+  padding: 0.5rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  line-height: 1.3;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 0.1875em;
+}
+.date-strip__more .bi {
+  font-size: 1.375rem;
+}
+.date-strip__more:focus-visible {
+  outline: 0.1875rem solid var(--color-focus-ring);
+  outline-offset: 0.1875rem;
 }
 
-.cart-fab:focus-visible,
-.a11y-fab:focus-visible {
-  outline: 3px solid var(--autohaus-accent);
-  outline-offset: 3px;
-  border-radius: 50%;
+.slot-section + .slot-section {
+  margin-block-start: 1rem;
+}
+.slot-section__head {
+  margin: 0 0 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.slot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.slot {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--touch-target-min);
+  padding: 0.5rem 1rem;
+  border: 0.125rem solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-background-surface);
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.slot.selected {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+.slot.disabled {
+  border-color: var(--color-disabled);
+  background-color: var(--color-disabled);
+  color: var(--color-text-primary);
+  cursor: not-allowed;
 }
 
 // ============================================================
@@ -608,59 +560,198 @@
 }
 
 // ============================================================
-// Wizard-Nav-Buttons (Mobile = full-width gestackt, Desktop = nebeneinander)
-// Ergaenzt das bestehende .wizard-nav-Pattern in styles.scss um Bootstrap-spezifische Bits.
-// Konsistente Schriftgroesse auf ALLEN Wizard-Pages — auch bei btn-lg.
+// Kontaktformular — REQ-039: mockups/wizard.css .contact-panel / .field
+// Bootstrap floating labels are shown ABOVE the field (label, input, error, hint) — markup,
+// ids and form bindings stay unchanged.
 // ============================================================
-.wizard-nav .btn,
-.wizard-nav > a.btn,
-.wizard-nav .btn-lg {
-  min-height: 2.75em; // WCAG-Touch-Target
-  font-size: 1em !important; // Konsistent ueber alle Pages — keine btn-lg-Aufblaehung
+.contact-panel {
+  min-inline-size: 0;
+  padding: 0.875rem 1rem 1rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
 }
 
-// Globale Konsistenz: btn-lg auf den Wizard-Pages soll nicht groesser werden als normale btn
-.btn.btn-lg {
-  font-size: 1em;
-  padding: 0.65em 1.25em;
+.carinformation .form-floating {
+  position: relative;
+  display: grid;
+  grid-template-areas:
+    'label'
+    'input'
+    'feedback'
+    'hint';
+  grid-template-columns: minmax(0, 1fr);
+  // Fields in a row are stretched to the tallest one (e.g. mileage with hint) — keep label and
+  // input at their natural height instead of spreading the extra space over the rows.
+  align-content: start;
+  row-gap: 0.25rem;
+  min-inline-size: 0;
+
+  // Doubled class: beats Bootstrap's floating-label states such as
+  // `.form-floating > .form-control:not(:placeholder-shown) ~ label` (scale + translate).
+  &.form-floating > label,
+  &.form-floating > .form-control ~ label,
+  &.form-floating > .form-select ~ label {
+    position: static;
+    grid-area: label;
+    block-size: auto;
+    padding: 0;
+    border: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: normal;
+    opacity: 1;
+    transform: none;
+
+    &::after {
+      display: none;
+    }
+  }
+
+  // Number fields without spin buttons (mockup: plain field with unit).
+  > input[type='number'] {
+    appearance: textfield;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      margin: 0;
+      appearance: none;
+    }
+  }
+
+  > .form-control,
+  > .form-select {
+    grid-area: input;
+    block-size: auto;
+    min-block-size: var(--touch-target-min);
+    padding: 0.625rem 0.75rem;
+    border: 0.0625rem solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    line-height: 1.4;
+
+    @media (min-width: 48em) {
+      font-size: 0.9375rem;
+    }
+
+    &::placeholder {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  > .form-select {
+    padding-inline-end: 2.25rem;
+  }
+
+  > .form-control.is-invalid,
+  > .form-select.is-invalid {
+    border-color: var(--color-error);
+  }
+
+  > .invalid-feedback {
+    grid-area: feedback;
+    margin: 0;
+  }
+
+  > .form-text {
+    grid-area: hint;
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+
+  // Unit inside the field (e.g. "km"), mockups/wizard.css .field__unit
+  > .field__unit {
+    grid-area: input;
+    align-self: center;
+    justify-self: end;
+    margin-inline-end: 0.75rem;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    pointer-events: none;
+  }
+
+  > .form-control:has(~ .field__unit) {
+    padding-inline-end: 2.5rem;
+  }
 }
 
-// Services-Page Bottom-Bar (Counter oben, Nav-Buttons unten — gestapelt
-// in zwei Reihen, damit lange Service-Listen die Buttons nicht uebberlappen)
-.services-bottom-bar {
+// ============================================================
+// Übersicht — REQ-039: mockups/wizard.css .summary-card / .summary-row
+// (shared by the overview tiles: icon column + label + value)
+// ============================================================
+.summary-card {
+  min-inline-size: 0;
+  padding: 0.75rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+}
+.summary-card__heading {
+  margin: 0 0 0.5rem;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 650;
+}
+.summary-row {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: 0.625rem;
+  margin-block-start: 0.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+.summary-row__icon {
+  margin-block-start: 0.1875rem;
+  color: var(--color-primary);
+  font-size: 1.125rem;
+  line-height: 1;
+}
+.summary-row__label {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.summary-row__value {
+  margin: 0;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+.summary-row__value--secondary,
+.summary-row__sub {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+.summary-row__empty {
+  color: var(--color-text-secondary);
+}
+.summary-row__details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.25rem 1rem;
+  margin-block-start: 0.25rem;
+}
+@media (min-width: 48em) {
+  .summary-row__details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.summary-row__detail {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding: 1rem;
-  background: #fff;
-  border: 1px solid #e3e6e9;
-  border-radius: 0.5rem;
+  min-inline-size: 0;
+}
+.summary-row__detail-label {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+.summary-row__detail-value {
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
 }
 
-// Counter-Reihe (oben): erlaubt Wrap, damit lange Listen umbrechen
-.services-bottom-bar > div:first-child {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.5em;
-}
-
-// Button-Reihe (unten): Zurueck links, Weiter rechts
-.services-bottom-bar > div:last-child {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5em;
-}
-
-@media (max-width: 48em) {
-  .services-bottom-bar > div:last-child {
-    flex-direction: column-reverse;
-    align-items: stretch;
-  }
-  .services-bottom-bar > div:last-child .btn {
-    width: 100%;
-    margin: 0 !important;
-  }
-}

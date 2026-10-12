@@ -24,11 +24,22 @@ export class FloatingOverlayComponent {
   private readonly translateService = inject(TranslateService);
 
   protected readonly overlay = i18nKeys.booking.overlay;
+  /** REQ-039: header title ("Werkstatttermin"). */
+  protected readonly app = i18nKeys.app;
   protected readonly isExpanded = signal(false);
   protected readonly isA11yOpen = signal(false);
 
   protected readonly badgeText = this.cartStore.badgeText;
   protected readonly hasItems = this.cartStore.hasItems;
+  /** Cart button name incl. the (visually aria-hidden) badge count, e.g. "Warenkorb, 2 Artikel im Warenkorb". */
+  protected readonly cartAriaLabel = computed(() => {
+    const label = this.translateService.instant(this.overlay.cartLabel);
+    if (!this.hasItems()) {
+      return label;
+    }
+    const count = this.translateService.instant(this.overlay.cartBadgeLabel).replace('{count}', this.badgeText());
+    return `${label}, ${count}`;
+  });
 
   protected readonly selectedLocationName = computed(() => this.bookingStore.selectedLocation()?.formattedAddress ?? '');
   protected readonly selectedBrandName = computed(() => this.bookingStore.selectedBrand() ?? '');

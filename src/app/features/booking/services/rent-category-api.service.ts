@@ -24,9 +24,12 @@ export class RentCategoryApiService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  public async getRentCategories(branchId: string): Promise<RentCategory[]> {
+  /** REQ-039 BR-M7: `variant` selects the same SoftNet group the snaps are requested from. */
+  public async getRentCategories(branchId: string, variant: 'default' | 'tireChange' = 'default'): Promise<RentCategory[]> {
     const response = await firstValueFrom(
-      this.http.get<ApiResponse<RentCategoryDto[]>>(`${this.apiUrl}/branches/${branchId}/rentcategories`)
+      this.http.get<ApiResponse<RentCategoryDto[]>>(`${this.apiUrl}/branches/${branchId}/rentcategories`, {
+        params: { variant }
+      })
     );
     return response.data.map(dto => ({
       id: dto.id,

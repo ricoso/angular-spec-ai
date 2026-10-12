@@ -62,6 +62,20 @@ describe('CustomerFormComponent', () => {
       expect(exposed.emailErrors()).toBe('booking.carinformation.form.email.error.required');
     });
 
+    it('should show required errors after markAllAsTouched without any input (submit case)', () => {
+      const exposed = component as unknown as {
+        emailErrors: () => string | null;
+        firstNameErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      // Read first so the computeds are cached — they must still react to the touched change.
+      expect(exposed.emailErrors()).toBeNull();
+      expect(exposed.firstNameErrors()).toBeNull();
+      exposed.form().markAllAsTouched();
+      expect(exposed.emailErrors()).toBe('booking.carinformation.form.email.error.required');
+      expect(exposed.firstNameErrors()).toBe('booking.carinformation.form.firstName.error.required');
+    });
+
     it('should return email error key when email invalid format', () => {
       const exposed = component as unknown as {
         emailErrors: () => string | null;

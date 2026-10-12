@@ -4,9 +4,16 @@
   role="radio"
   [attr.aria-checked]="isSelected()"
   [attr.aria-label]="appointment().dayAbbreviation + ', ' + appointment().displayDate + ', ' + (appointment().displayTime | berlinTime: appointment().date)"
+  [attr.aria-describedby]="appointment().rentalCarIncluded ? 'slot-rental-' + appointment().id : null"
   tabindex="0"
   (click)="onSelect()"
   (keydown)="onKeydown($event)"
 >
   {{ appointment().displayTime | berlinTime: appointment().date }}
+  @if (appointment().rentalCarIncluded) {
+    <span class="slot__rental" [id]="'slot-rental-' + appointment().id">
+      <i class="bi bi-car-front" aria-hidden="true"></i>
+      {{ rentalCar.included | translate }}
+    </span>
+  }
 </div>

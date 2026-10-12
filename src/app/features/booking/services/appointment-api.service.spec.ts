@@ -408,4 +408,29 @@ describe('AppointmentApiService', () => {
     const result = await promise;
     expect(result.id).toBe('apt-1');
   });
+
+  // REQ-039 Abschnitt 18
+  it('should send replacementCar=true and map rentalCarIncluded when a rental car is requested (AC-M1)', async () => {
+    const promise = service.getAppointments('branch-1', ['inspection'], 'audi', 'default', undefined, undefined, true);
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    expect(req.request.body.replacementCar).toBe(true);
+    req.flush({
+      data: [{
+        date: '2026-04-10', displayDate: '10.04.2026', dayAbbreviation: 'Fr',
+        slots: [{ id: 'slot-r', time: '08:00', displayTime: '08:00 Uhr', available: true, rentalCarIncluded: true }]
+      }]
+    });
+    const slots = await promise;
+    expect(slots[0].rentalCarIncluded).toBe(true);
+  });
+
+  it('should not send replacementCar without rental car — request unchanged (AC-M3)', async () => {
+    const promise = service.getAppointments('branch-1', ['inspection'], 'audi', 'default');
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    expect(req.request.body.replacementCar).toBeUndefined();
+    req.flush(mockSnapResponse);
+    const slots = await promise;
+    expect(slots.every(slot => slot.rentalCarIncluded === false)).toBe(true);
+  });
 });
+

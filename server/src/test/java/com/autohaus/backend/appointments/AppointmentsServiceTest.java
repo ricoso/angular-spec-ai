@@ -273,66 +273,130 @@ class AppointmentsServiceTest {
         assertFalse(wishlist.containsKey("callbackPreference"));
     }
 
-    // REQ-036: the id comes from /api/planning/rentcategories, so it must travel in
-    // "rentCategoryid" — "fleetCategoryid" points at a different SoftNet collection.
-    @Test
-    void createAppointment_withRentCategory_sendsRentCategoryidNotFleetCategoryid() {
-        ObjectNode snap = baseSnap();
-        when(snapCache.getRawSnap("snap-fleet")).thenReturn(snap);
-        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+    // ─── REQ-039 Abschnitt 18: rental car travels inside the snap, category is only a wish ───
 
-        CreateAppointmentRequest dto = buildDto("snap-fleet", RENT_CATEGORY_ID, null);
-        service.createAppointment(dto);
+    @Test
+    @DisplayName("Hybrid: a rental booking reserves the offered category via rentCategoryid and drops the replacement fields")
+    void createAppointment_rentalSnap_reservesOfferedCategoryAndDropsReplacementFields() {
+        when(snapCache.getRawSnap("snap-rental")).thenReturn(rentalSnap());
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of(rentCategory("Kleinwagen")));
+
+        service.createAppointment(buildDto("snap-rental", null, null));
 
         Map<String, Object> sent = captureSentSnap();
+        assertFalse(sent.containsKey("replacementResource"));
+        assertFalse(sent.containsKey("replacementStart"));
+        assertFalse(sent.containsKey("replacementEnd"));
         @SuppressWarnings("unchecked")
         Map<String, Object> wishlist = (Map<String, Object>) sent.get("wishlist");
+        assertFalse(wishlist.containsKey("replacementPreference"));
         assertEquals(Boolean.TRUE, wishlist.get("isFleet"));
         assertEquals("rentObject", wishlist.get("fleetType"));
         assertEquals(RENT_CATEGORY_ID, wishlist.get("rentCategoryid"));
-        assertFalse(wishlist.containsKey("fleetCategoryid"));
     }
 
     @Test
-    void createAppointment_rentCategoryWithWrongLength_isNotSentAtAll() {
-        ObjectNode snap = baseSnap();
-        when(snapCache.getRawSnap("snap-bad-cat")).thenReturn(snap);
+    @DisplayName("Hybrid: the category wish is reserved as rentCategoryid and still noted for the dealership")
+    void createAppointment_rentalSnapWithWish_reservesWishAndKeepsNote() {
+        when(snapCache.getRawSnap("snap-wish")).thenReturn(rentalSnap());
         when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of(rentCategory("Mittelklasse")));
 
-        // "cat-abc" is not a 24-char SoftNet id — sending it would be rejected downstream.
-        CreateAppointmentRequest dto = buildDto("snap-bad-cat", "cat-abc", null);
-        service.createAppointment(dto);
+        CreateAppointmentRequest base = buildDto("snap-wish", RENT_CATEGORY_ID, null);
+        service.createAppointment(new CreateAppointmentRequest(base.snapId(), base.branchId(), null,
+            base.customer(), base.vehicle(), "Bitte vorher anrufen", RENT_CATEGORY_ID, null, null));
 
-        Map<String, Object> sent = captureSentSnap();
         @SuppressWarnings("unchecked")
-        Map<String, Object> wishlist = (Map<String, Object>) sent.get("wishlist");
-        assertFalse(wishlist.containsKey("isFleet"));
-        assertFalse(wishlist.containsKey("fleetType"));
-        assertFalse(wishlist.containsKey("rentCategoryid"));
-        assertFalse(wishlist.containsKey("fleetCategoryid"));
+        Map<String, Object> wishlist = (Map<String, Object>) captureSentSnap().get("wishlist");
+        assertEquals(RENT_CATEGORY_ID, wishlist.get("rentCategoryid"));
+        assertEquals("Mietwagen-Wunsch: Mittelklasse\nBitte vorher anrufen", wishlist.get("note"));
     }
 
     @Test
-    void createAppointment_withoutRentCategory_setsNoMobilityFields() {
-        ObjectNode snap = baseSnap();
-        when(snapCache.getRawSnap("snap-no-cat")).thenReturn(snap);
+    @DisplayName("BR-M5: a wish without rental snap is ignored — no lookup, no note")
+    void createAppointment_wishWithoutRentalSnap_isIgnored() {
+        when(snapCache.getRawSnap("snap-plain")).thenReturn(baseSnap());
         when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
 
-        service.createAppointment(buildDto("snap-no-cat", null, null));
+        service.createAppointment(buildDto("snap-plain", RENT_CATEGORY_ID, null));
 
-        Map<String, Object> sent = captureSentSnap();
         @SuppressWarnings("unchecked")
-        Map<String, Object> wishlist = (Map<String, Object>) sent.get("wishlist");
-        assertFalse(wishlist.containsKey("isFleet"));
-        assertFalse(wishlist.containsKey("fleetType"));
+        Map<String, Object> wishlist = (Map<String, Object>) captureSentSnap().get("wishlist");
+        assertFalse(wishlist.containsKey("note"));
         assertFalse(wishlist.containsKey("rentCategoryid"));
+        verify(softnetApi, never()).getRentCategories(anyString());
+    }
+
+    @Test
+    @DisplayName("Hybrid: a wrong-length wish is ignored and the booking falls back to the offered category")
+    void createAppointment_wishWithWrongLength_fallsBackToOfferedCategory() {
+        when(snapCache.getRawSnap("snap-bad-cat")).thenReturn(rentalSnap());
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of(rentCategory("Kleinwagen")));
+
+        service.createAppointment(buildDto("snap-bad-cat", "cat-abc", null));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> wishlist = (Map<String, Object>) captureSentSnap().get("wishlist");
+        assertEquals(RENT_CATEGORY_ID, wishlist.get("rentCategoryid"));
+        assertFalse(wishlist.containsKey("note"));
+    }
+
+    @Test
+    void createAppointment_wishLookupFails_bookingStillSucceedsWithoutNote() {
+        when(snapCache.getRawSnap("snap-lookup-err")).thenReturn(rentalSnap());
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+        when(softnetApi.getRentCategories("mock-group-id"))
+            .thenThrow(new HttpServerErrorException(HttpStatus.BAD_GATEWAY));
+
+        AppointmentResponseDto response = service.createAppointment(buildDto("snap-lookup-err", RENT_CATEGORY_ID, null));
+
+        assertEquals("apt-x", response.id());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> wishlist = (Map<String, Object>) captureSentSnap().get("wishlist");
+        assertFalse(wishlist.containsKey("note"));
+    }
+
+    @Test
+    void composeNote_longCustomerNote_isShortenedButWishIsKept() {
+        String note = AppointmentsService.composeNote("Oberklasse", "x".repeat(2500));
+
+        assertEquals(AppointmentsService.NOTE_MAX_LENGTH, note.length());
+        assertTrue(note.startsWith("Mietwagen-Wunsch: Oberklasse\n"), note.substring(0, 40));
+    }
+
+    @Test
+    void composeNote_withoutWish_keepsCustomerNoteAndBlankBecomesNull() {
+        assertEquals("Hallo", AppointmentsService.composeNote(null, "Hallo"));
+        assertNull(AppointmentsService.composeNote(null, "  "));
+        assertEquals("Mietwagen-Wunsch: Kleinwagen", AppointmentsService.composeNote("Kleinwagen", null));
+    }
+
+    @Test
+    void normalizeVin_trimsAndUpperCases_blankOrMissingStaysUnknown() {
+        assertEquals("WAUZZZ8V0JA000001", AppointmentsService.normalizeVin(" wauzzz8v0ja000001 "));
+        assertEquals("WVWZZZ1JZXW000001", AppointmentsService.normalizeVin("WVWZZZ1JZXW000001"));
+        assertEquals(AppointmentsService.VIN_UNKNOWN, AppointmentsService.normalizeVin(null));
+        assertEquals(AppointmentsService.VIN_UNKNOWN, AppointmentsService.normalizeVin("   "));
+    }
+
+    @Test
+    @DisplayName("Hybrid: a booking counts as rental once a concrete rentCategoryid is reserved")
+    void isRentalCarBooking_requiresReservedRentCategory() {
+        ObjectNode reserved = baseSnap();
+        reserved.withObject("wishlist").put("rentCategoryid", RENT_CATEGORY_ID);
+        assertTrue(AppointmentsService.isRentalCarBooking(reserved));
+        assertFalse(AppointmentsService.isRentalCarBooking(baseSnap()));
+        // A snap that only carries replacementPreference (not yet booked/reserved) is not a reservation.
+        assertFalse(AppointmentsService.isRentalCarBooking(rentalSnap()));
     }
 
     @Test
     void createAppointment_logsMobilityFields_soASuccessfulBookingIsTraceable() {
-        ObjectNode snap = baseSnap();
-        when(snapCache.getRawSnap("snap-mob-log")).thenReturn(snap);
+        when(snapCache.getRawSnap("snap-mob-log")).thenReturn(rentalSnap());
         when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of(rentCategory("Kleinwagen")));
 
         ch.qos.logback.classic.Logger logger =
             (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(AppointmentsService.class);
@@ -341,13 +405,12 @@ class AppointmentsServiceTest {
         logger.addAppender(appender);
 
         try {
-            service.createAppointment(buildDto("snap-mob-log", RENT_CATEGORY_ID, null));
+            service.createAppointment(buildDto("snap-mob-log", null, null));
 
             String infoLine = bookingLogLine(appender);
-            assertTrue(infoLine.contains("mobility="), infoLine);
-            assertTrue(infoLine.contains(RENT_CATEGORY_ID), infoLine);   // id is not PII
             assertTrue(infoLine.contains("\"isFleet\":true"), infoLine);
-            assertTrue(infoLine.contains("\"fleetType\":\"rentObject\""), infoLine);
+            assertTrue(infoLine.contains("\"rentCategoryid\":\"" + RENT_CATEGORY_ID + "\""), infoLine);
+            assertFalse(infoLine.contains("replacementPreference"), infoLine);
         } finally {
             logger.detachAppender(appender);
         }
@@ -454,15 +517,19 @@ class AppointmentsServiceTest {
     @DisplayName("AC-13: a successful booking hands branch, group, pristine snap and mobility to the event buffer")
     void createAppointment_insightsEnabled_logsUsageBookingWithPristineSnap() {
         ObjectNode snap = baseSnap();
+        ObjectNode rental = rentalSnap();
         when(snapCache.getRawSnap("snap-usage")).thenReturn(snap);
+        when(snapCache.getRawSnap("snap-usage-rental")).thenReturn(rental);
         when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of(rentCategory("Kleinwagen")));
         AppointmentsService withInsights = serviceWithInsights(INSIGHTS_ON);
 
+        // BR-M12 (hybrid): mobility=true once a concrete rentCategoryid was reserved for the booking.
+        withInsights.createAppointment(buildDto("snap-usage-rental", null, null));
         withInsights.createAppointment(buildDto("snap-usage", RENT_CATEGORY_ID, null));
-        withInsights.createAppointment(buildDto("snap-usage", null, null));
 
         // same(snap): the cached SoftNet snap itself — the service patches a deep copy only.
-        verify(usageEventLogger).logBooking(eq("branch-1"), eq("mock-group-id"), same(snap), eq(true));
+        verify(usageEventLogger).logBooking(eq("branch-1"), eq("mock-group-id"), same(rental), eq(true));
         verify(usageEventLogger).logBooking(eq("branch-1"), eq("mock-group-id"), same(snap), eq(false));
         assertFalse(snap.path("wishlist").has("client"), "the logger never sees patched customer data");
     }
@@ -473,6 +540,8 @@ class AppointmentsServiceTest {
         ObjectNode snap = baseSnap();
         snap.put("checkInTime", "2026-10-24T07:30:00Z");
         snap.withObject("wishlist").putArray("operations").add("6908a1b2c3d4e5f6a7b8c9e2");
+        snap.withObject("wishlist").put("replacementPreference", true);
+        snap.put("replacementResource", "Kleinwagen");
         when(snapCache.getRawSnap("snap-line")).thenReturn(snap);
         when(setupService.resolveGroupId(HEX_BRANCH, null)).thenReturn(HEX_GROUP);
         when(setupService.findByBranchId(HEX_BRANCH)).thenReturn(new BranchSetup(HEX_BRANCH, "Filiale X",
@@ -643,6 +712,24 @@ class AppointmentsServiceTest {
         branch.put("branchLabel", "Filiale X");
         snap.set("branch", branch);
         return snap;
+    }
+
+    /** REQ-039: snap requested with replacementPreference, SoftNet reserved a car. */
+    private ObjectNode rentalSnap() {
+        ObjectNode snap = baseSnap();
+        snap.withObject("wishlist").put("replacementPreference", true);
+        snap.put("replacementResource", "Kleinwagen");
+        snap.put("replacementStart", "2026-05-10T09:00:00Z");
+        snap.put("replacementEnd", "2026-05-10T11:45:00Z");
+        return snap;
+    }
+
+    /** A SoftNet rent category ({@code id}, {@code name}) as returned by {@code getRentCategories}. */
+    private ObjectNode rentCategory(String name) {
+        ObjectNode category = om.createObjectNode();
+        category.put("id", RENT_CATEGORY_ID);
+        category.put("name", name);
+        return category;
     }
 
     private ObjectNode baseResult() {

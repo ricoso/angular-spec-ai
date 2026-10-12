@@ -154,4 +154,48 @@ class CreateAppointmentRequestValidationTest {
 
         assertTrue(violations.isEmpty());
     }
+
+    // === REQ-039: optional VIN, note and wish limits ===
+
+    private CreateAppointmentRequest.VehicleDto vehicleWithVin(String vin) {
+        return new CreateAppointmentRequest.VehicleDto("B-MS1234", 50000, vin, null, null, null);
+    }
+
+    @Test
+    void vehicleVin_missing_isValid() {
+        assertTrue(validator.validate(vehicleWithVin(null)).isEmpty());
+    }
+
+    @Test
+    void vehicleVin_17Alphanumerics_isValid() {
+        assertTrue(validator.validate(vehicleWithVin("WVWZZZ1JZ3W386752")).isEmpty());
+    }
+
+    @Test
+    void vehicleVin_wrongLengthOrCharacters_violatesPattern() {
+        assertEquals(1, validator.validate(vehicleWithVin("WVWZZZ1JZ3")).size());
+        assertEquals(1, validator.validate(vehicleWithVin("WVW-ZZZ1JZ3W38675")).size());
+    }
+
+    private CreateAppointmentRequest requestWith(String note, String rentCategoryId) {
+        return new CreateAppointmentRequest(
+            "snap-1", "branch-1", null,
+            new CreateAppointmentRequest.CustomerDto(
+                "test@test.de", "Max", "Muster", "0170", null,
+                "Str 1", "12345", "Berlin", null, null, null),
+            vehicleWithMileage(50000),
+            note, rentCategoryId, null, null);
+    }
+
+    @Test
+    void note_over2000Chars_violatesSize() {
+        assertTrue(validator.validate(requestWith("x".repeat(2000), null)).isEmpty());
+        assertEquals(1, validator.validate(requestWith("x".repeat(2001), null)).size());
+    }
+
+    @Test
+    void rentCategoryId_over24Chars_violatesSize() {
+        assertTrue(validator.validate(requestWith(null, "6908808e54f4bb2b69b0538b")).isEmpty());
+        assertEquals(1, validator.validate(requestWith(null, "x".repeat(25))).size());
+    }
 }

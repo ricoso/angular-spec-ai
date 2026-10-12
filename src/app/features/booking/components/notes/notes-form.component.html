@@ -1,29 +1,23 @@
-<div class="notes-form card">
-  <div class="card-body">
-    <p class="switch-card__title mb-1">
-      <i class="bi bi-chat-text me-2 text-primary" aria-hidden="true"></i>
-      {{ booking.notes.sectionTitle | translate }}
-    </p>
-    <p class="switch-card__hint mb-2" id="notes-hint">
-      {{ booking.notes.textareaHint | translate }}
-    </p>
-    <textarea
-      [formControl]="noteControl"
-      [placeholder]="booking.notes.textareaPlaceholder | translate"
-      [maxlength]="maxLength"
-      [attr.aria-label]="booking.notes.sectionTitle | translate"
-      [attr.aria-describedby]="'notes-hint notes-counter'"
-      rows="4"
-      class="form-control notes-form__textarea"
-    ></textarea>
-    <div class="form-text d-flex justify-content-end">
-      <span
-        id="notes-counter"
-        aria-live="polite"
-        class="notes-form__counter"
-      >
-        {{ currentLength() }} / {{ maxLength }}
-      </span>
-    </div>
-  </div>
-</div>
+<!-- REQ-039: note field as option card with label above the textarea (mockups/wizard.css .field). -->
+<section class="option-card notes-form">
+  <label class="option-card__heading notes-form__label" for="notes-textarea">
+    <i class="bi bi-chat-text" aria-hidden="true"></i>
+    {{ booking.notes.sectionTitle | translate }}
+  </label>
+  <p class="option-card__hint notes-form__hint" id="notes-hint">
+    {{ booking.notes.textareaHint | translate }}
+  </p>
+  <textarea
+    id="notes-textarea"
+    [formControl]="noteControl"
+    [placeholder]="booking.notes.textareaPlaceholder | translate"
+    [maxlength]="maxLength"
+    [attr.aria-describedby]="'notes-hint notes-counter'"
+    rows="4"
+    class="form-control notes-form__textarea"
+  ></textarea>
+  <span id="notes-counter" aria-live="polite" class="notes-form__counter">
+    <span aria-hidden="true">{{ currentLength() }} / {{ maxLength }}</span>
+    <span class="visually-hidden">{{ charCountLabel() }}</span>
+  </span>
+</section>

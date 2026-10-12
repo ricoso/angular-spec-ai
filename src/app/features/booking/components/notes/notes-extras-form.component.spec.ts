@@ -225,9 +225,16 @@ describe('NotesExtrasFormComponent', () => {
   });
 
   describe('Switch-Card UX (Toggle-Switch fuer Mietwagen + Rueckruf)', () => {
-    it('rentEnabled is false initially', () => {
-      const exposed = component as unknown as { rentEnabled: () => boolean };
-      expect(exposed.rentEnabled()).toBe(false);
+    it('rentalCarRequested is false initially (REQ-039 default "without rental car")', () => {
+      const exposed = component as unknown as { rentalCarRequested: () => boolean };
+      expect(exposed.rentalCarRequested()).toBe(false);
+    });
+
+    it('rentalCarRequested follows the initialRentalCarRequested input', () => {
+      fixture.componentRef.setInput('initialRentalCarRequested', true);
+      fixture.detectChanges();
+      const exposed = component as unknown as { rentalCarRequested: () => boolean };
+      expect(exposed.rentalCarRequested()).toBe(true);
     });
 
     it('callbackEnabled is false initially (Default no)', () => {
@@ -235,13 +242,13 @@ describe('NotesExtrasFormComponent', () => {
       expect(exposed.callbackEnabled()).toBe(false);
     });
 
-    it('rentEnabled becomes true when category is set', () => {
+    it('a category wish does not switch the rental car on (REQ-039 BR-M1)', () => {
       const exposed = component as unknown as {
         onRentCategoryChange: (id: string | null) => void;
-        rentEnabled: () => boolean;
+        rentalCarRequested: () => boolean;
       };
       exposed.onRentCategoryChange('cat-1');
-      expect(exposed.rentEnabled()).toBe(true);
+      expect(exposed.rentalCarRequested()).toBe(false);
     });
 
     it('callbackEnabled flips to true when "yes" selected', () => {
@@ -253,20 +260,44 @@ describe('NotesExtrasFormComponent', () => {
       expect(exposed.callbackEnabled()).toBe(true);
     });
 
-    it('onRentSwitchChange(true) auto-selects first rent category', () => {
+    it('onRentSwitchChange(true) emits rentalCarChanged and keeps "no preference" (REQ-039 BR-M5)', () => {
       const cats: RentCategory[] = [
         { id: 'cat-small', groupId: 'g1', name: 'Kleinwagen', description: '', brands: [], branches: [] },
         { id: 'cat-mid',   groupId: 'g1', name: 'Mittelklasse', description: '', brands: [], branches: [] }
       ];
       fixture.componentRef.setInput('rentCategories', cats);
       fixture.detectChanges();
+      const rentalSpy = jest.fn();
+      const wishSpy = jest.fn();
+      component.rentalCarChanged.subscribe(rentalSpy);
+      component.rentCategoryChanged.subscribe(wishSpy);
 
       const exposed = component as unknown as {
         onRentSwitchChange: (checked: boolean) => void;
         selectedRentCategoryId: () => string | null;
+        rentalCarRequested: () => boolean;
       };
       exposed.onRentSwitchChange(true);
-      expect(exposed.selectedRentCategoryId()).toBe('cat-small');
+      expect(exposed.rentalCarRequested()).toBe(true);
+      expect(exposed.selectedRentCategoryId()).toBeNull();
+      expect(rentalSpy).toHaveBeenCalledWith(true);
+      expect(wishSpy).not.toHaveBeenCalled();
+    });
+
+    it('onRentSwitchChange(false) emits false and drops the wish', () => {
+      const rentalSpy = jest.fn();
+      const wishSpy = jest.fn();
+      component.rentalCarChanged.subscribe(rentalSpy);
+      component.rentCategoryChanged.subscribe(wishSpy);
+      const exposed = component as unknown as {
+        onRentSwitchChange: (checked: boolean) => void;
+        onRentCategoryChange: (id: string | null) => void;
+      };
+      exposed.onRentSwitchChange(true);
+      exposed.onRentCategoryChange('cat-mid');
+      exposed.onRentSwitchChange(false);
+      expect(rentalSpy).toHaveBeenLastCalledWith(false);
+      expect(wishSpy).toHaveBeenLastCalledWith(null);
     });
 
     it('onRentSwitchChange(false) clears selected category', () => {
@@ -302,14 +333,14 @@ describe('NotesExtrasFormComponent', () => {
       expect(exposed.selectedRentCategoryId()).toBe('cat-b');
     });
 
-    it('onRentSwitchChange(true) falls back to null when no categories are available', () => {
+    it('onRentSwitchChange(true) leaves the wish at null when no categories are available', () => {
       fixture.componentRef.setInput('rentCategories', [] as RentCategory[]);
       fixture.detectChanges();
       const exposed = component as unknown as {
         onRentSwitchChange: (c: boolean) => void;
         selectedRentCategoryId: () => string | null;
       };
-      exposed.onRentSwitchChange(true); // null + empty list → [0]?.id ?? null → null
+      exposed.onRentSwitchChange(true);
       expect(exposed.selectedRentCategoryId()).toBeNull();
     });
 
@@ -332,11 +363,11 @@ describe('NotesExtrasFormComponent', () => {
       fixture.detectChanges();
       const exposed = component as unknown as {
         onRentSwitchToggle: (e: Event) => void;
-        rentEnabled: () => boolean;
+        rentalCarRequested: () => boolean;
       };
       const fakeEvent = { target: { checked: true } } as unknown as Event;
       exposed.onRentSwitchToggle(fakeEvent);
-      expect(exposed.rentEnabled()).toBe(true);
+      expect(exposed.rentalCarRequested()).toBe(true);
     });
 
     it('onCallbackSwitchToggle wrapper reads event.target.checked', () => {
@@ -347,41 +378,6 @@ describe('NotesExtrasFormComponent', () => {
       const fakeEvent = { target: { checked: true } } as unknown as Event;
       exposed.onCallbackSwitchToggle(fakeEvent);
       expect(exposed.callbackEnabled()).toBe(true);
-    });
-  });
-
-  describe('Rent Category Description', () => {
-    it('returns null when no category selected', () => {
-      const exposed = component as unknown as { selectedRentCategoryDescription: () => string | null };
-      expect(exposed.selectedRentCategoryDescription()).toBeNull();
-    });
-
-    it('returns description when category has one', () => {
-      const cats: RentCategory[] = [
-        { id: 'cat-1', groupId: 'g1', name: 'Premium', description: 'Ab 99 EUR/Tag', brands: [], branches: [] }
-      ];
-      fixture.componentRef.setInput('rentCategories', cats);
-      fixture.detectChanges();
-      const exposed = component as unknown as {
-        onRentCategoryChange: (id: string) => void;
-        selectedRentCategoryDescription: () => string | null;
-      };
-      exposed.onRentCategoryChange('cat-1');
-      expect(exposed.selectedRentCategoryDescription()).toBe('Ab 99 EUR/Tag');
-    });
-
-    it('returns null when category description is empty/whitespace', () => {
-      const cats: RentCategory[] = [
-        { id: 'cat-empty', groupId: 'g1', name: 'X', description: '   ', brands: [], branches: [] }
-      ];
-      fixture.componentRef.setInput('rentCategories', cats);
-      fixture.detectChanges();
-      const exposed = component as unknown as {
-        onRentCategoryChange: (id: string) => void;
-        selectedRentCategoryDescription: () => string | null;
-      };
-      exposed.onRentCategoryChange('cat-empty');
-      expect(exposed.selectedRentCategoryDescription()).toBeNull();
     });
   });
 });

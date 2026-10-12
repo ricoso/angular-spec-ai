@@ -60,57 +60,22 @@ describe('ServiceHintsComponent', () => {
     expect(exposed.visibleHints()[0].key).toBe('jt-2');
   });
 
-  it('exposes iconUrl from jobType when present', () => {
-    const jobTypes: ApiJobType[] = [
-      { id: 'jt-1', name: 'A', description: '', hint: 'h', category: null, categoryName: null, iconUrl: '/assets/api/x.svg', operations: [] }
-    ];
-    fixture.componentRef.setInput('jobTypes', jobTypes);
-    fixture.detectChanges();
-
-    const exposed = component as unknown as { visibleHints: () => { iconUrl: string | null }[] };
-    expect(exposed.visibleHints()[0].iconUrl).toBe('/assets/api/x.svg');
-  });
-
-  it('passes null iconUrl through when API delivers no icon', () => {
-    const jobTypes: ApiJobType[] = [
-      { id: 'jt-1', name: 'A', description: '', hint: 'h', category: null, categoryName: null, iconUrl: null, operations: [] }
-    ];
-    fixture.componentRef.setInput('jobTypes', jobTypes);
-    fixture.detectChanges();
-
-    const exposed = component as unknown as { visibleHints: () => { iconUrl: string | null }[] };
-    expect(exposed.visibleHints()[0].iconUrl).toBeNull();
-  });
-
   describe('Operations-based hints (REQ-025 b Iter. 3)', () => {
     it('renders Operation description as hint when selected', () => {
       fixture.componentRef.setInput('selectedServices', [{ serviceId: 'op-1', selectedOptionIds: [] }]);
-      fixture.componentRef.setInput('categories', [{ id: 'c1', name: 'Inspektion', rank: 0 }]);
       fixture.componentRef.setInput('operations', [
         { id: 'op-1', name: 'Inspektion', description: 'Bitte bringen Sie Serviceheft', tagIds: ['c1'], order: 1, imageId: null }
       ]);
       fixture.detectChanges();
-      const exposed = component as unknown as { visibleHints: () => { hint: string; iconUrl: string | null }[] };
+      const exposed = component as unknown as { visibleHints: () => { hint: string; serviceName: string }[] };
       const hints = exposed.visibleHints();
       expect(hints).toHaveLength(1);
       expect(hints[0].hint).toContain('Serviceheft');
-      expect(hints[0].iconUrl).toBe('assets/icons/services/inspection.svg');
-    });
-
-    it('uses Hol & Bringservice icon (rank 99) for that specific operation', () => {
-      fixture.componentRef.setInput('selectedServices', [{ serviceId: 'op-pickup', selectedOptionIds: [] }]);
-      fixture.componentRef.setInput('categories', [{ id: 'c1', name: 'Reparatur', rank: 5 }]);
-      fixture.componentRef.setInput('operations', [
-        { id: 'op-pickup', name: 'Hol & Bringservice', description: 'Wir holen ab.', tagIds: ['c1'], order: 99, imageId: null }
-      ]);
-      fixture.detectChanges();
-      const exposed = component as unknown as { visibleHints: () => { iconUrl: string | null }[] };
-      expect(exposed.visibleHints()[0].iconUrl).toBe('assets/icons/services/pickup-delivery.svg');
+      expect(hints[0].serviceName).toBe('Inspektion');
     });
 
     it('treats operation description=null as empty string', () => {
       fixture.componentRef.setInput('selectedServices', [{ serviceId: 'op-1', selectedOptionIds: [] }]);
-      fixture.componentRef.setInput('categories', [{ id: 'c1', name: 'X', rank: 0 }]);
       fixture.componentRef.setInput('operations', [
         { id: 'op-1', name: 'X', description: null, tagIds: ['c1'], order: 1, imageId: null }
       ]);
@@ -121,7 +86,6 @@ describe('ServiceHintsComponent', () => {
 
     it('falls back to jobTypes when operations array is empty', () => {
       fixture.componentRef.setInput('selectedServices', []);
-      fixture.componentRef.setInput('categories', []);
       fixture.componentRef.setInput('operations', []);
       fixture.componentRef.setInput('jobTypes', [
         { id: 'jt-x', name: 'X', description: '', hint: 'hint', category: null, categoryName: null, iconUrl: null, operations: [] }
@@ -132,15 +96,14 @@ describe('ServiceHintsComponent', () => {
       expect(exposed.visibleHints()[0].hint).toBe('hint');
     });
 
-    it('handles operation with no matching category (uses default rank 0 → inspection icon)', () => {
+    it('renders a hint for an operation without category (REQ-039: no per-hint icon)', () => {
       fixture.componentRef.setInput('selectedServices', [{ serviceId: 'op-orphan', selectedOptionIds: [] }]);
-      fixture.componentRef.setInput('categories', [{ id: 'c-other', name: 'X', rank: 5 }]);
       fixture.componentRef.setInput('operations', [
-        { id: 'op-orphan', name: 'Y', description: '', tagIds: [], order: 1, imageId: null }
+        { id: 'op-orphan', name: 'Y', description: 'Hinweis', tagIds: [], order: 1, imageId: null }
       ]);
       fixture.detectChanges();
-      const exposed = component as unknown as { visibleHints: () => { iconUrl: string | null }[] };
-      expect(exposed.visibleHints()[0].iconUrl).toBe('assets/icons/services/inspection.svg');
+      const exposed = component as unknown as { visibleHints: () => { serviceName: string; hint: string }[] };
+      expect(exposed.visibleHints()).toEqual([{ key: 'op-orphan', serviceName: 'Y', hint: 'Hinweis' }]);
     });
   });
 });

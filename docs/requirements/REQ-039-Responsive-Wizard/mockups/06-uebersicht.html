@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Übersicht · Werkstatttermin · REQ-039 Mockup</title>
+  <link rel="stylesheet" href="wizard.css">
+</head>
+<body class="mockup-page" data-mockup-step="6">
+  <span class="variant-target" id="mit-vin" aria-hidden="true"></span>
+  <span class="variant-target" id="erfolg" aria-hidden="true"></span>
+  <span class="variant-target" id="erfolg-mit-vin" aria-hidden="true"></span>
+  <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+  <div class="mockup-shell" data-testid="mockup-shell">
+    <header class="host-header" aria-label="Werkstatttermin – Referenz-Hostheader">
+      <p class="host-header__title">Werkstatttermin</p>
+      <details class="host-header__menu">
+        <summary class="host-header__action" aria-label="Darstellungseinstellungen"><i class="bi bi-universal-access" aria-hidden="true"></i></summary>
+        <div class="host-header__panel"><p><strong>Darstellung</strong></p><label class="host-header__setting"><input id="contrast-toggle" type="checkbox"> Hoher Kontrast</label><p>Die Referenz-Kontrastpalette gilt nur für diese Vorschau.</p></div>
+      </details>
+      <details class="host-header__menu">
+        <summary class="host-header__action" aria-label="Drei ausgewählte Services ansehen"><i class="bi bi-bag-fill" aria-hidden="true"></i></summary>
+        <div class="host-header__panel"><p><strong>Ihre Services – Musterzustand</strong></p><p>Ölwechsel-Service, Dialogannahme und Sicherheits-Check.</p></div>
+      </details>
+      <a class="host-header__action host-header__action--close" href="../mockup.html" aria-label="Zur Mockup-Galerie"><i class="bi bi-x-circle" aria-hidden="true"></i></a>
+    </header>
+    <nav class="wizard" aria-label="Buchungsfortschritt: Schritt 6 von 6" data-testid="wizard">
+      <ol class="wizard__steps">
+        <li class="wizard__step wizard__step--done" data-state="done" data-original-index="1">
+          <a class="wizard__control wizard__step-button" href="01-marke.html" aria-label="Schritt 1 von 6: Marke, abgeschlossen. Zurück zu diesem Schritt" data-testid="wizard-step-1"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Marke</span></a>
+        </li>
+        <li class="wizard__step wizard__step--done" data-state="done" data-original-index="2">
+          <a class="wizard__control wizard__step-button" href="02-service.html" aria-label="Schritt 2 von 6: Serviceauswahl, abgeschlossen. Zurück zu diesem Schritt" data-testid="wizard-step-2"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Service</span></a>
+        </li>
+        <li class="wizard__step wizard__step--done" data-state="done" data-original-index="3">
+          <a class="wizard__control wizard__step-button" href="03-hinweise.html" aria-label="Schritt 3 von 6: Hinweise, abgeschlossen. Zurück zu diesem Schritt" data-testid="wizard-step-3"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Hinweise</span></a>
+        </li>
+        <li class="wizard__step wizard__step--done" data-state="done" data-original-index="4">
+          <a class="wizard__control wizard__step-button" href="04-termin.html" aria-label="Schritt 4 von 6: Termin, abgeschlossen. Zurück zu diesem Schritt" data-testid="wizard-step-4"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Termin</span></a>
+        </li>
+        <li class="wizard__step wizard__step--done" data-state="done" data-original-index="5">
+          <a class="wizard__control wizard__step-button" href="05-kontakt.html" aria-label="Schritt 5 von 6: Kontakt- und Fahrzeugdaten, abgeschlossen. Zurück zu diesem Schritt" data-testid="wizard-step-5"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Kontakt- &amp; Fahrzeugdaten</span></a>
+        </li>
+        <li class="wizard__step wizard__step--active" data-state="active" data-original-index="6">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-current="step" aria-label="Schritt 6 von 6: Übersicht, aktuell" data-testid="wizard-step-6"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Übersicht</span></button>
+        </li>
+      </ol>
+      <p class="wizard__current" data-testid="wizard-current-title" aria-live="polite">Übersicht</p>
+      <p class="wizard__counter">Schritt 6 von 6</p>
+    </nav>
+    <main class="step-content step-content--overview" id="main-content" data-testid="step-content" aria-describedby="mockup-description">
+      <p class="visually-hidden" id="mockup-description">Statische Designvorschau mit ausschließlich erfundenen Beispieldaten. Termin anfragen zeigt nur die statische Erfolgsvariante. Es wird keine Anfrage versendet. Der Erfolg und eine eventuell angeforderte VIN sind Varianten dieses sechsten Schrittes.</p>
+      <div class="step-content__heading">
+        <h1 class="step-content__title">Übersicht</h1>
+        <p class="step-content__subtitle">Bitte prüfen Sie Ihre Angaben und wählen Sie alle benötigten Services aus, bevor Sie die Terminanfrage absenden.</p>
+      </div>
+      <div class="field overview__note">
+        <label class="field__label" for="booking-note">Möchten Sie uns noch etwas mitteilen?</label>
+        <textarea class="field__textarea" id="booking-note" rows="2" placeholder="Z. B. Besonderheiten am Fahrzeug oder zusätzlicher Reparaturwunsch …" readonly></textarea>
+      </div>
+      <div class="overview__grid" data-testid="overview-grid">
+        <section class="summary-card" aria-labelledby="summary-heading">
+          <h2 class="summary-card__heading" id="summary-heading">Zusammenfassung</h2>
+          <div class="summary-row">
+            <i class="bi bi-clock" aria-hidden="true"></i>
+            <div><p class="summary-row__label">Wunschtermin</p><p class="summary-row__value"><strong>01.09.2026 — 10:00 Uhr</strong></p></div>
+          </div>
+          <div class="summary-row">
+            <i class="bi bi-wrench" aria-hidden="true"></i>
+            <div>
+              <p class="summary-row__label">Gewählte Services</p>
+              <ul class="summary-row__services">
+                <li><strong>Ölwechsel-Service</strong> (inkl. Filter &amp; Dichtung) (190,00 € inkl. MwSt.)</li>
+                <li><strong>Dialogannahme</strong></li>
+                <li><strong>Sicherheits-Check</strong></li>
+              </ul>
+              <p class="summary-row__location">ThyssenKrupp Allee 20, 45143 Essen</p>
+              <a class="button button--secondary overview__add-services" href="02-service.html">Weitere Services hinzufügen</a>
+            </div>
+          </div>
+          <div class="summary-row">
+            <i class="bi bi-person" aria-hidden="true"></i>
+            <div><p class="summary-row__label">Kontaktdaten</p><p class="summary-row__value">Erika Beispiel (erika.beispiel@example.com)<br>Beispielweg 12, 45143 Essen</p></div>
+          </div>
+          <div class="summary-row">
+            <i class="bi bi-car-front" aria-hidden="true"></i>
+            <div>
+              <p class="summary-row__label">Fahrzeugdaten</p>
+              <p class="summary-row__value">Marke: Volkswagen | Kennzeichen: E-MB 2026<br>Kilometerstand: 42.500 km</p>
+              <p class="summary-row__value variant-vin" data-testid="summary-vin">Fahrzeugidentifikationsnummer (VIN): DEMFZG12345678901</p>
+            </div>
+          </div>
+        </section>
+        <aside class="overview__sidebar" aria-label="Terminanfrage">
+          <section class="overview__appointment" aria-label="Gewählter Service und Wunschtermin">
+            <dl><dt>Gewählter Service</dt><dd>Volkswagen Werkstattservice</dd><dt>Wunschtermin</dt><dd>01.09.2026 / 10:00 Uhr</dd></dl>
+          </section>
+          <a class="button overview__request variant-request-standard" href="#erfolg" aria-label="Statische Erfolgsansicht öffnen; keine Anfrage wird versendet" data-testid="booking-request">Termin anfragen</a>
+          <a class="button overview__request variant-request-vin" href="#erfolg-mit-vin" aria-label="Statische Erfolgsansicht mit VIN öffnen; keine Anfrage wird versendet" data-testid="booking-request-vin">Termin anfragen</a>
+          <div class="notice notice--success overview__success" role="status" aria-label="Statischer Erfolgszustand" data-testid="booking-success">
+            <i class="bi bi-check-circle" aria-hidden="true"></i>
+            <div><p><strong>Ihre Terminanfrage wurde erfolgreich gesendet.</strong></p><p>Wir prüfen Ihre Anfrage und melden uns in Kürze über den von Ihnen gewählten Kontaktweg mit einer Terminbestätigung oder einem alternativen Terminvorschlag.</p></div>
+          </div>
+        </aside>
+      </div>
+    </main>
+    <nav class="step-actions" aria-label="Schrittnavigation">
+      <a class="button button--secondary variant-request-standard" href="05-kontakt.html" data-testid="wizard-back">Zurück</a>
+      <a class="button button--secondary variant-request-vin" href="05-kontakt.html#mit-vin" data-testid="wizard-back-vin">Zurück</a>
+      <a class="button overview__finish" href="../mockup.html" data-testid="wizard-finish">Fertig</a>
+    </nav>
+  </div>
+</body>
+</html>

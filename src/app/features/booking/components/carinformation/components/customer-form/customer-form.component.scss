@@ -1,19 +1,24 @@
 @use 'breakpoints' as *;
 
+// REQ-039: as in mockups/wizard.css (.contact-panel__title / __grid / __name / __address).
 .customer-form {
-  border: none;
-  padding: 0;
-  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+
+  @include tablet {
+    gap: 0.625rem;
+  }
 
   &__title {
-    font-size: var(--font-size-lg);
-    font-weight: 500;
-    color: var(--color-text-primary);
-    margin-bottom: var(--spacing-md);
+    margin: 0 0 0.5rem;
     padding: 0;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-weight: 650;
   }
 
   &__field--full {
@@ -22,16 +27,17 @@
 
   &__row {
     display: grid;
-    gap: var(--spacing-md);
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
 
     @include tablet {
-      &--two {
-        grid-template-columns: 1fr 1fr;
+      // Anrede narrow + first/last name; PLZ narrow + city.
+      &--three {
+        grid-template-columns: 6rem repeat(2, minmax(0, 1fr));
       }
 
-      &--three {
-        grid-template-columns: 1fr 2fr 2fr;
+      &--two {
+        grid-template-columns: 7rem minmax(0, 1fr);
       }
     }
   }

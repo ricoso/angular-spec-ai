@@ -1,10 +1,10 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="booking-overview" aria-labelledby="overview-title">
-  <h1 id="overview-title" class="booking-overview__title">
+<section class="page-wrap booking-overview" aria-labelledby="overview-title">
+  <h1 id="overview-title" class="page-title booking-overview__title">
     {{ bookingOverview.title | translate }}
   </h1>
-  <p class="booking-overview__subtitle">
+  <p class="page-subtitle booking-overview__subtitle">
     {{ bookingOverview.subtitle | translate }}
   </p>
 
@@ -29,113 +29,88 @@
       </button>
     </div>
   } @else {
-    <div class="row g-3 booking-overview__grid" role="region" [attr.aria-label]="bookingOverview.ariaGridLabel | translate">
-      <!-- Left column: booking summary -->
-      <div class="col-lg-8">
-        <div class="card booking-overview__summary-card">
-          <div class="card-body">
-            <h5 class="booking-overview__summary-heading mb-3">
-              <i class="bi bi-clipboard-check text-primary me-2" aria-hidden="true"></i>{{ bookingOverview.title | translate }}
-            </h5>
+    <!-- REQ-039: mockups/06-uebersicht.html — summary card left, appointment card + request right -->
+    <div class="booking-overview__grid" role="region" [attr.aria-label]="bookingOverview.ariaGridLabel | translate">
+      <section class="summary-card booking-overview__summary-card" aria-labelledby="overview-summary-heading">
+        <h2 class="summary-card__heading" id="overview-summary-heading">{{ bookingOverview.summaryTitle | translate }}</h2>
 
-            @if (appointment(); as apt) {
-              <app-appointment-tile [appointment]="apt" />
-            }
+        @if (appointment(); as apt) {
+          <app-appointment-tile [appointment]="apt" />
+        }
 
-            <app-services-tile
-              [services]="services()"
-              [serviceLabels]="resolvedServiceLabels()"
-              [locationName]="resolvedLocationName()"
+        <app-services-tile
+          [services]="services()"
+          [serviceLabels]="resolvedServiceLabels()"
+          [locationName]="resolvedLocationName()"
+        />
+
+        @if (customerInfo(); as customer) {
+          @if (vehicleInfo(); as vehicle) {
+            <app-personal-data-tile
+              [customerInfo]="customer"
+              [vehicleInfo]="vehicle"
+              [brandName]="resolvedBrandName()"
             />
+          }
+        }
 
-            @if (customerInfo(); as customer) {
-              @if (vehicleInfo(); as vehicle) {
-                <app-personal-data-tile
-                  [customerInfo]="customer"
-                  [vehicleInfo]="vehicle"
-                  [brandName]="resolvedBrandName()"
-                />
-              }
-            }
+        <app-price-tile
+          [rentalCarRequested]="rentalCarRequested()"
+          [rentCategoryWishName]="rentCategoryWishName()"
+          [appointmentPreference]="appointmentPreference()"
+          [callbackOption]="callbackOption()"
+          [bookingNote]="bookingNote() ?? ''"
+        />
+      </section>
 
-            <app-price-tile
-              [rentCategoryName]="store.selectedRentCategoryName()"
-              [appointmentPreference]="store.selectedAppointmentPreference()"
-              [callbackOption]="store.selectedCallbackOption()"
-              [bookingNote]="store.bookingNote() ?? ''"
-            />
-          </div>
-        </div>
-
-        <!-- Datenschutz-Consent ist bereits auf der Carinformation-Page bestätigt — nicht doppelt zeigen. -->
-      </div>
-
-      <!-- Right column: sticky submit sidebar -->
-      <div class="col-lg-4">
-        <div class="card booking-overview__sidebar sticky-top">
-          <div class="card-body">
-            <h6 class="text-uppercase text-muted small mb-3">{{ bookingOverview.title | translate }}</h6>
-
-            @if (services().length > 0) {
-              <div class="d-flex justify-content-between mb-1">
-                <span>{{ bookingOverview.tiles.services.title | translate }}</span>
-                <span class="fw-semibold">{{ services().length }}</span>
-              </div>
-            }
-            @if (resolvedLocationName()) {
-              <div class="d-flex justify-content-between mb-1">
-                <span>{{ bookingOverview.tiles.personalData.brandLabel | translate }}</span>
-                <span class="fw-semibold">{{ resolvedBrandName() }}</span>
-              </div>
+      <div class="booking-overview__sidebar">
+        <div class="booking-overview__appointment">
+          <dl>
+            @if (resolvedBrandName()) {
+              <dt>{{ bookingOverview.sidebar.serviceLabel | translate }}</dt>
+              <dd>{{ sidebarServiceValue() }}</dd>
             }
             @if (appointment(); as apt) {
-              <div class="d-flex justify-content-between mb-3">
-                <span>{{ bookingOverview.tiles.appointment.title | translate }}</span>
-                <span class="fw-semibold">{{ apt.displayDate }} · {{ apt.displayTime | berlinTime: apt.date }}</span>
-              </div>
+              <dt>{{ bookingOverview.tiles.appointment.title | translate }}</dt>
+              <dd class="booking-overview__appointment-date">{{ apt.displayDate }} / {{ apt.displayTime | berlinTime: apt.date }}</dd>
             }
-
-            <hr>
-
-            <p class="small text-muted">{{ bookingOverview.subtitle | translate }}</p>
-
-            <nav class="booking-overview__navigation d-flex flex-column gap-2"
-                 [attr.aria-label]="bookingOverview.ariaNavLabel | translate">
-              <button
-                type="button"
-                class="btn btn-primary btn-lg w-100 booking-overview__submit-button"
-                [disabled]="hasSubmitted()"
-                [attr.aria-label]="bookingOverview.navigation.submit | translate"
-                (click)="onSubmit()"
-              >
-                <i class="bi bi-check-circle me-2" aria-hidden="true"></i>
-                @if (hasSubmitted()) {
-                  <span>{{ bookingOverview.navigation.submitted | translate }}</span>
-                } @else {
-                  <span>{{ bookingOverview.navigation.submit | translate }}</span>
-                }
-              </button>
-
-              @if (hasSubmitted()) {
-                <p class="booking-overview__confirmation" role="status" aria-live="polite">
-                  <i class="bi bi-check-circle-fill booking-overview__confirmation-icon" aria-hidden="true"></i>
-                  <span>{{ bookingOverview.confirmation.message | translate }}</span>
-                </p>
-              }
-
-              <button
-                type="button"
-                class="btn btn-outline-secondary w-100 booking-overview__back-button"
-                [attr.aria-label]="bookingOverview.navigation.back | translate"
-                (click)="onBack()"
-              >
-                <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>
-                {{ bookingOverview.navigation.back | translate }}
-              </button>
-            </nav>
-          </div>
+          </dl>
         </div>
+
+        <div class="booking-overview__request">
+          <button
+            type="button"
+            class="btn btn-primary booking-overview__submit-button"
+            [disabled]="hasSubmitted()"
+            [attr.aria-label]="bookingOverview.navigation.submit | translate"
+            (click)="onSubmit()"
+          >
+            @if (hasSubmitted()) {
+              <span>{{ bookingOverview.navigation.submitted | translate }}</span>
+            } @else {
+              <span>{{ bookingOverview.navigation.submit | translate }}</span>
+            }
+          </button>
+        </div>
+
+        @if (hasSubmitted()) {
+          <p class="notice notice--success booking-overview__confirmation" role="status" aria-live="polite">
+            <i class="bi bi-check-circle booking-overview__confirmation-icon" aria-hidden="true"></i>
+            <span>{{ bookingOverview.confirmation.message | translate }}</span>
+          </p>
+        }
       </div>
     </div>
+
+    <nav class="wizard-nav booking-overview__navigation" [attr.aria-label]="bookingOverview.ariaNavLabel | translate">
+      <button
+        type="button"
+        class="btn btn-outline-secondary booking-overview__back-button"
+        [attr.aria-label]="bookingOverview.navigation.back | translate"
+        (click)="onBack()"
+      >
+        {{ bookingOverview.navigation.back | translate }}
+      </button>
+    </nav>
   }
 </section>

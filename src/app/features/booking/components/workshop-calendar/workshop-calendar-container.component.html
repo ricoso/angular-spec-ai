@@ -1,8 +1,8 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="workshop-calendar" aria-labelledby="wk-title">
+<section class="page-wrap workshop-calendar" aria-labelledby="wk-title">
 
-  <h1 class="workshop-calendar__title" id="wk-title">
+  <h1 class="workshop-calendar__title page-title" id="wk-title">
     {{ booking.workshopCalendar.title | translate }}
   </h1>
 
@@ -44,8 +44,20 @@
             {{ booking.api.retryButton | translate }}
           </button>
         </div>
+      } @else if (hasNoRentalCarCalendarDays()) {
+        <!-- REQ-039 E-1/E-2: kein Termin mit Mietwagen ab dem gewählten Tag (der Kalender ist bereits die spätere Ansicht) -->
+        <app-rental-car-empty-state
+          class="workshop-calendar__rental-empty"
+          (continueWithout)="onContinueWithoutRentalCar()"
+        />
       } @else {
         <div class="right-panel__slots">
+          @if (rentalCarRequested()) {
+            <p class="notice workshop-calendar__rental-filter">
+              <i class="bi bi-car-front" aria-hidden="true"></i>
+              <span>{{ booking.appointment.rentalCar.filterActive | translate }}</span>
+            </p>
+          }
           <p class="slots__intro">
             {{ booking.workshopCalendar.hintAfter | translate }}
           </p>
@@ -67,23 +79,21 @@
   <nav class="wizard-nav" [attr.aria-label]="booking.workshopCalendar.navAriaLabel | translate">
     <button
       type="button"
-      class="btn btn-outline-secondary btn-lg wizard-nav__back-button"
+      class="btn btn-outline-secondary wizard-nav__back-button"
       [attr.aria-label]="booking.workshopCalendar.backButton | translate"
       (click)="onBack()"
     >
-      <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
       {{ booking.workshopCalendar.backButton | translate }}
     </button>
 
     <button
       type="button"
-      class="btn btn-primary btn-lg wizard-nav__continue-button"
+      class="btn btn-primary wizard-nav__continue-button"
       [disabled]="!hasAppointmentSelected()"
       [attr.aria-label]="booking.workshopCalendar.continueButton | translate"
       (click)="onContinue()"
     >
       {{ booking.workshopCalendar.continueButton | translate }}
-      <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
     </button>
   </nav>
 

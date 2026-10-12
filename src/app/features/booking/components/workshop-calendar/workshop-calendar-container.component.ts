@@ -8,6 +8,7 @@ import { WIZARD_STEPS } from '@shared/components/wizard-breadcrumb/wizard-steps.
 import type { AppointmentSlot } from '../../models/appointment.model';
 import type { WorkshopCalendarDay, WorkshopTimeSlot } from '../../models/workshop-calendar.model';
 import { BookingStore } from '../../stores/booking.store';
+import { RentalCarEmptyStateComponent } from '../appointment-selection/rental-car-empty-state/rental-car-empty-state.component';
 
 import { WorkshopCalendarDatePickerComponent } from './workshop-calendar-date-picker.component';
 import { WorkshopCalendarDayComponent } from './workshop-calendar-day.component';
@@ -18,6 +19,7 @@ import { WorkshopCalendarDayComponent } from './workshop-calendar-day.component'
   imports: [
     TranslatePipe,
     WizardBreadcrumbComponent,
+    RentalCarEmptyStateComponent,
     WorkshopCalendarDatePickerComponent,
     WorkshopCalendarDayComponent
   ],
@@ -38,6 +40,9 @@ export class WorkshopCalendarContainerComponent {
   protected readonly hasAppointmentSelected = this.store.hasAppointmentSelected;
   protected readonly isLoading = this.store.isLoading;
   protected readonly error = this.store.error;
+  /** REQ-039 A-2/E-1: rental filter hint and empty state. */
+  protected readonly rentalCarRequested = this.store.rentalCarRequested;
+  protected readonly hasNoRentalCarCalendarDays = this.store.hasNoRentalCarCalendarDays;
 
   protected onDateSelected(date: Date): void {
     const isoDate = this.formatIsoDate(date);
@@ -52,7 +57,8 @@ export class WorkshopCalendarContainerComponent {
       displayDate: day.displayDate,
       dayAbbreviation: day.dayAbbreviation,
       time: slot.time,
-      displayTime: slot.displayTime
+      displayTime: slot.displayTime,
+      rentalCarIncluded: slot.rentalCarIncluded === true
     };
     this.store.selectAppointment(appointment);
   }
@@ -64,6 +70,15 @@ export class WorkshopCalendarContainerComponent {
   protected onBack(): void {
     this.store.clearWorkshopCalendar();
     void this.router.navigate(['/home/appointment']);
+  }
+
+  /** REQ-039 E-1: conscious switch to "without rental car" — reload the chosen date unfiltered. */
+  protected onContinueWithoutRentalCar(): void {
+    this.store.continueWithoutRentalCar();
+    const currentDate = this.store.workshopCalendarDate();
+    if (currentDate) {
+      this.store.loadWorkshopCalendarDays(currentDate);
+    }
   }
 
   protected onRetry(): void {

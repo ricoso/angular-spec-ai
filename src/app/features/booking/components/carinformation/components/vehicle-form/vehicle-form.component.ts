@@ -48,6 +48,18 @@ export class VehicleFormComponent {
     return this.carinformation.form.licensePlate.error.invalidFormat;
   });
 
+  /** REQ-039: drives `is-invalid` / `aria-invalid` of the optional VIN field. */
+  protected readonly vinInvalid = computed(() => this.vinErrors() !== null);
+
+  /** REQ-039: optional VIN — errors only for a non-empty, malformed value. */
+  protected readonly vinErrors = computed(() => {
+    this.formStateTick();
+    const ctrl = this.form().get('vin');
+    if (!ctrl?.touched || ctrl.valid) { return null; }
+    if (ctrl.hasError('vinFormat')) { return this.carinformation.form.vin.error.invalidFormat; }
+    return this.carinformation.form.vin.error.invalidLength;
+  });
+
   protected readonly mileageErrors = computed(() => {
     this.formStateTick();
     const ctrl = this.form().get('mileage');

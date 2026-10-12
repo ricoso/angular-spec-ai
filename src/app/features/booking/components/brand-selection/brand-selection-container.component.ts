@@ -30,6 +30,8 @@ export class BrandSelectionContainerComponent {
   protected readonly selectedBranch = this.store.selectedBranch;
   protected readonly isLoading = this.store.isLoading;
   protected readonly error = this.store.error;
+  /** REQ-039: in the deep link there is no location step to go back to. */
+  protected readonly isDeepLinked = this.store.isDeepLinked;
 
   protected readonly formattedBranchAddress = computed(() => {
     const branch = this.selectedBranch();

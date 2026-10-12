@@ -266,4 +266,28 @@ describe('WorkshopCalendarApiService', () => {
     req.flush(mockSnapResponse);
     await promise;
   });
+
+  // REQ-039 A-2: same rental filter as the quick selection
+  it('should send replacementCar=true and map rentalCarIncluded with a rental car', async () => {
+    const promise = service.getWorkshopCalendarDays('2026-04-10', 'branch-1', ['inspection'], 'audi', 'default', true);
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    expect(req.request.body.replacementCar).toBe(true);
+    req.flush({
+      data: [{
+        date: '2026-04-10', displayDate: '10.04.2026', dayAbbreviation: 'Fr',
+        slots: [{ id: 'slot-r', time: '08:00', displayTime: '08:00 Uhr', available: true, rentalCarIncluded: true }]
+      }]
+    });
+    const days = await promise;
+    expect(days[0].slots[0].rentalCarIncluded).toBe(true);
+  });
+
+  it('should not send replacementCar without rental car', async () => {
+    const promise = service.getWorkshopCalendarDays('2026-04-10', 'branch-1', ['inspection'], 'audi', 'default');
+    const req = httpMock.expectOne(`${environment.apiUrl}/snaps`);
+    expect(req.request.body.replacementCar).toBeUndefined();
+    req.flush({ data: [] });
+    await expect(promise).resolves.toEqual([]);
+  });
 });
+

@@ -15,6 +15,8 @@ interface SnapSlotDto {
   time: string;
   displayTime: string;
   available: boolean;
+  /** REQ-039: set by the backend when SoftNet reserved a rental car for the slot. */
+  rentalCarIncluded?: boolean;
 }
 
 interface SnapDayDto {
@@ -83,6 +85,7 @@ export class AppointmentApiService {
     variant?: 'default' | 'tireChange',
     timePreference?: 'AM' | 'PM',
     notifications?: { SMS: boolean; SMTP: boolean },
+    rentalCarRequested = false,
   ): Promise<AppointmentSlot[]> {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -104,6 +107,8 @@ export class AppointmentApiService {
         variant: variant ?? 'default',
         timePreference,
         notifications,
+        // REQ-039 BR-M2/BR-M3: only sent with a rental car — without it the request stays as before.
+        replacementCar: rentalCarRequested ? true : undefined,
       })
     );
 
@@ -140,6 +145,7 @@ export class AppointmentApiService {
       dayAbbreviation: day.dayAbbreviation as DayAbbreviation,
       time: slot.time,
       displayTime: slot.displayTime,
+      rentalCarIncluded: slot.rentalCarIncluded === true,
     }));
   }
 

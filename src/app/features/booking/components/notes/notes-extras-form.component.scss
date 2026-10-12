@@ -1,17 +1,71 @@
-@use 'breakpoints' as *;
-
+// REQ-039: as in mockups/wizard.css (.option-card, .switch__label/__track/__detail).
 .notes-extras {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-xl);
+  gap: 0.875rem;
+}
 
-  &__switch-card {
+.switch {
+  &__label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-block-size: var(--touch-target-min);
+    margin: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  &__track {
+    display: block;
+    flex: 0 0 2.25rem;
+    inline-size: 2.25rem;
+    block-size: 1.25rem;
+    padding: 0.125rem;
+    border: 0.0625rem solid var(--color-primary);
+    border-radius: 1rem;
     background-color: var(--color-background-surface);
+
+    &::after {
+      display: block;
+      inline-size: 0.875rem;
+      block-size: 0.875rem;
+      border-radius: 50%;
+      background-color: var(--color-primary);
+      content: '';
+    }
   }
 
-  /* REQ-025: Mietwagen-Description (mit Preis) — Bootstrap-Alert wrapper */
-  &__rent-info {
-    border-left: 0.25em solid var(--bs-primary);
+  &__input:checked + .switch__label .switch__track {
+    background-color: var(--color-primary);
+
+    &::after {
+      background-color: var(--color-text-on-primary);
+      transform: translateX(0.875rem);
+    }
   }
+
+  &__input:focus-visible + .switch__label {
+    outline: 0.1875rem solid var(--color-focus-ring);
+    outline-offset: 0.1875rem;
+  }
+
+  &__detail {
+    margin-block-start: 0.875rem;
+    padding-block-start: 0.875rem;
+    border-block-start: 0.0625rem solid var(--color-disabled);
+
+    .pill-group {
+      margin-block: 0.5rem;
+    }
+  }
+}
+
+:host-context([dir='rtl']) .switch__input:checked + .switch__label .switch__track::after {
+  transform: translateX(-0.875rem);
+}
+
+.notes-extras__rental-unavailable {
+  margin: 0;
 }

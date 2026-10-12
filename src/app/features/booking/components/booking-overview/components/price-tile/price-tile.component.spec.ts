@@ -1,6 +1,8 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { i18nKeys, TranslateService } from '@core/i18n';
+
 import { PriceTileComponent } from './price-tile.component';
 
 describe('PriceTileComponent', () => {
@@ -19,7 +21,6 @@ describe('PriceTileComponent', () => {
     fixture = TestBed.createComponent(PriceTileComponent);
     component = fixture.componentInstance;
 
-    fixture.componentRef.setInput('rentCategoryName', null);
     fixture.componentRef.setInput('appointmentPreference', 'anytime');
     fixture.componentRef.setInput('callbackOption', 'no');
     fixture.componentRef.setInput('bookingNote', '');
@@ -31,11 +32,9 @@ describe('PriceTileComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should accept rentCategoryName input', () => {
-    expect(component.rentCategoryName()).toBeNull();
-    fixture.componentRef.setInput('rentCategoryName', 'Kleinwagen');
-    fixture.detectChanges();
-    expect(component.rentCategoryName()).toBe('Kleinwagen');
+  it('should default to "without rental car" and no wish (REQ-039)', () => {
+    expect(component.rentalCarRequested()).toBe(false);
+    expect(component.rentCategoryWishName()).toBeNull();
   });
 
   it('should expose i18n keys', () => {
@@ -47,16 +46,33 @@ describe('PriceTileComponent', () => {
     const exposed = (c: PriceTileComponent): { mobilityOptionLabel: () => string } =>
       c as unknown as { mobilityOptionLabel: () => string };
 
-    it('should fall back to "none" label when rentCategoryName is null', () => {
-      fixture.componentRef.setInput('rentCategoryName', null);
-      fixture.detectChanges();
-      expect(exposed(component).mobilityOptionLabel()).toBeTruthy();
+    it('should show the "no rental car" label without rental car', () => {
+      const translate = TestBed.inject(TranslateService);
+      expect(exposed(component).mobilityOptionLabel()).toBe(translate.instant(i18nKeys.booking.notes.rentCategory.none));
     });
 
-    it('should return category name directly when provided', () => {
-      fixture.componentRef.setInput('rentCategoryName', 'Mittelklasse');
+    it('should show "included" — never a category — with rental car (REQ-039 BR-M11)', () => {
+      fixture.componentRef.setInput('rentalCarRequested', true);
+      fixture.componentRef.setInput('rentCategoryWishName', 'Mittelklasse');
       fixture.detectChanges();
-      expect(exposed(component).mobilityOptionLabel()).toBe('Mittelklasse');
+      const translate = TestBed.inject(TranslateService);
+      expect(exposed(component).mobilityOptionLabel()).toBe(translate.instant(i18nKeys.booking.bookingOverview.rentalCar.value));
+      expect(exposed(component).mobilityOptionLabel()).not.toContain('Mittelklasse');
+    });
+  });
+
+  describe('rentalWishName (REQ-039 BR-M5)', () => {
+    const exposed = (c: PriceTileComponent): { rentalWishName: () => string | null } =>
+      c as unknown as { rentalWishName: () => string | null };
+
+    it('should show the wish only together with a rental car', () => {
+      fixture.componentRef.setInput('rentCategoryWishName', 'Oberklasse');
+      fixture.detectChanges();
+      expect(exposed(component).rentalWishName()).toBeNull();
+
+      fixture.componentRef.setInput('rentalCarRequested', true);
+      fixture.detectChanges();
+      expect(exposed(component).rentalWishName()).toBe('Oberklasse');
     });
   });
 

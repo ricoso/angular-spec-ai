@@ -1,8 +1,8 @@
 <article class="summary-row" aria-labelledby="tile-title-data">
   <span class="summary-row__icon" aria-hidden="true">
-    <i class="bi bi-person-circle"></i>
+    <i class="bi bi-person"></i>
   </span>
-  <div class="flex-grow-1">
+  <div>
     <p class="summary-row__label" id="tile-title-data">
       {{ bookingOverview.tiles.personalData.title | translate }}
     </p>
@@ -38,6 +38,13 @@
         <span class="summary-row__detail-label">{{ bookingOverview.tiles.personalData.mileageLabel | translate }}</span>
         <span class="summary-row__detail-value">{{ vehicleInfo().mileage }} {{ bookingOverview.tiles.personalData.mileageUnit | translate }}</span>
       </div>
+      <!-- REQ-039: optional FIN — only shown when the customer entered one -->
+      @if (vehicleInfo().vin; as vin) {
+        <div class="summary-row__detail">
+          <span class="summary-row__detail-label">{{ carinformation.form.vin.label | translate }}</span>
+          <span class="summary-row__detail-value">{{ vin }}</span>
+        </div>
+      }
     </div>
   </div>
 </article>

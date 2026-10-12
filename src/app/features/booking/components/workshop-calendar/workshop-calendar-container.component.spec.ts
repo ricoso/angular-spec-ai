@@ -167,4 +167,41 @@ describe('WorkshopCalendarContainerComponent', () => {
     exposed.onRetry();
     expect(loadSpy).not.toHaveBeenCalled();
   });
+
+  describe('rental car (REQ-039)', () => {
+    it('onContinueWithoutRentalCar reloads the picked date without rental filter (E-1)', () => {
+      store.setRentalCarRequested(true);
+      store.setWorkshopCalendarDate('2026-03-02');
+      store.setSelectedRentCategoryId('rc-1');
+      const loadSpy = jest.spyOn(store, 'loadWorkshopCalendarDays');
+      const exposed = component as unknown as { onContinueWithoutRentalCar: () => void };
+      exposed.onContinueWithoutRentalCar();
+      expect(store.rentalCarRequested()).toBe(false);
+      expect(store.selectedRentCategoryId()).toBeNull();
+      expect(store.workshopCalendarDate()).toBe('2026-03-02');
+      expect(loadSpy).toHaveBeenCalledWith('2026-03-02');
+    });
+
+    it('onContinueWithoutRentalCar without picked date only switches off', () => {
+      store.setRentalCarRequested(true);
+      const loadSpy = jest.spyOn(store, 'loadWorkshopCalendarDays');
+      const exposed = component as unknown as { onContinueWithoutRentalCar: () => void };
+      exposed.onContinueWithoutRentalCar();
+      expect(store.rentalCarRequested()).toBe(false);
+      expect(loadSpy).not.toHaveBeenCalled();
+    });
+
+    it('onSlotSelected carries rentalCarIncluded into the selected appointment (AC-M10)', () => {
+      const exposed = component as unknown as {
+        onSlotSelected: (slot: { id: string; time: string; displayTime: string; rentalCarIncluded?: boolean },
+          day: { date: string; displayDate: string; dayAbbreviation: 'Mo'; displayHeading: string; slots: [] }) => void;
+      };
+      exposed.onSlotSelected(
+        { id: 's-1', time: '08:00', displayTime: '08:00 Uhr', rentalCarIncluded: true },
+        { date: '2026-03-02', displayDate: '02.03.2026', dayAbbreviation: 'Mo', displayHeading: 'Mo, 02.03.2026', slots: [] }
+      );
+      expect(store.selectedAppointment()?.rentalCarIncluded).toBe(true);
+    });
+  });
 });
+

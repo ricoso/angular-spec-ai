@@ -174,7 +174,8 @@ public class UsageEventLogger {
      * @param branchId branch of the booking ({@code dto.branchId()}) / Standort der Buchung
      * @param groupId groupId resolved by {@code SetupService.resolveGroupId} / aufgelöste Group
      * @param rawSnap the pristine SoftNet snap from the cache / unveränderter SoftNet-Snap
-     * @param mobility whether {@code wishlist.rentCategoryid} was set (REQ-036) / Mietwagen gebucht
+     * @param mobility whether a rental car was booked — snap requested with {@code replacementPreference}
+     *     and reserved by SoftNet ({@code replacementResource}, REQ-039 BR-M12) / Mietwagen gebucht
      */
     public void logBooking(String branchId, String groupId, JsonNode rawSnap, boolean mobility) {
         buildEvent(branchId, groupId, rawSnap, mobility).ifPresent(event -> enqueue(toJson(event)));

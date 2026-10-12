@@ -1,13 +1,13 @@
-import type { ElementRef} from '@angular/core';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { i18nKeys, TranslatePipe } from '@core/i18n';
+import { i18nKeys, TranslatePipe, TranslateService } from '@core/i18n';
 import { WizardBreadcrumbComponent } from '@shared/components/wizard-breadcrumb/wizard-breadcrumb.component';
 import { WIZARD_STEPS } from '@shared/components/wizard-breadcrumb/wizard-steps.config';
 
-import type { ApiCategory, ApiOperation, ServiceType } from '../../models/service.model';
+import type { ApiCategory, ApiOperation, ServiceSelectionSummary, ServiceType } from '../../models/service.model';
 import { BookingStore } from '../../stores/booking.store';
+import { categoryIconClass } from '../../utils/category-icon.util';
 
 import { ServiceCardComponent } from './service-card.component';
 
@@ -22,6 +22,7 @@ import { ServiceCardComponent } from './service-card.component';
 export class ServiceSelectionContainerComponent {
   private readonly store = inject(BookingStore);
   private readonly router = inject(Router);
+  private readonly translateService = inject(TranslateService);
 
   protected readonly booking = i18nKeys.booking;
   protected readonly wizardSteps = WIZARD_STEPS;
@@ -33,7 +34,6 @@ export class ServiceSelectionContainerComponent {
   /** REQ-025 (b) Iter. 3: Operations gruppiert nach Tag-ID. */
   protected readonly operationsByCategory = this.store.operationsByCategory;
   protected readonly hasServicesSelected = this.store.hasServicesSelected;
-  protected readonly selectedServiceCount = this.store.selectedServiceCount;
   protected readonly isLoading = this.store.isLoading;
   protected readonly error = this.store.error;
 
@@ -70,13 +70,10 @@ export class ServiceSelectionContainerComponent {
     return result;
   });
 
-  // --- Karussell-State (Detail-Panel + Scroll) ---------------------------------
+  // --- Aktive Kategorie (Pill + Arbeiten-Panel) --------------------------------
 
-  /** Aktive Kategorie im Karussell — initial die erste Kategorie. */
+  /** Aktive Kategorie — initial Inspektion bzw. die erste Kategorie. */
   protected readonly activeCategoryId = signal<string | null>(null);
-
-  /** Referenz auf den Track-Container fuer programmatisches Scrollen. */
-  private readonly trackEl = viewChild<ElementRef<HTMLDivElement>>('carTrack');
 
   protected readonly activeCategory = computed<ApiCategory | null>(() => {
     const id = this.activeCategoryId();
@@ -100,48 +97,29 @@ export class ServiceSelectionContainerComponent {
     new Set(this.activeSelectedIds())
   );
 
-  /** Anzahl Slides fuer Indikator-Dots (4 Mini-Cards pro Slide laut Mockup). */
-  protected readonly slideCount = computed<number>(() => {
-    const total = this.categories().length;
-    return total === 0 ? 0 : Math.ceil(total / 4);
-  });
-
-  /** Aktiver Indikator-Dot — abgeleitet vom Scroll-Offset. */
-  protected readonly activeSlideIndex = signal<number>(0);
+  /** REQ-039: panel heading "Verfügbare Arbeiten im Bereich {category}". */
+  protected readonly panelHeading = computed<string>(() =>
+    this.translateService.instant(this.booking.services.panelHeading)
+      .replace('{category}', this.activeCategory()?.name ?? '')
+  );
 
   /** Bootstrap-Icon-Klasse fuer den Detail-Panel-Header (gemappt auf Tag-Rank). */
-  protected readonly activeIconClass = computed<string>(() => {
-    const cat = this.activeCategory();
-    if (!cat) return 'bi-tools';
-    if (cat.id === 'virtual-pickup-delivery' || cat.name === 'Hol & Bringservice') {
-      return 'bi-arrow-left-right';
-    }
-    switch (cat.rank) {
-      case 0: return 'bi-tools';
-      case 1: return 'bi-clipboard-check';
-      case 2: return 'bi-droplet-half';
-      case 3: return 'bi-record-circle';
-      case 4: return 'bi-check2-circle';
-      case 5: return 'bi-search';
-      case 6: return 'bi-car-front';
-      case 99: return 'bi-arrow-left-right';
-      default: return 'bi-tools';
-    }
-  });
+  protected readonly activeIconClass = computed<string>(() => categoryIconClass(this.activeCategory()));
 
-  /** Komma-getrennte Liste der Namen aller aktuell selektierten Operations (alle Kategorien). */
-  protected readonly selectedNamesList = computed<string>(() => {
+  /** REQ-039: green summary — selected operations grouped by category (mockup 02-service). */
+  protected readonly selectionSummary = computed<ServiceSelectionSummary[]>(() => {
     const selectedIds = new Set<string>(this.selectedServiceIds() as string[]);
     const opsByCat = this.operationsByCategory();
-    const names: string[] = [];
-    for (const catId of Object.keys(opsByCat)) {
-      for (const op of opsByCat[catId]) {
-        if (selectedIds.has(op.id)) {
-          names.push(op.name);
-        }
-      }
-    }
-    return names.join(' · ');
+    return this.categories()
+      .map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        operations: (opsByCat[cat.id] ?? [])
+          .filter(op => selectedIds.has(op.id))
+          .map(op => op.name)
+          .join('; ')
+      }))
+      .filter(group => group.operations.length > 0);
   });
 
   /** Tracked Kombination aus branchId + deepLinkGroupId, um Categories+Operations
@@ -177,36 +155,7 @@ export class ServiceSelectionContainerComponent {
       const inspektion = realCats.find(c => c.rank === 0);
       const target = inspektion ?? realCats[0];
       this.activeCategoryId.set(target.id);
-      // Karussell ganz nach links — Inspektion soll sichtbar starten.
-      queueMicrotask(() => {
-        const track = this.trackEl()?.nativeElement;
-        if (track) { track.scrollLeft = 0; }
-      });
     });
-  }
-
-  protected onServiceClick(operationId: string): void {
-    this.store.toggleService(operationId as ServiceType);
-  }
-
-  protected onServiceConfirm(event: { serviceId: string; optionIds: string[] }): void {
-    // event.serviceId ist die Category-ID (Tag), optionIds sind Operation-IDs.
-    // Erst alle Operations dieser Kategorie raus, dann nur die confirmed wieder rein.
-    const opsInCategory = this.operationsByCategory()[event.serviceId] ?? [];
-    for (const op of opsInCategory) {
-      this.store.deselectService(op.id as ServiceType);
-    }
-    for (const opId of event.optionIds) {
-      this.store.confirmServiceOptions(opId as ServiceType, []);
-    }
-  }
-
-  protected onServiceDeselect(categoryId: string): void {
-    // Alle Operations dieser Kategorie deselektieren.
-    const opsToRemove = this.operationsByCategory()[categoryId] ?? [];
-    for (const op of opsToRemove) {
-      this.store.deselectService(op.id as ServiceType);
-    }
   }
 
   /** Aktiviert die Kategorie im Detail-Panel — keine Store-Mutation. */
@@ -221,28 +170,6 @@ export class ServiceSelectionContainerComponent {
     } else {
       this.store.deselectService(operationId as ServiceType);
     }
-  }
-
-  // --- Karussell Scroll --------------------------------------------------------
-
-  protected onCarouselPrev(): void {
-    const el = this.trackEl()?.nativeElement;
-    if (!el) return;
-    el.scrollBy({ left: -(el.clientWidth - 16), behavior: 'smooth' });
-  }
-
-  protected onCarouselNext(): void {
-    const el = this.trackEl()?.nativeElement;
-    if (!el) return;
-    el.scrollBy({ left: el.clientWidth - 16, behavior: 'smooth' });
-  }
-
-  protected onTrackScroll(): void {
-    const el = this.trackEl()?.nativeElement;
-    if (!el) return;
-    const denom = Math.max(el.clientWidth - 16, 1);
-    const idx = Math.round(el.scrollLeft / denom);
-    this.activeSlideIndex.set(idx);
   }
 
   protected onContinue(): void {

@@ -37,10 +37,35 @@
         aria-describedby="vehicle-mileage-hint vehicle-mileage-error"
       />
       <label for="vehicle-mileage">{{ carinformation.form.mileage.label | translate }} *</label>
+      <span class="field__unit" aria-hidden="true">{{ carinformation.form.mileage.unit | translate }}</span>
       @if (mileageErrors(); as error) {
         <div class="invalid-feedback" id="vehicle-mileage-error" role="alert">{{ error | translate }}</div>
       }
       <div class="form-text" id="vehicle-mileage-hint">{{ carinformation.form.mileage.hint | translate }}</div>
+    </div>
+  </div>
+
+  <!-- REQ-039: FIN freiwillig — kein Stern, kein Pflichtvalidator; wird bei Eingabe mitgeschickt -->
+  <div class="vehicle-form__row">
+    <div class="form-floating">
+      <input
+        type="text"
+        id="vehicle-vin"
+        class="form-control"
+        [class.is-invalid]="vinInvalid()"
+        formControlName="vin"
+        [placeholder]="carinformation.form.vin.placeholder | translate"
+        autocomplete="off"
+        autocapitalize="characters"
+        spellcheck="false"
+        [attr.aria-invalid]="vinInvalid() ? 'true' : null"
+        [attr.aria-describedby]="vinInvalid() ? 'vehicle-vin-hint vehicle-vin-error' : 'vehicle-vin-hint'"
+      />
+      <label for="vehicle-vin">{{ carinformation.form.vin.label | translate }}</label>
+      @if (vinErrors(); as error) {
+        <div class="invalid-feedback" id="vehicle-vin-error" role="alert">{{ error | translate }}</div>
+      }
+      <div class="form-text" id="vehicle-vin-hint">{{ carinformation.form.vin.optionalHint | translate }}</div>
     </div>
   </div>
 

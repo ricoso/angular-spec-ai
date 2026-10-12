@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -29,9 +30,13 @@ public class SessionTokenFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
+        // A CORS preflight (OPTIONS + Origin + Access-Control-Request-Method) never carries custom
+        // headers such as X-Session-Token by spec — demanding one made every cross-origin call fail
+        // with 403 before Spring's CORS handling could answer it (e.g. ng serve on :4200).
         return !path.startsWith("/api/")
             || path.equals("/api/v1/session/token")
-            || path.equals("/api/v1/health");
+            || path.equals("/api/v1/health")
+            || CorsUtils.isPreFlightRequest(request);
     }
 
     @Override

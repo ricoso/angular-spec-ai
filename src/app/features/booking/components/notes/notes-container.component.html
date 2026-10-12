@@ -2,17 +2,19 @@
 
 <main class="page-wrap notes">
   <h1 class="page-title notes__title">{{ booking.notes.pageTitle | translate }}</h1>
-  <p class="page-subtitle notes__subtitle">{{ booking.notes.sectionTitle | translate }}</p>
+  <p class="page-subtitle notes__subtitle">{{ booking.notes.pageSubtitle | translate }}</p>
 
   <app-notes-extras-form
     [initialExtras]="initialExtras()"
     [rentCategories]="rentCategories()"
     [initialRentCategoryId]="initialRentCategoryId()"
+    [initialRentalCarRequested]="initialRentalCarRequested()"
+    [rentalCarOffered]="rentalCarOffered()"
+    [rentalCarUnavailable]="rentalCarUnavailable()"
     (extrasChanged)="onExtrasChanged($event)"
     (rentCategoryChanged)="onRentCategoryChanged($event)"
+    (rentalCarChanged)="onRentalCarChanged($event)"
   />
-
-  <app-rent-category-price-block />
 
   <app-notes-form
     [initialNote]="initialNote()"
@@ -23,7 +25,6 @@
     <app-service-hints
       [selectedServices]="selectedServices()"
       [operations]="operations()"
-      [categories]="categories()"
       [jobTypes]="jobTypes()"
     />
   }
@@ -35,17 +36,15 @@
       [attr.aria-label]="booking.notes.backButton | translate"
       (click)="onBack()"
     >
-      <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
       {{ booking.notes.backButton | translate }}
     </button>
     <button
       type="button"
-      class="btn btn-primary btn-lg notes__continue-button"
+      class="btn btn-primary notes__continue-button"
       [attr.aria-label]="booking.notes.continueButton | translate"
       (click)="onContinue()"
     >
       {{ booking.notes.continueButton | translate }}
-      <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
     </button>
   </nav>
 </main>

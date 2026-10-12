@@ -262,7 +262,7 @@ class SnapsControllerTest {
     private static List<SnapResponseDto> days(String... dates) {
         return Arrays.stream(dates)
             .map(date -> new SnapResponseDto(date, date, "Fr", List.of(
-                new SnapResponseDto.TimeSlotDto("snap-" + date, "08:00", "08:00 Uhr", true, "Berater"))))
+                new SnapResponseDto.TimeSlotDto("snap-" + date, "08:00", "08:00 Uhr", true, "Berater", false))))
             .toList();
     }
 

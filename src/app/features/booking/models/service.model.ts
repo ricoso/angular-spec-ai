@@ -182,3 +182,15 @@ export interface ApiOperation {
    *  Leer/undefined = keine Filterung (Operation fuer alle Marken sichtbar). */
   brands?: string[];
 }
+
+/**
+ * REQ-039: one line of the green selection summary on the service page (mockup 02-service).
+ * DE: Auswahl-Zusammenfassung je Kategorie / EN: Selection summary per category
+ */
+export interface ServiceSelectionSummary {
+  /** Category (tag) id */
+  id: string;
+  name: string;
+  /** Selected operation names, joined for display */
+  operations: string;
+}

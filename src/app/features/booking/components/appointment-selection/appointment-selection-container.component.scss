@@ -1,94 +1,49 @@
+// REQ-039: appointment step as in mockups/04-termin.html — calendar card, time slots card and
+// green confirmation; heading and action bar come from the global page layout.
 .appointment-selection {
-  max-width: 70em;
-  margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
-
-  &__title {
-    text-align: center;
-    margin: 0 0 var(--spacing-xl);
+  &__loading-text {
+    margin: 0;
+    color: var(--color-text-secondary);
   }
 
-  &__loading-text {
-    color: var(--color-text-secondary);
-    margin: 0;
+  &__error {
+    text-align: center;
   }
 
   &__error-icon {
-    font-size: 3em;
-    color: var(--color-error);
     display: block;
     margin-bottom: var(--spacing-sm);
+    color: var(--color-error);
+    font-size: 3em;
   }
 
   &__error-title {
+    margin: 0 0 var(--spacing-sm);
+    color: var(--color-text-primary);
     font-size: var(--font-size-lg);
     font-weight: 700;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-sm);
   }
 
   &__error-message {
-    color: var(--color-text-secondary);
-    margin: 0 0 var(--spacing-md);
     max-width: 30em;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0 auto var(--spacing-md);
+    color: var(--color-text-secondary);
   }
 
+  // Empty date row spans the whole grid.
+  &__empty {
+    grid-column: 1 / -1;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+  }
+
+  // Only the top margin — the distance to the action bar comes from the global page layout.
   &__summary {
-    border-left: 0.25em solid #198754;
+    margin-block-start: 1.5rem;
   }
 
-  &__calendar-link {
-    display: inline-block;
-    margin-top: var(--spacing-lg);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-primary);
-    text-decoration: underline;
-    cursor: pointer;
-    border: none;
-    background: none;
-    font-family: inherit;
-    padding: var(--spacing-xs);
-    border-radius: var(--radius-sm);
-    transition: color 0.2s;
-
-    &:hover {
-      color: var(--color-primary);
-    }
-
-    &:focus-visible {
-      outline: 0.125em solid var(--color-focus-ring);
-      outline-offset: 0.125em;
-    }
-  }
-
-  &__nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-xl);
-    padding: var(--spacing-md) 0;
-    border-top: 0.0625em solid var(--color-divider);
+  &__rental-filter {
+    margin-block: 0 1rem;
   }
 }
 
-.slot-section {
-  margin-top: 1.5em;
-
-  &:first-of-type {
-    margin-top: 0;
-  }
-
-  &__head {
-    font-size: 0.85em;
-    text-transform: uppercase;
-    font-weight: 700;
-    color: #6c757d;
-    letter-spacing: 0.06em;
-    margin-bottom: 0.75em;
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
-  }
-}

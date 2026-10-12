@@ -9,6 +9,8 @@ coverage
 .cache
 .env
 .env.*
+**/.env
+**/.env.*
 *.log
 playwright-report
 playwright/reports

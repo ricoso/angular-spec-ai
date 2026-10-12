@@ -2,6 +2,8 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { FormBuilder, Validators } from '@angular/forms';
 
+import { optionalVinValidator } from '../../../../validators/optional-vin.validator';
+
 import { VehicleFormComponent } from './vehicle-form.component';
 
 describe('VehicleFormComponent', () => {
@@ -26,7 +28,8 @@ describe('VehicleFormComponent', () => {
       licensePlate: ['', [Validators.required, Validators.pattern(/^[A-ZÄÖÜ]{1,3}-[A-Z]{1,2}\s?\d{1,4}$/i)]],
       // REQ-031 BR-6: spiegelt die echten Container-Validators (ganze Zahl >= 10)
       mileage: [null as number | null, [Validators.required, Validators.pattern(/^[0-9]+$/), Validators.min(10)]],
-      vin: ['', [Validators.minLength(17), Validators.maxLength(17)]]
+      // REQ-039: spiegelt den echten Container-Validator (FIN freiwillig)
+      vin: ['', [optionalVinValidator()]]
     });
 
     fixture.componentRef.setInput('form', form);
@@ -172,4 +175,39 @@ describe('VehicleFormComponent', () => {
       expect(exposed.mileageErrors()).toBeNull();
     });
   });
+
+  describe('vinErrors (REQ-039, optional VIN)', () => {
+    interface Exposed { vinErrors: () => string | null; form: () => ReturnType<FormBuilder['group']> }
+
+    it('should stay null for an empty, touched VIN', () => {
+      const exposed = component as unknown as Exposed;
+      exposed.form().get('vin')?.markAsTouched();
+      expect(exposed.vinErrors()).toBeNull();
+    });
+
+    it('should report invalidFormat for non-alphanumeric input', () => {
+      const exposed = component as unknown as Exposed;
+      const ctrl = exposed.form().get('vin');
+      ctrl?.setValue('WVW-123');
+      ctrl?.markAsTouched();
+      expect(exposed.vinErrors()).toBe('booking.carinformation.form.vin.error.invalidFormat');
+    });
+
+    it('should report invalidLength for a too short VIN', () => {
+      const exposed = component as unknown as Exposed;
+      const ctrl = exposed.form().get('vin');
+      ctrl?.setValue('WVWZZZ1JZ3');
+      ctrl?.markAsTouched();
+      expect(exposed.vinErrors()).toBe('booking.carinformation.form.vin.error.invalidLength');
+    });
+
+    it('should be null for a valid 17-char VIN', () => {
+      const exposed = component as unknown as Exposed;
+      const ctrl = exposed.form().get('vin');
+      ctrl?.setValue('WVWZZZ1JZ3W386752');
+      ctrl?.markAsTouched();
+      expect(exposed.vinErrors()).toBeNull();
+    });
+  });
 });
+

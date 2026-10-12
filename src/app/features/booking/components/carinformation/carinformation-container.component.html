@@ -4,20 +4,16 @@
   <h1 class="page-title">{{ carinformation.title | translate }}</h1>
 
   <form class="carinformation__form" (submit)="onSubmit($event)" novalidate>
-    <div class="card carinformation__card">
-      <div class="card-body">
-        <app-customer-form [form]="customerForm" />
-      </div>
-    </div>
+    <!-- REQ-039: panels as in mockups/05-kontakt.html (.contact-panel, .consent) -->
+    <section class="contact-panel carinformation__card">
+      <app-customer-form [form]="customerForm" />
+    </section>
 
-    <div class="card carinformation__card">
-      <div class="card-body">
-        <app-vehicle-form [form]="vehicleForm" />
-      </div>
-    </div>
+    <section class="contact-panel carinformation__card">
+      <app-vehicle-form [form]="vehicleForm" />
+    </section>
 
-    <div class="card carinformation__card">
-      <div class="card-body">
+    <div class="carinformation__consent">
         <div class="form-check carinformation__privacy">
           <input
             type="checkbox"
@@ -45,30 +41,27 @@
             </div>
           }
         </div>
-      </div>
     </div>
 
     <p class="carinformation__required-hint">{{ carinformation.form.requiredHint | translate }}</p>
 
-    <nav class="carinformation__actions" [attr.aria-label]="carinformation.navigation.back | translate">
+    <nav class="wizard-nav carinformation__actions" [attr.aria-label]="carinformation.navigation.back | translate">
       <button
         type="button"
         id="carinformation-back-button"
-        class="btn btn-outline-secondary btn-lg carinformation__back-button"
+        class="btn btn-outline-secondary carinformation__back-button"
         [attr.aria-label]="carinformation.navigation.back | translate"
         (click)="onBack()"
       >
-        <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>
         {{ carinformation.navigation.back | translate }}
       </button>
       <button
         type="submit"
         id="carinformation-continue-button"
-        class="btn btn-primary btn-lg carinformation__continue-button"
+        class="btn btn-primary carinformation__continue-button"
         [attr.aria-label]="carinformation.navigation.continue | translate"
       >
         {{ carinformation.navigation.continue | translate }}
-        <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
       </button>
     </nav>
   </form>

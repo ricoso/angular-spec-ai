@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, linkedSignal, output, signal } from '@angular/core';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 
@@ -23,27 +23,35 @@ export class NotesExtrasFormComponent {
   public readonly initialExtras = input<NotesExtras | null>(null);
   public readonly rentCategories = input<RentCategory[]>([]);
   public readonly initialRentCategoryId = input<string | null>(null);
+  /** REQ-039 BR-M1: initial with/without rental car choice. */
+  public readonly initialRentalCarRequested = input<boolean>(false);
+  /** REQ-039 BR-M8: false when the snap group has no rent categories — switch is hidden. */
+  public readonly rentalCarOffered = input<boolean>(true);
+  /** REQ-039 AC-M9: categories are known to be empty — show the "not available" note. */
+  public readonly rentalCarUnavailable = input<boolean>(false);
   public readonly extrasChanged = output<NotesExtras>();
+  /** REQ-039 BR-M5: optional category wish (`null` = no preference). */
   public readonly rentCategoryChanged = output<string | null>();
+  public readonly rentalCarChanged = output<boolean>();
 
   protected readonly notes = i18nKeys.booking.notes;
-  protected readonly selectedRentCategoryId = signal<string | null>(null);
+  /** REQ-039 BR-M5: category wish, `null` = no preference — follows the input, writable by the user. */
+  protected readonly selectedRentCategoryId = linkedSignal<string | null>(() => this.initialRentCategoryId());
+  /** REQ-039 BR-M1: with/without rental car — follows the input, writable by the user. */
+  protected readonly rentalCarRequested = linkedSignal<boolean>(() => this.initialRentalCarRequested());
 
   protected readonly appointmentPreference = signal<AppointmentPreference>(DEFAULT_NOTES_EXTRAS.appointmentPreference);
   protected readonly callbackOption = signal<CallbackOption>(DEFAULT_NOTES_EXTRAS.callbackOption);
   /** REQ-027: chosen notification channel (default 'email'). */
   protected readonly notificationChannel = signal<NotificationChannel>(DEFAULT_NOTES_EXTRAS.notificationChannel);
 
-  /** Toggle-Switch State — abgeleitet vom rentCategoryId. */
-  protected readonly rentEnabled = computed<boolean>(() => this.selectedRentCategoryId() !== null);
-
   /** Toggle-Switch State — abgeleitet vom callbackOption ('yes' = on, 'no' = off). */
   protected readonly callbackEnabled = computed<boolean>(() => this.callbackOption() === 'yes');
 
   protected readonly appointmentOptionItems = computed(() => [
-    { value: 'anytime' as AppointmentPreference, label: this.notes.appointmentPreference.anytime, icon: null as string | null },
-    { value: 'morning' as AppointmentPreference, label: this.notes.appointmentPreference.morning, icon: 'bi-sunrise' as string | null },
-    { value: 'afternoon' as AppointmentPreference, label: this.notes.appointmentPreference.afternoon, icon: 'bi-sunset' as string | null }
+    { value: 'anytime' as AppointmentPreference, label: this.notes.appointmentPreference.anytime },
+    { value: 'morning' as AppointmentPreference, label: this.notes.appointmentPreference.morning },
+    { value: 'afternoon' as AppointmentPreference, label: this.notes.appointmentPreference.afternoon }
   ]);
 
   protected readonly callbackOptionItems = computed(() => [
@@ -53,17 +61,9 @@ export class NotesExtrasFormComponent {
 
   /** REQ-027: pill items for notification channel toggle. */
   protected readonly notificationChannelItems = computed(() => [
-    { value: 'email' as NotificationChannel, label: this.notes.notification.email, icon: 'bi-envelope-fill' },
-    { value: 'sms'   as NotificationChannel, label: this.notes.notification.sms,   icon: 'bi-chat-dots-fill' }
+    { value: 'email' as NotificationChannel, label: this.notes.notification.email },
+    { value: 'sms'   as NotificationChannel, label: this.notes.notification.sms }
   ]);
-
-  /** REQ-025: Description (inkl. Preis) der gewählten Mietwagen-Kategorie aus SoftNet. */
-  protected readonly selectedRentCategoryDescription = computed<string | null>(() => {
-    const id = this.selectedRentCategoryId();
-    if (!id) return null;
-    const cat = this.rentCategories().find(c => c.id === id);
-    return cat?.description.trim() ? cat.description : null;
-  });
 
   constructor() {
     effect(() => {
@@ -74,10 +74,6 @@ export class NotesExtrasFormComponent {
         this.notificationChannel.set(extras.notificationChannel);
       }
     });
-
-    effect(() => {
-      this.selectedRentCategoryId.set(this.initialRentCategoryId());
-    });
   }
 
   protected onRentCategoryChange(value: string | null): void {
@@ -86,17 +82,13 @@ export class NotesExtrasFormComponent {
   }
 
   /**
-   * Toggle-Switch fuer Mietwagen: ON = automatisch erste Kategorie waehlen,
-   * OFF = Auswahl loeschen. Bewahrt Output-Vertrag (string | null).
+   * REQ-039 BR-M1: the switch only says "with rental car" — no category is picked automatically.
+   * Switching off also drops the category wish.
    */
   protected onRentSwitchChange(checked: boolean): void {
-    if (checked) {
-      // Falls bereits eine Auswahl existiert, behalten — sonst erste Kategorie waehlen
-      if (this.selectedRentCategoryId() === null) {
-        const first = this.rentCategories()[0]?.id ?? null;
-        this.onRentCategoryChange(first);
-      }
-    } else {
+    this.rentalCarRequested.set(checked);
+    this.rentalCarChanged.emit(checked);
+    if (!checked && this.selectedRentCategoryId() !== null) {
       this.onRentCategoryChange(null);
     }
   }

@@ -1,137 +1,120 @@
-<div class="notes-extras" role="group" [attr.aria-label]="notes.mobilityOptions.title | translate">
-  <!-- Mietwagen — Switch-Card (Toggle) + Pill-Group Klassen-Auswahl bei Aktiv -->
-  <div
-    class="switch-card mb-3 notes-extras__switch-card"
-    [class.is-on]="rentEnabled()"
-    role="region"
-    [attr.aria-label]="notes.rentCategory.title | translate"
-  >
-    <div class="d-flex align-items-center justify-content-between gap-3">
-      <div class="d-flex align-items-center gap-3">
-        <i class="bi bi-car-front-fill text-primary fs-4" aria-hidden="true"></i>
-        <div>
-          <p class="switch-card__title">{{ notes.rentCategory.title | translate }}</p>
-          <p class="switch-card__hint">{{ notes.rentCategory.label | translate }}</p>
-        </div>
-      </div>
-      <div class="form-check form-switch m-0">
-        <input
-          class="form-check-input"
-          type="checkbox"
-          role="switch"
-          id="rentSwitch"
-          [checked]="rentEnabled()"
-          [attr.aria-label]="notes.rentCategory.title | translate"
-          (change)="onRentSwitchToggle($event)"
-        >
-      </div>
-    </div>
-
-    @if (rentEnabled()) {
-      <div class="switch-card__detail">
-        <span class="form-label small text-uppercase text-muted mb-2 d-block">
-          {{ notes.rentCategory.label | translate }}
+<!-- REQ-039: option cards as in mockups/03-hinweise.html (.option-card, .switch__*, .pill-options). -->
+<!-- Each option card is its own labelled section; no extra group label (it read "Mobilitätsoptionen (kostenpflichtig)" for all options). -->
+<div class="notes-extras">
+  <!-- Mietwagen — Schalter "mit/ohne" + optionaler, unverbindlicher Kategorie-Wunsch -->
+  @if (rentalCarOffered()) {
+    <section
+      class="option-card notes-extras__switch-card"
+      [class.is-on]="rentalCarRequested()"
+      aria-labelledby="rental-heading">
+      <input
+        class="switch__input visually-hidden"
+        type="checkbox"
+        role="switch"
+        id="rentSwitch"
+        [checked]="rentalCarRequested()"
+        aria-labelledby="rental-heading"
+        aria-describedby="rental-hint"
+        (change)="onRentSwitchToggle($event)"
+      >
+      <label class="switch__label" for="rentSwitch">
+        <span class="option-card__heading">
+          <i class="bi bi-car-front" aria-hidden="true"></i>
+          <span>
+            <span class="option-card__title" id="rental-heading">{{ notes.rentalCar.toggleLabel | translate }}</span>
+            <span class="option-card__hint" id="rental-hint">{{ notes.rentalCar.toggleHint | translate }}</span>
+          </span>
         </span>
-        <div class="pill-group" role="radiogroup" [attr.aria-label]="notes.rentCategory.label | translate">
-          @for (category of rentCategories(); track category.id) {
+        <span class="switch__track" aria-hidden="true"></span>
+      </label>
+
+      @if (rentalCarRequested()) {
+        <div class="switch__detail">
+          <p class="option-card__hint" id="rentWishLabel">{{ notes.rentalCar.wishLabel | translate }}</p>
+          <div class="pill-group" role="radiogroup" aria-labelledby="rentWishLabel">
             <input
               type="radio"
               name="rentClass"
-              [id]="'rentClass-' + category.id"
-              [checked]="selectedRentCategoryId() === category.id"
-              (change)="onRentCategoryChange(category.id)"
+              id="rentClass-none"
+              [checked]="selectedRentCategoryId() === null"
+              (change)="onRentCategoryChange(null)"
             >
-            <label [for]="'rentClass-' + category.id">
-              <i class="bi bi-car-front" aria-hidden="true"></i>
-              {{ category.name }}
-            </label>
-          }
-        </div>
-        @if (selectedRentCategoryDescription(); as desc) {
-          <div
-            class="alert alert-primary small mt-3 mb-0 d-flex gap-2 align-items-start notes-extras__rent-info"
-            role="note"
-            aria-live="polite"
-          >
-            <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
-            <div>{{ desc }}</div>
-          </div>
-        }
-      </div>
-    }
-  </div>
-
-  <!-- Terminpräferenz — Pill-Group Radios -->
-  <div class="card mb-3" role="region" [attr.aria-label]="notes.appointmentPreference.title | translate">
-    <div class="card-body">
-      <p class="switch-card__title mb-1">
-        <i class="bi bi-clock me-2 text-primary" aria-hidden="true"></i>
-        {{ notes.appointmentPreference.title | translate }}
-      </p>
-      <p class="switch-card__hint mb-3">{{ notes.appointmentPreference.label | translate }}</p>
-      <div class="pill-group" role="radiogroup" [attr.aria-label]="notes.appointmentPreference.title | translate">
-        @for (item of appointmentOptionItems(); track item.value) {
-          <input
-            type="radio"
-            name="timePref"
-            [id]="'timePref-' + item.value"
-            [checked]="appointmentPreference() === item.value"
-            (change)="onAppointmentPreferenceChange(item.value)"
-          >
-          <label [for]="'timePref-' + item.value">
-            @if (item.icon) {
-              <i [class]="'bi ' + item.icon" aria-hidden="true"></i>
+            <label for="rentClass-none">{{ notes.rentalCar.wishNone | translate }}</label>
+            @for (category of rentCategories(); track category.id) {
+              <input
+                type="radio"
+                name="rentClass"
+                [id]="'rentClass-' + category.id"
+                [checked]="selectedRentCategoryId() === category.id"
+                (change)="onRentCategoryChange(category.id)"
+              >
+              <label [for]="'rentClass-' + category.id">{{ category.name }}</label>
             }
-            {{ item.label | translate }}
-          </label>
-        }
-      </div>
-    </div>
-  </div>
-
-  <!-- Rückruf — Switch-Card (Boolean) -->
-  <div
-    class="switch-card mb-3 notes-extras__switch-card"
-    [class.is-on]="callbackEnabled()"
-    role="region"
-    [attr.aria-label]="notes.callback.title | translate"
-  >
-    <div class="d-flex align-items-center justify-content-between gap-3">
-      <div class="d-flex align-items-center gap-3">
-        <i class="bi bi-telephone-fill text-primary fs-4" aria-hidden="true"></i>
-        <div>
-          <p class="switch-card__title">{{ notes.callback.title | translate }}</p>
-          <p class="switch-card__hint">{{ notes.callback.label | translate }}</p>
+          </div>
+          <p class="option-card__hint notes-extras__wish-hint">
+            <i class="bi bi-info-circle" aria-hidden="true"></i>
+            {{ notes.rentalCar.wishHint | translate }}
+          </p>
         </div>
-      </div>
-      <div class="form-check form-switch m-0">
-        <input
-          class="form-check-input"
-          type="checkbox"
-          role="switch"
-          id="callbackSwitch"
-          [checked]="callbackEnabled()"
-          [attr.aria-label]="notes.callback.title | translate"
-          (change)="onCallbackSwitchToggle($event)"
-        >
-      </div>
-    </div>
-  </div>
+      }
+    </section>
+  } @else if (rentalCarUnavailable()) {
+    <p class="notice notes-extras__rental-unavailable" role="note">
+      <i class="bi bi-info-circle" aria-hidden="true"></i>
+      <span>{{ notes.rentalCar.notAvailable | translate }}</span>
+    </p>
+  }
 
-  <!-- REQ-027: Benachrichtigung — Pill-Group (E-Mail | SMS) -->
-  <div
-    class="switch-card mb-3 notes-extras__switch-card"
-    role="region"
-    [attr.aria-label]="notes.notification.title | translate"
-  >
-    <div class="d-flex align-items-center gap-3 mb-3">
-      <i class="bi bi-bell-fill text-primary fs-4" aria-hidden="true"></i>
-      <div>
-        <p class="switch-card__title">{{ notes.notification.title | translate }}</p>
-        <p class="switch-card__hint">{{ notes.notification.label | translate }}</p>
-      </div>
+  <!-- Bevorzugte Tageszeit -->
+  <section class="option-card" aria-labelledby="time-preference-heading">
+    <h2 class="option-card__heading" id="time-preference-heading">
+      <i class="bi bi-calendar-event" aria-hidden="true"></i>
+      {{ notes.appointmentPreference.title | translate }}
+    </h2>
+    <div class="pill-group" role="radiogroup" aria-labelledby="time-preference-heading">
+      @for (item of appointmentOptionItems(); track item.value) {
+        <input
+          type="radio"
+          name="timePref"
+          [id]="'timePref-' + item.value"
+          [checked]="appointmentPreference() === item.value"
+          (change)="onAppointmentPreferenceChange(item.value)"
+        >
+        <label [for]="'timePref-' + item.value">{{ item.label | translate }}</label>
+      }
     </div>
-    <div class="pill-group" role="radiogroup" [attr.aria-label]="notes.notification.title | translate">
+  </section>
+
+  <!-- Rückruf -->
+  <section
+    class="option-card notes-extras__switch-card"
+    [class.is-on]="callbackEnabled()"
+    aria-labelledby="callback-heading">
+    <input
+      class="switch__input visually-hidden"
+      type="checkbox"
+      role="switch"
+      id="callbackSwitch"
+      [checked]="callbackEnabled()"
+      aria-labelledby="callback-heading"
+      (change)="onCallbackSwitchToggle($event)"
+    >
+    <label class="switch__label" for="callbackSwitch">
+      <span class="option-card__heading">
+        <i class="bi bi-telephone" aria-hidden="true"></i>
+        <span class="option-card__title" id="callback-heading">{{ notes.callback.title | translate }}</span>
+      </span>
+      <span class="switch__track" aria-hidden="true"></span>
+    </label>
+  </section>
+
+  <!-- REQ-027: Benachrichtigung (E-Mail | SMS) -->
+  <section class="option-card" aria-labelledby="notification-heading">
+    <h2 class="option-card__heading" id="notification-heading">
+      <i class="bi bi-bell" aria-hidden="true"></i>
+      {{ notes.notification.title | translate }}
+    </h2>
+    <div class="pill-group" role="radiogroup" aria-labelledby="notification-heading">
       @for (item of notificationChannelItems(); track item.value) {
         <input
           type="radio"
@@ -140,11 +123,8 @@
           [checked]="notificationChannel() === item.value"
           (change)="onNotificationChannelChange(item.value)"
         >
-        <label [for]="'notificationChannel-' + item.value">
-          <i [class]="'bi ' + item.icon" aria-hidden="true"></i>
-          {{ item.label | translate }}
-        </label>
+        <label [for]="'notificationChannel-' + item.value">{{ item.label | translate }}</label>
       }
     </div>
-  </div>
+  </section>
 </div>

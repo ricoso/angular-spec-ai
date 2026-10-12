@@ -3,10 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 
 import { AVAILABLE_BRANDS } from '../../models/brand.model';
+import type { LocationDisplay } from '../../models/location.model';
 import { LOCATIONS_BY_BRAND } from '../../models/location.model';
 import type { NotesExtras } from '../../models/notes-extras.model';
 import { AVAILABLE_SERVICES } from '../../models/service.model';
 import { BookingApiService } from '../../services/booking-api.service';
+import { RentCategoryApiService } from '../../services/rent-category-api.service';
 import { BookingStore } from '../../stores/booking.store';
 
 import { NotesContainerComponent } from './notes-container.component';
@@ -30,6 +32,14 @@ describe('NotesContainerComponent', () => {
             getBrands: jest.fn().mockResolvedValue(AVAILABLE_BRANDS),
             getLocations: jest.fn().mockResolvedValue(LOCATIONS_BY_BRAND.audi),
             getServices: jest.fn().mockResolvedValue(AVAILABLE_SERVICES)
+          }
+        },
+        {
+          provide: RentCategoryApiService,
+          useValue: {
+            getRentCategories: jest.fn().mockResolvedValue([
+              { id: 'rc-42', groupId: 'g1', name: 'Mittelklasse', description: '', brands: [], branches: [] }
+            ])
           }
         },
         { provide: Router, useValue: router }
@@ -252,14 +262,55 @@ describe('NotesContainerComponent', () => {
       expect(exposed.currentRentCategoryId()).toBe('rc-1');
     });
 
-    it('should persist rentCategoryId to store on continue', () => {
+    /** REQ-039: the branch offers rent categories → the switch is shown. */
+    async function offerRentalCars(): Promise<void> {
+      store.setLocation({ id: 'loc-1' } as LocationDisplay);
+      store.loadRentCategories();
+      await fixture.whenStable();
+    }
+
+    it('should persist rental car choice and wish to store on continue (REQ-039)', async () => {
+      await offerRentalCars();
+      const exposed = component as unknown as {
+        onRentalCarChanged: (requested: boolean) => void;
+        onRentCategoryChanged: (id: string | null) => void;
+        onContinue: () => void;
+      };
+      exposed.onRentalCarChanged(true);
+      exposed.onRentCategoryChanged('rc-42');
+      exposed.onContinue();
+      expect(store.rentalCarRequested()).toBe(true);
+      expect(store.selectedRentCategoryId()).toBe('rc-42');
+    });
+
+    it('should drop the wish when continuing without rental car (REQ-039 BR-M5)', async () => {
+      await offerRentalCars();
       const exposed = component as unknown as {
         onRentCategoryChanged: (id: string | null) => void;
         onContinue: () => void;
       };
       exposed.onRentCategoryChanged('rc-42');
       exposed.onContinue();
-      expect(store.selectedRentCategoryId()).toBe('rc-42');
+      expect(store.rentalCarRequested()).toBe(false);
+      expect(store.selectedRentCategoryId()).toBeNull();
+    });
+
+    it('should never request a rental car when the branch offers none (REQ-039 BR-M8)', () => {
+      const exposed = component as unknown as {
+        onRentalCarChanged: (requested: boolean) => void;
+        onContinue: () => void;
+      };
+      exposed.onRentalCarChanged(true);
+      exposed.onContinue();
+      expect(store.rentalCarRequested()).toBe(false);
+    });
+
+    it('should reset the rental car choice on back', async () => {
+      await offerRentalCars();
+      store.setRentalCarRequested(true);
+      const exposed = component as unknown as { onBack: () => void };
+      exposed.onBack();
+      expect(store.rentalCarRequested()).toBe(false);
     });
 
     it('should clear rentCategoryId in store on back', () => {

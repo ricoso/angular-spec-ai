@@ -1,25 +1,77 @@
 @use 'breakpoints' as *;
 
+// REQ-039: overview as in mockups/06-uebersicht.html — summary card (2fr) and appointment card
+// with the request button (1fr); heading and action bar come from the global page layout.
 .booking-overview {
-  max-width: 75em;
-  margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
-
-  &__title {
-    font-size: var(--font-size-2xl);
-    line-height: var(--line-height-tight);
-    color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-sm);
-    font-weight: 700;
-    text-align: center;
+  @include desktop {
+    padding-block-start: 1.5rem;
   }
 
-  &__subtitle {
-    font-size: var(--font-size-md);
-    line-height: var(--line-height-normal);
-    color: var(--color-text-secondary);
-    margin: 0 0 var(--spacing-xl);
-    text-align: center;
+  // Auf Wunsch ausgeblendet (2026-10-12): Die Übersicht hat keine eigene „Zurück"-Aktionsleiste;
+  // der Rücksprung läuft über das Fortschrittsband. Reversibel — diese Regel entfernen zeigt sie wieder.
+  &__navigation {
+    display: none;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 1.25rem;
+
+    @include tablet {
+      grid-template-columns: minmax(0, 2fr) minmax(14rem, 1fr);
+    }
+  }
+
+  &__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-inline-size: 0;
+  }
+
+  &__appointment {
+    padding: 1rem;
+    border: 0.0625rem solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-background-header);
+
+    dl {
+      margin: 0;
+    }
+
+    dt {
+      color: var(--color-text-secondary);
+      font-size: 0.875rem;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+
+    dd {
+      margin: 0.25rem 0 1rem;
+      color: var(--color-text-primary);
+      font-size: 0.9375rem;
+      font-weight: 650;
+
+      &:last-child {
+        margin-block-end: 0;
+      }
+    }
+
+    // Requested date/time in primary colour as in the mockup.
+    dd.booking-overview__appointment-date {
+      color: var(--color-primary);
+    }
+  }
+
+  &__request {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__confirmation {
+    margin: 0;
   }
 
   &__loading {
@@ -27,14 +79,12 @@
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-md);
-    padding: var(--spacing-2xl) 0;
-    text-align: center;
+    padding: var(--spacing-xl) 0;
   }
 
   &__loading-text {
-    font-size: var(--font-size-md);
-    color: var(--color-text-secondary);
     margin: 0;
+    color: var(--color-text-secondary);
   }
 
   &__error {
@@ -42,128 +92,26 @@
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-sm);
-    padding: var(--spacing-2xl) var(--spacing-md);
+    padding: var(--spacing-xl) var(--spacing-md);
     text-align: center;
   }
 
   &__error-icon {
-    font-size: 3em;
     color: var(--color-error);
+    font-size: 3em;
+    line-height: 1;
   }
 
   &__error-title {
+    margin: 0;
+    color: var(--color-text-primary);
     font-size: var(--font-size-lg);
     font-weight: 700;
-    color: var(--color-text-primary);
-    margin: 0;
   }
 
   &__error-message {
-    font-size: var(--font-size-md);
-    color: var(--color-text-secondary);
-    margin: 0 0 var(--spacing-md);
     max-width: 30em;
-  }
-
-  &__retry-button {
-    min-height: var(--touch-target-min);
-  }
-
-  &__summary-heading {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--color-text-primary);
     margin: 0 0 var(--spacing-md);
-    display: flex;
-    align-items: center;
-  }
-
-  &__sidebar {
-    top: 1em;
-
-    // Safari Mobile/Tablet: Sticky-Sidebar ist auf Mobile sinnlos (Bootstrap-Grid
-    // stapelt `.col-lg-4` unter `.col-lg-8` ab < 992px) und blockiert in iOS-Safari
-    // den Scroll. Sticky daher unterhalb des Desktop-Breakpoints deaktivieren.
-    @media (max-width: 991.98px) {
-      position: static !important;
-      top: auto;
-    }
-  }
-
-  &__navigation {
-    margin-top: var(--spacing-sm);
-  }
-
-  &__back-button,
-  &__submit-button {
-    min-height: var(--touch-target-min);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-xs);
-
-    &:focus-visible {
-      outline: 0.1875em solid var(--color-focus-ring);
-      outline-offset: 0.125em;
-    }
-  }
-
-  // REQ-028: Bestätigungsnachricht unter dem Submit-Button.
-  // Hervorhebung analog summary-row__value (font-weight 600, primäre Textfarbe).
-  &__confirmation {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-xs);
-    margin: var(--spacing-sm) 0 0;
-    font-size: var(--font-size-md);
-    font-weight: 600;
-    line-height: var(--line-height-normal);
-    color: var(--color-text-primary);
-  }
-
-  &__confirmation-icon {
-    flex-shrink: 0;
-    margin-top: 0.15em;
-    color: var(--color-success);
-  }
-}
-
-// ============================================================
-// Bootstrap-Card-Tweaks
-// ============================================================
-.booking-overview__summary-card,
-.booking-overview__consent-card,
-.booking-overview__sidebar {
-  border: 1px solid #e3e6e9;
-  border-radius: 0.5em;
-  background-color: var(--color-background-surface);
-}
-
-// ============================================================
-// Datenschutz-Consent-Box (analog 06-overview.html)
-// ============================================================
-.consent-box {
-  border: 0.125em solid #d6dce0;
-  border-radius: 0.5em;
-  padding: 1em;
-  margin: 0;
-  cursor: pointer;
-  transition: border-color 0.12s ease, background 0.12s ease;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-
-  &:has(input:checked) {
-    border-color: var(--bs-primary);
-    background: #f5fafd;
-  }
-
-  a {
-    color: var(--bs-link-color);
-    text-decoration: underline;
-
-    &:hover,
-    &:focus-visible {
-      color: var(--bs-link-hover-color);
-    }
+    color: var(--color-text-secondary);
   }
 }

@@ -282,12 +282,21 @@ class ControllerTests {
     void rentCategoriesController_getRentCategories_returnsList() {
         RentCategoriesController ctrl = new RentCategoriesController(rentCategoriesService);
         RentCategoryResponseDto dto = new RentCategoryResponseDto("rc-1", "grp-1", "Kleinwagen", "desc", null, null, null, List.of("VW"), List.of("branch-1"));
-        when(rentCategoriesService.getRentCategories("branch-1")).thenReturn(List.of(dto));
+        when(rentCategoriesService.getRentCategories("branch-1", "tireChange")).thenReturn(List.of(dto));
 
-        List<RentCategoryResponseDto> result = ctrl.getRentCategories("branch-1");
+        List<RentCategoryResponseDto> result = ctrl.getRentCategories("branch-1", "tireChange");
         assertEquals(1, result.size());
         assertEquals("rc-1", result.get(0).id());
         assertEquals("Kleinwagen", result.get(0).name());
+    }
+
+    @Test
+    void rentCategories_unknownVariant_fallsBackToDefault() {
+        RentCategoriesController ctrl = new RentCategoriesController(rentCategoriesService);
+        when(rentCategoriesService.getRentCategories("branch-1", "default")).thenReturn(List.of());
+
+        assertTrue(ctrl.getRentCategories("branch-1", "evil\nvalue").isEmpty());
+        org.mockito.Mockito.verify(rentCategoriesService).getRentCategories("branch-1", "default");
     }
 
     @Test

@@ -1,56 +1,69 @@
 @use 'breakpoints' as *;
 
-// Visuelle Karten + Brand-Logos kommen primaer aus _bootstrap-theme.scss
-// (.card-pickable, .brand-logo, .badge-selected). Hier nur lokale Anpassungen
-// und BEM-Hooks fuer E2E-Selektoren.
-
+// REQ-039: as in mockups/wizard.css (.brand-grid / .brand-grid__card / .brand-grid__logo).
 .brand-grid {
-  margin-bottom: var(--spacing-xl);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  min-inline-size: 0;
 
-  &__radio {
-    // Bootstrap .visually-hidden uebernimmt das Verstecken des Radios.
-    // Fokus-Ring auf das gerenderte Card-Label uebertragen.
-    &:focus-visible + .brand-card {
-      outline: 0.1875em solid var(--color-focus-ring);
-      outline-offset: 0.125em;
-    }
+  @media (min-width: 22.5em) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @include tablet {
+    gap: 1rem;
+  }
+
+  // Six columns as in the mockup; fewer brands stay centred instead of left-aligned.
+  @include desktop {
+    grid-template-columns: repeat(auto-fit, minmax(7rem, calc((100% - 5rem) / 6)));
+    justify-content: center;
+    margin-inline: 1rem;
+  }
+
+  &__item {
+    position: relative;
+  }
+
+  &__radio:focus-visible + .brand-card {
+    outline: 0.1875rem solid var(--color-focus-ring);
+    outline-offset: 0.1875rem;
   }
 }
 
 .brand-card {
-  min-height: 9em;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 6rem;
   margin: 0;
+  padding: 0.75rem;
+  border: 0.125rem solid var(--color-disabled);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+  cursor: pointer;
 
-  // Selected-State: Logo in Originalfarbe (haendisch, da .selected via [class.selected])
+  @include tablet {
+    min-block-size: 7.75rem;
+  }
+
+  &:hover {
+    border-color: var(--color-border);
+  }
+
+  &.selected {
+    border-color: var(--color-primary);
+  }
+
   &__logo {
-    height: 4.5em;
-    max-width: 80%;
-    width: auto;
+    inline-size: 6.25rem;
+    block-size: 3.75rem;
     object-fit: contain;
-  }
 
-  // E2E-Hook: .brand-card__name bleibt im DOM (visually-hidden) damit Tests
-  // weiterhin Marken-Namen finden koennen.
-  &__name {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--color-text-primary);
-  }
-}
-
-@media (max-width: 47.9375em) {
-  .brand-card {
-    min-height: 7em;
-
-    &__logo {
-      height: 3.5em;
+    @include tablet {
+      inline-size: 7rem;
+      block-size: 4.5rem;
     }
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .brand-card {
-    transition: none;
   }
 }

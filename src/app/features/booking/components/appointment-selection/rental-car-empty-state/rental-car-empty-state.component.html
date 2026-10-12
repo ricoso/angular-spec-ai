@@ -1,0 +1,14 @@
+<div class="rental-empty" role="status" aria-live="polite">
+  <i class="bi bi-car-front rental-empty__icon" aria-hidden="true"></i>
+  <p class="rental-empty__text">{{ rentalCar.noneAvailable | translate }}</p>
+  <div class="rental-empty__actions">
+    @if (showLaterAvailable()) {
+      <button type="button" class="btn btn-primary rental-empty__show-later-button" (click)="onShowLater()">
+        {{ rentalCar.showLater | translate }}
+      </button>
+    }
+    <button type="button" class="btn btn-outline-secondary rental-empty__without-rental-button" (click)="onContinueWithout()">
+      {{ rentalCar.continueWithout | translate }}
+    </button>
+  </div>
+</div>

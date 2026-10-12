@@ -5,13 +5,18 @@
 
   <div class="summary-row">
     <span class="summary-row__icon" aria-hidden="true">
-      <i class="bi bi-car-front-fill"></i>
+      <i class="bi bi-car-front"></i>
     </span>
-    <div class="flex-grow-1">
+    <div>
       <p class="summary-row__label">
         {{ bookingOverview.tiles.extras.mobilityLabel | translate }}
       </p>
       <p class="summary-row__value">{{ mobilityOptionLabel() }}</p>
+      @if (rentalWishName(); as wish) {
+        <p class="summary-row__value summary-row__value--secondary">
+          {{ bookingOverview.rentalCar.wishLabel | translate }}: {{ wish }}
+        </p>
+      }
     </div>
   </div>
 
@@ -19,7 +24,7 @@
     <span class="summary-row__icon" aria-hidden="true">
       <i class="bi bi-clock"></i>
     </span>
-    <div class="flex-grow-1">
+    <div>
       <p class="summary-row__label">
         {{ bookingOverview.tiles.extras.appointmentPreferenceLabel | translate }}
         ·
@@ -35,9 +40,9 @@
   @if (bookingNote()) {
     <div class="summary-row">
       <span class="summary-row__icon" aria-hidden="true">
-        <i class="bi bi-chat-left-text-fill"></i>
+        <i class="bi bi-chat-left-text"></i>
       </span>
-      <div class="flex-grow-1">
+      <div>
         <p class="summary-row__label">
           {{ bookingOverview.tiles.extras.noteLabel | translate }}
         </p>

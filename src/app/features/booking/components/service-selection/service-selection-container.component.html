@@ -25,129 +25,84 @@
       </button>
     </div>
   } @else {
-    <!-- Karussell mit Mini-Cards (eine pro Tag-Kategorie) -->
+    <!-- REQ-039: Kategorie-Pills (mockups/02-service.html .service-pills) -->
     <div
-      class="service-carousel service-selection__grid"
+      class="service-pills service-selection__grid"
       role="group"
       [attr.aria-label]="booking.services.ariaGroupLabel | translate">
-      <button
-        type="button"
-        class="service-carousel__btn service-carousel__btn--prev"
-        id="carPrev"
-        aria-label="Zurück"
-        (click)="onCarouselPrev()">
-        <i class="bi bi-chevron-left" aria-hidden="true"></i>
-      </button>
-      <button
-        type="button"
-        class="service-carousel__btn service-carousel__btn--next"
-        id="carNext"
-        aria-label="Weiter"
-        (click)="onCarouselNext()">
-        <i class="bi bi-chevron-right" aria-hidden="true"></i>
-      </button>
-
-      <div
-        class="service-carousel__track"
-        id="carTrack"
-        #carTrack
-        (scroll)="onTrackScroll()">
-        @for (cat of categories(); track cat.id) {
-          <div class="service-carousel__item">
-            <app-service-card
-              [category]="cat"
-              [operations]="operationsByCategory()[cat.id] ?? []"
-              [isSelected]="categorySelectedMap()[cat.id] ?? false"
-              [selectedOperationIds]="selectedOptionsMap()[cat.id] ?? []"
-              (serviceClicked)="onMiniCardClick($event)"
-              (serviceConfirmed)="onServiceConfirm($event)"
-              (serviceDeselected)="onServiceDeselect($event)"
-            />
-          </div>
-        }
-      </div>
-
-      @if (slideCount() > 1) {
-        <div class="service-carousel__indicators" id="carDots" aria-hidden="true">
-          @for (i of [].constructor(slideCount()); track $index) {
-            <span
-              class="service-carousel__dot"
-              [class.active]="activeSlideIndex() === $index"
-            ></span>
-          }
-        </div>
+      @for (cat of categories(); track cat.id) {
+        <app-service-card
+          [category]="cat"
+          [operations]="operationsByCategory()[cat.id] ?? []"
+          [isSelected]="categorySelectedMap()[cat.id] ?? false"
+          [isActive]="activeCategoryId() === cat.id"
+          [selectedOperationIds]="selectedOptionsMap()[cat.id] ?? []"
+          (serviceClicked)="onMiniCardClick($event)"
+        />
       }
     </div>
 
-    <!-- Detail-Panel: Operations der aktiven Kategorie -->
-    @if (activeCategory(); as cat) {
-      <div class="service-detail">
-        <div class="service-detail__header">
-          <i class="bi {{ activeIconClass() }} service-detail__icon" aria-hidden="true"></i>
-          <div class="flex-grow-1">
-            <h4 class="service-detail__title">{{ cat.name }}</h4>
-            @if (activeOperations().length > 0) {
-              <p class="service-detail__subtitle">
-                {{ activeOperations().length }} Services &mdash; {{ activeSelectedIds().length }} ausgewählt
-              </p>
-            } @else {
-              <p class="service-detail__subtitle">Keine Services in dieser Kategorie</p>
-            }
-          </div>
-        </div>
+    <!-- Arbeiten der aktiven Kategorie -->
+    @if (activeCategory()) {
+      <section class="service-panel service-detail" aria-labelledby="service-panel-heading">
+        <h2 class="service-panel__heading" id="service-panel-heading">
+          <i class="bi {{ activeIconClass() }}" aria-hidden="true"></i>
+          {{ panelHeading() }}
+        </h2>
 
-        <div class="vstack">
-          @for (op of activeOperations(); track op.id) {
-            <label class="service-option d-flex">
-              <div class="d-flex align-items-start">
+        @if (activeOperations().length > 0) {
+          <div class="choice-list">
+            @for (op of activeOperations(); track op.id) {
+              <label class="service-option choice-list__row" [for]="'service-option-' + op.id">
                 <input
                   #operationCheckbox
                   type="checkbox"
-                  class="form-check-input mt-1 me-2"
+                  class="form-check-input"
                   [id]="'service-option-' + op.id"
                   [checked]="activeSelectedSet().has(op.id)"
                   (change)="onOperationToggle(op.id, operationCheckbox.checked)"
                 />
-                <div>
+                <span class="choice-list__text">
                   <span class="service-option__name">{{ op.name }}</span>
                   @if (op.description) {
-                    <p class="service-option__desc mb-0">{{ op.description }}</p>
+                    <span class="service-option__desc choice-list__description">{{ op.description }}</span>
                   }
-                </div>
-              </div>
-            </label>
+                </span>
+              </label>
+            }
+          </div>
+        } @else {
+          <p class="service-panel__empty">{{ booking.services.noOperations | translate }}</p>
+        }
+      </section>
+    }
+
+    <!-- Zusammenfassung der Auswahl je Kategorie (grüner Hinweis) -->
+    @if (selectionSummary().length > 0) {
+      <div class="notice notice--success service-selection__summary" role="status" aria-live="polite">
+        <i class="bi bi-check-circle" aria-hidden="true"></i>
+        <p>
+          @for (group of selectionSummary(); track group.id) {
+            <span class="service-selection__summary-line"><strong>{{ group.name }}:</strong> {{ group.operations }}</span>
           }
-        </div>
+        </p>
       </div>
     }
 
-    <!-- Bottom-Bar: Counter + Nav-Buttons -->
-    <div class="services-bottom-bar">
-      <div>
-        <strong>
-          {{ selectedServiceCount() }} {{ booking.services.ariaGroupLabel | translate }}
-        </strong>
-        @if (selectedServiceCount() > 0) {
-          <small class="text-muted ms-2">{{ selectedNamesList() }}</small>
-        }
-      </div>
-      <div>
-        <button
-          type="button"
-          class="btn btn-outline-secondary btn-lg me-2"
-          (click)="onBack()">
-          <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
-          {{ booking.services.backButton | translate }}
-        </button>
-        <button
-          type="button"
-          class="btn btn-primary btn-lg"
-          [disabled]="!hasServicesSelected()"
-          (click)="onContinue()">
-          {{ booking.services.continueButton | translate }}
-          <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
-        </button>
-      </div>
-    </div>
+    <nav class="wizard-nav services-bottom-bar" [attr.aria-label]="booking.services.navAriaLabel | translate">
+      <button
+        type="button"
+        class="btn btn-outline-secondary service-selection__back-button"
+        (click)="onBack()">
+        {{ booking.services.backButton | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary service-selection__continue-button"
+        [disabled]="!hasServicesSelected()"
+        (click)="onContinue()">
+        {{ booking.services.continueButton | translate }}
+      </button>
+    </nav>
   }
 </main>

@@ -16,7 +16,10 @@ import { setLanguage, waitForAngular } from './helpers/app.helpers';
 const VALID_BRANCH_ID = '68f606798d2bb4389ed1af51';
 const VALID_GROUP_ID = '6908807454f4bb2b69b03fde';
 
-test.describe('REQ-023: Wizard-Nav Mobile-Stack', () => {
+// REQ-039: SKIPPED — der Mockup (docs/requirements/REQ-039-Responsive-Wizard/mockups) ersetzt den
+// mobilen Stapel durch eine klebende Aktionsleiste in einer Zeile (Zurück links, Weiter rechts).
+// Der neue Vertrag wird in playwright/REQ-039-responsive-wizard.spec.ts („Aktionsleiste") geprüft.
+test.describe.skip('REQ-023: Wizard-Nav Mobile-Stack', () => {
   /**
    * Wir validieren die Mobile-Stack-Regel via direktem CSS-Check auf der globalen
    * Stylesheet-Eintragung — unabhaengig davon, welche Seite gerade aktiv ist.

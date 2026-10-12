@@ -1,32 +1,94 @@
 @use 'breakpoints' as *;
 
-// Container fuer die Services-Page. Karussell- und Detail-Styles kommen aus
-// `_bootstrap-theme.scss`. Hier nur Page-Header + Loading/Error + dezente
-// Anpassungen am Karussell-Wrapper.
-.service-selection {
-  max-width: 70em;
-  margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
+// REQ-039: services step as in mockups/wizard.css (.service-pills, .service-panel, .choice-list,
+// .notice--success). Page heading and action bar come from the global page layout.
+.service-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  margin-block-end: 1.5rem;
+}
 
-  > .page-title {
-    font-size: var(--font-size-2xl);
-    font-weight: 700;
-    line-height: var(--line-height-tight);
+.service-panel {
+  min-inline-size: 0;
+  padding: 1rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-header);
+
+  &__heading {
+    display: flex;
+    align-items: baseline;
+    gap: 0.625rem;
+    margin: 0;
+    padding-block-end: 0.75rem;
+    border-block-end: 0.0625rem solid var(--color-disabled);
     color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-sm);
-    text-align: center;
+    font-size: 1rem;
+    font-weight: 650;
+    line-height: 1.4;
+
+    .bi {
+      color: var(--color-primary);
+    }
   }
 
-  > .page-subtitle {
-    font-size: var(--font-size-md);
-    line-height: var(--line-height-normal);
+  &__empty {
+    margin: 0;
+    padding-block-start: 0.75rem;
     color: var(--color-text-secondary);
-    margin: 0 0 var(--spacing-xl);
-    text-align: center;
+    font-size: 0.875rem;
+  }
+}
+
+.choice-list {
+  padding-block-start: 0.5rem;
+
+  &__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-block-size: var(--touch-target-min);
+    margin: 0;
+    padding-block: 0.625rem;
+    color: var(--color-text-primary);
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    cursor: pointer;
+
+    .form-check-input {
+      flex: 0 0 1.25rem;
+      inline-size: 1.25rem;
+      block-size: 1.25rem;
+      margin: 0.125rem 0 0;
+      // Thin border as in the mockup, but with text-secondary for >= 3:1 non-text contrast.
+      border-width: 0.0625rem;
+      border-color: var(--color-text-secondary);
+    }
+  }
+
+  &__text {
+    min-inline-size: 0;
+  }
+
+  &__description {
+    display: block;
+    margin-block-start: 0.125rem;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+}
+
+.service-selection {
+  &__summary {
+    margin-block-start: 1.5rem;
+  }
+
+  &__summary-line {
+    display: block;
   }
 
   &__loading-text {
-    font-size: var(--font-size-md);
     color: var(--color-text-secondary);
   }
 
@@ -38,38 +100,21 @@
   }
 
   &__error-icon {
-    font-size: 3em;
     color: var(--color-error);
+    font-size: 3em;
     line-height: 1;
   }
 
   &__error-title {
+    margin: 0;
+    color: var(--color-text-primary);
     font-size: var(--font-size-lg);
     font-weight: 700;
-    color: var(--color-text-primary);
-    margin: 0;
   }
 
   &__error-message {
-    font-size: var(--font-size-md);
-    color: var(--color-text-secondary);
-    margin: 0 0 var(--spacing-md);
     max-width: 30em;
-  }
-
-  // Pfeil-Buttons fokussierbar machen (WCAG)
-  .service-carousel__btn:focus-visible {
-    outline: 0.1875em solid var(--color-focus-ring, #4a90e2);
-    outline-offset: 0.125em;
-  }
-}
-
-@media (max-width: 47.9375em) {
-  .service-selection {
-    padding: var(--spacing-lg) var(--spacing-sm);
-
-    > .page-title {
-      font-size: var(--font-size-xl);
-    }
+    margin: 0 0 var(--spacing-md);
+    color: var(--color-text-secondary);
   }
 }

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -8,6 +9,7 @@ import { WIZARD_STEPS } from '@shared/components/wizard-breadcrumb/wizard-steps.
 
 import type { CustomerInfo, VehicleInfo } from '../../models/customer.model';
 import { BookingStore } from '../../stores/booking.store';
+import { optionalVinValidator } from '../../validators/optional-vin.validator';
 
 import { CustomerFormComponent } from './components/customer-form/customer-form.component';
 import { VehicleFormComponent } from './components/vehicle-form/vehicle-form.component';
@@ -53,7 +55,9 @@ export class CarinformationContainerComponent {
     // Kennzeichen: nur leer / reines Leerzeichen ungültig, jeder andere Wert erlaubt.
     licensePlate: ['', [Validators.required, Validators.pattern(/\S/)]],
     // REQ-031 BR-6: whole number >= 10 — SoftNet treats 0 as "not set"
-    mileage: [null as number | null, [Validators.required, Validators.pattern(/^[0-9]+$/), Validators.min(10)]]
+    mileage: [null as number | null, [Validators.required, Validators.pattern(/^[0-9]+$/), Validators.min(10)]],
+    // REQ-039: VIN is fully optional — empty passes; if entered it must be 17 letters/digits.
+    vin: ['', [optionalVinValidator()]]
   });
 
   protected readonly privacyControl = new FormControl(false, [Validators.requiredTrue]);
@@ -74,8 +78,14 @@ export class CarinformationContainerComponent {
     }
   }
 
+  /** Consent value as signal — `privacyControl.invalid` alone is not tracked by `computed()`. */
+  private readonly privacyChecked = toSignal(this.privacyControl.valueChanges, {
+    initialValue: this.privacyControl.value
+  });
+
+  /** Error only after a submit attempt and only while the box is unchecked (clears on ticking it). */
   protected readonly privacyError = computed(() =>
-    this.privacyTouched() && this.privacyControl.invalid
+    this.privacyTouched() && this.privacyChecked() !== true
   );
 
   protected onSubmit(event: Event): void {
@@ -105,7 +115,8 @@ export class CarinformationContainerComponent {
 
     const vehicleInfo: VehicleInfo = {
       licensePlate: vehicleValue.licensePlate ?? '',
-      mileage: vehicleValue.mileage ?? 0
+      mileage: vehicleValue.mileage ?? 0,
+      vin: this.normalizeVin(vehicleValue.vin)
     };
 
     this.store.setCustomerInfo(customerInfo);
@@ -118,5 +129,11 @@ export class CarinformationContainerComponent {
 
   protected onBack(): void {
     void this.router.navigate(['/home/appointment']);
+  }
+
+  /** REQ-039: optional VIN — trimmed and upper-cased, `undefined` when left empty. */
+  private normalizeVin(vin: string | null | undefined): string | undefined {
+    const trimmed = vin?.trim() ?? '';
+    return trimmed.length > 0 ? trimmed.toUpperCase() : undefined;
   }
 }

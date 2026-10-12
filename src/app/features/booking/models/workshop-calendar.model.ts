@@ -8,6 +8,8 @@ export interface WorkshopTimeSlot {
   id: string;
   time: string;
   displayTime: string;
+  /** REQ-039 AC-M10: SoftNet reserved a rental car for this slot. */
+  rentalCarIncluded?: boolean;
 }
 
 /**

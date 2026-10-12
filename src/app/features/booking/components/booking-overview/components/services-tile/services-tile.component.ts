@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 
@@ -8,7 +7,7 @@ import type { SelectedService } from '../../../../models/service.model';
 @Component({
   selector: 'app-services-tile',
   standalone: true,
-  imports: [RouterLink, TranslatePipe],
+  imports: [TranslatePipe],
   templateUrl: './services-tile.component.html',
   styleUrl: './services-tile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

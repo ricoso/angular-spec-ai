@@ -16,6 +16,8 @@ interface SnapSlotDto {
   time: string;
   displayTime: string;
   available: boolean;
+  /** REQ-039: set by the backend when SoftNet reserved a rental car for the slot. */
+  rentalCarIncluded?: boolean;
 }
 
 interface SnapDayDto {
@@ -30,7 +32,7 @@ export class WorkshopCalendarApiService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  public async getWorkshopCalendarDays(fromDate: string, branchId: string, serviceIds: string[], brandName?: string, variant?: 'default' | 'tireChange'): Promise<WorkshopCalendarDay[]> {
+  public async getWorkshopCalendarDays(fromDate: string, branchId: string, serviceIds: string[], brandName?: string, variant?: 'default' | 'tireChange', rentalCarRequested = false): Promise<WorkshopCalendarDay[]> {
     const toDate = new Date(`${fromDate}T00:00:00`);
     toDate.setDate(toDate.getDate() + 14);
     const toDateStr = this.formatIsoDate(toDate);
@@ -49,6 +51,8 @@ export class WorkshopCalendarApiService {
         // lehnt SoftNet die Kombination aus Default-Group + Radwechsel-Operation ab (400).
         variant: variant ?? 'default',
         // KEIN timePreference → alle Slots (vor- und nachmittags)
+        // REQ-039 A-2: same rental filter as the quick selection; free days come from filtered slots.
+        replacementCar: rentalCarRequested ? true : undefined,
       })
     );
 
@@ -84,6 +88,7 @@ export class WorkshopCalendarApiService {
         id: s.id,
         time: s.time,
         displayTime: s.displayTime,
+        rentalCarIncluded: s.rentalCarIncluded === true,
       }));
 
     return {

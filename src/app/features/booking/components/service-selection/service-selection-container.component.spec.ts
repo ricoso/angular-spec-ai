@@ -76,38 +76,6 @@ describe('ServiceSelectionContainerComponent', () => {
     });
   });
 
-  describe('Service Click (no operations under category)', () => {
-    it('should toggle service in store on click', () => {
-      const exposed = component as unknown as {
-        onServiceClick: (serviceId: string) => void;
-      };
-      exposed.onServiceClick('inspection');
-      expect(store.selectedServices()).toEqual([{ serviceId: 'inspection', selectedOptionIds: [] }]);
-    });
-
-    it('should support multi-select', () => {
-      const exposed = component as unknown as {
-        onServiceClick: (serviceId: string) => void;
-      };
-      exposed.onServiceClick('inspection');
-      exposed.onServiceClick('tuv');
-      expect(store.selectedServices()).toHaveLength(2);
-    });
-  });
-
-  describe('Service Confirm (REQ-025 b Iter. 3 — Category contains Operations)', () => {
-    it('should add Operation-IDs as selectedServices on confirm', () => {
-      const exposed = component as unknown as {
-        onServiceConfirm: (event: { serviceId: string; optionIds: string[] }) => void;
-      };
-      exposed.onServiceConfirm({ serviceId: 'cat-inspektion', optionIds: ['op-1', 'op-2'] });
-      expect(store.selectedServices()).toEqual([
-        { serviceId: 'op-1', selectedOptionIds: [] },
-        { serviceId: 'op-2', selectedOptionIds: [] }
-      ]);
-    });
-  });
-
   describe('Navigation', () => {
     it('should navigate forward on continue', () => {
       const exposed = component as unknown as { onContinue: () => void };
@@ -117,10 +85,11 @@ describe('ServiceSelectionContainerComponent', () => {
 
     it('should navigate back and clear services on back', () => {
       const exposed = component as unknown as {
-        onServiceClick: (serviceId: string) => void;
+        onOperationToggle: (id: string, checked: boolean) => void;
         onBack: () => void;
       };
-      exposed.onServiceClick('inspection');
+      exposed.onOperationToggle('inspection', true);
+      expect(store.selectedServices()).toHaveLength(1);
       exposed.onBack();
       expect(store.selectedServices()).toEqual([]);
       expect(router.navigate).toHaveBeenCalledWith(['/home/brand']);
@@ -133,7 +102,7 @@ describe('ServiceSelectionContainerComponent', () => {
     });
   });
 
-  describe('Carousel + Detail Panel', () => {
+  describe('Category pills + operations panel (REQ-039)', () => {
     it('should expose activeCategoryId signal (initial null)', () => {
       const exposed = component as unknown as { activeCategoryId: () => string | null };
       expect(exposed.activeCategoryId()).toBeNull();
@@ -154,10 +123,10 @@ describe('ServiceSelectionContainerComponent', () => {
       expect(exposed.activeIconClass()).toBe('bi-tools');
     });
 
-    it('should compute slideCount as Math.ceil(categories/4)', () => {
-      const exposed = component as unknown as { slideCount: () => number };
-      // Without categories, slideCount = 0
-      expect(exposed.slideCount()).toBe(0);
+    it('should build the panel heading from the active category name', () => {
+      const exposed = component as unknown as { panelHeading: () => string; activeCategoryId: { set: (id: string) => void } };
+      // Without an active category the placeholder is replaced by an empty name.
+      expect(exposed.panelHeading()).not.toContain('{category}');
     });
 
     it('should expose activeSelectedSet', () => {
@@ -175,16 +144,6 @@ describe('ServiceSelectionContainerComponent', () => {
       expect(store.selectedServices().some(s => (s.serviceId as string) === 'op-X')).toBe(false);
     });
 
-    it('should not throw when carousel scroll handlers run without track ref', () => {
-      const exposed = component as unknown as {
-        onCarouselPrev: () => void;
-        onCarouselNext: () => void;
-        onTrackScroll: () => void;
-      };
-      expect(() => { exposed.onCarouselPrev(); }).not.toThrow();
-      expect(() => { exposed.onCarouselNext(); }).not.toThrow();
-      expect(() => { exposed.onTrackScroll(); }).not.toThrow();
-    });
 
     it('should compute activeSelectedIds as empty when no category active', () => {
       const exposed = component as unknown as { activeSelectedIds: () => string[] };
@@ -202,36 +161,9 @@ describe('ServiceSelectionContainerComponent', () => {
     });
   });
 
-  describe('Service deselect/confirm pathways', () => {
-    it('should clear all operations of a category on deselect', () => {
-      const exposed = component as unknown as {
-        onServiceClick: (id: string) => void;
-        onServiceDeselect: (catId: string) => void;
-      };
-      exposed.onServiceClick('inspection');
-      // Even with no real category mapping, should not throw
-      expect(() => { exposed.onServiceDeselect('cat-X'); }).not.toThrow();
-    });
-
-    it('should rebuild category selection on confirm', () => {
-      const exposed = component as unknown as {
-        onServiceConfirm: (e: { serviceId: string; optionIds: string[] }) => void;
-      };
-      exposed.onServiceConfirm({ serviceId: 'cat-1', optionIds: ['op-A', 'op-B'] });
-      expect(store.selectedServices()).toEqual([
-        { serviceId: 'op-A', selectedOptionIds: [] },
-        { serviceId: 'op-B', selectedOptionIds: [] }
-      ]);
-    });
-  });
-
   describe('Stub-API integration', () => {
-    it('should expose selectedServiceCount and hasServicesSelected', () => {
-      const exposed = component as unknown as {
-        selectedServiceCount: () => number;
-        hasServicesSelected: () => boolean;
-      };
-      expect(exposed.selectedServiceCount()).toBe(0);
+    it('should expose hasServicesSelected', () => {
+      const exposed = component as unknown as { hasServicesSelected: () => boolean };
       expect(exposed.hasServicesSelected()).toBe(false);
     });
 
@@ -264,9 +196,36 @@ describe('ServiceSelectionContainerComponent', () => {
       expect(id === null || typeof id === 'string').toBe(true);
     });
 
-    it('selectedNamesList: empty when no selection', () => {
-      const exposed = component as unknown as { selectedNamesList: () => string };
-      expect(typeof exposed.selectedNamesList()).toBe('string');
+    it('selectionSummary: empty when no selection', () => {
+      const exposed = component as unknown as { selectionSummary: () => unknown[] };
+      expect(exposed.selectionSummary()).toEqual([]);
+    });
+
+    it('selectionSummary groups selected operations by category and panelHeading names the active one (REQ-039)', async () => {
+      const api = TestBed.inject(BookingApiService) as unknown as {
+        getCategoriesByBranch: jest.Mock; getOperationsByBranch: jest.Mock;
+      };
+      api.getCategoriesByBranch.mockResolvedValue([{ id: 'c1', name: 'Inspektion', rank: 0 }]);
+      api.getOperationsByBranch.mockResolvedValue([
+        { id: '690000000000000000000001', name: 'Ölwechsel', description: null, tagIds: ['c1'], order: 1, imageId: null },
+        { id: '690000000000000000000002', name: 'Dialogannahme', description: null, tagIds: ['c1'], order: 2, imageId: null }
+      ]);
+      store.loadCategoriesForBranch('branch-1');
+      store.loadOperationsForBranch('branch-1');
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      const exposed = component as unknown as {
+        onOperationToggle: (id: string, checked: boolean) => void;
+        onMiniCardClick: (id: string) => void;
+        selectionSummary: () => { id: string; name: string; operations: string }[];
+        panelHeading: () => string;
+      };
+      exposed.onOperationToggle('690000000000000000000001', true);
+      exposed.onOperationToggle('690000000000000000000002', true);
+      exposed.onMiniCardClick('c1');
+
+      expect(exposed.selectionSummary()).toEqual([{ id: 'c1', name: 'Inspektion', operations: 'Ölwechsel; Dialogannahme' }]);
+      expect(exposed.panelHeading()).toContain('Inspektion');
     });
   });
 });

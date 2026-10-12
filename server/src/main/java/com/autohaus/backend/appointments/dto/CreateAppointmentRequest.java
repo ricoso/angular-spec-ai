@@ -9,8 +9,10 @@ public record CreateAppointmentRequest(
     String variant,
     @Valid CustomerDto customer,
     @Valid VehicleDto vehicle,
-    String note,
-    String rentCategoryId,
+    // SoftNet spec: wishlist.note holds at most 2000 chars (REQ-039: also guards composeNote).
+    @Size(max = 2000) String note,
+    // REQ-039 BR-M5: wish id is resolved against SoftNet's categories; length re-checked in the service.
+    @Size(max = 24) String rentCategoryId,
     Boolean callbackRequested,
     NotificationsDto notifications
 ) {
@@ -36,7 +38,8 @@ public record CreateAppointmentRequest(
         // REQ-031: Integer statt int — fehlender JSON-Wert wird nicht still 0,
         // sondern von @NotNull abgefangen; SoftNet wertet 0 als "nicht gesetzt"
         @NotNull @Min(10) Integer mileage,
-        String vin,
+        // REQ-039 BR-9: VIN is optional; if sent it must be 17 letters/digits (null = not given).
+        @Pattern(regexp = "^[A-Za-z0-9]{17}$") String vin,
         String model,
         String firstRegMonth,
         String firstRegYear

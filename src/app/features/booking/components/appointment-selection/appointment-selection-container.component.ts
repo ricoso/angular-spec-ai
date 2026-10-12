@@ -2,33 +2,30 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signa
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
-import { i18nKeys, TranslatePipe } from '@core/i18n';
+import { i18nKeys, TranslatePipe, TranslateService } from '@core/i18n';
 import { WizardBreadcrumbComponent } from '@shared/components/wizard-breadcrumb/wizard-breadcrumb.component';
 import { WIZARD_STEPS } from '@shared/components/wizard-breadcrumb/wizard-steps.config';
 import { convertToBerlinTime } from '@shared/pipes/berlin-time.pipe';
+import { LOCALE_BY_LANGUAGE, toLocalDate, withoutDot } from '@shared/utils/date-locale.util';
 import { EMPTY, switchMap, timer } from 'rxjs';
 
-import type { AppointmentSlot, DayAbbreviation } from '../../models/appointment.model';
+import type { AppointmentSlot, DateTile, SlotSection } from '../../models/appointment.model';
 import { BookingStore } from '../../stores/booking.store';
 
 import { AppointmentCardComponent } from './appointment-card.component';
+import { RentalCarEmptyStateComponent } from './rental-car-empty-state/rental-car-empty-state.component';
 import { SNAP_CONFLICT_BANNER_TIMEOUT_MS, SnapConflictBannerComponent } from './snap-conflict-banner/snap-conflict-banner.component';
-
-const DAY_FULL_NAMES = new Map<DayAbbreviation, string>([
-  ['Mo', 'Montag'],
-  ['Di', 'Dienstag'],
-  ['Mi', 'Mittwoch'],
-  ['Do', 'Donnerstag'],
-  ['Fr', 'Freitag'],
-  ['Sa', 'Samstag']
-]);
-
-const MONTH_NAMES_DE = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 
 @Component({
   selector: 'app-appointment-selection-container',
   standalone: true,
-  imports: [TranslatePipe, WizardBreadcrumbComponent, AppointmentCardComponent, SnapConflictBannerComponent],
+  imports: [
+    TranslatePipe,
+    WizardBreadcrumbComponent,
+    AppointmentCardComponent,
+    RentalCarEmptyStateComponent,
+    SnapConflictBannerComponent
+  ],
   templateUrl: './appointment-selection-container.component.html',
   styleUrl: './appointment-selection-container.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -37,6 +34,7 @@ export class AppointmentSelectionContainerComponent {
   private readonly store = inject(BookingStore);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly translateService = inject(TranslateService);
 
   protected readonly booking = i18nKeys.booking;
   protected readonly wizardSteps = WIZARD_STEPS;
@@ -48,6 +46,9 @@ export class AppointmentSelectionContainerComponent {
   protected readonly error = this.store.error;
   /** REQ-031: steuert das Snap-Conflict-Banner. */
   protected readonly hasSnapConflict = this.store.hasSnapConflict;
+  /** REQ-039: with/without rental car and the empty state when no slot has a car. */
+  protected readonly rentalCarRequested = this.store.rentalCarRequested;
+  protected readonly hasNoRentalCarAppointments = this.store.hasNoRentalCarAppointments;
 
   constructor() {
     // REQ-031 BR-3: banner auto-dismiss after 30s; timer restarts on every new conflict
@@ -71,24 +72,28 @@ export class AppointmentSelectionContainerComponent {
    */
   private readonly viewedDate = signal<string | null>(null);
 
-  /** Unique sorted list of date entries derived from appointments() */
-  protected readonly availableDates = computed(() => {
+  private readonly locale = computed(() => LOCALE_BY_LANGUAGE[this.translateService.getCurrentLanguage()]);
+
+  /** Unique list of date tiles derived from appointments() (mockup: weekday / day / month). */
+  protected readonly availableDates = computed<DateTile[]>(() => {
+    const locale = this.locale();
+    const weekdayShort = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+    const monthShort = new Intl.DateTimeFormat(locale, { month: 'short' });
+    const fullDate = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const seen = new Set<string>();
-    const result: { date: string; dayAbbreviation: string; day: string; month: string }[] = [];
+    const result: DateTile[] = [];
     for (const appt of this.appointments()) {
       if (seen.has(appt.date)) {
         continue;
       }
       seen.add(appt.date);
-      const parts = appt.displayDate.split('.');
-      const day = parts[0] ?? '';
-      const monthIndex = Number(parts[1] ?? '0') - 1;
-      const month = MONTH_NAMES_DE[monthIndex] ?? '';
+      const date = toLocalDate(appt.date);
       result.push({
         date: appt.date,
-        dayAbbreviation: appt.dayAbbreviation,
-        day,
-        month
+        weekday: withoutDot(weekdayShort.format(date)).toUpperCase(),
+        day: String(date.getDate()).padStart(2, '0'),
+        month: withoutDot(monthShort.format(date)),
+        ariaLabel: fullDate.format(date)
       });
     }
     return result;
@@ -104,54 +109,51 @@ export class AppointmentSelectionContainerComponent {
     if (fromSelection) {
       return fromSelection;
     }
-    return this.availableDates()[0]?.date ?? null;
+    return this.availableDates().at(0)?.date ?? null;
   });
 
-  /** Header label for the slots card (e.g. "Mittwoch, 25.02.2026") */
-  protected readonly selectedDateLabel = computed<string>(() => {
-    const date = this.selectedDate();
-    if (!date) {
-      return '';
-    }
-    const appt = this.appointments().find((a) => a.date === date);
-    if (!appt) {
-      return '';
-    }
-    return `${DAY_FULL_NAMES.get(appt.dayAbbreviation) ?? appt.dayAbbreviation}, ${appt.displayDate}`;
-  });
-
-  /** Month/year label shown in the strip header */
+  /** Month/year heading of the calendar card (e.g. "September 2026"). */
   protected readonly stripMonthLabel = computed<string>(() => {
-    const dates = this.availableDates();
-    if (dates.length === 0) {
+    const first = this.availableDates().at(0);
+    if (!first) {
       return '';
     }
-    const first = dates[0];
-    const appt = this.appointments().find((a) => a.date === first.date);
-    if (!appt) {
-      return first.month;
-    }
-    const year = appt.date.split('-')[0] ?? '';
-    return `${first.month} ${year}`;
+    return new Intl.DateTimeFormat(this.locale(), { month: 'long', year: 'numeric' }).format(toLocalDate(first.date));
   });
 
-  /** Slots for the currently viewed date, split into morning (< 12:00) and afternoon (>= 12:00) */
+  /**
+   * Slots for the currently viewed date, split into morning (< 12:00) and afternoon (>= 12:00) by the
+   * Berlin time the slot shows — `time` is UTC, so 10:00 UTC (12:00 CEST) belongs to the afternoon.
+   */
   protected readonly morningSlots = computed<AppointmentSlot[]>(() =>
-    this.appointments().filter((a) => a.date === this.selectedDate() && this.parseHour(a.time) < 12)
+    this.appointments().filter((a) => a.date === this.selectedDate() && this.berlinHour(a) < 12)
   );
 
   protected readonly afternoonSlots = computed<AppointmentSlot[]>(() =>
-    this.appointments().filter((a) => a.date === this.selectedDate() && this.parseHour(a.time) >= 12)
+    this.appointments().filter((a) => a.date === this.selectedDate() && this.berlinHour(a) >= 12)
   );
 
+  /** Non-empty morning/afternoon groups of the viewed date (mockup 04-termin). */
+  protected readonly slotSections = computed<SlotSection[]>(() =>
+    ([
+      { key: 'morning', label: this.booking.appointment.morning, slots: this.morningSlots() },
+      { key: 'afternoon', label: this.booking.appointment.afternoon, slots: this.afternoonSlots() }
+    ] satisfies SlotSection[]).filter((section) => section.slots.length > 0)
+  );
+
+  /** Text of the green confirmation (e.g. "Dienstag, 01.09.2026 — 10:00 Uhr"). */
   protected readonly selectedSummary = computed<string>(() => {
     const appt = this.selectedAppointment();
     if (!appt) {
       return '';
     }
+    const weekday = new Intl.DateTimeFormat(this.locale(), { weekday: 'long' }).format(toLocalDate(appt.date));
     const time = convertToBerlinTime(appt.displayTime, appt.date);
-    return `${DAY_FULL_NAMES.get(appt.dayAbbreviation) ?? appt.dayAbbreviation}, ${appt.displayDate} — ${time}`;
+    return `${weekday}, ${appt.displayDate} — ${time}`;
   });
+
+  /** REQ-039 AC-M10: the chosen slot comes with a reserved rental car. */
+  protected readonly selectedIncludesRentalCar = computed(() => this.selectedAppointment()?.rentalCarIncluded === true);
 
   protected onDateSelect(date: string): void {
     this.viewedDate.set(date);
@@ -182,6 +184,22 @@ export class AppointmentSelectionContainerComponent {
 
   protected onRetry(): void {
     this.store.loadAppointments();
+  }
+
+  /** REQ-039 E-1: conscious switch to "without rental car" — reload all slots. */
+  protected onContinueWithoutRentalCar(): void {
+    this.store.continueWithoutRentalCar();
+    this.store.loadAppointments();
+  }
+
+  /** REQ-039 E-1: later dates via the existing workshop calendar (keeps the rental filter). */
+  protected onShowLaterAppointments(): void {
+    void this.router.navigate(['/home/workshop-calendar']);
+  }
+
+  /** Hour of the slot in Berlin time — the time the slot shows (berlinTime pipe). */
+  private berlinHour(slot: AppointmentSlot): number {
+    return this.parseHour(convertToBerlinTime(slot.time, slot.date));
   }
 
   private parseHour(time: string): number {

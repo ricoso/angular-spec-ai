@@ -1,22 +1,20 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="brand-selection">
+<section class="page-wrap brand-selection">
   @if (selectedBranch()) {
     <div class="branch-banner brand-selection__info-banner" role="status" aria-live="polite">
-      <span class="branch-banner__icon brand-selection__info-icon">
-        <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
-      </span>
+      <i class="bi bi-geo-alt branch-banner__icon brand-selection__info-icon" aria-hidden="true"></i>
       <div class="brand-selection__info-text">
-        <div class="branch-banner__title">{{ booking.branch.infoLabel | translate }}</div>
-        <div class="branch-banner__address">
-          <strong>{{ formattedBranchAddress() }}</strong>
-        </div>
+        <span class="branch-banner__title">{{ booking.branch.infoLabel | translate }}</span>
+        <p class="branch-banner__address">{{ formattedBranchAddress() }}</p>
       </div>
     </div>
   }
 
-  <h1 class="brand-selection__title page-title">{{ booking.brand.title | translate }}</h1>
-  <p class="brand-selection__subtitle page-subtitle">{{ booking.brand.subtitle | translate }}</p>
+  <div class="brand-selection__heading">
+    <h1 class="brand-selection__title page-title">{{ booking.brand.title | translate }}</h1>
+    <p class="brand-selection__subtitle page-subtitle">{{ booking.brand.subtitle | translate }}</p>
+  </div>
 
   @if (isLoading()) {
     <div class="brand-selection__loading text-center py-5" role="status" aria-live="polite">
@@ -48,14 +46,16 @@
     <p class="brand-selection__empty">{{ booking.brand.noBrandsAvailable | translate }}</p>
   }
 
-  <!-- Navigation: Nur Zurück (Auto-Navigation bei Marken-Klick) -->
-  <nav class="brand-selection__nav wizard-nav" [attr.aria-label]="booking.brand.ariaNavLabel | translate">
-    <button
-      type="button"
-      class="btn btn-outline-secondary brand-selection__back-button"
-      (click)="onBack()">
-      <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
-      {{ booking.brand.backButton | translate }}
-    </button>
-  </nav>
+  <!-- Navigation: nur Zurück (Marken-Klick navigiert direkt). Im Deep-Link gibt es keinen
+       Standort-Schritt, daher dort keine Aktionsleiste. -->
+  @if (!isDeepLinked()) {
+    <nav class="brand-selection__nav wizard-nav" [attr.aria-label]="booking.brand.ariaNavLabel | translate">
+      <button
+        type="button"
+        class="btn btn-outline-secondary brand-selection__back-button"
+        (click)="onBack()">
+        {{ booking.brand.backButton | translate }}
+      </button>
+    </nav>
+  }
 </section>

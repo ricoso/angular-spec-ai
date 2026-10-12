@@ -47,6 +47,8 @@
 
   &__brands {
     margin-top: auto;
+    // REQ-039 AC-11: branches with many brands wrap their logos instead of overflowing at 320px.
+    flex-wrap: wrap;
   }
 
   // SVG-Mask Brand-Logo — Farbe via background-color, Form via mask.

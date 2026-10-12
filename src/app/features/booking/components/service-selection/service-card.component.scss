@@ -1,33 +1,77 @@
-// Mini-Card im Service-Karussell. Optisches Verhalten kommt aus
-// `_bootstrap-theme.scss` (.service-card-mini ...). Hier nur Component-spezifische
-// Ergaenzungen: Focus-Ring (WCAG) + Check-Badge fuer den selected-State.
+// REQ-039: as in mockups/wizard.css (.service-pills__item / __count).
+:host {
+  display: block;
+  max-inline-size: 100%;
+}
 
-.service-card-mini {
-  outline: none;
+.service-pills__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-block-size: var(--touch-target-min);
+  max-inline-size: 100%;
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  text-align: start;
 
-  &:focus-visible {
-    outline: 0.1875em solid var(--color-focus-ring, #4a90e2);
-    outline-offset: 0.125em;
+  &:hover {
+    border-color: var(--color-primary);
   }
 
-  // E2E-kompatible Klassen — tragen keine Stile, dienen nur als Selektor-Anker
-  &.service-card--selected {
-    // visueller Selected-State stammt aus .selected im Theme
+  &:focus-visible {
+    outline: 0.1875rem solid var(--color-focus-ring);
+    outline-offset: 0.1875rem;
+  }
+
+  &--active {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+    font-weight: 600;
   }
 }
 
-.service-card__check {
-  position: absolute;
-  top: -0.5em;
-  right: -0.5em;
-  width: 1.5em;
-  height: 1.5em;
-  border-radius: 50%;
-  background: white;
+.service-pills__icon {
+  color: var(--color-primary);
+  font-size: 1.125rem;
+
+  .service-pills__item--active & {
+    color: inherit;
+  }
+}
+
+.service-pills__name {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.service-pills__count {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  color: var(--bs-primary, #003d6b);
-  font-size: 1em;
-  z-index: 1;
+  min-inline-size: 1.25rem;
+  padding-inline: 0.25rem;
+  border-radius: 1rem;
+  background-color: var(--color-disabled);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  &--selected {
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+  }
+
+  .service-pills__item--active & {
+    background-color: var(--color-background-surface);
+    color: var(--color-primary);
+  }
 }

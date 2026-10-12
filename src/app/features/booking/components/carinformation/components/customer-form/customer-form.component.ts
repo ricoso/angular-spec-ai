@@ -1,10 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
 import type { FormGroup } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
-import { merge, startWith, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-customer-form',
@@ -22,18 +20,22 @@ export class CustomerFormComponent {
 
   protected readonly carinformation = i18nKeys.booking.carinformation;
 
-  // Reactive-Forms sind nicht Signal-basiert. Dieses Signal tickt bei jedem value-/status-Change
-  // der FormGroup und fungiert als Dependency in allen Error-Computeds,
-  // damit sie bei FormControl-Aenderungen neu evaluiert werden.
-  private readonly formEvents = toSignal(
-    toObservable(this.form).pipe(
-      switchMap(f => merge(f.valueChanges, f.statusChanges).pipe(startWith(null)))
-    ),
-    { initialValue: null }
-  );
+  // Reactive forms are not signal-based. This tick is the dependency of all error computeds and
+  // follows each CHILD control's events (incl. TouchedChangeEvent) — as in vehicle-form (REQ-031):
+  // markAllAsTouched() on submit emits no group valueChanges/statusChanges, so errors of untouched
+  // required fields would otherwise never show (only the red border did).
+  private readonly formStateTick = signal(0);
+
+  constructor() {
+    effect((onCleanup) => {
+      const subs = Object.values(this.form().controls)
+        .map(control => control.events.subscribe(() => { this.formStateTick.update(v => v + 1); }));
+      onCleanup(() => { subs.forEach(s => { s.unsubscribe(); }); });
+    });
+  }
 
   protected readonly emailErrors = computed(() => {
-    this.formEvents();
+    this.formStateTick();
     const ctrl = this.form().get('email');
     if (!ctrl || !ctrl.touched || ctrl.valid) { return null; }
     if (ctrl.hasError('required')) { return this.carinformation.form.email.error.required; }
@@ -42,7 +44,7 @@ export class CustomerFormComponent {
   });
 
   protected readonly firstNameErrors = computed(() => {
-    this.formEvents();
+    this.formStateTick();
     const ctrl = this.form().get('firstName');
     if (!ctrl || !ctrl.touched || ctrl.valid) { return null; }
     if (ctrl.hasError('required')) { return this.carinformation.form.firstName.error.required; }
@@ -51,7 +53,7 @@ export class CustomerFormComponent {
   });
 
   protected readonly lastNameErrors = computed(() => {
-    this.formEvents();
+    this.formStateTick();
     const ctrl = this.form().get('lastName');
     if (!ctrl || !ctrl.touched || ctrl.valid) { return null; }
     if (ctrl.hasError('required')) { return this.carinformation.form.lastName.error.required; }
@@ -60,14 +62,14 @@ export class CustomerFormComponent {
   });
 
   protected readonly streetErrors = computed(() => {
-    this.formEvents();
+    this.formStateTick();
     const ctrl = this.form().get('street');
     if (!ctrl || !ctrl.touched || ctrl.valid) { return null; }
     return this.carinformation.form.street.error.required;
   });
 
   protected readonly postalCodeErrors = computed(() => {
-    this.formEvents();
+    this.formStateTick();
     const ctrl = this.form().get('postalCode');
     if (!ctrl || !ctrl.touched || ctrl.valid) { return null; }
     if (ctrl.hasError('required')) { return this.carinformation.form.postalCode.error.required; }
@@ -75,7 +77,7 @@ export class CustomerFormComponent {
   });
 
   protected readonly cityErrors = computed(() => {
-    this.formEvents();
+    this.formStateTick();
     const ctrl = this.form().get('city');
     if (!ctrl || !ctrl.touched || ctrl.valid) { return null; }
     if (ctrl.hasError('required')) { return this.carinformation.form.city.error.required; }
@@ -84,7 +86,7 @@ export class CustomerFormComponent {
   });
 
   protected readonly mobilePhoneErrors = computed(() => {
-    this.formEvents();
+    this.formStateTick();
     const ctrl = this.form().get('mobilePhone');
     if (!ctrl || !ctrl.touched || ctrl.valid) { return null; }
     if (ctrl.hasError('required')) { return this.carinformation.form.mobilePhone.error.required; }

@@ -21,7 +21,16 @@ public class RentCategoriesService {
     }
 
     public List<RentCategoryResponseDto> getRentCategories(String branchId) {
-        String groupId = setupService.resolveGroupId(branchId, "default");
+        return getRentCategories(branchId, "default");
+    }
+
+    /**
+     * REQ-039 BR-M7: categories come from the same (variant) group the snaps are requested from,
+     * otherwise a tireChange booking would check rental availability against the default group.
+     * {@code null}/blank variant falls back to {@code default} in {@link SetupService}.
+     */
+    public List<RentCategoryResponseDto> getRentCategories(String branchId, String variant) {
+        String groupId = setupService.resolveGroupId(branchId, variant);
         List<JsonNode> categories = softnetApi.getRentCategories(groupId);
         return categories.stream()
             .map(this::toDto)

@@ -98,6 +98,19 @@ describe('CarinformationContainerComponent', () => {
   });
 
   describe('onSubmit', () => {
+    it('should clear the privacy error as soon as the consent box is ticked after a failed submit', () => {
+      const exposed = component as unknown as {
+        onSubmit: (e: Event) => void;
+        privacyError: () => boolean;
+        privacyControl: { setValue: (v: boolean) => void };
+      };
+      expect(exposed.privacyError()).toBe(false);
+      exposed.onSubmit({ preventDefault: jest.fn() } as unknown as Event);
+      expect(exposed.privacyError()).toBe(true);
+      exposed.privacyControl.setValue(true);
+      expect(exposed.privacyError()).toBe(false);
+    });
+
     it('should not save to store when forms are invalid', () => {
       const exposed = component as unknown as { onSubmit: (e: Event) => void };
       exposed.onSubmit({ preventDefault: jest.fn() } as unknown as Event);
@@ -126,7 +139,8 @@ describe('CarinformationContainerComponent', () => {
 
       exposed.vehicleForm.setValue({
         licensePlate: 'B-AB 1234',
-        mileage: 50000
+        mileage: 50000,
+        vin: ''
       });
 
       exposed.privacyControl.setValue(true);
@@ -136,8 +150,47 @@ describe('CarinformationContainerComponent', () => {
       expect(store.customerInfo()?.email).toBe('test@example.com');
       expect(store.vehicleInfo()).not.toBeNull();
       expect(store.vehicleInfo()?.licensePlate).toBe('B-AB 1234');
+      expect(store.vehicleInfo()?.vin).toBeUndefined();
       expect(store.privacyConsent()).toBe(true);
       expect(router.navigate).toHaveBeenCalledWith(['/home/booking-overview']);
+    });
+  });
+
+  // REQ-039: VIN is optional — license plate is enough, a given VIN is sent along.
+  describe('optional VIN (REQ-039)', () => {
+    interface Exposed {
+      onSubmit: (e: Event) => void;
+      customerForm: { setValue: (v: unknown) => void };
+      vehicleForm: FormGroup;
+      privacyControl: { setValue: (v: unknown) => void };
+    }
+
+    function submitWithVin(vin: string): void {
+      const exposed = component as unknown as Exposed;
+      exposed.customerForm.setValue({
+        email: 'test@example.com', salutation: 'mr', firstName: 'Max', lastName: 'Mustermann',
+        street: 'Musterstraße 1', postalCode: '12345', city: 'Musterstadt', mobilePhone: '017012345678'
+      });
+      exposed.vehicleForm.setValue({ licensePlate: 'B-AB 1234', mileage: 50000, vin });
+      exposed.privacyControl.setValue(true);
+      exposed.onSubmit({ preventDefault: jest.fn() } as unknown as Event);
+    }
+
+    it('should submit without VIN', () => {
+      submitWithVin('   ');
+      expect(store.vehicleInfo()?.vin).toBeUndefined();
+      expect(router.navigate).toHaveBeenCalledWith(['/home/booking-overview']);
+    });
+
+    it('should send a given VIN trimmed and upper-cased', () => {
+      submitWithVin(' wvwzzz1jz3w386752 ');
+      expect(store.vehicleInfo()?.vin).toBe('WVWZZZ1JZ3W386752');
+    });
+
+    it('should block submit for a malformed VIN', () => {
+      submitWithVin('WVW-123');
+      expect(store.vehicleInfo()).toBeNull();
+      expect(router.navigate).not.toHaveBeenCalled();
     });
   });
 
@@ -231,7 +284,7 @@ describe('CarinformationContainerComponent', () => {
         city: 'Musterstadt',
         mobilePhone: '017012345678'
       });
-      exposed.vehicleForm.setValue({ licensePlate: 'B-AB 1234', mileage: 5 });
+      exposed.vehicleForm.setValue({ licensePlate: 'B-AB 1234', mileage: 5, vin: '' });
       exposed.privacyControl.setValue(true);
 
       exposed.onSubmit({ preventDefault: jest.fn() } as unknown as Event);

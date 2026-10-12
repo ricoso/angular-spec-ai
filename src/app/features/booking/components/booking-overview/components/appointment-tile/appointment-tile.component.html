@@ -1,18 +1,13 @@
 <article class="summary-row" aria-labelledby="tile-title-appointment">
   <span class="summary-row__icon" aria-hidden="true">
-    <i class="bi bi-calendar-check-fill"></i>
+    <i class="bi bi-clock"></i>
   </span>
-  <div class="flex-grow-1">
+  <div>
     <p class="summary-row__label" id="tile-title-appointment">
       {{ bookingOverview.tiles.appointment.title | translate }}
     </p>
     <p class="summary-row__value">
       {{ appointment().displayDate }} &mdash; {{ appointment().displayTime | berlinTime: appointment().date }}
-    </p>
-    <p class="summary-row__sub">
-      {{ bookingOverview.tiles.appointment.dateLabel | translate }}: {{ appointment().displayDate }}
-      ·
-      {{ bookingOverview.tiles.appointment.timeLabel | translate }}: {{ appointment().displayTime | berlinTime: appointment().date }}
     </p>
   </div>
 </article>

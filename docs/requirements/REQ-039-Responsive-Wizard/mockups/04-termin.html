@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Termin · Werkstatttermin · REQ-039 Mockup</title>
+  <link rel="stylesheet" href="wizard.css">
+</head>
+<body class="mockup-page" data-mockup-step="4">
+  <span class="variant-target" id="mit-mietwagen" aria-hidden="true"></span>
+  <span class="variant-target" id="kein-mietwagen" aria-hidden="true"></span>
+  <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+  <div class="mockup-shell" data-testid="mockup-shell">
+    <header class="host-header" aria-label="Werkstatttermin – Referenz-Hostheader">
+      <p class="host-header__title">Werkstatttermin</p>
+      <details class="host-header__menu">
+        <summary class="host-header__action" aria-label="Darstellungseinstellungen"><i class="bi bi-universal-access" aria-hidden="true"></i></summary>
+        <div class="host-header__panel"><p><strong>Darstellung</strong></p><label class="host-header__setting"><input id="contrast-toggle" type="checkbox"> Hoher Kontrast</label><p>Die Referenz-Kontrastpalette gilt nur für diese Vorschau.</p></div>
+      </details>
+      <details class="host-header__menu">
+        <summary class="host-header__action" aria-label="Drei ausgewählte Services ansehen"><i class="bi bi-bag-fill" aria-hidden="true"></i></summary>
+        <div class="host-header__panel"><p><strong>Ihre Services – Musterzustand</strong></p><p>Ölwechsel-Service, Dialogannahme und Sicherheits-Check.</p></div>
+      </details>
+      <a class="host-header__action host-header__action--close" href="../mockup.html" aria-label="Zur Mockup-Galerie"><i class="bi bi-x-circle" aria-hidden="true"></i></a>
+    </header>
+    <nav class="wizard" aria-label="Buchungsfortschritt: Schritt 4 von 6" data-testid="wizard">
+      <ol class="wizard__steps">
+        <li class="wizard__step wizard__step--done" data-state="done" data-original-index="1">
+          <a class="wizard__control wizard__step-button" href="01-marke.html" aria-label="Schritt 1 von 6: Marke, abgeschlossen. Zurück zu diesem Schritt" data-testid="wizard-step-1"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Marke</span></a>
+        </li>
+        <li class="wizard__step wizard__step--done" data-state="done" data-original-index="2">
+          <a class="wizard__control wizard__step-button" href="02-service.html" aria-label="Schritt 2 von 6: Serviceauswahl, abgeschlossen. Zurück zu diesem Schritt" data-testid="wizard-step-2"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Service</span></a>
+        </li>
+        <li class="wizard__step wizard__step--done" data-state="done" data-original-index="3">
+          <a class="wizard__control wizard__step-button" href="03-hinweise.html" aria-label="Schritt 3 von 6: Hinweise, abgeschlossen. Zurück zu diesem Schritt" data-testid="wizard-step-3"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Hinweise</span></a>
+        </li>
+        <li class="wizard__step wizard__step--active" data-state="active" data-original-index="4">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-current="step" aria-label="Schritt 4 von 6: Termin, aktuell" data-testid="wizard-step-4"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Termin</span></button>
+        </li>
+        <li class="wizard__step wizard__step--future" data-state="future" data-original-index="5">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-label="Schritt 5 von 6: Kontakt- und Fahrzeugdaten, noch nicht erreichbar" data-testid="wizard-step-5"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Kontakt- &amp; Fahrzeugdaten</span></button>
+        </li>
+        <li class="wizard__step wizard__step--future" data-state="future" data-original-index="6">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-label="Schritt 6 von 6: Übersicht, noch nicht erreichbar" data-testid="wizard-step-6"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Übersicht</span></button>
+        </li>
+      </ol>
+      <p class="wizard__current" data-testid="wizard-current-title" aria-live="polite">Termin</p>
+      <p class="wizard__counter">Schritt 4 von 6</p>
+    </nav>
+    <main class="step-content" id="main-content" data-testid="step-content" aria-describedby="mockup-description">
+      <p class="visually-hidden" id="mockup-description">Statische Designvorschau mit Referenzdatum September 2026, keine Live-Verfügbarkeit. Datumsauswahl, Uhrzeit und Terminbestätigung sind Darstellungsbeispiele und werden nicht gespeichert.</p>
+      <div class="step-content__heading">
+        <h1 class="step-content__title">Wählen Sie den passenden Tag und Uhrzeit</h1>
+        <p class="step-content__subtitle">Klicken Sie auf ein Datum, um freie Werkstattkapazitäten anzuzeigen.</p>
+      </div>
+      <div class="notice variant-rental-filter" role="note" data-testid="rental-filter">
+        <i class="bi bi-car-front" aria-hidden="true"></i>
+        <p>Es werden nur Termine mit Mietwagen angezeigt.</p>
+      </div>
+      <div class="rental-empty variant-rental-empty" role="note" data-testid="rental-empty">
+        <i class="bi bi-car-front rental-empty__icon" aria-hidden="true"></i>
+        <p>Im angezeigten Zeitraum ist kein Termin mit Mietwagen frei.</p>
+        <div class="rental-empty__actions">
+          <a class="button" href="../mockup.html#kalender">Spätere Termine anzeigen</a>
+          <a class="button button--secondary" href="04-termin.html">Ohne Mietwagen fortfahren</a>
+        </div>
+      </div>
+      <section class="calendar variant-rental-hide-on-empty" aria-labelledby="calendar-heading">
+        <h2 class="calendar__heading" id="calendar-heading"><i class="bi bi-calendar-event" aria-hidden="true"></i> September 2026</h2>
+        <fieldset class="date-list">
+          <legend class="visually-hidden">Terminvorschläge – Referenzzustand</legend>
+          <input class="choice-input date-list__input" type="radio" name="appointment-date" id="date-01" checked>
+          <label class="date-list__item" for="date-01" aria-label="Dienstag, 1. September 2026"><span class="date-list__weekday">DI</span><span class="date-list__day">01</span><span class="date-list__month">Sep</span></label>
+          <input class="choice-input date-list__input" type="radio" name="appointment-date" id="date-08">
+          <label class="date-list__item" for="date-08" aria-label="Dienstag, 8. September 2026"><span class="date-list__weekday">DI</span><span class="date-list__day">08</span><span class="date-list__month">Sep</span></label>
+          <input class="choice-input date-list__input" type="radio" name="appointment-date" id="date-10">
+          <label class="date-list__item" for="date-10" aria-label="Donnerstag, 10. September 2026"><span class="date-list__weekday">DO</span><span class="date-list__day">10</span><span class="date-list__month">Sep</span></label>
+          <input class="choice-input date-list__input" type="radio" name="appointment-date" id="date-11">
+          <label class="date-list__item" for="date-11" aria-label="Freitag, 11. September 2026"><span class="date-list__weekday">FR</span><span class="date-list__day">11</span><span class="date-list__month">Sep</span></label>
+          <input class="choice-input date-list__input" type="radio" name="appointment-date" id="date-14">
+          <label class="date-list__item" for="date-14" aria-label="Montag, 14. September 2026"><span class="date-list__weekday">MO</span><span class="date-list__day">14</span><span class="date-list__month">Sep</span></label>
+          <a class="date-list__more" href="../mockup.html#kalender" aria-label="Hinweis zur Kalenderdarstellung in dieser Vorschau"><i class="bi bi-calendar-event" aria-hidden="true"></i><span>Weitere freie Termine</span></a>
+        </fieldset>
+      </section>
+      <section class="time-slots variant-rental-hide-on-empty" aria-labelledby="time-heading">
+        <h2 class="time-slots__heading" id="time-heading">Vormittag</h2>
+        <input class="choice-input" id="time-1000" type="radio" name="appointment-time" checked>
+        <label class="time-slots__time" for="time-1000">10:00 Uhr<span class="time-slots__rental variant-rental-label"><i class="bi bi-car-front" aria-hidden="true"></i> inkl. Mietwagen</span></label>
+      </section>
+      <div class="notice notice--success variant-rental-hide-on-empty" role="note" aria-label="Dargestellter Wunschtermin">
+        <i class="bi bi-check-circle" aria-hidden="true"></i>
+        <p><strong>Termin gewählt:</strong> Dienstag, 01.09.2026 — 10:00 Uhr<span class="variant-rental-label"> — inkl. Mietwagen</span></p>
+      </div>
+    </main>
+    <nav class="step-actions" aria-label="Schrittnavigation">
+      <a class="button button--secondary" href="03-hinweise.html" data-testid="wizard-back">Zurück</a>
+      <a class="button" href="05-kontakt.html" data-testid="wizard-next">Weiter</a>
+    </nav>
+  </div>
+</body>
+</html>

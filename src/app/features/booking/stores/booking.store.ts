@@ -48,7 +48,12 @@ interface BookingState {
   snapConflict: boolean;
   appointmentId: string | null;
   rentCategories: RentCategory[];
+  /** REQ-039 BR-M5: optional, non-binding category wish (no availability promise). */
   selectedRentCategoryId: string | null;
+  /** REQ-039 BR-M1: customer wants a rental car — independent of any category. */
+  rentalCarRequested: boolean;
+  /** REQ-039 BR-M8: rent categories for the snap group were loaded (or failed) — decides the offer. */
+  rentCategoriesLoaded: boolean;
   /** REQ-025: API-driven JobType-Liste für die gewählte Branch. */
   jobTypes: ApiJobType[];
   /** REQ-025 (b) Iter. 3: Service-Kategorien (Tags) für die gewählte Branch. */
@@ -87,6 +92,8 @@ const INITIAL_STATE: BookingState = {
   appointmentId: null,
   rentCategories: [],
   selectedRentCategoryId: null,
+  rentalCarRequested: false,
+  rentCategoriesLoaded: false,
   jobTypes: [],
   categories: [],
   operations: [],
@@ -112,12 +119,24 @@ export function mapAppointmentPreferenceToSoftnet(
   }
 }
 
+/**
+ * REQ-039 BR-M8: a rent category applies to the selected brand when its brand list is empty
+ * (= all brands) or contains the brand. Case-insensitive, because the UI brand is lowercase
+ * ('audi') while SoftNet category brands are capitalized ('Audi'). Without a selected brand only
+ * all-brand categories apply.
+ */
+function rentCategoryMatchesBrand(category: RentCategory, brandLower: string | null): boolean {
+  if (category.brands.length === 0) { return true; }
+  if (brandLower === null) { return false; }
+  return category.brands.some(brand => brand.toLowerCase() === brandLower);
+}
+
 export const BookingStore = signalStore(
   { providedIn: 'root' },
 
   withState<BookingState>(INITIAL_STATE),
 
-  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, snapConflict, appointmentId, notesExtras, rentCategories, selectedRentCategoryId, categories, operations, deepLinkGroupId }) => ({
+  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, snapConflict, appointmentId, notesExtras, rentCategories, selectedRentCategoryId, rentalCarRequested, rentCategoriesLoaded, appointments, workshopCalendarDays, isLoading, categories, operations, deepLinkGroupId }) => ({
     hasBranchSelected: computed(() => selectedBranch() !== null),
     selectedBranchBrands: computed(() => {
       const branch = selectedBranch();
@@ -334,16 +353,32 @@ export const BookingStore = signalStore(
       if (!id) return null;
       return rentCategories().find(c => c.id === id)?.name ?? null;
     }),
-    /** REQ-025 AC-15: Mietwagen-Kategorie + Preis-Info für den Notes-Preisblock. */
-    selectedRentCategoryPrice: computed<{ name: string; price: number; currency: string; priceUnit: string } | null>(() => {
-      const id = selectedRentCategoryId();
-      if (!id) return null;
-      const rc = rentCategories().find(c => c.id === id);
-      if (!rc?.price || !rc.currency || !rc.priceUnit) {
-        return null;
-      }
-      return { name: rc.name, price: rc.price, currency: rc.currency, priceUnit: rc.priceUnit };
+    /** REQ-039 BR-M8: rent categories that apply to the selected brand (empty = none match it). */
+    rentCategoriesForBrand: computed(() => {
+      const brand = selectedBrand();
+      const brandLower = brand ? brand.toLowerCase() : null;
+      return rentCategories().filter(category => rentCategoryMatchesBrand(category, brandLower));
     }),
+    /** REQ-039 BR-M8: the switch is only offered when the SELECTED BRAND has a matching rent category. */
+    hasRentalCarOffer: computed(() => {
+      const brand = selectedBrand();
+      const brandLower = brand ? brand.toLowerCase() : null;
+      return rentCategories().some(category => rentCategoryMatchesBrand(category, brandLower));
+    }),
+    /** REQ-039 AC-M9: "not available" once categories are known and none match the brand — no flicker. */
+    hasNoRentalCarOffer: computed(() => {
+      const brand = selectedBrand();
+      const brandLower = brand ? brand.toLowerCase() : null;
+      return rentCategoriesLoaded() && !rentCategories().some(category => rentCategoryMatchesBrand(category, brandLower));
+    }),
+    /** REQ-039 E-1/E-2: rental car requested, but no slot with a reserved car (or the call failed). */
+    hasNoRentalCarAppointments: computed(() =>
+      rentalCarRequested() && !isLoading() && appointments().length === 0
+    ),
+    /** REQ-039 E-1 for the workshop calendar: no day with a rental-car slot from the chosen date. */
+    hasNoRentalCarCalendarDays: computed(() =>
+      rentalCarRequested() && !isLoading() && workshopCalendarDays().length === 0
+    ),
   })),
 
   withMethods((store, api = inject(BookingApiService), appointmentApi = inject(AppointmentApiService), workshopCalendarApi = inject(WorkshopCalendarApiService), rentCategoryApi = inject(RentCategoryApiService)) => ({
@@ -569,11 +604,18 @@ export const BookingStore = signalStore(
           const variant = store.selectedVariant();
           const timePreference = mapAppointmentPreferenceToSoftnet(store.selectedAppointmentPreference());
           const notifications = mapNotificationChannelToSoftnet(store.selectedNotificationChannel());
-          return from(appointmentApi.getAppointments(branchId, serviceIds, brandName, variant, timePreference, notifications)).pipe(
+          const rentalCarRequested = store.rentalCarRequested();
+          return from(appointmentApi.getAppointments(branchId, serviceIds, brandName, variant, timePreference, notifications, rentalCarRequested)).pipe(
             tap((appointments) => {
               patchState(store, { appointments, isLoading: false });
             }),
             catchError((err: unknown) => {
+              // REQ-039 E-2: with a rental car a failed call shows the rental hint, not the generic error.
+              if (rentalCarRequested) {
+                console.debug('[BookingStore] rental snap request failed — showing rental empty state', err);
+                patchState(store, { appointments: [], isLoading: false });
+                return EMPTY;
+              }
               const message = err instanceof Error ? err.message : 'Unknown error';
               patchState(store, { error: message, isLoading: false });
               return EMPTY;
@@ -598,11 +640,18 @@ export const BookingStore = signalStore(
           const branchId = store.selectedLocation()?.id ?? '';
           const serviceIds = store.selectedServices().map(s => s.serviceId);
           const brandName = store.selectedBrand() ?? '';
-          return from(workshopCalendarApi.getWorkshopCalendarDays(fromDate, branchId, serviceIds, brandName, store.selectedVariant())).pipe(
+          const rentalCarRequested = store.rentalCarRequested();
+          return from(workshopCalendarApi.getWorkshopCalendarDays(fromDate, branchId, serviceIds, brandName, store.selectedVariant(), rentalCarRequested)).pipe(
             tap((workshopCalendarDays) => {
               patchState(store, { workshopCalendarDays, isLoading: false });
             }),
             catchError((err: unknown) => {
+              // REQ-039 E-2: rental hint instead of the generic error.
+              if (rentalCarRequested) {
+                console.debug('[BookingStore] rental calendar request failed — showing rental empty state', err);
+                patchState(store, { workshopCalendarDays: [], isLoading: false });
+                return EMPTY;
+              }
               const message = err instanceof Error ? err.message : 'Unknown error';
               patchState(store, { error: message, isLoading: false });
               return EMPTY;
@@ -683,7 +732,8 @@ export const BookingStore = signalStore(
               firstRegYear: vehicle?.firstRegYear,
             },
             note: store.bookingNote() ?? undefined,
-            rentCategoryId: store.selectedRentCategoryId() ?? undefined,
+            // REQ-039 BR-M5: the wish only travels with a rental car; the backend turns it into a note.
+            rentCategoryId: store.rentalCarRequested() ? store.selectedRentCategoryId() ?? undefined : undefined,
             callbackRequested: extras?.callbackOption === 'yes',
             notifications: mapNotificationChannelToSoftnet(extras?.notificationChannel ?? 'email'),
           };
@@ -730,20 +780,22 @@ export const BookingStore = signalStore(
 
     loadRentCategories: rxMethod<void>(
       pipe(
-        tap(() => { patchState(store, { isLoading: true, error: null }); }),
+        tap(() => { patchState(store, { isLoading: true, error: null, rentCategoriesLoaded: false }); }),
         switchMap(() => {
           const branchId = store.selectedLocation()?.id ?? '';
           if (!branchId) {
-            patchState(store, { rentCategories: [], isLoading: false });
+            patchState(store, { rentCategories: [], rentCategoriesLoaded: true, isLoading: false });
             return EMPTY;
           }
-          return from(rentCategoryApi.getRentCategories(branchId)).pipe(
+          // REQ-039 BR-M7: same (variant) group as the snaps.
+          return from(rentCategoryApi.getRentCategories(branchId, store.selectedVariant())).pipe(
             tap((rentCategories) => {
-              patchState(store, { rentCategories, isLoading: false });
+              patchState(store, { rentCategories, rentCategoriesLoaded: true, isLoading: false });
             }),
             catchError((err: unknown) => {
-              const message = err instanceof Error ? err.message : 'Unknown error';
-              patchState(store, { error: message, isLoading: false });
+              // REQ-039 E-5: without categories the rental switch is hidden; booking stays possible.
+              console.debug('[BookingStore] rent categories unavailable — hiding rental switch', err);
+              patchState(store, { rentCategories: [], rentCategoriesLoaded: true, isLoading: false });
               return EMPTY;
             })
           );
@@ -755,11 +807,40 @@ export const BookingStore = signalStore(
       patchState(store, { selectedRentCategoryId: id });
     },
 
+    /**
+     * REQ-039 E-1: conscious switch to "without rental car" from the appointment or calendar page.
+     * Drops the wish and the filtered slots but keeps the calendar date the customer picked.
+     */
+    continueWithoutRentalCar(): void {
+      patchState(store, {
+        rentalCarRequested: false,
+        selectedRentCategoryId: null,
+        appointments: [],
+        selectedAppointment: null,
+        workshopCalendarDays: []
+      });
+    },
+
+    /**
+     * REQ-039 AC-M8: switching with/without rental car invalidates loaded slots, the calendar and a
+     * chosen appointment — they were filtered for the other choice.
+     */
+    setRentalCarRequested(rentalCarRequested: boolean): void {
+      if (store.rentalCarRequested() === rentalCarRequested) { return; }
+      patchState(store, {
+        rentalCarRequested,
+        appointments: [],
+        selectedAppointment: null,
+        workshopCalendarDate: null,
+        workshopCalendarDays: []
+      });
+    },
+
     resetFromStep(targetIndex: number): void {
       if (targetIndex <= 0) { patchState(store, { selectedBranch: null, selectedLocation: null }); }
       if (targetIndex <= 1) { patchState(store, { selectedBrand: null }); }
       if (targetIndex <= 2) { patchState(store, { selectedServices: [] }); }
-      if (targetIndex <= 3) { patchState(store, { notesExtras: null }); }
+      if (targetIndex <= 3) { patchState(store, { notesExtras: null, rentalCarRequested: false }); }
       if (targetIndex <= 4) { patchState(store, { selectedAppointment: null, workshopCalendarDate: null, workshopCalendarDays: [] }); }
     },
 

@@ -23,11 +23,16 @@ export async function goToBrandSelection(page: Page): Promise<void> {
   const card = page.locator('.location-card').first();
   await expect(card).toBeVisible({ timeout: 15000 });
   await card.click();
-  await waitForAngular(page);
-  // Should auto-navigate or be on /home/brand — ensure we are
-  if (!page.url().includes('/home/brand')) {
-    await navigateTo(page, '/home/brand');
+  // Flake fix (REQ-039 E2E): the former fallback `navigateTo('/home/brand')` reloaded the app,
+  // dropped the store and let the guard bounce back to /home/location. Wait for the in-app
+  // navigation instead and only re-click if the first click was swallowed.
+  try {
+    await page.waitForURL(/\/home\/brand/, { timeout: 10_000 });
+  } catch {
+    await card.click();
+    await page.waitForURL(/\/home\/brand/, { timeout: 15_000 });
   }
+  await waitForAngular(page);
 }
 
 /** Click the Back button on the brand selection page (navigates to /home/location) */
@@ -433,6 +438,14 @@ export async function clickNotesContinue(page: Page): Promise<void> {
   const continueButton = page.locator('.notes__continue-button');
   await expect(continueButton).toBeVisible();
   await continueButton.click();
+  // Flake fix (REQ-039 E2E): "Weiter" always navigates — under load the click was occasionally
+  // swallowed and the caller timed out waiting for the appointment page. Re-click once if needed.
+  try {
+    await page.waitForURL(/\/home\/appointment/, { timeout: 10_000 });
+  } catch {
+    await continueButton.click();
+    await page.waitForURL(/\/home\/appointment/, { timeout: 15_000 });
+  }
   await waitForAngular(page);
 }
 
@@ -498,6 +511,9 @@ export async function selectAppointmentCard(page: Page, index: number): Promise<
   // New UI (REQ-026): choose a date tile first; time-slot cards render afterwards.
   // Walk the date strip until a date with available slots is found.
   const dateTiles = page.locator('.date-tile');
+  // Flake fix (REQ-039 E2E): count() does not wait — while SoftNet is still loading the strip is
+  // empty, the loop was skipped and the slot assertion failed after 5 s. Wait for the strip first.
+  await expect(dateTiles.first()).toBeVisible({ timeout: 30_000 });
   const tileCount = await dateTiles.count();
   const slots = page.locator('app-appointment-card .slot');
   for (let i = 0; i < tileCount; i++) {
@@ -755,6 +771,8 @@ export async function fillVehicleForm(
   data?: {
     licensePlate?: string;
     mileage?: string;
+    /** REQ-039: optional VIN — only filled when given. */
+    vin?: string;
   }
 ): Promise<void> {
   const d = {
@@ -763,6 +781,9 @@ export async function fillVehicleForm(
   };
   await page.locator('input[formcontrolname="licensePlate"]').fill(d.licensePlate);
   await page.locator('input[formcontrolname="mileage"]').fill(d.mileage);
+  if (data?.vin !== undefined) {
+    await page.locator('input[formcontrolname="vin"]').fill(data.vin);
+  }
   await waitForAngular(page);
 }
 

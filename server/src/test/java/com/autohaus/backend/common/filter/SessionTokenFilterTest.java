@@ -46,6 +46,20 @@ class SessionTokenFilterTest {
     }
 
     @Test
+    void shouldNotFilter_corsPreflight() {
+        MockHttpServletRequest request = new MockHttpServletRequest("OPTIONS", "/api/v1/branches");
+        request.addHeader("Origin", "http://localhost:4200");
+        request.addHeader("Access-Control-Request-Method", "GET");
+        assertTrue(filter.shouldNotFilter(request));
+    }
+
+    @Test
+    void shouldFilter_plainOptionsWithoutPreflightHeaders() {
+        MockHttpServletRequest request = new MockHttpServletRequest("OPTIONS", "/api/v1/branches");
+        assertFalse(filter.shouldNotFilter(request));
+    }
+
+    @Test
     void shouldFilter_apiEndpoints() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/branches");
         assertFalse(filter.shouldNotFilter(request));
