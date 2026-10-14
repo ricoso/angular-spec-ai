@@ -26,19 +26,28 @@ export class WizardBreadcrumbComponent {
 
   protected readonly wizard = i18nKeys.booking.wizard;
   protected readonly isDeepLinked = this.store.isDeepLinked;
+  /** REQ-041: recall mode hides the service step (index 2 in WIZARD_STEPS). */
+  protected readonly isRecallMode = this.store.isRecallMode;
+
+  /** Original WIZARD_STEPS index of the service step (hidden in recall mode). */
+  private static readonly SERVICE_STEP_INDEX = 2;
 
   protected readonly stepsWithStatus = computed(() => {
+    // `activeIndex` is the ORIGINAL step index (0..6). We hide whole steps (location when deep-linked,
+    // the service step in recall mode) and keep each visible step's original index for status + reset.
     const active = this.activeIndex();
-    const deepLinked = this.isDeepLinked();
+    const hidden = new Set<number>();
+    if (this.isDeepLinked()) { hidden.add(0); }
+    if (this.isRecallMode()) { hidden.add(WizardBreadcrumbComponent.SERVICE_STEP_INDEX); }
+
     return this.steps()
-      .filter((_, i) => !(deepLinked && i === 0))
-      .map((step, i, arr) => {
-        const originalIndex = deepLinked ? i + 1 : i;
-        const adjustedActive = deepLinked ? active - 1 : active;
+      .map((step, originalIndex) => ({ step, originalIndex }))
+      .filter(({ originalIndex }) => !hidden.has(originalIndex))
+      .map(({ step, originalIndex }, i, arr) => {
         let status: WizardStepStatus;
-        if (i < adjustedActive) {
+        if (originalIndex < active) {
           status = 'done';
-        } else if (i === adjustedActive) {
+        } else if (originalIndex === active) {
           status = 'active';
         } else {
           status = 'future';
@@ -67,6 +76,7 @@ export class WizardBreadcrumbComponent {
     if (originalIndex < 0 || originalIndex >= active || originalIndex >= allSteps.length) { return; }
 
     if (this.isDeepLinked() && originalIndex === 0) { return; }
+    if (this.isRecallMode() && originalIndex === WizardBreadcrumbComponent.SERVICE_STEP_INDEX) { return; }
 
     this.store.resetFromStep(originalIndex);
     void this.router.navigate([allSteps[originalIndex].route]);

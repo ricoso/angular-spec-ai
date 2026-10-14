@@ -19,14 +19,19 @@
         <span class="badge-selected" aria-hidden="true">
           <i class="bi bi-check-lg"></i>
         </span>
-        @if (branch.groupIdOverride) {
+        @if (branch.cardKind === 'tireChange') {
           <span class="badge bg-warning text-dark mb-2 align-self-start">
             <i class="bi bi-tools me-1" aria-hidden="true"></i>Radwechsel+ (Boxenstopp)
           </span>
+        } @else if (branch.cardKind === 'recall') {
+          <span class="badge mb-2 align-self-start location-card__badge--recall">
+            <i class="bi bi-megaphone-fill me-1" aria-hidden="true"></i>{{ booking.recall.badge | translate }}
+          </span>
         }
-        <h5 class="mb-2 location-card__address">
+        <h5 class="mb-1 location-card__name">{{ branch.name }}</h5>
+        <p class="mb-2 location-card__address">
           <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ branch.formattedAddress }}
-        </h5>
+        </p>
         <span class="d-flex gap-2 align-items-center mt-auto location-card__brands">
           @for (logo of branch.brandLogos; track logo.name) {
             <span

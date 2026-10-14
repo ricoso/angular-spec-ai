@@ -80,6 +80,8 @@ export class NotesContainerComponent {
     this.store.clearNotesExtras();
     this.store.setSelectedRentCategoryId(null);
     this.store.setRentalCarRequested(false);
-    void this.router.navigate(['/home/services']);
+    // REQ-041: the service step is skipped in recall mode — going back there would reload the
+    // default-group catalogue and overwrite the recall operation. Return to brand instead.
+    void this.router.navigate([this.store.isRecallMode() ? '/home/brand' : '/home/services']);
   }
 }

@@ -126,3 +126,10 @@ server/bin/
 server/Autohaus-Terminbuchung.zip
 Names_and_IDs.xlsx
 dist/
+fingerprint-82e5a685c878c3d0719fdc930c245d91.json
+
+# Secrets / Credentials — Glob-Muster, damit NEUE Fingerprints (z. B. Rückruf-REQ-041)
+# automatisch ignoriert werden und nie committet werden (enthalten private keys).
+fingerprint-*.json
+cognigy.net_fingerprint-*.json
+Names_and_IDs*.xlsx

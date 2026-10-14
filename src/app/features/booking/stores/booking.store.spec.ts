@@ -2,9 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
 import type { AppointmentSlot } from '../models/appointment.model';
-import { AVAILABLE_BRANDS } from '../models/brand.model';
+import type { BranchConfig } from '../models/branch-config.model';
+import { AVAILABLE_BRANDS, type Brand } from '../models/brand.model';
 import { ALL_LOCATIONS,LOCATIONS_BY_BRAND } from '../models/location.model';
-import { AVAILABLE_SERVICES } from '../models/service.model';
+import { AVAILABLE_SERVICES, type ServiceType } from '../models/service.model';
 import { AppointmentApiService } from '../services/appointment-api.service';
 import { BookingApiService } from '../services/booking-api.service';
 import { RentCategoryApiService } from '../services/rent-category-api.service';
@@ -423,6 +424,115 @@ describe('BookingStore', () => {
     });
   });
 
+  // REQ-040: FIN nur bei "Räder sind eingelagert" — Erkennung über den Operations-Namen
+  // (serviceId trägt im Live-Flow die Operation-ID, nicht das ServiceType-Enum).
+  describe('hasStoredTiresService (REQ-040)', () => {
+    const STORED_TIRES_DEFAULT = { id: 'op-stored-default', name: 'Räderwechsel - meine Räder sind eingelagert', description: null, tagIds: ['c1'], order: 1, imageId: null };
+    const STORED_TIRES_BOXENSTOPP = { id: 'op-stored-box', name: 'Radwechsel mit Einlagerung', description: null, tagIds: ['c1'], order: 2, imageId: null };
+    const STORE_TIRES = { id: 'op-store-tires', name: 'Die angelieferten Räder sollen bitte eingelagert werden', description: null, tagIds: ['c1'], order: 3, imageId: null };
+    const INSPECTION = { id: 'op-inspection', name: 'Inspektion', description: null, tagIds: ['c1'], order: 4, imageId: null };
+
+    async function loadOperations(): Promise<void> {
+      apiSpy.getOperationsByBranch = jest.fn().mockResolvedValue([
+        STORED_TIRES_DEFAULT, STORED_TIRES_BOXENSTOPP, STORE_TIRES, INSPECTION
+      ]);
+      store.loadOperationsForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+    }
+
+    function select(operationId: string): void {
+      store.confirmServiceOptions(operationId as ServiceType, []);
+    }
+
+    it('is false when nothing is selected', () => {
+      expect(store.hasStoredTiresService()).toBe(false);
+    });
+
+    it('is true for the default "Räder sind eingelagert" operation', async () => {
+      await loadOperations();
+      select(STORED_TIRES_DEFAULT.id);
+      expect(store.hasStoredTiresService()).toBe(true);
+    });
+
+    it('is true for the Boxenstopp "Radwechsel mit Einlagerung" operation', async () => {
+      await loadOperations();
+      select(STORED_TIRES_BOXENSTOPP.id);
+      expect(store.hasStoredTiresService()).toBe(true);
+    });
+
+    it('is false for the store-tires operation (angelieferte Räder einlagern)', async () => {
+      await loadOperations();
+      select(STORE_TIRES.id);
+      expect(store.hasStoredTiresService()).toBe(false);
+    });
+
+    it('is false for an unrelated service (Inspektion)', async () => {
+      await loadOperations();
+      select(INSPECTION.id);
+      expect(store.hasStoredTiresService()).toBe(false);
+    });
+
+    it('is false while operations are not loaded yet (name cannot be resolved)', () => {
+      select(STORED_TIRES_DEFAULT.id);
+      expect(store.hasStoredTiresService()).toBe(false);
+    });
+  });
+
+  // REQ-041: recall campaign mode — own SoftNet group/variant, single auto-selected operation.
+  describe('recall mode (REQ-041)', () => {
+    const RECALL_GROUP_ID = '6ac7939ba4c0acee699905a8';
+    const BRANCH: BranchConfig = {
+      branchId: 'b-recall', name: 'Test Branch', address: { street: 'S', zip: '1', city: 'C' }, brands: []
+    };
+    const RECALL_OP = { id: 'op-recall', name: 'Rückrufaktion Lenkungsgetriebe Schraube', description: null, tagIds: ['c1'], order: 1, imageId: null };
+
+    it('activateRecallMode sets mode, normalized VIN, the recall group and variant', () => {
+      store.activateRecallMode('wvwzzz1jz3w386752');
+      expect(store.isRecallMode()).toBe(true);
+      expect(store.recallVin()).toBe('WVWZZZ1JZ3W386752');
+      expect(store.deepLinkGroupId()).toBe(RECALL_GROUP_ID);
+      expect(store.selectedVariant()).toBe('recall');
+    });
+
+    it('activateRecallMode rejects a malformed URL VIN (recallVin = null)', () => {
+      store.activateRecallMode('too-short');
+      expect(store.isRecallMode()).toBe(true);
+      expect(store.recallVin()).toBeNull();
+    });
+
+    it('activateRecallMode without a VIN keeps recallVin null', () => {
+      store.activateRecallMode(null);
+      expect(store.recallVin()).toBeNull();
+    });
+
+    it('applyRecallService loads the recall group operation and auto-selects it', async () => {
+      apiSpy.getOperationsByBranch = jest.fn().mockResolvedValue([RECALL_OP]);
+      store.selectBranch(BRANCH);
+      store.activateRecallMode('WVWZZZ1JZ3W386752');
+      await store.applyRecallService();
+      expect(apiSpy.getOperationsByBranch).toHaveBeenCalledWith('b-recall', RECALL_GROUP_ID);
+      expect(store.selectedServices()).toEqual([{ serviceId: 'op-recall', selectedOptionIds: [] }]);
+      expect(store.hasServicesSelected()).toBe(true);
+    });
+
+    it('applyRecallService is a no-op outside recall mode', async () => {
+      apiSpy.getOperationsByBranch = jest.fn();
+      store.selectBranch(BRANCH);
+      await store.applyRecallService();
+      expect(apiSpy.getOperationsByBranch).not.toHaveBeenCalled();
+      expect(store.hasServicesSelected()).toBe(false);
+    });
+
+    it('clearRecallMode resets mode, VIN and the recall group override', () => {
+      store.activateRecallMode('WVWZZZ1JZ3W386752');
+      store.clearRecallMode();
+      expect(store.isRecallMode()).toBe(false);
+      expect(store.recallVin()).toBeNull();
+      expect(store.deepLinkGroupId()).toBeNull();
+      expect(store.selectedVariant()).toBe('default');
+    });
+  });
+
   describe('mapAppointmentPreferenceToSoftnet', () => {
     it('maps morning to AM', () => {
       expect(mapAppointmentPreferenceToSoftnet('morning')).toBe('AM');
@@ -831,27 +941,30 @@ describe('BookingStore', () => {
       expect(rentCategoryApi.getRentCategories.mock.calls.at(-1)?.[1]).toBe('default');
     });
 
-    it('hasRentalCarOffer follows the SELECTED BRAND, not just the branch (BR-M8)', async () => {
-      // A branch that offers a rental car for BMW only.
+    it('hasRentalCarOffer is LOCATION-based, not brand-based (fix 2026-10-13)', async () => {
+      // A location whose rent category lists a specific brand still offers rental for ALL brands —
+      // the backend substitutes a location-valid brand on the SoftNet call. REQ-039 BR-M8 (per-brand
+      // gating) was wrong: the dealer lends a brand-neutral pool car.
       rentCategoryApi.getRentCategories.mockResolvedValueOnce([
-        { id: 'rc-bmw', groupId: 'g', name: 'Kleinwagen', description: '', brands: ['BMW'], branches: [] }
+        { id: 'rc-vw', groupId: 'g', name: 'Kleinwagen', description: '', brands: ['Volkswagen'], branches: [] }
       ]);
       store.loadRentCategories();
       await flush();
 
+      store.setBrand('volkswagen');
+      expect(store.hasRentalCarOffer()).toBe(true);
+      expect(store.hasNoRentalCarOffer()).toBe(false);
+      expect(store.rentCategoriesForBrand().map(category => category.id)).toEqual(['rc-vw']);
+
+      // A brand that is NOT on the category (the SEAT/Nutzfahrzeuge case) at the same location:
+      // switch stays available, categories stay listed — the backend substitutes the brand.
       store.setBrand('bmw');
       expect(store.hasRentalCarOffer()).toBe(true);
       expect(store.hasNoRentalCarOffer()).toBe(false);
-      expect(store.rentCategoriesForBrand().map(category => category.id)).toEqual(['rc-bmw']);
-
-      // A brand without a matching category (the Hyundai/SEAT case) → no switch, no SoftNet probe.
-      store.setBrand('audi');
-      expect(store.hasRentalCarOffer()).toBe(false);
-      expect(store.hasNoRentalCarOffer()).toBe(true);
-      expect(store.rentCategoriesForBrand()).toEqual([]);
+      expect(store.rentCategoriesForBrand().map(category => category.id)).toEqual(['rc-vw']);
     });
 
-    it('an all-brand category (empty brands array) applies to every selected brand', async () => {
+    it('offers rental for any brand once the location has a category', async () => {
       rentCategoryApi.getRentCategories.mockResolvedValueOnce([
         { id: 'rc-all', groupId: 'g', name: 'Kleinwagen', description: '', brands: [], branches: [] }
       ]);
@@ -894,6 +1007,27 @@ describe('BookingStore', () => {
       store.submitBooking();
       await flush();
       expect(appointmentApi.createAppointment.mock.calls.at(-1)?.[0].rentCategoryId).toBe('rc-1');
+    });
+  });
+
+  // Bugfix: multi-word brands (e.g. "Volkswagen Nutzfahrzeuge") must reach SoftNet as the real
+  // display name, not the hyphenated slug — otherwise snaps return HTTP 400 (zero appointments).
+  describe('loadAppointments brand name', () => {
+    it('sends the real brand display name, not the slug, to the snaps API', async () => {
+      const appointmentApi = TestBed.inject(AppointmentApiService) as jest.Mocked<AppointmentApiService>;
+      apiSpy.getBrands.mockResolvedValueOnce([
+        { id: 'volkswagen-nutzfahrzeuge' as unknown as Brand, name: 'Volkswagen Nutzfahrzeuge' }
+      ]);
+      store.loadBrands();
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      store.setBrand('volkswagen-nutzfahrzeuge' as unknown as Brand);
+      store.loadAppointments();
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(appointmentApi.getAppointments).toHaveBeenCalled();
+      const brandArg = (appointmentApi.getAppointments as jest.Mock).mock.calls.at(-1)?.[2];
+      expect(brandArg).toBe('Volkswagen Nutzfahrzeuge');
     });
   });
 });

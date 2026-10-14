@@ -225,6 +225,16 @@ describe('NotesContainerComponent', () => {
       expect(store.notesExtras()).toBeNull();
       expect(router.navigate).toHaveBeenCalledWith(['/home/services']);
     });
+
+    // REQ-041: the service step is skipped in recall mode — back must not re-enter it.
+    it('should navigate to the brand page (not services) in recall mode', () => {
+      store.activateRecallMode('WVWZZZ1KZAW000123');
+
+      const exposed = component as unknown as { onBack: () => void };
+      exposed.onBack();
+
+      expect(router.navigate).toHaveBeenCalledWith(['/home/brand']);
+    });
   });
 
   describe('Store Integration', () => {

@@ -169,7 +169,8 @@ public class SoftnetApiClient {
             if (requestBody != null) {
                 jsonBody = objectMapper.writeValueAsString(requestBody);
             }
-            String token = authService.getAccessToken();
+            // REQ-041: token is chosen per group — the recall group uses its own credential.
+            String token = authService.getAccessToken(groupId);
             String result = switch (method) {
                 case "GET" -> {
                     var spec = restClient.get().uri(url)

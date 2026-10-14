@@ -44,8 +44,17 @@ export class BrandSelectionContainerComponent {
     return street || zipCity || branch.name;
   });
 
-  protected onBrandSelect(brand: Brand): void {
+  protected async onBrandSelect(brand: Brand): Promise<void> {
     this.store.setBrand(brand);
+    // REQ-041: recall mode skips the service step — select the single recall service up front (before
+    // navigating), so the services-selected guard on /home/notes passes. Angular runs a route's
+    // canActivate guards in parallel, so the async recallServiceGuard alone cannot win the race
+    // against the synchronous servicesSelectedGuard; selecting here makes it deterministic.
+    if (this.store.isRecallMode()) {
+      await this.store.applyRecallService();
+      void this.router.navigate(['/home/notes']);
+      return;
+    }
     void this.router.navigate(['/home/services']);
   }
 

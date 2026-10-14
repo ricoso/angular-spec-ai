@@ -14,6 +14,7 @@ import type { CustomerInfo, VehicleInfo } from '../models/customer.model';
 import type { LocationDisplay } from '../models/location.model';
 import type { AppointmentPreference, NotesExtras, NotificationChannel } from '../models/notes-extras.model';
 import { mapNotificationChannelToSoftnet } from '../models/notes-extras.model';
+import { RECALL_GROUP_ID } from '../models/recall.model';
 import type { RentCategory } from '../models/rent-category.model';
 import type { ApiCategory, ApiJobType, ApiOperation, SelectedService, ServiceDisplay, ServiceType } from '../models/service.model';
 import { AVAILABLE_SERVICES } from '../models/service.model';
@@ -22,6 +23,7 @@ import { AppointmentApiService } from '../services/appointment-api.service';
 import { BookingApiService } from '../services/booking-api.service';
 import { RentCategoryApiService } from '../services/rent-category-api.service';
 import { WorkshopCalendarApiService } from '../services/workshop-calendar-api.service';
+import { normalizeRecallVin } from '../validators/optional-vin.validator';
 
 interface BookingState {
   branches: BranchConfig[];
@@ -65,6 +67,10 @@ interface BookingState {
   isDeepLinked: boolean;
   /** Optionaler Deep-Link-Override: SoftNet-`groupId` aus der URL (z. B. tireChange-Group). */
   deepLinkGroupId: string | null;
+  /** REQ-041: true wenn das OTV über die Rückruf-URL (recall-Flag) geöffnet wurde. */
+  recallMode: boolean;
+  /** REQ-041: aus der Rückruf-URL übernommene, normalisierte FIN (oder null). */
+  recallVin: string | null;
 }
 
 const INITIAL_STATE: BookingState = {
@@ -100,7 +106,9 @@ const INITIAL_STATE: BookingState = {
   isLoading: false,
   error: null,
   isDeepLinked: false,
-  deepLinkGroupId: null
+  deepLinkGroupId: null,
+  recallMode: false,
+  recallVin: null
 };
 
 /**
@@ -120,23 +128,20 @@ export function mapAppointmentPreferenceToSoftnet(
 }
 
 /**
- * REQ-039 BR-M8: a rent category applies to the selected brand when its brand list is empty
- * (= all brands) or contains the brand. Case-insensitive, because the UI brand is lowercase
- * ('audi') while SoftNet category brands are capitalized ('Audi'). Without a selected brand only
- * all-brand categories apply.
+ * REQ-040: lowercase name substrings that identify the "Räder sind eingelagert" wheel-change
+ * service across both SoftNet group names — mirrors `OperationIdMapper.stored-tires`
+ * (default: "Räderwechsel - meine Räder sind eingelagert"; Boxenstopp: "Radwechsel mit Einlagerung").
+ * Deliberately NOT a bare 'eingelagert': that would also match the different `store-tires` service
+ * ("…angelieferten Räder sollen bitte eingelagert werden").
  */
-function rentCategoryMatchesBrand(category: RentCategory, brandLower: string | null): boolean {
-  if (category.brands.length === 0) { return true; }
-  if (brandLower === null) { return false; }
-  return category.brands.some(brand => brand.toLowerCase() === brandLower);
-}
+const STORED_TIRES_NAME_PATTERNS = ['räder sind eingelagert', 'radwechsel mit einlagerung'];
 
 export const BookingStore = signalStore(
   { providedIn: 'root' },
 
   withState<BookingState>(INITIAL_STATE),
 
-  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, snapConflict, appointmentId, notesExtras, rentCategories, selectedRentCategoryId, rentalCarRequested, rentCategoriesLoaded, appointments, workshopCalendarDays, isLoading, categories, operations, deepLinkGroupId }) => ({
+  withComputed(({ selectedBranch, selectedBrand, selectedLocation, selectedServices, bookingNote, selectedAppointment, workshopCalendarDate, customerInfo, vehicleInfo, privacyConsent, bookingSubmitted, bookingSubmitting, bookingError, snapConflict, appointmentId, notesExtras, rentCategories, selectedRentCategoryId, rentalCarRequested, rentCategoriesLoaded, appointments, workshopCalendarDays, isLoading, categories, operations, deepLinkGroupId, recallMode }) => ({
     hasBranchSelected: computed(() => selectedBranch() !== null),
     selectedBranchBrands: computed(() => {
       const branch = selectedBranch();
@@ -171,6 +176,19 @@ export const BookingStore = signalStore(
       }
       return labels;
     }),
+    /**
+     * REQ-040: true when the selection contains the "Räder sind eingelagert" wheel-change service.
+     * `serviceId` is the SoftNet operation id in the current flow, so match the operation NAME
+     * (joined via `operations()`, same as `selectedServiceLabels`) against the canonical patterns.
+     * Brand/branch/variant-independent — it only depends on which operation is selected.
+     */
+    hasStoredTiresService: computed<boolean>(() => {
+      const ops = operations();
+      return selectedServices().some(sel => {
+        const name = ops.find(o => o.id === sel.serviceId)?.name.toLowerCase() ?? '';
+        return STORED_TIRES_NAME_PATTERNS.some(pattern => name.includes(pattern));
+      });
+    }),
     hasBookingNote: computed(() => bookingNote() !== null && bookingNote() !== ''),
     hasAppointmentSelected: computed(() => selectedAppointment() !== null),
     hasWorkshopSlotSelected: computed(() => {
@@ -193,7 +211,11 @@ export const BookingStore = signalStore(
     /** REQ-031: steuert Snap-Conflict-Banner + Redirect zur Terminauswahl. */
     hasSnapConflict: computed(() => snapConflict()),
     submittedAppointmentId: computed(() => appointmentId()),
-    selectedVariant: computed<'default' | 'tireChange'>(() => {
+    selectedVariant: computed<'default' | 'tireChange' | 'recall'>(() => {
+      // REQ-041: Rückruf-Modus hat Vorrang und schaltet auf die dedizierte Rückruf-Group/-Credential.
+      if (recallMode()) {
+        return 'recall';
+      }
       // Variant = `'tireChange'` NUR wenn Boxenstopp-Deep-Link aktiv ist (deepLinkGroupId
       // entspricht der tireChange-Group der Branch). Sonst immer `'default'`.
       //
@@ -208,6 +230,8 @@ export const BookingStore = signalStore(
       }
       return 'default';
     }),
+    /** REQ-041: true when the OTV was opened via the recall URL (recall campaign mode). */
+    isRecallMode: computed<boolean>(() => recallMode()),
     /**
      * REQ-025 (b) Iter. 3: Operations gruppiert nach Tag-IDs.
      * Pro Card-Tag → Liste aller Operations mit diesem Tag, sortiert nach `order`.
@@ -353,24 +377,18 @@ export const BookingStore = signalStore(
       if (!id) return null;
       return rentCategories().find(c => c.id === id)?.name ?? null;
     }),
-    /** REQ-039 BR-M8: rent categories that apply to the selected brand (empty = none match it). */
-    rentCategoriesForBrand: computed(() => {
-      const brand = selectedBrand();
-      const brandLower = brand ? brand.toLowerCase() : null;
-      return rentCategories().filter(category => rentCategoryMatchesBrand(category, brandLower));
-    }),
-    /** REQ-039 BR-M8: the switch is only offered when the SELECTED BRAND has a matching rent category. */
-    hasRentalCarOffer: computed(() => {
-      const brand = selectedBrand();
-      const brandLower = brand ? brand.toLowerCase() : null;
-      return rentCategories().some(category => rentCategoryMatchesBrand(category, brandLower));
-    }),
-    /** REQ-039 AC-M9: "not available" once categories are known and none match the brand — no flicker. */
-    hasNoRentalCarOffer: computed(() => {
-      const brand = selectedBrand();
-      const brandLower = brand ? brand.toLowerCase() : null;
-      return rentCategoriesLoaded() && !rentCategories().some(category => rentCategoryMatchesBrand(category, brandLower));
-    }),
+    /**
+     * Rental is LOCATION-based, not brand-based (Kundenbestätigung 2026-10-13): a location that
+     * offers rent categories offers them for every brand. The per-brand gating from REQ-039 BR-M8
+     * was wrong — SoftNet lists only Audi/VW on the categories, but the dealer lends a pool car
+     * regardless of the vehicle brand. The backend substitutes a location-valid brand on the
+     * rental SoftNet call so SEAT/ŠKODA/CUPRA/Nutzfahrzeuge/Hyundai also get slots.
+     */
+    rentCategoriesForBrand: computed(() => rentCategories()),
+    /** The switch is offered whenever the selected location has any rent category. */
+    hasRentalCarOffer: computed(() => rentCategories().length > 0),
+    /** "Not available" only once categories are known and the location has none — no flicker. */
+    hasNoRentalCarOffer: computed(() => rentCategoriesLoaded() && rentCategories().length === 0),
     /** REQ-039 E-1/E-2: rental car requested, but no slot with a reserved car (or the call failed). */
     hasNoRentalCarAppointments: computed(() =>
       rentalCarRequested() && !isLoading() && appointments().length === 0
@@ -600,7 +618,12 @@ export const BookingStore = signalStore(
         switchMap(() => {
           const branchId = store.selectedLocation()?.id ?? '';
           const serviceIds = store.selectedServices().map(s => s.serviceId);
-          const brandName = store.selectedBrand() ?? '';
+          // Bugfix: selectedBrand() holds the brand SLUG ("volkswagen-nutzfahrzeuge"); SoftNet needs
+          // the real display name ("Volkswagen Nutzfahrzeuge") — a slug with a hyphen for the space
+          // makes SoftNet reject the snaps request (400), so multi-word brands got zero slots unless
+          // a rental car substituted the brand. Resolve the slug back to the loaded brand's name.
+          const brandId = store.selectedBrand();
+          const brandName = store.brands().find(b => b.id === brandId)?.name ?? brandId ?? '';
           const variant = store.selectedVariant();
           const timePreference = mapAppointmentPreferenceToSoftnet(store.selectedAppointmentPreference());
           const notifications = mapNotificationChannelToSoftnet(store.selectedNotificationChannel());
@@ -639,7 +662,12 @@ export const BookingStore = signalStore(
         switchMap((fromDate) => {
           const branchId = store.selectedLocation()?.id ?? '';
           const serviceIds = store.selectedServices().map(s => s.serviceId);
-          const brandName = store.selectedBrand() ?? '';
+          // Bugfix: selectedBrand() holds the brand SLUG ("volkswagen-nutzfahrzeuge"); SoftNet needs
+          // the real display name ("Volkswagen Nutzfahrzeuge") — a slug with a hyphen for the space
+          // makes SoftNet reject the snaps request (400), so multi-word brands got zero slots unless
+          // a rental car substituted the brand. Resolve the slug back to the loaded brand's name.
+          const brandId = store.selectedBrand();
+          const brandName = store.brands().find(b => b.id === brandId)?.name ?? brandId ?? '';
           const rentalCarRequested = store.rentalCarRequested();
           return from(workshopCalendarApi.getWorkshopCalendarDays(fromDate, branchId, serviceIds, brandName, store.selectedVariant(), rentalCarRequested)).pipe(
             tap((workshopCalendarDays) => {
@@ -850,6 +878,47 @@ export const BookingStore = signalStore(
 
     setDeepLinked(isDeepLinked: boolean): void {
       patchState(store, { isDeepLinked });
+    },
+
+    /**
+     * REQ-041: activate recall-campaign mode. Remembers the (validated/normalized) VIN from the URL
+     * and routes the booking to the dedicated recall group (`deepLinkGroupId = RECALL_GROUP_ID` →
+     * `selectedVariant() === 'recall'`). Does NOT skip location selection (the user picks it).
+     */
+    activateRecallMode(vin: string | null): void {
+      patchState(store, {
+        recallMode: true,
+        recallVin: normalizeRecallVin(vin),
+        deepLinkGroupId: RECALL_GROUP_ID
+      });
+    },
+
+    /** REQ-041: leave recall mode (normal entry / reset) and drop the recall group override. */
+    clearRecallMode(): void {
+      patchState(store, {
+        recallMode: false,
+        recallVin: null,
+        deepLinkGroupId: store.deepLinkGroupId() === RECALL_GROUP_ID ? null : store.deepLinkGroupId()
+      });
+    },
+
+    /**
+     * REQ-041: load the recall group's operation(s) for the selected branch and auto-select them —
+     * the recall group holds exactly the recall operation per branch, so no service step is needed.
+     * Idempotent and a no-op outside recall mode / without a selected branch.
+     */
+    async applyRecallService(): Promise<void> {
+      const branch = store.selectedBranch();
+      if (!store.recallMode() || !branch) { return; }
+      try {
+        const ops = await api.getOperationsByBranch(branch.branchId, RECALL_GROUP_ID);
+        patchState(store, {
+          operations: ops,
+          selectedServices: ops.map(op => ({ serviceId: op.id as ServiceType, selectedOptionIds: [] }))
+        });
+      } catch (err: unknown) {
+        console.debug('[BookingStore] recall service load failed:', err instanceof Error ? err.message : err);
+      }
     }
   }))
 );

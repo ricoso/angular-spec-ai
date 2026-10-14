@@ -19,6 +19,11 @@
           "variant": "tireChange",
           "groupId": "6908807823dcaf880659dc5e",
           "fullName": "Audi Mettmann Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -41,6 +46,11 @@
           "variant": "tireChange",
           "groupId": "690cbc436859488a77bd1eb1",
           "fullName": "Audi Zentrum Duisburg Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -63,6 +73,11 @@
           "variant": "tireChange",
           "groupId": "690237d67bd43a9f1f01b3a7",
           "fullName": "Audi Zentrum Düsseldorf Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -85,6 +100,11 @@
           "variant": "tireChange",
           "groupId": "6908821a429ef729117d1eef",
           "fullName": "Audi Zentrum Essen Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -107,6 +127,11 @@
           "variant": "tireChange",
           "groupId": "690cbc464bcdb0cd0152593f",
           "fullName": "Audi Zentrum Mülheim Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -129,6 +154,11 @@
           "variant": "tireChange",
           "groupId": "68d27e02794a7b452c5227ad",
           "fullName": "Audi Zentrum Neuss Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -151,6 +181,11 @@
           "variant": "tireChange",
           "groupId": "6908808c23dcaf880659ea93",
           "fullName": "Audi Zentrum Wuppertal Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -173,6 +208,11 @@
           "variant": "tireChange",
           "groupId": "692efcc9d6f69fcab895e50b",
           "fullName": "Automobil Zentrum Leverkusen BS planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -195,6 +235,11 @@
           "variant": "tireChange",
           "groupId": "68d27dfcbc2f5a9f555f918a",
           "fullName": "Dormagen Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -217,6 +262,11 @@
           "variant": "tireChange",
           "groupId": "6908822f429ef729117d3753",
           "fullName": "Erkrath Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -239,6 +289,11 @@
           "variant": "tireChange",
           "groupId": "690cbc487ff8b27fb379f8a5",
           "fullName": "Essen -Kray Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -261,6 +316,11 @@
           "variant": "tireChange",
           "groupId": "690cbc4a99f4bdb65b6b6719",
           "fullName": "Essen Wickenburg Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -283,6 +343,11 @@
           "variant": "tireChange",
           "groupId": "68d27dff534d720c02a9b653",
           "fullName": "Grevenbroich Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -305,6 +370,11 @@
           "variant": "tireChange",
           "groupId": "690880b323dcaf88065a0848",
           "fullName": "Mettmann VW Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -327,6 +397,11 @@
           "variant": "tireChange",
           "groupId": "690ca0a399f4bdb65b55f683",
           "fullName": "Mülheim Saarn Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -349,6 +424,11 @@
           "variant": "tireChange",
           "groupId": "68ac3023d4ba93dcfa2d12b1",
           "fullName": "Neuss Hammer Landstr. Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -371,6 +451,11 @@
           "variant": "tireChange",
           "groupId": "690c8a51bd7493c144b6ddf8",
           "fullName": "Schultz, Düsseldorf Benrath Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -393,6 +478,11 @@
           "variant": "tireChange",
           "groupId": "690cbc447ff8b27fb379f6f1",
           "fullName": "Schultz, Hagen Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -415,6 +505,11 @@
           "variant": "tireChange",
           "groupId": "690cbc4799f4bdb65b6b65fc",
           "fullName": "Schultz, Mülheim Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -437,6 +532,11 @@
           "variant": "tireChange",
           "groupId": "69023d9a71767bc6a80e1bea",
           "fullName": "Skoda-Centrum, Düsseldorf Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -459,6 +559,11 @@
           "variant": "tireChange",
           "groupId": "68be9c14c75620cfda20f8ac",
           "fullName": "Solingen Kullerstr. Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -481,6 +586,11 @@
           "variant": "tireChange",
           "groupId": "68be9c29bfd6a79f1c7d3d1a",
           "fullName": "Solingen Schlagbaumerstr (Audi) Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -503,6 +613,11 @@
           "variant": "tireChange",
           "groupId": "68ff294d23dcaf88064a117e",
           "fullName": "VW-Zentrum Nordrhein, Düsseldorf Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -525,6 +640,11 @@
           "variant": "tireChange",
           "groupId": "690cbc4c9e5d1205e2f21b25",
           "fullName": "Volkswagen Zentrum Essen Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -547,6 +667,11 @@
           "variant": "tireChange",
           "groupId": "692efccdfa906b4a962c1c7b",
           "fullName": "Volkswagen Zentrum Leverkusen planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -569,6 +694,11 @@
           "variant": "tireChange",
           "groupId": "682ad3bf7bc0a91b86e3bc47",
           "fullName": "Volkswagen und Audi Velbert Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     },
@@ -591,6 +721,11 @@
           "variant": "tireChange",
           "groupId": "690880a054f4bb2b69b08c1c",
           "fullName": "Wuppertal Uellendahler Str. Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
         }
       ]
     }

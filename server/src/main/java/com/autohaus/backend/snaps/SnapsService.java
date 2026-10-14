@@ -16,6 +16,8 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Service
 public class SnapsService {
@@ -56,8 +58,10 @@ public class SnapsService {
         boolean rentalCar = Boolean.TRUE.equals(request.replacementCar());
         // REQ-039 BR-M6: SoftNet matches rent categories case-sensitively; only the rental path
         // needs the SoftNet spelling, the plain path stays byte-identical (AC-M3).
+        // Fix 2026-10-13: rental is LOCATION-based — substitute a rent-category-valid brand when the
+        // customer's brand is on no category, so SEAT/ŠKODA/CUPRA/Nutzfahrzeuge/Hyundai also book.
         String brand = rentalCar
-            ? brandResolver.resolve(groupId, request.brandName())
+            ? resolveRentalBrand(groupId, brandResolver.resolve(groupId, request.brandName()))
             : request.brandName();
 
         Map<String, Object> softnetRequest = new LinkedHashMap<>();
@@ -123,6 +127,63 @@ public class SnapsService {
     private static boolean hasRentalCar(JsonNode snap) {
         JsonNode resource = snap.path("replacementResource");
         return resource.isTextual() && !resource.asText().isBlank();
+    }
+
+    /**
+     * Rental is LOCATION-based, not brand-based (Kundenbestätigung 2026-10-13). SoftNet gates rent
+     * categories by the request brand and answers 500 ("No matching rent category for brand X") for
+     * a brand that is on no category — at this dealer only Audi/Volkswagen are listed, so SEAT,
+     * ŠKODA, CUPRA, Volkswagen Nutzfahrzeuge and Hyundai got no rental slots at all.
+     *
+     * <p>If the customer's brand is already on a rent category we keep it (Audi → Audi,
+     * Volkswagen → Volkswagen). Otherwise we substitute a brand the location's categories accept,
+     * preferring Volkswagen, then Audi, then any — the dealer lends a brand-neutral pool car, so the
+     * rental is booked on that location-valid brand regardless of the vehicle brand. An all-brand
+     * category (empty brand list) means no substitution is needed. A failed lookup keeps the brand
+     * unchanged; the existing 500 safety net then degrades gracefully to "no rental slots".
+     */
+    private String resolveRentalBrand(String groupId, String resolvedBrand) {
+        List<JsonNode> categories;
+        try {
+            categories = softnetApi.getRentCategories(groupId);
+        } catch (RuntimeException e) {
+            log.warn("Rental brand resolution: rent categories unavailable ({}) — keeping brand '{}'",
+                e.getClass().getSimpleName(), resolvedBrand);
+            return resolvedBrand;
+        }
+        if (categories == null || categories.isEmpty()) {
+            return resolvedBrand;
+        }
+        List<String> validBrands = categories.stream()
+            .flatMap(cat -> {
+                JsonNode brands = cat.path("brand");
+                // Empty brand list = category valid for ALL brands.
+                if (!brands.isArray() || brands.isEmpty()) {
+                    return Stream.of("*");
+                }
+                return StreamSupport.stream(brands.spliterator(), false).map(b -> b.asText(""));
+            })
+            .filter(b -> b != null && !b.isBlank())
+            .toList();
+
+        // An all-brand category exists → any brand is accepted, keep the customer's.
+        if (validBrands.contains("*")) {
+            return resolvedBrand;
+        }
+        // Customer brand already accepted → keep it (Audi → Audi, Volkswagen → Volkswagen).
+        if (resolvedBrand != null && validBrands.stream().anyMatch(b -> b.equalsIgnoreCase(resolvedBrand))) {
+            return resolvedBrand;
+        }
+        // Substitute a location-valid brand: Volkswagen first, then Audi, then any (customer rule).
+        String substitute = validBrands.stream().filter(b -> b.equalsIgnoreCase("Volkswagen")).findFirst()
+            .or(() -> validBrands.stream().filter(b -> b.equalsIgnoreCase("Audi")).findFirst())
+            .or(() -> validBrands.stream().findFirst())
+            .orElse(resolvedBrand);
+        if (substitute != null && !substitute.equalsIgnoreCase(resolvedBrand)) {
+            log.info("Rental brand substitution: '{}' is on no rent category — using location-valid '{}'",
+                resolvedBrand, substitute);
+        }
+        return substitute;
     }
 
     private List<SnapResponseDto> transformSnaps(List<JsonNode> snaps) {

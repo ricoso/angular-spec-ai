@@ -300,6 +300,25 @@ class ControllerTests {
     }
 
     @Test
+    void rentCategories_recallVariant_usesRecallGroup() {
+        // REQ-041: rental offer must come from the recall group the snaps/booking use.
+        RentCategoriesController ctrl = new RentCategoriesController(rentCategoriesService);
+        when(rentCategoriesService.getRentCategories("branch-1", "recall")).thenReturn(List.of());
+
+        assertTrue(ctrl.getRentCategories("branch-1", "recall").isEmpty());
+        org.mockito.Mockito.verify(rentCategoriesService).getRentCategories("branch-1", "recall");
+    }
+
+    @Test
+    void rentCategories_nullVariant_fallsBackToDefault() {
+        RentCategoriesController ctrl = new RentCategoriesController(rentCategoriesService);
+        when(rentCategoriesService.getRentCategories("branch-1", "default")).thenReturn(List.of());
+
+        assertTrue(ctrl.getRentCategories("branch-1", null).isEmpty());
+        org.mockito.Mockito.verify(rentCategoriesService).getRentCategories("branch-1", "default");
+    }
+
+    @Test
     void sessionController_getToken_returnsTokenResult() {
         SessionController ctrl = new SessionController(sessionTokenService);
         when(sessionTokenService.generateToken()).thenReturn(new SessionTokenService.TokenResult("abc-token", "2026-04-16T13:00:00Z"));

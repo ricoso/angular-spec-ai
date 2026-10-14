@@ -1,7 +1,7 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
 <section class="page-wrap location-selection">
-  @if (!isEmbedded()) {
+  @if (showReportButton()) {
     <div class="d-flex justify-content-end mb-2">
       <button
         type="button"
@@ -15,6 +15,22 @@
   }
   <h1 class="page-title">{{ booking.location.title | translate }}</h1>
   <p class="page-subtitle">{{ booking.location.subtitle | translate }}</p>
+
+  <!-- REQ-041: Rückruf-Hinweis auf der Standortauswahl (kein eigener Landing-Screen). -->
+  @if (isRecallMode()) {
+    <div class="notice notice--info location-selection__recall" role="status">
+      <span class="location-selection__recall-badge">
+        <i class="bi bi-megaphone-fill" aria-hidden="true"></i>
+        {{ booking.recall.badge | translate }}
+      </span>
+      <p class="location-selection__recall-text">{{ booking.recall.description | translate }}</p>
+      @if (recallVin()) {
+        <p class="location-selection__recall-vin">
+          {{ booking.recall.vinDetected | translate }}: <strong>{{ recallVin() }}</strong>
+        </p>
+      }
+    </div>
+  }
 
   @if (isLoading()) {
     <div class="location-selection__loading text-center py-5" role="status" aria-live="polite">
@@ -37,11 +53,39 @@
       </button>
     </div>
   } @else {
-    <app-location-cards
-      [branches]="branches()"
-      [selectedBranch]="selectedBranch()"
-      [selectedGroupIdOverride]="selectedGroupIdOverride()"
-      (branchSelected)="onBranchSelect($event)"
-    />
+    <div class="location-selection__search">
+      <label class="location-selection__search-label" for="location-city-search">
+        {{ booking.location.searchLabel | translate }}
+      </label>
+      <div class="location-selection__search-field">
+        <i class="bi bi-search location-selection__search-icon" aria-hidden="true"></i>
+        <input
+          id="location-city-search"
+          type="search"
+          class="form-control location-selection__search-input"
+          [value]="citySearch()"
+          (input)="onCitySearch($event)"
+          [attr.placeholder]="booking.location.searchPlaceholder | translate"
+          [attr.aria-label]="booking.location.searchLabel | translate"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+
+    @if (noSearchResults()) {
+      <p class="location-selection__no-results notice notice--info" role="status">
+        <i class="bi bi-info-circle" aria-hidden="true"></i>
+        {{ booking.location.noResults | translate }}
+      </p>
+    } @else {
+      <app-location-cards
+        [branches]="branches()"
+        [selectedBranch]="selectedBranch()"
+        [selectedGroupIdOverride]="selectedGroupIdOverride()"
+        [hideTireChange]="isRecallMode()"
+        [showRecall]="!isRecallMode()"
+        (branchSelected)="onBranchSelect($event)"
+      />
+    }
   }
 </section>

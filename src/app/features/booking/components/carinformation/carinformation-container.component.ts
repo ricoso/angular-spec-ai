@@ -1,15 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import type { TranslationKey } from '@core/i18n';
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 import { WizardBreadcrumbComponent } from '@shared/components/wizard-breadcrumb/wizard-breadcrumb.component';
 import { WIZARD_STEPS } from '@shared/components/wizard-breadcrumb/wizard-steps.config';
 
 import type { CustomerInfo, VehicleInfo } from '../../models/customer.model';
 import { BookingStore } from '../../stores/booking.store';
-import { optionalVinValidator } from '../../validators/optional-vin.validator';
+import { optionalVinValidator, requiredVinValidator } from '../../validators/optional-vin.validator';
 
 import { CustomerFormComponent } from './components/customer-form/customer-form.component';
 import { VehicleFormComponent } from './components/vehicle-form/vehicle-form.component';
@@ -36,6 +37,17 @@ export class CarinformationContainerComponent {
   protected readonly carinformation = i18nKeys.booking.carinformation;
   protected readonly wizardSteps = WIZARD_STEPS;
   protected readonly activeStepIndex = 5;
+
+  /** REQ-040: "Räder sind eingelagert" selected → the VIN field is shown and required. */
+  protected readonly storedTiresSelected = computed(() => this.store.hasStoredTiresService());
+  /** REQ-041: recall campaign mode → the VIN is prefilled from the URL and required. */
+  protected readonly isRecallMode = computed(() => this.store.isRecallMode());
+  /** REQ-040/REQ-041: the VIN field is shown + mandatory for stored tires OR a recall campaign. */
+  protected readonly vinRequired = computed(() => this.storedTiresSelected() || this.isRecallMode());
+  /** Context hint under the required VIN field. */
+  protected readonly vinHintKey = computed<TranslationKey>(() =>
+    this.isRecallMode() ? this.carinformation.form.vin.recallHint : this.carinformation.form.vin.requiredHint
+  );
 
   protected readonly customerForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -73,9 +85,30 @@ export class CarinformationContainerComponent {
     if (vehicle) {
       this.vehicleForm.patchValue(vehicle);
     }
+    // REQ-041: prefill the VIN from the recall URL (editable), unless already set from stored data.
+    const recallVin = this.store.recallVin();
+    if (this.isRecallMode() && recallVin && !this.vehicleForm.controls.vin.value) {
+      this.vehicleForm.controls.vin.setValue(recallVin);
+    }
     if (this.store.privacyConsent()) {
       this.privacyControl.setValue(true);
     }
+
+    // REQ-040/REQ-041: swap the VIN validators with the required state (stored tires OR recall).
+    // Required + format when the field is shown; only the optional format check otherwise (and reset
+    // so nothing stale is sent). `emitEvent: true` ticks the child events subscription so `vinErrors`
+    // recomputes.
+    effect(() => {
+      const vin = this.vehicleForm.controls.vin;
+      if (this.vinRequired()) {
+        // REQ-040/REQ-041: whitespace-only input must NOT satisfy the mandatory field.
+        vin.setValidators([requiredVinValidator()]);
+      } else {
+        vin.setValidators([optionalVinValidator()]);
+        vin.reset('');
+      }
+      vin.updateValueAndValidity({ emitEvent: true });
+    });
   }
 
   /** Consent value as signal — `privacyControl.invalid` alone is not tracked by `computed()`. */
@@ -116,7 +149,8 @@ export class CarinformationContainerComponent {
     const vehicleInfo: VehicleInfo = {
       licensePlate: vehicleValue.licensePlate ?? '',
       mileage: vehicleValue.mileage ?? 0,
-      vin: this.normalizeVin(vehicleValue.vin)
+      // REQ-040/REQ-041: only send the VIN when it is actually asked for (stored tires or recall).
+      vin: this.vinRequired() ? this.normalizeVin(vehicleValue.vin) : undefined
     };
 
     this.store.setCustomerInfo(customerInfo);

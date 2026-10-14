@@ -21,6 +21,11 @@ softnet:
   fingerprint-json: ${SOFTNET_FINGERPRINT_JSON:}
   fingerprint-path: ${SOFTNET_FINGERPRINT_PATH:}
   timeout: ${SOFTNET_TIMEOUT:10000}
+  # REQ-041: dedicated recall-campaign credential (separate SoftNet billing). Empty → the recall
+  # group falls back to the default fingerprint (e.g. INT before the recall client is provisioned).
+  recall-fingerprint-json: ${RECALL_FINGERPRINT_JSON:}
+  recall-fingerprint-path: ${RECALL_FINGERPRINT_PATH:}
+  recall-group-id: ${RECALL_GROUP_ID:6ac7939ba4c0acee699905a8}
 
 setup:
   json: ${SETUP_JSON:}

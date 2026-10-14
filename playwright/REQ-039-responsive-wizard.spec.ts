@@ -263,9 +263,9 @@ test.describe('REQ-039 Abschnitt 18 — Mietwagen pro Termin', () => {
   });
 });
 
-// ─── Freiwillige FIN (Nutzerentscheid 2026-10-08) ───
+// ─── FIN: ohne eingelagerte Räder nicht abgefragt (REQ-040 löst REQ-039 „freiwillig“ ab) ───
 
-test.describe('REQ-039 FIN freiwillig — Kennzeichen reicht', () => {
+test.describe('REQ-039/REQ-040 FIN — ohne eingelagerte Räder kein FIN-Feld', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/home/location');
     await ensureGermanLanguage(page);
@@ -276,18 +276,17 @@ test.describe('REQ-039 FIN freiwillig — Kennzeichen reicht', () => {
     await expect(page.locator('.booking-overview')).toBeVisible();
   });
 
-  test('ungültige FIN blockiert, gültige FIN erscheint in der Übersicht', async ({ page }) => {
+  // REQ-040: die FIN ist nicht mehr generell optional, sondern nur beim stored-tires-Service
+  // sichtbar/Pflicht. Im Standard-Flow (Inspektion) darf das Feld gar nicht erscheinen.
+  test('Standardservice zeigt kein FIN-Feld', async ({ page }) => {
     await goToCarinformationPage(page);
+    await expect(page.locator('input[formcontrolname="vin"]')).toHaveCount(0);
+
     await fillCustomerForm(page);
-    await fillVehicleForm(page, { vin: 'WVW-123' });
+    await fillVehicleForm(page);
     await acceptPrivacyConsent(page);
     await clickCarinformationContinue(page);
-    await expect(page.locator('#vehicle-vin-error')).toBeVisible();
-    await expect(page).toHaveURL(/\/home\/carinformation/);
-
-    await page.locator('input[formcontrolname="vin"]').fill('wvwzzz1jz3w386752');
-    await clickCarinformationContinue(page);
     await page.locator('.booking-overview').waitFor({ state: 'visible', timeout: 10_000 });
-    await expect(page.locator('.booking-overview')).toContainText('WVWZZZ1JZ3W386752');
+    await expect(page.locator('.booking-overview')).toBeVisible();
   });
 });

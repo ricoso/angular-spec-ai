@@ -5,6 +5,7 @@ import { brandSelectedGuard } from './guards/brand-selected.guard';
 import { carInformationGuard } from './guards/car-information.guard';
 import { deepLinkGuard } from './guards/deep-link.guard';
 import { locationSelectedGuard } from './guards/location-selected.guard';
+import { recallBlocksServicesGuard, recallGuard, recallServiceGuard } from './guards/recall.guard';
 import { servicesSelectedGuard } from './guards/services-selected.guard';
 import { appointmentsResolver } from './resolvers/appointments.resolver';
 import { brandsResolver } from './resolvers/brands.resolver';
@@ -22,7 +23,7 @@ export const bookingRoutes: Routes = [
     path: 'location',
     loadComponent: () => import('./components/location-selection/location-selection-container.component')
       .then(m => m.LocationSelectionContainerComponent),
-    canActivate: [deepLinkGuard],
+    canActivate: [deepLinkGuard, recallGuard],
     resolve: { _: locationsResolver }
   },
   {
@@ -36,39 +37,39 @@ export const bookingRoutes: Routes = [
     path: 'services',
     loadComponent: () => import('./components/service-selection/service-selection-container.component')
       .then(m => m.ServiceSelectionContainerComponent),
-    canActivate: [brandSelectedGuard],
+    canActivate: [recallBlocksServicesGuard, brandSelectedGuard],
     resolve: { _: servicesResolver }
   },
   {
     path: 'notes',
     loadComponent: () => import('./components/notes/notes-container.component')
       .then(m => m.NotesContainerComponent),
-    canActivate: [servicesSelectedGuard],
+    canActivate: [recallServiceGuard, servicesSelectedGuard],
     resolve: { _: rentCategoriesResolver }
   },
   {
     path: 'appointment',
     loadComponent: () => import('./components/appointment-selection/appointment-selection-container.component')
       .then(m => m.AppointmentSelectionContainerComponent),
-    canActivate: [servicesSelectedGuard],
+    canActivate: [recallServiceGuard, servicesSelectedGuard],
     resolve: { _: appointmentsResolver }
   },
   {
     path: 'workshop-calendar',
     loadComponent: () => import('./components/workshop-calendar/workshop-calendar-container.component')
       .then(m => m.WorkshopCalendarContainerComponent),
-    canActivate: [servicesSelectedGuard]
+    canActivate: [recallServiceGuard, servicesSelectedGuard]
   },
   {
     path: 'carinformation',
     loadComponent: () => import('./components/carinformation/carinformation-container.component')
       .then(m => m.CarinformationContainerComponent),
-    canActivate: [carInformationGuard]
+    canActivate: [recallServiceGuard, carInformationGuard]
   },
   {
     path: 'booking-overview',
     loadComponent: () => import('./components/booking-overview/booking-overview-container.component')
       .then(m => m.BookingOverviewContainerComponent),
-    canActivate: [bookingOverviewGuard]
+    canActivate: [recallServiceGuard, bookingOverviewGuard]
   }
 ];

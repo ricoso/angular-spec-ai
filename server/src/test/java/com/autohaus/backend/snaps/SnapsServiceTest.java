@@ -281,4 +281,64 @@ class SnapsServiceTest {
 
         assertFalse(result.getFirst().slots().getFirst().rentalCarIncluded());
     }
+
+    // ─── Fix 2026-10-13: rental is LOCATION-based — substitute a rent-category-valid brand ───
+
+    private com.fasterxml.jackson.databind.JsonNode rentCat(String... brands) {
+        ObjectNode c = om.createObjectNode();
+        var arr = c.putArray("brand");
+        for (String b : brands) {
+            arr.add(b);
+        }
+        return c;
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @DisplayName("Rental: a brand on no rent category is substituted with a location-valid one (Volkswagen preferred)")
+    void getSnaps_rentalBrandNotOnCategory_substitutesLocationValidBrand() {
+        when(brandResolver.resolve("mock-group-id", "seat")).thenReturn("SEAT");
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of(rentCat("Audi", "Volkswagen")));
+        when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of());
+
+        service.getSnaps(request("seat", true));
+
+        org.mockito.ArgumentCaptor<Object> captor = org.mockito.ArgumentCaptor.forClass(Object.class);
+        verify(softnetApi).getSnaps(captor.capture(), eq("mock-group-id"));
+        java.util.Map<String, Object> sent = (java.util.Map<String, Object>) captor.getValue();
+        assertEquals("Volkswagen", sent.get("brand"));
+        assertEquals(java.util.Map.of("brand", "Volkswagen"), sent.get("car"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @DisplayName("Rental: a brand that IS on a rent category is kept unchanged (Audi → Audi)")
+    void getSnaps_rentalBrandOnCategory_keepsBrand() {
+        when(brandResolver.resolve("mock-group-id", "audi")).thenReturn("Audi");
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of(rentCat("Audi", "Volkswagen")));
+        when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of());
+
+        service.getSnaps(request("audi", true));
+
+        org.mockito.ArgumentCaptor<Object> captor = org.mockito.ArgumentCaptor.forClass(Object.class);
+        verify(softnetApi).getSnaps(captor.capture(), eq("mock-group-id"));
+        java.util.Map<String, Object> sent = (java.util.Map<String, Object>) captor.getValue();
+        assertEquals("Audi", sent.get("brand"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @DisplayName("Rental: an all-brand category (empty brand list) accepts any brand — no substitution")
+    void getSnaps_rentalAllBrandCategory_keepsBrand() {
+        when(brandResolver.resolve("mock-group-id", "seat")).thenReturn("SEAT");
+        when(softnetApi.getRentCategories("mock-group-id")).thenReturn(List.of(rentCat()));
+        when(softnetApi.getSnaps(any(), eq("mock-group-id"))).thenReturn(List.of());
+
+        service.getSnaps(request("seat", true));
+
+        org.mockito.ArgumentCaptor<Object> captor = org.mockito.ArgumentCaptor.forClass(Object.class);
+        verify(softnetApi).getSnaps(captor.capture(), eq("mock-group-id"));
+        java.util.Map<String, Object> sent = (java.util.Map<String, Object>) captor.getValue();
+        assertEquals("SEAT", sent.get("brand"));
+    }
 }

@@ -81,6 +81,12 @@ export const translations = {
         vehicle: 'Kontakt- & Fahrzeugdaten',
         overview: 'Übersicht'
       },
+      recall: {
+        badge: 'Rückrufaktion',
+        title: 'Termin für Ihre Rückrufaktion',
+        description: 'Sie buchen einen Termin für eine Rückrufaktion. Der passende Service ist bereits ausgewählt.',
+        vinDetected: 'Erkannte FIN'
+      },
       branch: {
         infoLabel: 'Ihr Standort',
         infoSeparator: '—'
@@ -98,6 +104,9 @@ export const translations = {
         subtitle: 'Wählen Sie Ihren Standort — die Markenlogos helfen Ihnen bei der Orientierung',
         ariaGroupLabel: 'Standortauswahl',
         ariaNavLabel: 'Seitennavigation',
+        searchLabel: 'Standort nach Stadt suchen',
+        searchPlaceholder: 'Stadt eingeben, z. B. Essen',
+        noResults: 'Kein Standort gefunden. Bitte passen Sie Ihre Suche an.',
         continueButton: 'Weiter'
       },
       services: {
@@ -286,7 +295,7 @@ export const translations = {
           mileage: { label: 'Kilometerstand', unit: 'km', placeholder: 'Bitte Werte ab 10 km eingeben',
             hint: 'Bitte Werte ab 10 km eingeben',
             error: { required: 'Bitte geben Sie den Kilometerstand ein.', digitsOnly: 'Kilometerstand darf nur Zahlen enthalten.', min: 'Bitte geben Sie einen Kilometerstand von mindestens 10 km ein.' } },
-vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der FIN', optionalHint: 'Freiwillig – hilft der Werkstatt, Ihr Fahrzeug eindeutig zuzuordnen.',
+vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der FIN', optionalHint: 'Freiwillig – hilft der Werkstatt, Ihr Fahrzeug eindeutig zuzuordnen.', requiredHint: 'Zur eindeutigen Zuordnung Ihrer eingelagerten Räder erforderlich.', recallHint: 'Zur eindeutigen Zuordnung der Rückrufaktion zu Ihrem Fahrzeug erforderlich.',
             error: { required: 'Bitte geben Sie die Fahrzeugidentifikationsnummer ein.', invalidLength: 'Die FIN muss genau 17 Zeichen enthalten.', invalidFormat: 'Die FIN darf nur Buchstaben und Zahlen enthalten.' } },
           privacy: { consent: 'Ich willige in die Verarbeitung meiner personenbezogenen Daten zum Zwecke der Online-Terminvereinbarung ein. Informationen',
             privacyLink: 'hier',
@@ -453,6 +462,12 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
         vehicle: 'Contact & vehicle details',
         overview: 'Overview'
       },
+      recall: {
+        badge: 'Recall campaign',
+        title: 'Appointment for your recall campaign',
+        description: 'You are booking an appointment for a recall campaign. The matching service is already selected.',
+        vinDetected: 'Detected VIN'
+      },
       branch: {
         infoLabel: 'Your location',
         infoSeparator: '—'
@@ -470,6 +485,9 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
         subtitle: 'Select your location — brand logos help you navigate',
         ariaGroupLabel: 'Location selection',
         ariaNavLabel: 'Page navigation',
+        searchLabel: 'Search location by city',
+        searchPlaceholder: 'Enter a city, e.g. Essen',
+        noResults: 'No location found. Please adjust your search.',
         continueButton: 'Continue'
       },
       services: {
@@ -658,7 +676,7 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
           mileage: { label: 'Mileage', unit: 'km', placeholder: 'Please enter a value of at least 10 km',
             hint: 'Please enter a value of at least 10 km',
             error: { required: 'Please enter the current mileage.', digitsOnly: 'Mileage may only contain digits.', min: 'Please enter a mileage of at least 10 km.' } },
-vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of VIN', optionalHint: 'Optional – helps the workshop identify your vehicle.',
+vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of VIN', optionalHint: 'Optional – helps the workshop identify your vehicle.', requiredHint: 'Required so we can match your stored wheels to your vehicle.', recallHint: 'Required to match the recall campaign to your vehicle.',
             error: { required: 'Please enter the vehicle identification number.', invalidLength: 'The VIN must be exactly 17 characters.', invalidFormat: 'The VIN may only contain letters and digits.' } },
           privacy: { consent: 'I consent to the processing of my personal data for the purpose of online appointment booking. More information',
             privacyLink: 'here',
@@ -825,6 +843,12 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
         vehicle: 'Контактні дані та автомобіль',
         overview: 'Огляд'
       },
+      recall: {
+        badge: 'Відклична кампанія',
+        title: 'Запис на відкличну кампанію',
+        description: 'Ви записуєтесь на відкличну кампанію. Відповідну послугу вже обрано.',
+        vinDetected: 'Виявлений VIN'
+      },
       branch: {
         infoLabel: 'Ваше місце',
         infoSeparator: '—'
@@ -842,6 +866,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
         subtitle: 'Оберіть ваше місце — логотипи марок допоможуть зорієнтуватися',
         ariaGroupLabel: 'Вибір місця',
         ariaNavLabel: 'Навігація сторінки',
+        searchLabel: 'Пошук місця за містом',
+        searchPlaceholder: 'Введіть місто, напр. Essen',
+        noResults: 'Місце не знайдено. Будь ласка, змініть запит.',
         continueButton: 'Далі'
       },
       services: {
@@ -1030,7 +1057,7 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
           mileage: { label: 'Пробіг', unit: 'км', placeholder: 'Будь ласка, вводьте значення від 10 км',
             hint: 'Будь ласка, вводьте значення від 10 км',
             error: { required: 'Будь ласка, введіть пробіг.', digitsOnly: 'Пробіг може містити лише цифри.', min: 'Будь ласка, введіть пробіг щонайменше 10 км.' } },
-vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснення VIN', optionalHint: 'Необов’язково – допомагає майстерні точно ідентифікувати ваш автомобіль.',
+vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснення VIN', optionalHint: 'Необов’язково – допомагає майстерні точно ідентифікувати ваш автомобіль.', requiredHint: 'Потрібно, щоб зіставити ваші зберігані колеса з вашим автомобілем.', recallHint: 'Потрібно для зіставлення відкличної кампанії з вашим автомобілем.',
             error: { required: 'Будь ласка, введіть ідентифікаційний номер автомобіля.', invalidLength: 'VIN має складатися рівно з 17 символів.', invalidFormat: 'VIN може містити лише літери та цифри.' } },
           privacy: { consent: 'Я погоджуюся на обробку моїх персональних даних з метою онлайн-запису на технічне обслуговування. Детальніше в нашій',
             privacyLink: 'Політиці конфіденційності',
@@ -1202,6 +1229,12 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
         vehicle: 'Coordonnées et véhicule',
         overview: 'Aperçu'
       },
+      recall: {
+        badge: 'Campagne de rappel',
+        title: 'Rendez-vous pour votre campagne de rappel',
+        description: 'Vous prenez rendez-vous pour une campagne de rappel. Le service correspondant est déjà sélectionné.',
+        vinDetected: 'NIV détecté'
+      },
       branch: {
         infoLabel: 'Votre lieu',
         infoSeparator: '—'
@@ -1219,6 +1252,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
         subtitle: 'Sélectionnez votre emplacement — les logos des marques vous aident à vous orienter',
         ariaGroupLabel: 'Sélection de l\'emplacement',
         ariaNavLabel: 'Navigation de la page',
+        searchLabel: 'Rechercher un site par ville',
+        searchPlaceholder: 'Saisissez une ville, p. ex. Essen',
+        noResults: 'Aucun site trouvé. Veuillez modifier votre recherche.',
         continueButton: 'Continuer'
       },
       services: {
@@ -1407,7 +1443,7 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
           mileage: { label: 'Kilométrage', unit: 'km', placeholder: 'Veuillez saisir une valeur d\'au moins 10 km',
             hint: 'Veuillez saisir une valeur d\'au moins 10 km',
             error: { required: 'Veuillez saisir le kilométrage.', digitsOnly: 'Le kilométrage ne peut contenir que des chiffres.', min: 'Veuillez saisir un kilométrage d\'au moins 10 km.' } },
-vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du NIV', optionalHint: 'Facultatif – aide l’atelier à identifier votre véhicule.',
+vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du NIV', optionalHint: 'Facultatif – aide l’atelier à identifier votre véhicule.', requiredHint: 'Requis pour associer vos roues stockées à votre véhicule.', recallHint: 'Requis pour associer la campagne de rappel à votre véhicule.',
             error: { required: 'Veuillez saisir le numéro d\'identification du véhicule.', invalidLength: 'Le NIV doit comporter exactement 17 caractères.', invalidFormat: 'Le NIV ne peut contenir que des lettres et des chiffres.' } },
           privacy: { consent: 'Je consens au traitement de mes données personnelles aux fins de la prise de rendez-vous en ligne. Pour en savoir plus, consultez notre',
             privacyLink: 'Politique de confidentialité',
@@ -1579,6 +1615,12 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
         vehicle: 'بيانات الاتصال والسيارة',
         overview: 'نظرة عامة'
       },
+      recall: {
+        badge: 'حملة استدعاء',
+        title: 'موعد لحملة الاستدعاء الخاصة بك',
+        description: 'أنت تحجز موعدًا لحملة استدعاء. تم بالفعل اختيار الخدمة المناسبة.',
+        vinDetected: 'رقم VIN المكتشف'
+      },
       branch: {
         infoLabel: 'موقعك',
         infoSeparator: '—'
@@ -1596,6 +1638,9 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
         subtitle: 'اختر موقعك — شعارات العلامات التجارية تساعدك في التنقل',
         ariaGroupLabel: 'اختيار الموقع',
         ariaNavLabel: 'التنقل في الصفحة',
+        searchLabel: 'البحث عن موقع حسب المدينة',
+        searchPlaceholder: 'أدخل مدينة، مثل Essen',
+        noResults: 'لم يتم العثور على موقع. يرجى تعديل بحثك.',
         continueButton: 'متابعة'
       },
       services: {
@@ -1784,7 +1829,7 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
           mileage: { label: 'عداد المسافات', unit: 'كم', placeholder: 'يرجى إدخال قيمة لا تقل عن 10 كم',
             hint: 'يرجى إدخال قيمة لا تقل عن 10 كم',
             error: { required: 'يرجى إدخال قراءة عداد المسافات.', digitsOnly: 'عداد المسافات يجب أن يحتوي على أرقام فقط.', min: 'يرجى إدخال قراءة عداد لا تقل عن 10 كم.' } },
-vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم VIN', optionalHint: 'اختياري – يساعد الورشة على تحديد سيارتك بدقة.',
+vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم VIN', optionalHint: 'اختياري – يساعد الورشة على تحديد سيارتك بدقة.', requiredHint: 'مطلوب لمطابقة إطاراتك المخزنة بسيارتك.', recallHint: 'مطلوب لمطابقة حملة الاستدعاء بسيارتك.',
             error: { required: 'يرجى إدخال رقم تعريف السيارة.', invalidLength: 'يجب أن يتكون رقم VIN من 17 حرفاً بالضبط.', invalidFormat: 'رقم VIN يجب أن يحتوي على أحرف وأرقام فقط.' } },
           privacy: { consent: 'أوافق على معالجة بياناتي الشخصية لغرض حجز موعد عبر الإنترنت. لمزيد من المعلومات راجع',
             privacyLink: 'سياسة الخصوصية',

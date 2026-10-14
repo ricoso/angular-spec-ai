@@ -209,5 +209,54 @@ describe('VehicleFormComponent', () => {
       expect(exposed.vinErrors()).toBeNull();
     });
   });
+
+  describe('vinRequired input (REQ-040/REQ-041)', () => {
+    it('defaults to false', () => {
+      expect(component.vinRequired()).toBe(false);
+    });
+
+    it('reflects a set value', () => {
+      fixture.componentRef.setInput('vinRequired', true);
+      fixture.detectChanges();
+      expect(component.vinRequired()).toBe(true);
+    });
+  });
+
+  // REQ-040: with stored tires the container adds Validators.required to the VIN control;
+  // vinErrors must then surface the required message (and still the format checks).
+  describe('vinErrors required branch (REQ-040)', () => {
+    interface Exposed { vinErrors: () => string | null; form: () => ReturnType<FormBuilder['group']> }
+
+    function makeVinRequired(): ReturnType<ReturnType<FormBuilder['group']>['get']> {
+      const exposed = component as unknown as Exposed;
+      const vin = exposed.form().get('vin');
+      vin?.setValidators([Validators.required, optionalVinValidator()]);
+      vin?.updateValueAndValidity();
+      return vin;
+    }
+
+    it('reports the required error for an empty, touched VIN', () => {
+      const vin = makeVinRequired();
+      vin?.markAsTouched();
+      const exposed = component as unknown as Exposed;
+      expect(exposed.vinErrors()).toBe('booking.carinformation.form.vin.error.required');
+    });
+
+    it('still reports invalidFormat for a malformed required VIN', () => {
+      const vin = makeVinRequired();
+      vin?.setValue('WVW-123');
+      vin?.markAsTouched();
+      const exposed = component as unknown as Exposed;
+      expect(exposed.vinErrors()).toBe('booking.carinformation.form.vin.error.invalidFormat');
+    });
+
+    it('is null for a valid required VIN', () => {
+      const vin = makeVinRequired();
+      vin?.setValue('WVWZZZ1JZ3W386752');
+      vin?.markAsTouched();
+      const exposed = component as unknown as Exposed;
+      expect(exposed.vinErrors()).toBeNull();
+    });
+  });
 });
 

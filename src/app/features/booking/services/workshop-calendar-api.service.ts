@@ -32,7 +32,7 @@ export class WorkshopCalendarApiService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  public async getWorkshopCalendarDays(fromDate: string, branchId: string, serviceIds: string[], brandName?: string, variant?: 'default' | 'tireChange', rentalCarRequested = false): Promise<WorkshopCalendarDay[]> {
+  public async getWorkshopCalendarDays(fromDate: string, branchId: string, serviceIds: string[], brandName?: string, variant?: 'default' | 'tireChange' | 'recall', rentalCarRequested = false): Promise<WorkshopCalendarDay[]> {
     const toDate = new Date(`${fromDate}T00:00:00`);
     toDate.setDate(toDate.getDate() + 14);
     const toDateStr = this.formatIsoDate(toDate);

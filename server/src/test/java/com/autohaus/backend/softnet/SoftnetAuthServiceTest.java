@@ -85,4 +85,17 @@ class SoftnetAuthServiceTest {
         service.init();
         assertThrows(RuntimeException.class, service::getAccessToken);
     }
+
+    // REQ-041: the recall group falls back to the DEFAULT credential when no recall fingerprint is
+    // configured (e.g. INT before the dedicated recall client is provisioned).
+    @Test
+    void getAccessToken_recallGroupWithoutRecallCredential_fallsBackToDefault() {
+        SoftnetProperties props = new SoftnetProperties(
+            "http://test", "http://auth", "", null, 10000, "", null, "recall-grp");
+        SoftnetAuthService service = new SoftnetAuthService(props, objectMapper);
+        service.init();
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> service.getAccessToken("recall-grp"));
+        assertTrue(ex.getMessage().contains("'default'"),
+            "recall group without a recall credential must fall back to the default credential");
+    }
 }

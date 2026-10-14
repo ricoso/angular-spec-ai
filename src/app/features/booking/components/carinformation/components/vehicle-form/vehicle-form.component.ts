@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, signal } f
 import type { FormGroup } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 
+import type { TranslationKey } from '@core/i18n';
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 
 @Component({
@@ -17,6 +18,15 @@ import { i18nKeys, TranslatePipe } from '@core/i18n';
 })
 export class VehicleFormComponent {
   public readonly form = input.required<FormGroup>();
+
+  /**
+   * REQ-040/REQ-041: when the VIN is required (stored-tires service or recall campaign) the field is
+   * shown and mandatory; otherwise it is hidden and not asked. The container owns the matching
+   * validator swap on the `vin` control and picks the explanatory hint.
+   */
+  public readonly vinRequired = input<boolean>(false);
+  /** REQ-041: context hint under the required VIN field (stored tires vs. recall assignment). */
+  public readonly vinHintKey = input<TranslationKey>(i18nKeys.booking.carinformation.form.vin.requiredHint);
 
   protected readonly carinformation = i18nKeys.booking.carinformation;
 
@@ -51,11 +61,15 @@ export class VehicleFormComponent {
   /** REQ-039: drives `is-invalid` / `aria-invalid` of the optional VIN field. */
   protected readonly vinInvalid = computed(() => this.vinErrors() !== null);
 
-  /** REQ-039: optional VIN — errors only for a non-empty, malformed value. */
+  /**
+   * REQ-039/REQ-040: VIN errors. When the field is required (stored tires) an empty value yields
+   * the `required` message; otherwise only a non-empty, malformed value errors (format/length).
+   */
   protected readonly vinErrors = computed(() => {
     this.formStateTick();
     const ctrl = this.form().get('vin');
     if (!ctrl?.touched || ctrl.valid) { return null; }
+    if (ctrl.hasError('required')) { return this.carinformation.form.vin.error.required; }
     if (ctrl.hasError('vinFormat')) { return this.carinformation.form.vin.error.invalidFormat; }
     return this.carinformation.form.vin.error.invalidLength;
   });

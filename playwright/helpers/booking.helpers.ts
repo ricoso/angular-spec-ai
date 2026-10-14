@@ -733,6 +733,72 @@ export async function goToCarinformationPage(
   await waitForAngular(page);
 }
 
+/**
+ * REQ-040: select the stored-tires wheel-change operation, which makes the VIN mandatory on the
+ * car-information page. The default flow helpers always pick "Inspektion", which never triggers
+ * the FIN requirement.
+ *
+ * SoftNet INT names this operation "Radwechsel mit Einlagerung" in the normal OTV (some groups
+ * also use "… meine Räder sind eingelagert"). We match either canonical phrase — the same two
+ * the backend OperationIdMapper keys off for `stored-tires`. The regex excludes the sibling
+ * "Radwechsel ohne Einlagerung" (bring-own-tires) and the different "store-tires" service
+ * ("… sollen bitte eingelagert werden").
+ */
+export async function selectStoredTiresOperation(page: Page): Promise<void> {
+  const categoryCards = page.locator('app-service-card');
+  const cardCount = await categoryCards.count();
+
+  const storedTires = page
+    .locator('.service-option', { hasText: /sind eingelagert|mit einlagerung/i })
+    .locator('input[type="checkbox"]')
+    .first();
+
+  // i === -1 checks the auto-activated first category without re-clicking.
+  for (let i = -1; i < cardCount; i++) {
+    if (i >= 0) {
+      await categoryCards.nth(i).click();
+      await waitForAngular(page);
+    }
+    if (await storedTires.isVisible().catch(() => false)) {
+      if (!(await storedTires.isChecked())) {
+        await storedTires.check({ force: true });
+        await waitForAngular(page);
+      }
+      return;
+    }
+  }
+
+  throw new Error('Stored-tires operation ("… sind eingelagert" / "… mit Einlagerung") not found in the service carousel');
+}
+
+/**
+ * REQ-040: navigate to the car-information page having selected the stored-tires operation,
+ * so the VIN field is shown and required. Mirrors goToCarinformationPage but swaps the service
+ * pick (Inspektion → "… sind eingelagert").
+ */
+export async function goToCarinformationWithStoredTires(
+  page: Page,
+  options?: { brandName?: string; locationName?: string }
+): Promise<void> {
+  await goToServiceSelection(page, options?.brandName, options?.locationName);
+  await selectStoredTiresOperation(page);
+
+  const servicesContinue = page.locator('.services-bottom-bar .btn-primary');
+  await expect(servicesContinue).toBeEnabled();
+  await servicesContinue.click();
+  await page.locator('.notes').waitFor({ state: 'visible', timeout: 10_000 });
+  await waitForAngular(page);
+
+  await clickNotesContinue(page);
+  await page.locator('.appointment-selection').waitFor({ state: 'visible', timeout: 10_000 });
+  await waitForAngular(page);
+
+  await selectAppointmentCard(page, 0);
+  await clickAppointmentContinue(page);
+  await page.locator('.carinformation').waitFor({ state: 'visible', timeout: 10_000 });
+  await waitForAngular(page);
+}
+
 /** Fill in the customer form with valid test data */
 export async function fillCustomerForm(
   page: Page,

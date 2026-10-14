@@ -11,6 +11,12 @@ coverage
 .env.*
 **/.env
 **/.env.*
+# Secrets / Credentials — nie in den Build-Kontext (enthalten private keys)
+fingerprint-*.json
+cognigy.net_*.json
+*.xlsx
+3rd-party_Authentication-Authorization.html
+soft-netOpenAPI.html
 *.log
 playwright-report
 playwright/reports

@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 
 import { AVAILABLE_BRANDS } from '../../models/brand.model';
 import { LOCATIONS_BY_BRAND } from '../../models/location.model';
-import { AVAILABLE_SERVICES } from '../../models/service.model';
+import { AVAILABLE_SERVICES, type ServiceType } from '../../models/service.model';
 import { AppointmentApiService } from '../../services/appointment-api.service';
 import { BookingApiService } from '../../services/booking-api.service';
 import { WorkshopCalendarApiService } from '../../services/workshop-calendar-api.service';
@@ -31,7 +31,8 @@ describe('CarinformationContainerComponent', () => {
           useValue: {
             getBrands: jest.fn().mockResolvedValue(AVAILABLE_BRANDS),
             getLocations: jest.fn().mockResolvedValue(LOCATIONS_BY_BRAND.audi),
-            getServices: jest.fn().mockResolvedValue(AVAILABLE_SERVICES)
+            getServices: jest.fn().mockResolvedValue(AVAILABLE_SERVICES),
+            getOperationsByBranch: jest.fn().mockResolvedValue([])
           }
         },
         {
@@ -156,8 +157,9 @@ describe('CarinformationContainerComponent', () => {
     });
   });
 
-  // REQ-039: VIN is optional — license plate is enough, a given VIN is sent along.
-  describe('optional VIN (REQ-039)', () => {
+  // REQ-039/REQ-040: the VIN is only asked (and only sent) when the stored-tires service is
+  // selected. Without it, the field is not required and nothing is sent even if a value lingers.
+  describe('VIN without stored tires (REQ-040)', () => {
     interface Exposed {
       onSubmit: (e: Event) => void;
       customerForm: { setValue: (v: unknown) => void };
@@ -176,21 +178,106 @@ describe('CarinformationContainerComponent', () => {
       exposed.onSubmit({ preventDefault: jest.fn() } as unknown as Event);
     }
 
-    it('should submit without VIN', () => {
+    it('submits and never sends the VIN when stored tires is not selected', () => {
       submitWithVin('   ');
       expect(store.vehicleInfo()?.vin).toBeUndefined();
       expect(router.navigate).toHaveBeenCalledWith(['/home/booking-overview']);
     });
+  });
 
-    it('should send a given VIN trimmed and upper-cased', () => {
-      submitWithVin(' wvwzzz1jz3w386752 ');
-      expect(store.vehicleInfo()?.vin).toBe('WVWZZZ1JZ3W386752');
+  // REQ-040: when the "Räder sind eingelagert" service is selected the VIN becomes mandatory
+  // and is sent trimmed + upper-cased. The validator swap is driven by the store computed.
+  describe('required VIN with stored tires (REQ-040)', () => {
+    const STORED_TIRES_OP = { id: 'op-stored-default', name: 'Räderwechsel - meine Räder sind eingelagert', description: null, tagIds: ['c1'], order: 1, imageId: null };
+
+    interface Exposed {
+      onSubmit: (e: Event) => void;
+      customerForm: { setValue: (v: unknown) => void };
+      vehicleForm: FormGroup;
+      privacyControl: { setValue: (v: unknown) => void };
+    }
+
+    async function activateStoredTires(): Promise<void> {
+      const api = TestBed.inject(BookingApiService);
+      (api.getOperationsByBranch as jest.Mock).mockResolvedValue([STORED_TIRES_OP]);
+      store.loadOperationsForBranch('b1');
+      await new Promise(r => setTimeout(r, 0));
+      store.confirmServiceOptions(STORED_TIRES_OP.id as ServiceType, []);
+      fixture.detectChanges(); // flush the validator-swap effect
+    }
+
+    function fillAndSubmit(vin: string): void {
+      const exposed = component as unknown as Exposed;
+      exposed.customerForm.setValue({
+        email: 'test@example.com', salutation: 'mr', firstName: 'Max', lastName: 'Mustermann',
+        street: 'Musterstraße 1', postalCode: '12345', city: 'Musterstadt', mobilePhone: '017012345678'
+      });
+      exposed.vehicleForm.patchValue({ licensePlate: 'B-AB 1234', mileage: 50000, vin });
+      exposed.privacyControl.setValue(true);
+      exposed.onSubmit({ preventDefault: jest.fn() } as unknown as Event);
+    }
+
+    it('exposes storedTiresSelected as true once the service is selected', async () => {
+      await activateStoredTires();
+      const exposed = component as unknown as { storedTiresSelected: () => boolean };
+      expect(exposed.storedTiresSelected()).toBe(true);
     });
 
-    it('should block submit for a malformed VIN', () => {
-      submitWithVin('WVW-123');
+    it('blocks submit when the VIN is empty (now required)', async () => {
+      await activateStoredTires();
+      fillAndSubmit('');
       expect(store.vehicleInfo()).toBeNull();
-      expect(router.navigate).not.toHaveBeenCalled();
+      expect(router.navigate).not.toHaveBeenCalledWith(['/home/booking-overview']);
+    });
+
+    it('sends the VIN trimmed and upper-cased', async () => {
+      await activateStoredTires();
+      fillAndSubmit(' wvwzzz1jz3w386752 ');
+      expect(store.vehicleInfo()?.vin).toBe('WVWZZZ1JZ3W386752');
+      expect(router.navigate).toHaveBeenCalledWith(['/home/booking-overview']);
+    });
+
+    it('blocks submit for a malformed VIN', async () => {
+      await activateStoredTires();
+      fillAndSubmit('WVW-123');
+      expect(store.vehicleInfo()).toBeNull();
+      expect(router.navigate).not.toHaveBeenCalledWith(['/home/booking-overview']);
+    });
+  });
+
+  // REQ-041: recall mode prefills the VIN from the URL and makes it required.
+  describe('recall mode (REQ-041)', () => {
+    it('prefills the VIN from recallVin and marks it required', () => {
+      store.activateRecallMode('WVWZZZ1JZ3W386752');
+      const f = TestBed.createComponent(CarinformationContainerComponent);
+      f.detectChanges();
+      const exposed = f.componentInstance as unknown as {
+        vehicleForm: FormGroup; vinRequired: () => boolean; isRecallMode: () => boolean;
+      };
+      expect(exposed.isRecallMode()).toBe(true);
+      expect(exposed.vinRequired()).toBe(true);
+      expect(exposed.vehicleForm.get('vin')?.value).toBe('WVWZZZ1JZ3W386752');
+    });
+
+    it('requires a VIN (blocks submit) when none was given in the URL', () => {
+      store.activateRecallMode(null);
+      const f = TestBed.createComponent(CarinformationContainerComponent);
+      f.detectChanges();
+      const exposed = f.componentInstance as unknown as {
+        onSubmit: (e: Event) => void;
+        customerForm: { setValue: (v: unknown) => void };
+        vehicleForm: FormGroup;
+        privacyControl: { setValue: (v: unknown) => void };
+      };
+      exposed.customerForm.setValue({
+        email: 'test@example.com', salutation: 'mr', firstName: 'Max', lastName: 'Mustermann',
+        street: 'Musterstraße 1', postalCode: '12345', city: 'Musterstadt', mobilePhone: '017012345678'
+      });
+      exposed.vehicleForm.patchValue({ licensePlate: 'B-AB 1234', mileage: 50000, vin: '' });
+      exposed.privacyControl.setValue(true);
+      exposed.onSubmit({ preventDefault: jest.fn() } as unknown as Event);
+      expect(store.vehicleInfo()).toBeNull();
+      expect(router.navigate).not.toHaveBeenCalledWith(['/home/booking-overview']);
     });
   });
 

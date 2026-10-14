@@ -24,6 +24,16 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 import java.util.Date;
 
+/**
+ * SoftNet JWT-bearer authentication.
+ *
+ * <p>REQ-041: holds TWO credentials with separate token caches so that recall-campaign bookings
+ * are billed on their own SoftNet client ("Abrechnung"): the <b>default</b> fingerprint serves the
+ * normal OTV (default + tireChange groups), the <b>recall</b> fingerprint serves the recall group
+ * ({@code softnet.recall-group-id}). {@link #getAccessToken(String)} picks the credential by group.
+ * If no recall fingerprint is configured, the recall group falls back to the default credential so
+ * environments without the dedicated recall client (e.g. INT before provisioning) keep working.
+ */
 @Service
 public class SoftnetAuthService {
 
@@ -33,13 +43,9 @@ public class SoftnetAuthService {
     private final ObjectMapper objectMapper;
     private final RestClient authClient;
 
-    private String clientEmail;
-    private String clientId;
-    private RSAPrivateKey privateKey;
-    private String privateKeyId;
-
-    private String accessToken = "";
-    private long tokenExpiresAt = 0;
+    private final Credential defaultCredential = new Credential("default");
+    private final Credential recallCredential = new Credential("recall");
+    private String recallGroupId;
 
     public SoftnetAuthService(SoftnetProperties properties, ObjectMapper objectMapper) {
         this.properties = properties;
@@ -49,44 +55,137 @@ public class SoftnetAuthService {
 
     @PostConstruct
     public void init() {
-        loadFingerprint();
+        this.recallGroupId = properties.recallGroupId();
+        loadCredential(defaultCredential, properties.fingerprintJson(), properties.fingerprintPath());
+        loadCredential(recallCredential, properties.recallFingerprintJson(), properties.recallFingerprintPath());
+        if (!recallCredential.loaded) {
+            log.info("No recall fingerprint configured — recall group falls back to the default credential");
+        }
     }
 
-    private void loadFingerprint() {
-        String fingerprintJson = properties.fingerprintJson();
+    /** Backwards-compatible: the default credential's token (normal OTV + tireChange). */
+    public String getAccessToken() {
+        return getAccessToken(null);
+    }
 
-        // Fall back to file if env var is empty
-        if ((fingerprintJson == null || fingerprintJson.isBlank()) && properties.fingerprintPath() != null && !properties.fingerprintPath().isBlank()) {
+    /**
+     * REQ-041: token for the given SoftNet group. The recall group uses the recall credential (when
+     * configured); every other group — and the recall group without a dedicated credential — uses
+     * the default credential.
+     */
+    public String getAccessToken(String groupId) {
+        boolean isRecall = recallGroupId != null && !recallGroupId.isBlank()
+            && recallGroupId.equals(groupId) && recallCredential.loaded;
+        return tokenFor(isRecall ? recallCredential : defaultCredential);
+    }
+
+    private void loadCredential(Credential credential, String fingerprintJson, String fingerprintPath) {
+        String json = fingerprintJson;
+
+        // Fall back to file if the env var is empty.
+        if ((json == null || json.isBlank()) && fingerprintPath != null && !fingerprintPath.isBlank()) {
             try {
-                Path path = Path.of(properties.fingerprintPath());
+                Path path = Path.of(fingerprintPath);
                 if (Files.exists(path)) {
-                    fingerprintJson = Files.readString(path);
-                    log.info("Fingerprint loaded from file: {}", properties.fingerprintPath());
+                    json = Files.readString(path);
+                    log.info("[{}] Fingerprint loaded from file: {}", credential.name, fingerprintPath);
                 } else {
-                    log.warn("SOFTNET_FINGERPRINT_PATH set but file not found: {}", properties.fingerprintPath());
+                    log.warn("[{}] fingerprint path set but file not found: {}", credential.name, fingerprintPath);
                 }
             } catch (Exception e) {
-                log.error("Failed to read fingerprint from file {}: {}", properties.fingerprintPath(), e.getMessage());
+                log.error("[{}] failed to read fingerprint from file {}: {}", credential.name, fingerprintPath, e.getMessage());
             }
         }
 
-        if (fingerprintJson == null || fingerprintJson.isBlank()) {
-            log.warn("SOFTNET_FINGERPRINT_JSON not set and no fingerprint file available — SoftNet auth will fail");
+        if (json == null || json.isBlank()) {
+            if ("default".equals(credential.name)) {
+                log.warn("SOFTNET_FINGERPRINT_JSON not set and no fingerprint file available — SoftNet auth will fail");
+            }
             return;
         }
 
         try {
-            JsonNode node = objectMapper.readTree(fingerprintJson);
-            this.clientEmail = node.get("client_email").asText();
-            this.clientId = node.get("client_id").asText();
-            this.privateKeyId = node.get("private_key_id").asText();
-
-            String pemKey = node.get("private_key").asText();
-            this.privateKey = parseRsaPrivateKey(pemKey);
-
-            log.info("Fingerprint parsed successfully — SoftNet auth ready");
+            JsonNode node = objectMapper.readTree(json);
+            credential.clientEmail = node.get("client_email").asText();
+            credential.clientId = node.get("client_id").asText();
+            credential.privateKeyId = node.get("private_key_id").asText();
+            credential.privateKey = parseRsaPrivateKey(node.get("private_key").asText());
+            credential.loaded = true;
+            log.info("[{}] Fingerprint parsed successfully — SoftNet auth ready", credential.name);
         } catch (Exception e) {
-            log.error("Failed to parse fingerprint JSON: {}", e.getMessage());
+            log.error("[{}] failed to parse fingerprint JSON: {}", credential.name, e.getMessage());
+        }
+    }
+
+    private synchronized String tokenFor(Credential credential) {
+        if (!credential.loaded) {
+            throw new IllegalStateException(
+                "Failed to authenticate with SoftNet API — credential '" + credential.name + "' is not configured");
+        }
+        long now = System.currentTimeMillis() / 1000;
+        if (!credential.accessToken.isEmpty() && credential.expiresAt > now + 60) {
+            return credential.accessToken;
+        }
+
+        log.info("[{}] Requesting new SoftNet access token...", credential.name);
+        try {
+            long iat = now;
+            long exp = iat + 300;
+
+            JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .claim("id", credential.privateKeyId)
+                .claim("scope", "scope.api.planning.service")
+                .subject(credential.clientEmail)
+                .issuer(credential.clientId)
+                .audience(properties.authUrl())
+                .issueTime(new Date(iat * 1000))
+                .expirationTime(new Date(exp * 1000))
+                .build();
+
+            JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
+                .type(com.nimbusds.jose.JOSEObjectType.JWT)
+                .build();
+
+            SignedJWT signedJWT = new SignedJWT(header, claims);
+            JWSSigner signer = new RSASSASigner(credential.privateKey);
+            signedJWT.sign(signer);
+            String jwtString = signedJWT.serialize();
+
+            String body = "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=" + jwtString;
+
+            String responseBody = authClient.post()
+                .uri(properties.authUrl())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(body)
+                .retrieve()
+                .body(String.class);
+
+            JsonNode responseJson = objectMapper.readTree(responseBody);
+            credential.accessToken = responseJson.get("access_token").asText();
+            int expiresIn = responseJson.get("expires_in").asInt();
+            credential.expiresAt = now + expiresIn;
+
+            log.info("[{}] SoftNet token obtained, expires in {}s", credential.name, expiresIn);
+            return credential.accessToken;
+        } catch (Exception e) {
+            log.error("[{}] failed to get SoftNet access token: {}", credential.name, e.getMessage());
+            throw new RuntimeException("Failed to authenticate with SoftNet API", e);
+        }
+    }
+
+    /** One SoftNet client credential plus its token cache. */
+    private static final class Credential {
+        private final String name;
+        private String clientEmail;
+        private String clientId;
+        private String privateKeyId;
+        private RSAPrivateKey privateKey;
+        private boolean loaded;
+        private String accessToken = "";
+        private long expiresAt = 0;
+
+        private Credential(String name) {
+            this.name = name;
         }
     }
 
@@ -105,12 +204,10 @@ public class SoftnetAuthService {
 
         if (isPkcs1) {
             // PKCS#1 format: wrap in PKCS#8 envelope
-            // DER sequence: SEQUENCE { version, algorithm, privateKey }
             byte[] pkcs8Bytes = wrapPkcs1InPkcs8(keyBytes);
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(pkcs8Bytes);
             return (RSAPrivateKey) factory.generatePrivate(spec);
         } else {
-            // PKCS#8 format: use directly
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
             return (RSAPrivateKey) factory.generatePrivate(spec);
         }
@@ -122,16 +219,10 @@ public class SoftnetAuthService {
             (byte) 0xf7, 0x0d, 0x01, 0x01, 0x01};
         byte[] nullParam = {0x05, 0x00};
 
-        // AlgorithmIdentifier SEQUENCE
         byte[] algId = encodeSequence(concat(rsaOid, nullParam));
-
-        // Version INTEGER 0
         byte[] version = {0x02, 0x01, 0x00};
-
-        // PrivateKey OCTET STRING wrapping PKCS#1 key
         byte[] privateKeyOctet = encodeOctetString(pkcs1Bytes);
 
-        // Outer SEQUENCE
         return encodeSequence(concat(concat(version, algId), privateKeyOctet));
     }
 
@@ -167,57 +258,5 @@ public class SoftnetAuthService {
         System.arraycopy(a, 0, result, 0, a.length);
         System.arraycopy(b, 0, result, a.length, b.length);
         return result;
-    }
-
-    public synchronized String getAccessToken() {
-        long now = System.currentTimeMillis() / 1000;
-        if (!accessToken.isEmpty() && tokenExpiresAt > now + 60) {
-            return accessToken;
-        }
-
-        log.info("Requesting new SoftNet access token...");
-        try {
-            long iat = now;
-            long exp = iat + 300;
-
-            JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                .claim("id", privateKeyId)
-                .claim("scope", "scope.api.planning.service")
-                .subject(clientEmail)
-                .issuer(clientId)
-                .audience(properties.authUrl())
-                .issueTime(new Date(iat * 1000))
-                .expirationTime(new Date(exp * 1000))
-                .build();
-
-            JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
-                .type(com.nimbusds.jose.JOSEObjectType.JWT)
-                .build();
-
-            SignedJWT signedJWT = new SignedJWT(header, claims);
-            JWSSigner signer = new RSASSASigner(privateKey);
-            signedJWT.sign(signer);
-            String jwtString = signedJWT.serialize();
-
-            String body = "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=" + jwtString;
-
-            String responseBody = authClient.post()
-                .uri(properties.authUrl())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(body)
-                .retrieve()
-                .body(String.class);
-
-            JsonNode responseJson = objectMapper.readTree(responseBody);
-            this.accessToken = responseJson.get("access_token").asText();
-            int expiresIn = responseJson.get("expires_in").asInt();
-            this.tokenExpiresAt = now + expiresIn;
-
-            log.info("SoftNet token obtained, expires in {}s", expiresIn);
-            return this.accessToken;
-        } catch (Exception e) {
-            log.error("Failed to get SoftNet access token: {}", e.getMessage());
-            throw new RuntimeException("Failed to authenticate with SoftNet API", e);
-        }
     }
 }

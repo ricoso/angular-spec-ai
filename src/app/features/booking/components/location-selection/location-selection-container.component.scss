@@ -28,6 +28,44 @@
     color: var(--color-text-secondary);
   }
 
+  // City search above the location list.
+  &__search {
+    max-width: 30em;
+    margin: 0 auto var(--spacing-lg);
+  }
+
+  &__search-label {
+    display: block;
+    font-size: var(--font-size-sm, 0.875rem);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-xs, 0.4em);
+  }
+
+  &__search-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  &__search-icon {
+    position: absolute;
+    inset-inline-start: 0.85em;
+    color: var(--color-text-secondary);
+    pointer-events: none;
+  }
+
+  &__search-input {
+    padding-inline-start: 2.5em;
+    background-color: var(--color-background-surface);
+  }
+
+  &__no-results {
+    max-width: 30em;
+    margin: 0 auto;
+    text-align: center;
+  }
+
   &__error {
     display: flex;
     flex-direction: column;
@@ -63,5 +101,35 @@
     > .page-title {
       font-size: var(--font-size-xl);
     }
+  }
+}
+
+// REQ-041: Rückruf-Hinweis-Banner auf der Standortauswahl.
+.location-selection__recall {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  margin-bottom: var(--spacing-md, 1rem);
+
+  &-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    align-self: flex-start;
+    padding: 0.2em 0.65em;
+    border-radius: var(--radius-pill, 999px);
+    background: rgba(var(--color-primary-rgb), 0.12);
+    color: var(--color-primary);
+    font-weight: 600;
+    font-size: var(--font-size-sm, 0.875rem);
+  }
+
+  &-text {
+    margin: 0;
+  }
+
+  &-vin {
+    margin: 0;
+    font-size: var(--font-size-sm, 0.875rem);
   }
 }

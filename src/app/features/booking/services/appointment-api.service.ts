@@ -52,7 +52,7 @@ export interface AppointmentVehicle {
 export interface CreateAppointmentRequest {
   snapId: string;
   branchId: string;
-  variant?: 'default' | 'tireChange';
+  variant?: 'default' | 'tireChange' | 'recall';
   customer: AppointmentCustomer;
   vehicle: AppointmentVehicle;
   note?: string;
@@ -82,7 +82,7 @@ export class AppointmentApiService {
     branchId: string,
     serviceIds: string[],
     brandName?: string,
-    variant?: 'default' | 'tireChange',
+    variant?: 'default' | 'tireChange' | 'recall',
     timePreference?: 'AM' | 'PM',
     notifications?: { SMS: boolean; SMTP: boolean },
     rentalCarRequested = false,
@@ -156,7 +156,7 @@ export class AppointmentApiService {
     return response.data;
   }
 
-  public async getAppointment(appointmentId: string, branchId: string, variant?: 'default' | 'tireChange'): Promise<AppointmentResponse> {
+  public async getAppointment(appointmentId: string, branchId: string, variant?: 'default' | 'tireChange' | 'recall'): Promise<AppointmentResponse> {
     const params: Record<string, string> = { branchId };
     if (variant) {
       params.variant = variant;

@@ -43,6 +43,14 @@
   &__address {
     display: flex;
     align-items: center;
+    font-size: var(--font-size-sm, 0.875rem);
+    color: var(--color-text-secondary);
+  }
+
+  // Blaues Badge für die Rückrufaktion-Karte (eigene Applikation) — analog zum gelben Boxenstopp.
+  &__badge--recall {
+    background-color: var(--color-primary);
+    color: #fff;
   }
 
   &__brands {

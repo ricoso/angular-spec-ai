@@ -19,6 +19,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,7 +40,7 @@ class SoftnetApiClientTest {
 
     @Test
     void ping_whenAuthFails_returnsUnhealthy() {
-        when(authService.getAccessToken()).thenThrow(new RuntimeException("No token"));
+        when(authService.getAccessToken(any())).thenThrow(new RuntimeException("No token"));
 
         SoftnetApiClient.PingResult result = client.ping();
 
@@ -49,7 +50,7 @@ class SoftnetApiClientTest {
 
     @Test
     void ping_whenConnectionFails_returnsUnhealthy() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
 
         SoftnetApiClient.PingResult result = client.ping();
 
@@ -78,97 +79,97 @@ class SoftnetApiClientTest {
 
     @Test
     void getGroups_whenAuthFails_throwsRuntimeException() {
-        when(authService.getAccessToken()).thenThrow(new RuntimeException("No token"));
+        when(authService.getAccessToken(any())).thenThrow(new RuntimeException("No token"));
         assertThrows(RuntimeException.class, () -> client.getGroups());
     }
 
     @Test
     void getBranches_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.getBranches());
     }
 
     @Test
     void getBranch_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.getBranch("some-id"));
     }
 
     @Test
     void getBrands_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.getBrands("group-1"));
     }
 
     @Test
     void getJobTypes_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.getJobTypes("group-1"));
     }
 
     @Test
     void getOperations_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.getOperations("group-1"));
     }
 
     @Test
     void getMobilityAlternatives_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.getMobilityAlternatives("group-1"));
     }
 
     @Test
     void getGroup_whenAuthFails_throwsRuntimeException() {
-        when(authService.getAccessToken()).thenThrow(new RuntimeException("No token"));
+        when(authService.getAccessToken(any())).thenThrow(new RuntimeException("No token"));
         assertThrows(RuntimeException.class, () -> client.getGroup("g1"));
     }
 
     @Test
     void createVaultItem_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.createVaultItem(java.util.Map.of("email", "test@test.de"), "group-1"));
     }
 
     @Test
     void searchVaultItems_emptyQuery_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.searchVaultItems(java.util.Map.of(), "group-1"));
     }
 
     @Test
     void searchVaultItems_withQuery_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.searchVaultItems(java.util.Map.of("email", "test@test.de"), "group-1"));
     }
 
     @Test
     void createCar_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.createCar(java.util.Map.of("licensePlate", "B-MS1234"), "group-1"));
     }
 
     @Test
     void createAppointment_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.createAppointment(java.util.Map.of("snapId", "s1"), "group-1"));
     }
 
     @Test
     void getAppointment_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.getAppointment("a1", "group-1"));
     }
 
     @Test
     void cancelAppointment_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.cancelAppointment("a1", "group-1"));
     }
 
     @Test
     void getSnaps_whenConnectionFails_throwsException() {
-        when(authService.getAccessToken()).thenReturn("fake-token");
+        when(authService.getAccessToken(any())).thenReturn("fake-token");
         assertThrows(Exception.class, () -> client.getSnaps(java.util.Map.of("branchId", "b1"), "group-1"));
     }
 
@@ -197,7 +198,7 @@ class SoftnetApiClientTest {
                 "http://localhost:" + server.getAddress().getPort(), "http://auth", "/fp", null, 1000
             );
             SoftnetApiClient localClient = new SoftnetApiClient(authService, props, objectMapper);
-            when(authService.getAccessToken()).thenReturn("fake-token");
+            when(authService.getAccessToken(any())).thenReturn("fake-token");
 
             assertThrows(HttpServerErrorException.class,
                 () -> localClient.createAppointment(java.util.Map.of("snapId", "s1"), "group-1"));
@@ -241,7 +242,7 @@ class SoftnetApiClientTest {
                 "http://localhost:" + server.getAddress().getPort(), "http://auth", "/fp", null, 1000
             );
             SoftnetApiClient localClient = new SoftnetApiClient(authService, props, objectMapper);
-            when(authService.getAccessToken()).thenReturn("fake-token");
+            when(authService.getAccessToken(any())).thenReturn("fake-token");
 
             java.util.Map<String, Object> requestWithPii = java.util.Map.of(
                 "snapId", "s1",

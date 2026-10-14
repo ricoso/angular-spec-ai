@@ -41,8 +41,8 @@ class SetupServiceIntegrationTest {
         svc.getAllBranches().forEach(b -> {
             assertNotNull(b.branchId(), "branchId must be set for " + b.name());
             assertFalse(b.branchId().isBlank());
-            assertEquals(2, b.groups().size(),
-                "Expected default + tireChange variants for " + b.name());
+            assertEquals(3, b.groups().size(),
+                "Expected default + tireChange + recall (REQ-041) variants for " + b.name());
         });
     }
 
@@ -57,8 +57,12 @@ class SetupServiceIntegrationTest {
         svc.init();
 
         svc.getAllBranches().forEach(b -> {
-            assertEquals(1, b.groups().size(), "Only default variant expected for " + b.name());
+            // REQ-041: recall is a deep-link variant without a feature flag → stays. Only tireChange
+            // is filtered when the season is off, so default + recall remain.
+            assertEquals(2, b.groups().size(), "default + recall expected (tireChange filtered) for " + b.name());
             assertEquals("default", b.groups().get(0).variant());
+            assertTrue(b.groups().stream().noneMatch(g -> "tireChange".equals(g.variant())),
+                "tireChange must be filtered for " + b.name());
         });
     }
 
