@@ -7,6 +7,7 @@ import com.autohaus.backend.common.html.HtmlText;
 import com.autohaus.backend.usage.UsageSectionRenderer;
 import com.autohaus.backend.usage.UsageStats;
 import com.autohaus.backend.usage.insights.BranchRankingSectionRenderer;
+import com.autohaus.backend.usage.insights.EntryVariantSectionRenderer;
 import com.autohaus.backend.usage.insights.FunnelSectionRenderer;
 import com.autohaus.backend.usage.insights.InsightsViewModel;
 import com.autohaus.backend.usage.insights.ServiceGroupSectionRenderer;
@@ -459,6 +460,7 @@ class ReportHtmlGeneratorTest {
                 ReportHtmlGenerator.class, StatisticsPageRenderer.class, UsageSectionRenderer.class,
                 BriefingSectionRenderer.class, CapacitySectionRenderer.class,
                 BranchRankingSectionRenderer.class, ServiceGroupSectionRenderer.class,
+                EntryVariantSectionRenderer.class,
                 TimingSectionRenderer.class, FunnelSectionRenderer.class, LimitsSectionRenderer.class)) {
 
                 ReportHtmlGenerator bean = context.getBean(ReportHtmlGenerator.class);

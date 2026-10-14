@@ -17,6 +17,7 @@ import java.util.Map;
  * @param slotUnknown bookings without a slot time (E12), {@code null} = none to report
  * @param bookedWhenLegend runtime legend of T-1 / Laufzeit-Legende
  * @param slotLegend runtime legend of T-3 / Laufzeit-Legende
+ * @param variants REQ-042: bookings per entry variant {@code default|tireChange|recall} (G-4)
  */
 public record Period(
     String label,
@@ -29,5 +30,15 @@ public record Period(
     Cell offHoursShare,
     Cell slotUnknown,
     HeatLegend bookedWhenLegend,
-    HeatLegend slotLegend
-) {}
+    HeatLegend slotLegend,
+    Map<String, Cell> variants
+) {
+    /** REQ-042 compatibility constructor without the entry-variant distribution ({@code variants = null}). */
+    public Period(String label, String rangeLabel, Cell bookings, Map<String, Cell> groups,
+            Map<String, Map<String, Cell>> bookedWhen, Map<String, Map<String, Cell>> slotGrid,
+            Map<String, Cell> leadTime, Cell offHoursShare, Cell slotUnknown,
+            HeatLegend bookedWhenLegend, HeatLegend slotLegend) {
+        this(label, rangeLabel, bookings, groups, bookedWhen, slotGrid, leadTime, offHoursShare,
+            slotUnknown, bookedWhenLegend, slotLegend, null);
+    }
+}

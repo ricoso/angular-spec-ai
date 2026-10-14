@@ -71,6 +71,10 @@ final class InsightsViewModelPeriods {
     static final List<String> GROUPS = Arrays.stream(ServiceGroup.values())
         .map(ServiceGroup::key).toList();
 
+    /** REQ-042 (G-4): entry-variant keys in display order / Einstiegs-Varianten. */
+    static final List<String> VARIANTS = List.of(
+        UsageEventLogger.VARIANT_DEFAULT, UsageEventLogger.VARIANT_TIRE_CHANGE, UsageEventLogger.VARIANT_RECALL);
+
     /** Index of Saturday in {@link #WEEKDAYS} — Sa/So count fully as off-hours (T-2). */
     private static final int SATURDAY = 5;
 
@@ -119,9 +123,12 @@ final class InsightsViewModelPeriods {
         groups.put(MOBILITY_KEY, Cell.noData());
         Map<String, Cell> lead = new LinkedHashMap<>();
         LEAD_TIMES.forEach(key -> lead.put(key, Cell.noData()));
+        Map<String, Cell> variants = new LinkedHashMap<>();
+        VARIANTS.forEach(key -> variants.put(key, Cell.noData()));
         return new Period(label, range, Cell.noData(), Collections.unmodifiableMap(groups),
             noDataGrid(WEEKDAYS, BOOKING_DAYPARTS), noDataGrid(WEEKDAYS.subList(0, SUNDAY), SLOT_DAYPARTS),
-            Collections.unmodifiableMap(lead), Cell.noData(), null, null, null);
+            Collections.unmodifiableMap(lead), Cell.noData(), null, null, null,
+            Collections.unmodifiableMap(variants));
     }
 
     private static Map<String, Map<String, Cell>> noDataGrid(List<String> rows, List<String> columns) {
@@ -158,6 +165,10 @@ final class InsightsViewModelPeriods {
         private long mobility;
         private boolean anyMobility;
         private long mobilityBookings;
+        // REQ-042 (G-4): entry-variant distribution, additive to bookings.
+        private final long[] variants = new long[VARIANTS.size()];
+        private boolean anyVariants;
+        private long variantBookings;
 
         void add(LocalDate date, InsightsDay day) {
             days++;
@@ -205,6 +216,13 @@ final class InsightsViewModelPeriods {
                 anyMobility = true;
                 mobilityBookings += dayBookings;
                 mobility += nn(day.mobility());
+            }
+            if (day.variants() != null) {
+                anyVariants = true;
+                variantBookings += dayBookings;
+                for (int i = 0; i < VARIANTS.size(); i++) {
+                    variants[i] += nn(day.variants().get(VARIANTS.get(i)));
+                }
             }
         }
 
@@ -277,6 +295,15 @@ final class InsightsViewModelPeriods {
             }
             Node mobilityNode = anyMobility ? engine.count(MOBILITY_KEY, mobility) : null;
 
+            // G-4 (additive — each booking has exactly one entry variant) / Einstiegs-Variante.
+            Node[] variantNodes = new Node[VARIANTS.size()];
+            if (anyVariants) {
+                for (int i = 0; i < VARIANTS.size(); i++) {
+                    variantNodes[i] = engine.count("variant/" + VARIANTS.get(i), variants[i]);
+                }
+                engine.constrain(Rule.SUM, null, Arrays.asList(variantNodes));
+            }
+
             engine.solve();
 
             Map<String, Map<String, Cell>> bookedWhenCells = new LinkedHashMap<>();
@@ -313,6 +340,12 @@ final class InsightsViewModelPeriods {
             }
             groupCells.put(MOBILITY_KEY, anyMobility ? countWithShare(mobilityNode, mobilityBookings) : Cell.noData());
 
+            Map<String, Cell> variantCells = new LinkedHashMap<>();
+            for (int i = 0; i < VARIANTS.size(); i++) {
+                variantCells.put(VARIANTS.get(i),
+                    anyVariants ? countWithShare(variantNodes[i], variantBookings) : Cell.noData());
+            }
+
             Cell offHoursShare = offHoursState == CellState.VALUE
                 ? Cell.percentOf(percent(offHours, t1Total, 0)) : hiddenCell(offHoursState);
             Cell slotUnknownCell = slotUnknown == 0 ? null : countCell(slotUnknownNode);
@@ -322,7 +355,8 @@ final class InsightsViewModelPeriods {
                 Collections.unmodifiableMap(bookedWhenCells),
                 Collections.unmodifiableMap(slotCells),
                 Collections.unmodifiableMap(leadCells),
-                offHoursShare, slotUnknownCell, bookedWhenLegend, slotLegend);
+                offHoursShare, slotUnknownCell, bookedWhenLegend, slotLegend,
+                Collections.unmodifiableMap(variantCells));
         }
     }
 

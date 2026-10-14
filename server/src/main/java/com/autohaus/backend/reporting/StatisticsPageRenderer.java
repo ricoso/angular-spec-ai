@@ -3,6 +3,7 @@ package com.autohaus.backend.reporting;
 import com.autohaus.backend.capacity.CapacitySectionRenderer;
 import com.autohaus.backend.usage.UsageSectionRenderer;
 import com.autohaus.backend.usage.insights.BranchRankingSectionRenderer;
+import com.autohaus.backend.usage.insights.EntryVariantSectionRenderer;
 import com.autohaus.backend.usage.insights.FunnelSectionRenderer;
 import com.autohaus.backend.usage.insights.InsightsViewModel;
 import com.autohaus.backend.usage.insights.ServiceGroupSectionRenderer;
@@ -49,6 +50,8 @@ public class StatisticsPageRenderer {
     static final String TOC_BRANCHES = "Standorte";
     /** §17 {@code TOC_*} — S3. */
     static final String TOC_SERVICE_GROUPS = "Servicegruppen";
+    /** §17 {@code TOC_*} — REQ-042 Einstiegs-Variante (G-4). */
+    static final String TOC_ENTRY_VARIANT = "Einstieg";
     /** §17 {@code TOC_*} — S4. */
     static final String TOC_TIMING = "Zeiten";
     /** §17 {@code TOC_*} — S5 (REQ-037 section). */
@@ -68,6 +71,8 @@ public class StatisticsPageRenderer {
     static final String ANCHOR_BRANCHES = "branches";
     /** Anchor of S3. */
     static final String ANCHOR_SERVICE_GROUPS = "service-groups";
+    /** Anchor of the REQ-042 entry-variant section (G-4). */
+    static final String ANCHOR_ENTRY_VARIANT = "entry-variant";
     /** Anchor of S4. */
     static final String ANCHOR_TIMING = "timing";
     /** Anchor of S5 — the existing {@code h2#us-h} of REQ-037 (the section itself has no id). */
@@ -81,6 +86,7 @@ public class StatisticsPageRenderer {
     private final CapacitySectionRenderer capacityRenderer;
     private final BranchRankingSectionRenderer rankingRenderer;
     private final ServiceGroupSectionRenderer serviceGroupRenderer;
+    private final EntryVariantSectionRenderer entryVariantRenderer;
     private final TimingSectionRenderer timingRenderer;
     private final UsageSectionRenderer usageRenderer;
     private final FunnelSectionRenderer funnelRenderer;
@@ -103,6 +109,7 @@ public class StatisticsPageRenderer {
                                   CapacitySectionRenderer capacityRenderer,
                                   BranchRankingSectionRenderer rankingRenderer,
                                   ServiceGroupSectionRenderer serviceGroupRenderer,
+                                  EntryVariantSectionRenderer entryVariantRenderer,
                                   TimingSectionRenderer timingRenderer,
                                   UsageSectionRenderer usageRenderer,
                                   FunnelSectionRenderer funnelRenderer,
@@ -111,6 +118,7 @@ public class StatisticsPageRenderer {
         this.capacityRenderer = capacityRenderer;
         this.rankingRenderer = rankingRenderer;
         this.serviceGroupRenderer = serviceGroupRenderer;
+        this.entryVariantRenderer = entryVariantRenderer;
         this.timingRenderer = timingRenderer;
         this.usageRenderer = usageRenderer;
         this.funnelRenderer = funnelRenderer;
@@ -124,6 +132,7 @@ public class StatisticsPageRenderer {
     public StatisticsPageRenderer() {
         this(new BriefingSectionRenderer(), new CapacitySectionRenderer(),
             new BranchRankingSectionRenderer(), new ServiceGroupSectionRenderer(),
+            new EntryVariantSectionRenderer(),
             new TimingSectionRenderer(), new UsageSectionRenderer(), new FunnelSectionRenderer(),
             new LimitsSectionRenderer());
     }
@@ -159,6 +168,8 @@ public class StatisticsPageRenderer {
         if (bookings) {
             add(rankingRenderer.render(insights), ANCHOR_BRANCHES, TOC_BRANCHES, toc, sections);
             add(serviceGroupRenderer.render(insights), ANCHOR_SERVICE_GROUPS, TOC_SERVICE_GROUPS,
+                toc, sections);
+            add(entryVariantRenderer.render(insights), ANCHOR_ENTRY_VARIANT, TOC_ENTRY_VARIANT,
                 toc, sections);
             add(timingRenderer.render(insights), ANCHOR_TIMING, TOC_TIMING, toc, sections);
         }

@@ -6,6 +6,7 @@ import com.autohaus.backend.common.html.HtmlText;
 import com.autohaus.backend.usage.UsageSectionRenderer;
 import com.autohaus.backend.usage.UsageStats;
 import com.autohaus.backend.usage.insights.BranchRankingSectionRenderer;
+import com.autohaus.backend.usage.insights.EntryVariantSectionRenderer;
 import com.autohaus.backend.usage.insights.FunnelSectionRenderer;
 import com.autohaus.backend.usage.insights.InsightsViewModel;
 import com.autohaus.backend.usage.insights.ServiceGroupSectionRenderer;
@@ -158,7 +159,8 @@ public class ReportHtmlGenerator {
     public ReportHtmlGenerator(UsageSectionRenderer usageRenderer) {
         this(usageRenderer, new StatisticsPageRenderer(new BriefingSectionRenderer(),
             new CapacitySectionRenderer(), new BranchRankingSectionRenderer(),
-            new ServiceGroupSectionRenderer(), new TimingSectionRenderer(), usageRenderer,
+            new ServiceGroupSectionRenderer(), new EntryVariantSectionRenderer(),
+            new TimingSectionRenderer(), usageRenderer,
             new FunnelSectionRenderer(), new LimitsSectionRenderer()));
     }
 
@@ -766,7 +768,7 @@ public class ReportHtmlGenerator {
             .st-notfound ul{list-style:none;padding:0;margin:.4rem 0 0}
             .st-notfound a{display:inline-flex;align-items:center;min-height:2.75rem;color:var(--accent);text-underline-offset:.15em}
             .st-notfound a:focus-visible{outline:.15rem solid var(--focus);outline-offset:.15rem}
-            .cap,.rk,.sg,.tm,.fn{min-width:0}
+            .cap,.rk,.sg,.ev,.tm,.fn{min-width:0}
             .st-intro{color:var(--soft);font-size:.85rem;margin:.4rem 0 0}
             .st-range{color:var(--soft);font-size:.8rem;margin:.15rem 0 .65rem}
             .st-sub{font-size:.95rem;font-weight:650;margin:1.4rem 0 .1rem}

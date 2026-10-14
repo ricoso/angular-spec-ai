@@ -340,6 +340,21 @@ class UsageEventLoggerTest {
     }
 
     @Test
+    @DisplayName("TC-15/REQ-042: a recall-group booking logs variant recall, not default")
+    void logsRecallVariant() throws Exception {
+        String recallGroup = "6908a1b2c3d4e5f6a7b8c9e9";
+        when(setupService.findByBranchId(BRANCH)).thenReturn(new BranchSetup(BRANCH, "Autohaus Nord", null,
+            List.of(new GroupEntry("default", GROUP_DEFAULT, "Werkstatt"),
+                new GroupEntry("recall", recallGroup, "Rückrufaktion"))));
+
+        usageLogger.logBooking(BRANCH, recallGroup, snapAt("2026-10-24T07:30:00Z"), false);
+
+        JsonNode json = payload(singleFlushedLine(usageLogger));
+        assertEquals("recall", json.path("variant").asText());
+        assertEquals(recallGroup, json.path("group").asText());
+    }
+
+    @Test
     @DisplayName("TC-15: with the tire-change season switched off the default group is logged")
     void logsDefaultWhenTireChangeSeasonIsOff() throws Exception {
         SetupService realSetup = realSetup(false);

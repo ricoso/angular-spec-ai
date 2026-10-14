@@ -558,9 +558,9 @@ class Req038DeliveryStateTest {
         @DisplayName("e2e-seed: /internal/report shows .ib .cap .rk .sg .tm .us .fn .st-limits, no .ai; /bugs no .rk")
         void rendersEverySectionOnTheDefaultTab() throws Exception {
             String html = page(mockMvc, "/internal/report", 200);
-            assertEquals(List.of("ib", "cap", "rk", "sg", "tm", "us", "fn", "st-limits"), sections(html));
-            assertEquals(List.of("briefing", "capacity", "branches", "service-groups", "timing", "us-h", "funnel",
-                "limits"), tocLinks(html), "AC-4: jump links = rendered sections");
+            assertEquals(List.of("ib", "cap", "rk", "sg", "ev", "tm", "us", "fn", "st-limits"), sections(html));
+            assertEquals(List.of("briefing", "capacity", "branches", "service-groups", "entry-variant", "timing",
+                "us-h", "funnel", "limits"), tocLinks(html), "AC-4: jump links = rendered sections");
             assertTrue(html.contains("<section class=\"" + DROPOFF_SUBSECTION + "\""), "N1 sub-section");
             assertFalse(html.contains("class=\"ai\""), "BR-3: no AI summary on the statistics tab");
             // S5 (REQ-037) names its own missing blob with the same words — only S0–S4, S6, S7 count.

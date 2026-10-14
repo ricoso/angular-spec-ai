@@ -77,6 +77,15 @@ beide (required sieht einen nicht-leeren String, der optionale Validator trimmt 
 **Fix:** Neuer `requiredVinValidator()` — leere/whitespace-only Eingabe ergibt `{ required: true }`,
 ein gegebener Wert muss ein gültiger 17-stelliger alphanumerischer FIN sein.
 
+### BUG-5 — Rückruf-Buchungen wurden in der Statistik als „default" gezählt
+
+**Ursache:** Die anonyme Buchungs-Statistik (REQ-038) kollabierte jede Variante ≠ `tireChange` auf
+`default` — an **zwei** Stellen: `UsageEventLogger.variantOf` und `InsightsAggregator.parseBookingRow`.
+Rückruf-Buchungen waren dadurch in der Statistik unsichtbar (als `default` mitgezählt).
+
+**Fix:** Beide Stellen geben/whitelisten jetzt die echte Variante (`default`/`tireChange`/`recall`);
+eine mehrdeutige Group-Zuordnung bleibt fallback-sicher `default`. Siehe UI-6.
+
 ### BUG-4 — Rückruf-Modus: Mietwagen-Angebot aus der falschen Group
 
 **Ursache:** `RentCategoriesController` reichte nur `variant=tireChange` durch, alles andere wurde
@@ -123,6 +132,24 @@ Kundendaten-Schritt eingegeben). Die **Kunden-Rückrufseite** (Deep-Link `?recal
 > intern/zum Testen gewünscht ist, kann sie hinter einen Schalter (z. B. URL-Parameter) gelegt
 > werden. Entscheidung des Nutzers steht aus.
 
+### UI-6 — Statistik: neue Kategorie „Einstieg" (Varianten-Verteilung, G-4)
+
+Auf der Statistikseite (`/internal/report`, serverseitiges HTML) gibt es eine neue Sektion
+**„Einstieg: Woher kommen die Buchungen?"** zwischen „Servicegruppen" und „Zeiten". Sie zählt die
+Buchungen je Einstiegs-Variante — **Normal** (`default`), **Radwechsel** (`tireChange`) und
+**Rückrufaktion** (`recall`) — je Zeitraum (aktueller Monat + laufendes Jahr), als Balken mit Anzahl
+und Anteil. Rein anonymes Aggregat (nur Zählung je Variante, nie „wer"); es gilt dieselbe
+Schwellwert-Unterdrückung (BR-9) wie bei den übrigen Aggregaten.
+
+**Umsetzung (Backend, da das Dashboard serverseitig gerendert wird):**
+- Erfassung: `UsageEventLogger` (echte Variante, BUG-5) → anonyme Buchungszeile.
+- Aggregation: `InsightsAggregator.GlobalAcc` zählt je Variante → `InsightsDay.variants` →
+  `Period.variants` (`InsightsViewModelPeriods`). Beide Records haben einen abwärtskompatiblen
+  Konstruktor, damit ältere Blobs ohne das Feld weiter lesbar sind (`InsightsBlobClient` schreibt
+  `variants` nur, wenn vorhanden).
+- Anzeige: neuer `EntryVariantSectionRenderer`, eingehängt in `StatisticsPageRenderer` (Anker
+  `entry-variant`, TOC „Einstieg"); erscheint auch automatisch in `insights.json`.
+
 ### UI-5 — Hinweis „Serviceauswahl entfällt" entfernt (aus REQ-041)
 
 Der Zusatzhinweis im Rückruf-Banner wurde auf Wunsch entfernt; der Banner zeigt nur noch Badge,
@@ -147,6 +174,13 @@ gelöscht, Mockup aktualisiert.
 
 **Backend:**
 - `server/.../rentcategories/RentCategoriesController.java` — BUG-4 (`variant=recall` durchreichen)
+- `server/.../usage/insights/UsageEventLogger.java` — BUG-5 (echte Variante, `VARIANT_RECALL`)
+- `server/.../usage/insights/InsightsAggregator.java` — BUG-5 + UI-6 (Whitelist, `GlobalAcc`-Zähler)
+- `server/.../usage/insights/InsightsDay.java` + `Period.java` — UI-6 (Feld `variants` + Kompat-Konstruktor)
+- `server/.../usage/insights/InsightsBlobClient.java` — UI-6 (variants (de)serialisieren)
+- `server/.../usage/insights/InsightsViewModelPeriods.java` — UI-6 (Varianten-Akkumulation + Cells)
+- `server/.../usage/insights/EntryVariantSectionRenderer.java` — **neu**, UI-6 (Sektion „Einstieg")
+- `server/.../reporting/StatisticsPageRenderer.java` + `ReportHtmlGenerator.java` — UI-6 (Sektion einhängen, `.ev`-CSS)
 
 ---
 

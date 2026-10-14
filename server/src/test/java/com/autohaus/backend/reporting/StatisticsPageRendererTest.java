@@ -6,6 +6,7 @@ import com.autohaus.backend.capacity.ScanState;
 import com.autohaus.backend.usage.UsageSectionRenderer;
 import com.autohaus.backend.usage.UsageStats;
 import com.autohaus.backend.usage.insights.BranchRankingSectionRenderer;
+import com.autohaus.backend.usage.insights.EntryVariantSectionRenderer;
 import com.autohaus.backend.usage.insights.FunnelSectionRenderer;
 import com.autohaus.backend.usage.insights.InsightsViewModel;
 import com.autohaus.backend.usage.insights.ServiceGroupSectionRenderer;
@@ -48,6 +49,7 @@ class StatisticsPageRendererTest {
     private TimingSectionRenderer timing;
     private UsageSectionRenderer usage;
     private FunnelSectionRenderer funnel;
+    private EntryVariantSectionRenderer entryVariant;
     private StatisticsPageRenderer renderer;
 
     @BeforeEach
@@ -58,6 +60,7 @@ class StatisticsPageRendererTest {
         timing = mock(TimingSectionRenderer.class);
         usage = mock(UsageSectionRenderer.class);
         funnel = mock(FunnelSectionRenderer.class);
+        entryVariant = mock(EntryVariantSectionRenderer.class);
         when(capacity.render(any())).thenReturn(section("capacity", "cap"));
         when(ranking.render(any())).thenReturn(section("branches", "rk"));
         when(groups.render(any())).thenReturn(section("service-groups", "sg"));
@@ -65,7 +68,7 @@ class StatisticsPageRendererTest {
         when(usage.render(any())).thenReturn("<section class=\"us\" aria-labelledby=\"us-h\"><h2 id=\"us-h\">N</h2></section>");
         when(funnel.render(any())).thenReturn(section("funnel", "fn"));
         renderer = new StatisticsPageRenderer(new BriefingSectionRenderer(), capacity, ranking, groups,
-            timing, usage, funnel, new LimitsSectionRenderer());
+            entryVariant, timing, usage, funnel, new LimitsSectionRenderer());
     }
 
     @Test
@@ -176,7 +179,7 @@ class StatisticsPageRendererTest {
         LimitsSectionRenderer silent = mock(LimitsSectionRenderer.class);
         when(silent.render(any())).thenReturn(null);
         StatisticsPageRenderer composer = new StatisticsPageRenderer(new BriefingSectionRenderer(), capacity,
-            ranking, groups, timing, usage, funnel, silent);
+            ranking, groups, entryVariant, timing, usage, funnel, silent);
 
         assertThat(composer.render(new StatisticsPage(null, null, null, null))).isEmpty();
     }

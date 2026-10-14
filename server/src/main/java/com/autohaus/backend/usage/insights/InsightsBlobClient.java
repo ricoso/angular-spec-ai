@@ -210,6 +210,10 @@ public class InsightsBlobClient {
         putCounts(node, "groups", day.groups());
         putCount(node, "mobility", day.mobility());
         putCount(node, "serviceViews", day.serviceViews());
+        // REQ-042: only written once collected — keeps older blobs (and the §10.6 example) byte-stable.
+        if (day.variants() != null) {
+            putCounts(node, "variants", day.variants());
+        }
         FunnelDay funnel = day.funnel();
         if (funnel == null) {
             node.putNull("funnel");
@@ -380,7 +384,8 @@ public class InsightsBlobClient {
                 counts(node.get("groups"), path),
                 count(node.get("mobility"), path),
                 count(node.get("serviceViews"), path),
-                funnel(node.get("funnel"), path + ".funnel"));
+                funnel(node.get("funnel"), path + ".funnel"),
+                counts(node.get("variants"), path));
         }
 
         private FunnelDay funnel(JsonNode node, String path) {

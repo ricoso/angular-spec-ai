@@ -118,6 +118,9 @@ public class UsageEventLogger {
     /** Variant key of the tire-change group (§10.2, REQ-035) / Varianten-Schlüssel Radwechsel. */
     public static final String VARIANT_TIRE_CHANGE = "tireChange";
 
+    /** Variant key of the recall-campaign group (REQ-042) / Varianten-Schlüssel Rückrufaktion. */
+    public static final String VARIANT_RECALL = "recall";
+
     /** SoftNet ObjectId: 24 lowercase hex / SoftNet-ObjectId, 24 Hex-Zeichen klein. */
     private static final Pattern HEX_24 = Pattern.compile("^[a-f0-9]{24}$");
 
@@ -333,18 +336,25 @@ public class UsageEventLogger {
      * Group-Eintrags, sonst {@code default}.
      */
     private static String variantOf(BranchSetup branch, String groupId) {
-        boolean tireChange = false;
+        // REQ-042: capture the real variant (default/tireChange/recall) so the recall campaign is
+        // counted on its own instead of collapsing to default. An ambiguous match (the same group id
+        // on entries with different variants) or no match stays {@code default} (fallback-safe, §5.5).
         List<GroupEntry> groups = branch.groups() == null ? List.of() : branch.groups();
+        String found = null;
         for (GroupEntry group : groups) {
             if (group == null || !groupId.equals(group.groupId())) {
                 continue;
             }
-            if (!VARIANT_TIRE_CHANGE.equals(group.variant())) {
+            String variant = VARIANT_TIRE_CHANGE.equals(group.variant()) ? VARIANT_TIRE_CHANGE
+                : VARIANT_RECALL.equals(group.variant()) ? VARIANT_RECALL
+                : VARIANT_DEFAULT;
+            if (found == null) {
+                found = variant;
+            } else if (!found.equals(variant)) {
                 return VARIANT_DEFAULT;
             }
-            tireChange = true;
         }
-        return tireChange ? VARIANT_TIRE_CHANGE : VARIANT_DEFAULT;
+        return found == null ? VARIANT_DEFAULT : found;
     }
 
     /**

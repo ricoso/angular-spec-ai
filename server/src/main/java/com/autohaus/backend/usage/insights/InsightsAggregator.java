@@ -405,8 +405,13 @@ public class InsightsAggregator {
         String group = row.get(2).trim();
         boolean groupKnown = HEX_24.matcher(group).matches()
             && groupsByBranch.get(branch).contains(group);
-        String variant = ServiceGroupClassifier.TIRE_CHANGE_VARIANT.equals(row.get(3).trim())
-            ? ServiceGroupClassifier.TIRE_CHANGE_VARIANT : "default";
+        // REQ-042: die drei bekannten Varianten whitelisten (default/tireChange/recall);
+        // Fremdwerte fallen weiterhin auf default zurück (fallback-sicher, anonym).
+        String rawVariant = row.get(3).trim();
+        String variant = ServiceGroupClassifier.TIRE_CHANGE_VARIANT.equals(rawVariant)
+            ? ServiceGroupClassifier.TIRE_CHANGE_VARIANT
+            : UsageEventLogger.VARIANT_RECALL.equals(rawVariant) ? UsageEventLogger.VARIANT_RECALL
+            : "default";
         return new BookingRow(branch, group, groupKnown, variant, parseOps(row.get(4)),
             bookingDaypart,
             SlotWeekday.fromKey(row.get(6).trim()),
@@ -716,9 +721,12 @@ public class InsightsAggregator {
         private final Map<ServiceGroup, Long> groups = new EnumMap<>(ServiceGroup.class);
         private long mobility;
         private long serviceViews;
+        // REQ-042 (G-4): bookings per entry variant (default/tireChange/recall).
+        private final Map<String, Long> variants = new LinkedHashMap<>();
 
         void add(BookingRow booking, Set<ServiceGroup> bookingGroups) {
             bookings++;
+            variants.merge(booking.variant(), 1L, Long::sum);
             bookingDaypart.merge(booking.bookingDaypart(), 1L, Long::sum);
             if (booking.slotWeekday() == SlotWeekday.UNKNOWN || booking.slotDaypart() == SlotDaypart.UNKNOWN) {
                 slotUnknown++;
@@ -756,9 +764,18 @@ public class InsightsAggregator {
             for (LeadTimeBucket bucket : LeadTimeBucket.values()) {
                 lead.put(bucket.key(), leadTime.getOrDefault(bucket, 0L));
             }
+            Map<String, Long> variantMap = new LinkedHashMap<>();
+            for (String key : List.of(UsageEventLogger.VARIANT_DEFAULT,
+                    UsageEventLogger.VARIANT_TIRE_CHANGE, UsageEventLogger.VARIANT_RECALL)) {
+                long count = variants.getOrDefault(key, 0L);
+                if (count > 0) {
+                    variantMap.put(key, count);
+                }
+            }
             return new InsightsDay(bookings, Collections.unmodifiableMap(dayparts),
                 Collections.unmodifiableMap(grid), slotUnknown, Collections.unmodifiableMap(lead),
-                groupMap(groups), mobility, serviceViews, funnel);
+                groupMap(groups), mobility, serviceViews, funnel,
+                Collections.unmodifiableMap(variantMap));
         }
     }
 

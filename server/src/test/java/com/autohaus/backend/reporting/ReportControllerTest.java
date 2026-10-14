@@ -30,6 +30,7 @@ import com.autohaus.backend.usage.UsageStatsService;
 import com.autohaus.backend.usage.UsageStatsStore;
 import com.autohaus.backend.usage.insights.BranchRankingRow;
 import com.autohaus.backend.usage.insights.BranchRankingSectionRenderer;
+import com.autohaus.backend.usage.insights.EntryVariantSectionRenderer;
 import com.autohaus.backend.usage.insights.Cell;
 import com.autohaus.backend.usage.insights.FunnelSectionRenderer;
 import com.autohaus.backend.usage.insights.FunnelStage;
@@ -1536,6 +1537,12 @@ class ReportControllerTest {
                 public String render(InsightsViewModel viewModel) {
                     return viewModel == null || !viewModel.bookingsEnabled() ? ""
                         : marker("service-groups", "sg", viewModel.warnings());
+                }
+            },
+            new EntryVariantSectionRenderer() {
+                @Override
+                public String render(InsightsViewModel viewModel) {
+                    return "";
                 }
             },
             new TimingSectionRenderer() {

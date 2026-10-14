@@ -16,6 +16,8 @@ import java.util.Map;
  * @param mobility bookings with a rental car (G-3)
  * @param serviceViews sum of R-3 over all branches / Leistungsaufrufe gesamt
  * @param funnel funnel of the day, {@code null} while {@code usage.funnel.enabled=false}
+ * @param variants REQ-042: bookings per entry variant {@code default|tireChange|recall} (G-4);
+ *                 {@code null} = not collected (older blobs) → „—", a missing key means 0
  */
 public record InsightsDay(
     Long bookings,
@@ -26,5 +28,14 @@ public record InsightsDay(
     Map<String, Long> groups,
     Long mobility,
     Long serviceViews,
-    FunnelDay funnel
-) {}
+    FunnelDay funnel,
+    Map<String, Long> variants
+) {
+    /** REQ-042 compatibility constructor without the entry-variant distribution ({@code variants = null}). */
+    public InsightsDay(Long bookings, Map<String, Long> bookingDaypart,
+            Map<String, Map<String, Long>> slotGrid, Long slotUnknown, Map<String, Long> leadTime,
+            Map<String, Long> groups, Long mobility, Long serviceViews, FunnelDay funnel) {
+        this(bookings, bookingDaypart, slotGrid, slotUnknown, leadTime, groups, mobility,
+            serviceViews, funnel, null);
+    }
+}
