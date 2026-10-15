@@ -154,6 +154,9 @@ class InsightsSchedulerTest {
         InsightsHistory written = saved.get(0);
         assertEquals(15, written.days().size(), "05.10.–19.10. complete");
         assertEquals(15L, written.days().get(LocalDate.of(2026, 10, 15)).bookings());
+        // REQ-042: the entry-variant distribution survives the per-day booking/funnel merge.
+        assertEquals(Map.of("default", 14L, "recall", 1L),
+            written.days().get(LocalDate.of(2026, 10, 15)).variants(), "G-4 variants carried through the merge");
         assertEquals(12L, written.branchDays().get(LocalDate.of(2026, 10, 12)).get(BRANCH_A).bookings());
         assertEquals(clock.instant(), written.updatedAt());
         assertEquals(List.of("\"v0\""), savedEtags, "If-Match with the ETag of the read");
@@ -1149,7 +1152,7 @@ class InsightsSchedulerTest {
         }
         InsightsDay global = bookings
             ? new InsightsDay(n, dayparts(n), Map.of("MO", slots(n)), 0L, leadTimes(n), Map.of("inspection", n), 0L,
-                n * 3, funnelDay)
+                n * 3, funnelDay, Map.of("default", n - 1, "recall", 1L))
             : new InsightsDay(null, null, null, null, null, null, null, null, funnelDay);
         return new AggregatedDay(global, bookings ? Map.of(BRANCH_A, counts(n)) : Map.of());
     }

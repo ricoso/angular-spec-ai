@@ -470,9 +470,11 @@ public class InsightsScheduler {
         InsightsDay old = existing == null
             ? new InsightsDay(null, null, null, null, null, null, null, null, null) : existing;
         InsightsDay source = bookings ? fresh : old;
+        // REQ-042: carry the entry-variant distribution (G-4) through the per-day booking/funnel
+        // merge — it rides with the booking source, like groups/mobility.
         return new InsightsDay(source.bookings(), source.bookingDaypart(), source.slotGrid(),
             source.slotUnknown(), source.leadTime(), source.groups(), source.mobility(),
-            source.serviceViews(), funnel ? fresh.funnel() : old.funnel());
+            source.serviceViews(), funnel ? fresh.funnel() : old.funnel(), source.variants());
     }
 
     // ---- view / Sicht ----
