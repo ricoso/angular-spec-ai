@@ -18,7 +18,7 @@ class LlmSummaryServiceTest {
     private ReportModel model() {
         ErrorEntry e = new ErrorEntry(
             Instant.parse("2026-07-09T02:00:00Z"), "t1", "volkswagen", "Essen",
-            List.of("Inspektion"), "No match (Operation/Marke)", "/api/planning/snaps", "{}", "{}");
+            List.of("Inspektion"), "No match (Operation/Marke)", "", "/api/planning/snaps", "{}", "{}");
         return new ReportModel(Instant.parse("2026-07-09T03:00:00Z"),
             new BookingStats(20, 14, 6), new BookingStats(10, 4, 6),
             Map.of("volkswagen", 1L), Map.of("Essen", 1L), List.of(e), null);

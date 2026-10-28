@@ -1,5 +1,6 @@
 package com.autohaus.backend.reporting;
 
+import com.autohaus.backend.common.logging.LogSanitizer;
 import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.snaps.OperationIdMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -176,13 +177,17 @@ public class ReportAggregator {
         if (!requestBody.isBlank()) {
             try {
                 JsonNode req = objectMapper.readTree(requestBody);
-                brand = req.path("brand").asText("");
-                branchId = req.path("preferredBranch").asText("");
-                groupId = req.path("groupid").asText("");
-                JsonNode ops = req.path("operations");
+                // A snap search (/snaps) sends brand / preferredBranch / operations flat; a booking
+                // (/appointments) sends the patched snap, where the same data sits under
+                // branch (string or {id}), wishlist.car.brand and wishlist.operations.
+                JsonNode wishlist = req.path("wishlist");
+                brand = firstText(req.path("brand"), wishlist.path("car").path("brand"));
+                branchId = firstText(req.path("preferredBranch"), idOf(req.path("branch")));
+                groupId = req.has("groupid") ? req.path("groupid").asText("") : defaultGroupId(branchId);
+                JsonNode ops = req.path("operations").isArray() ? req.path("operations") : wishlist.path("operations");
                 if (ops.isArray()) {
                     for (JsonNode op : ops) {
-                        operationIds.add(op.asText());
+                        operationIds.add(idOf(op).asText());
                     }
                 }
             } catch (JsonProcessingException e) {
@@ -193,6 +198,7 @@ public class ReportAggregator {
         String location = resolveLocation(branchId);
         List<String> operations = resolveOperations(groupId, operationIds);
         String errorType = classifyError(responseBody);
+        String errorDetail = LogSanitizer.redact(softnetErrorDetail(responseBody));
 
         // Mask PII for display only — the metadata above (brand / branch / operations /
         // error type) was already extracted from the original, unmasked payloads.
@@ -206,10 +212,64 @@ public class ReportAggregator {
             location,
             operations,
             errorType,
+            errorDetail,
             endpoint,
             safeRequestBody,
             safeResponseBody
         );
+    }
+
+    private static String firstText(JsonNode... candidates) {
+        for (JsonNode node : candidates) {
+            String text = node.isValueNode() ? node.asText("") : "";
+            if (!text.isBlank()) {
+                return text;
+            }
+        }
+        return "";
+    }
+
+    /** SoftNet references are either a plain id string or an object with {@code id}. */
+    private static JsonNode idOf(JsonNode node) {
+        return node.isObject() ? node.path("id") : node;
+    }
+
+    /**
+     * The booking payload carries no group id (it travels in the {@code x-nrg-group} header), so
+     * service names are resolved via the branch's default group; failures leave it blank and the
+     * services fall back to the placeholder.
+     */
+    private String defaultGroupId(String branchId) {
+        if (branchId.isBlank()) {
+            return "";
+        }
+        try {
+            String groupId = setupService.resolveGroupId(branchId, null);
+            return groupId == null ? "" : groupId;
+        } catch (RuntimeException e) {
+            return "";
+        }
+    }
+
+    /**
+     * SoftNet's own error code and message (e.g. {@code GoneError — Access to the target resource
+     * is no longer available}) for the card overview; empty when the response is not JSON.
+     */
+    private String softnetErrorDetail(String responseBody) {
+        if (responseBody == null || responseBody.isBlank()) {
+            return "";
+        }
+        try {
+            JsonNode res = objectMapper.readTree(responseBody);
+            String code = firstText(res.path("code"), res.path("name"));
+            String message = firstText(res.path("message"), res.path("original").path("message"));
+            if (code.isBlank()) {
+                return message.strip();
+            }
+            return message.isBlank() ? code : code + " — " + message.strip();
+        } catch (JsonProcessingException e) {
+            return "";
+        }
     }
 
     private String resolveLocation(String branchId) {
@@ -271,6 +331,12 @@ public class ReportAggregator {
         }
         if (lower.contains("timed out") || lower.contains("did not respond")) {
             return "Timeout";
+        }
+        if (lower.contains("goneerror")) {
+            return "Termin nicht mehr verfügbar";
+        }
+        if (lower.contains("maxcount")) {
+            return "Buchungslimit erreicht";
         }
         if (lower.contains("internalservererror")) {
             return "SoftNet InternalServerError";

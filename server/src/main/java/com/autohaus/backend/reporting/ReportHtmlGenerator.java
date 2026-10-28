@@ -551,6 +551,10 @@ public class ReportHtmlGenerator {
             h.append("<div class=\"row\"><span class=\"k\">Services</span><span>")
                 .append(esc(e.operations() == null || e.operations().isEmpty() ? "—" : String.join(", ", e.operations())))
                 .append("</span><span class=\"k\">Fehlertyp</span><span class=\"etype\">").append(esc(orDash(e.errorType()))).append("</span></div>");
+            if (e.errorDetail() != null && !e.errorDetail().isBlank()) {
+                h.append("<div class=\"row\"><span class=\"k\">SoftNet</span><span class=\"mono edetail\">")
+                    .append(esc(e.errorDetail())).append("</span></div>");
+            }
             h.append("<div class=\"row\"><span class=\"k\">Trace-ID</span><span class=\"mono\">").append(esc(orDash(e.traceId())))
                 .append("</span><span class=\"k\">Endpoint</span><span class=\"mono\">").append(esc(orDash(e.endpoint()))).append("</span></div>");
             h.append("<details><summary>Gesendet (Request)</summary><pre>").append(esc(orDash(e.requestBody()))).append("</pre></details>");
@@ -701,7 +705,7 @@ public class ReportHtmlGenerator {
             .card{border:1px solid var(--line);border-radius:6px;padding:.8rem 1rem;margin:.7rem 0}
             .row{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:.3rem .7rem;font-size:.9rem;margin-bottom:.4rem}
             .k{color:var(--soft);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;align-self:center}
-            .etype{font-weight:600;color:var(--bad)}.mono{font-family:var(--mono);font-size:.82rem;word-break:break-all}
+            .etype{font-weight:600;color:var(--bad)}.edetail{grid-column:2/-1;color:var(--bad)}.mono{font-family:var(--mono);font-size:.82rem;word-break:break-all}
             details{margin-top:.4rem}summary{cursor:pointer;color:var(--accent);font-size:.85rem}
             pre{background:#0e161b;color:#c9d6dd;font-family:var(--mono);font-size:.78rem;padding:.7rem;border-radius:5px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
             .empty{color:var(--soft)}.ft{color:var(--soft);font-size:.78rem;text-align:center;margin-top:1.5rem}

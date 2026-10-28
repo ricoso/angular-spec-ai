@@ -44,6 +44,7 @@ class ReportHtmlGeneratorTest {
             "Volkswagen Essen-Kray",
             List.of("Inspektion", "Ölwechsel"),
             "No match (Operation/Marke)",
+            "InternalServerError — No match could be found",
             "/api/planning/snaps",
             requestBody,
             "{\"code\":\"InternalServerError\"}");
@@ -70,6 +71,8 @@ class ReportHtmlGeneratorTest {
         assertTrue(html.contains("80"));
         assertTrue(html.contains("20"));
         assertTrue(html.contains("trace-123"));
+        assertTrue(html.contains("<span class=\"mono edetail\">InternalServerError — No match could be found</span>"),
+            "SoftNet code + message must be visible in the card overview");
         // Iteration 2: category status overview + PII note
         assertTrue(html.contains("Status-Übersicht"));
         assertTrue(html.contains("Terminsuchen"));

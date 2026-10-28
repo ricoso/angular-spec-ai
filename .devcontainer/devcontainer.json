@@ -1,11 +1,11 @@
 {
   "name": "Angular 21 Dev Container",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
 
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/java:1": {
-      "version": "21",
+      "version": "25",
       "installGradle": "false",
       "installMaven": "false"
     }

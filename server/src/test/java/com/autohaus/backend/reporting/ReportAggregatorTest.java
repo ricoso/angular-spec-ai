@@ -161,6 +161,62 @@ class ReportAggregatorTest {
         assertEquals(List.of("Inspektion", "Service (unbekannt)"), e.operations());
     }
 
+    @Test
+    void snapErrorCarriesSoftnetCodeAndMessage() {
+        ErrorEntry e = aggregator.aggregate().errors().get(0);
+        assertEquals("InternalServerError — No match could be found", e.errorDetail());
+    }
+
+    @Test
+    @DisplayName("Booking errors: brand, location and services come from the patched snap")
+    void bookingErrorReadsMetadataFromPatchedSnap() {
+        String hexId = "6908807454f4bb2b69b03ffc";
+        errorLogLine = bookingErrorLine(
+            "{\"branch\":{\"id\":\"b1\",\"name\":\"Essen\"},\"wishlist\":{\"car\":{\"brand\":\"audi\",\"license\":\"E-AB 123\"},"
+                + "\"operations\":[{\"id\":\"" + hexId + "\"}],\"client\":{\"email\":\"max@example.com\"}}}",
+            "{\"code\":\"GoneError\",\"message\":\"Access to the target resource is no longer available \"}");
+        when(setupService.resolveGroupId("b1", null)).thenReturn("g1");
+        when(operationIdMapper.resolveOperationNames("g1", List.of(hexId))).thenReturn(List.of("Inspektion"));
+
+        ErrorEntry e = aggregator.aggregate().errors().get(0);
+        assertEquals("audi", e.brand());
+        assertEquals("Volkswagen Essen-Kray", e.location());
+        assertEquals(List.of("Inspektion"), e.operations());
+        assertEquals("Termin nicht mehr verfügbar", e.errorType());
+        assertEquals("GoneError — Access to the target resource is no longer available", e.errorDetail());
+        assertFalse(e.requestBody().contains("max@example.com"), "PII stays masked");
+    }
+
+    @Test
+    void bookingErrorWithTextualBranchAndUnknownGroupFallsBackToPlaceholder() {
+        String hexId = "6908807454f4bb2b69b03ffc";
+        errorLogLine = bookingErrorLine(
+            "{\"branch\":\"b1\",\"wishlist\":{\"operations\":[\"" + hexId + "\"]}}",
+            "{\"code\":\"BadRequest\",\"message\":\"apptMaxCount per user reached\"}");
+        when(setupService.resolveGroupId("b1", null)).thenThrow(new RuntimeException("no default group"));
+
+        ErrorEntry e = aggregator.aggregate().errors().get(0);
+        assertEquals("", e.brand());
+        assertEquals("Volkswagen Essen-Kray", e.location());
+        assertEquals(List.of("Service (unbekannt)"), e.operations());
+        assertEquals("Buchungslimit erreicht", e.errorType());
+        assertEquals("BadRequest — apptMaxCount per user reached", e.errorDetail());
+    }
+
+    @Test
+    void nonJsonResponseYieldsEmptyDetail() {
+        errorLogLine = bookingErrorLine("{\"branch\":\"b1\"}", "upstream timed out");
+        ErrorEntry e = aggregator.aggregate().errors().get(0);
+        assertEquals("", e.errorDetail());
+        assertEquals("Timeout", e.errorType());
+    }
+
+    private static String bookingErrorLine(String requestBody, String responseBody) {
+        return "2026-10-22 09:14:08,061 [http-nio-3000-exec-8] ERROR c.a.backend.softnet.SoftnetApiClient "
+            + "- " + CUSTOMER_TRACE_ID + ": SOFTNET_ERROR POST /api/planning/appointments failed after 336ms: "
+            + "410 Gone: \"...\" | requestBody=" + requestBody + " | responseBody=" + responseBody;
+    }
+
     // ─── REQ-038 BR-15 / TC-36: the bugs tab stays clean ───
 
     @Test

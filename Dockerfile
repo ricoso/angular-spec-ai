@@ -4,7 +4,11 @@
 # Bases mirror the LDP runner images so behaviour matches CI:
 #   - frontend stage : ubi9/nodejs-22
 #   - backend stage  : ubi9/openjdk-25
-#   - runtime stage  : ubi9/openjdk-25
+#   - runtime stage  : ubi9/openjdk-25-runtime (same OpenJDK build, JRE only —
+#                      no javac/Maven in the shipped image, smaller attack surface)
+#
+# Base images are deliberately untagged: every rebuild pulls the latest
+# Red Hat errata (OS + JDK security patches).
 #
 # OpenShift restricted-v2 SCC compliance:
 #   - The base image's default user is non-root
@@ -54,7 +58,7 @@ COPY --from=frontend-build /app/dist/ ./dist/
 RUN cd server && ./gradlew --no-daemon bootJar -x buildAngular -x test
 
 # ===== Stage 3: Runtime =====
-FROM registry.access.redhat.com/ubi9/openjdk-25
+FROM registry.access.redhat.com/ubi9/openjdk-25-runtime
 
 USER root
 WORKDIR /app

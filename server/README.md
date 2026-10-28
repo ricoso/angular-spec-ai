@@ -6,7 +6,7 @@ Proxy/Middleware zur SoftNet Planning API (ersetzt das fruehere NestJS-Backend).
 
 - **Java 25** (JDK)
 - **Gradle** (oder `./gradlew` Wrapper im Projekt)
-- **Spring Boot 4.1.0**
+- **Spring Boot 4.1.1**
 - **SoftNet-Fingerprint** Datei (JSON mit RSA Private Key)
 
 ## Konfiguration
