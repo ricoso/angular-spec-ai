@@ -208,7 +208,6 @@ class UsageSectionRendererTest {
             "class=\"dot\"",
             "class=\"cat-name\"",
             "class=\"cat-ep\"",
-            "class=\"cat-ep-plain\"",
             "class=\"cat-num\"",
             "class=\"cat-sub\"",
             "class=\"us-rates\"",
@@ -275,8 +274,77 @@ class UsageSectionRendererTest {
     }
 
     // -----------------------------------------------------------------------------------------
+    // REQ-043 K-1/K-3: Anfragen → Terminsuchen → Buchungen, each split into ok · Fehler
+    // -----------------------------------------------------------------------------------------
+
+    @Test
+    void everyTileSplitsItsBigNumberIntoOkAndFailures() {
+        UsageStats base = fullYear();
+        PeriodUsage month = withFailedSessions(base.month(), 25L, 7L, base.month().rangeFrom());
+        UsageStats usage = new UsageStats(month, month, List.of(), base.liveAsOf(),
+            true, true, base.collectingSince(), base.lastRollupDay());
+
+        String html = renderer.render(usage);
+
+        assertTrue(html.contains("<span class=\"cat-name\">Anfragen</span><span class=\"cat-ep\">/snaps</span>"
+            + "</div><div class=\"cat-num\">1.180</div><div class=\"cat-sub\">1.141 ok &middot; 39 Fehler</div>"),
+            "Anfragen are the search calls, split into ok and failed");
+        assertTrue(html.contains("<div class=\"cat-num\">456</div><div class=\"cat-sub\">431 ok &middot; 25 Fehler</div>"),
+            "Terminsuchen = 431 ok + 25 failed sessions");
+        assertTrue(html.contains("<div class=\"cat-num\">150</div><div class=\"cat-sub\">143 ok &middot; 7 Fehler</div>"),
+            "Buchungen = 143 ok + 7 failed sessions");
+        assertFalse(html.contains(" Anfragen &middot;"), "no second „Anfragen\" inside a tile any more");
+        assertFalse(html.contains("API-Aufrufe"), "the server load is no longer on the page");
+        assertFalse(html.contains("Fehler erfasst ab"), "recorded from the first day, nothing partial");
+        assertFalse(html.contains("<span class=\"cat-name\">Besuche</span>"), "no „Besuche\" tile");
+        // The visits stay where they are a denominator: rates and device split.
+        assertTrue(html.contains("431 von 954 Besuchen mit Terminsuche"));
+    }
+
+    @Test
+    void aPartialFailureCountNamesItsFirstDay() {
+        UsageStats base = fullYear();
+        PeriodUsage year = withFailedSessions(base.year(), 25L, 7L, LocalDate.of(2026, 9, 15));
+        UsageStats usage = new UsageStats(year, year, List.of(), base.liveAsOf(),
+            true, true, base.collectingSince(), base.lastRollupDay());
+
+        String html = renderer.render(usage);
+
+        assertTrue(html.contains("1.901 ok &middot; 25 Fehler &middot; Fehler erfasst ab 15.09.2026"));
+        assertTrue(html.contains("<div class=\"cat-num\">1.926</div>"), "1.901 ok + 25 failed");
+    }
+
+    @Test
+    void unrecordedFailuresAreNamedNeverShownAsZero() {
+        String html = renderer.render(fullYear());
+
+        assertTrue(html.contains("<div class=\"cat-num\">431</div><div class=\"cat-sub\">431 ok &middot; "
+            + "Fehler nicht erfasst</div>"), "without the counter only the ok sessions are known");
+        assertFalse(html.contains("431 ok &middot; 0 Fehler"), "„nicht erfasst\" is not „0 Fehler\"");
+    }
+
+    @Test
+    void monthlyTableCountsTheSearchCallsAsRequests() {
+        String html = renderer.render(fullYear());
+
+        assertTrue(html.contains("<th scope=\"col\">Anfragen</th>"));
+        assertTrue(html.contains("<th scope=\"row\">August</th><td>340</td>"),
+            "every recorded month carries its search calls — no gap before REQ-043");
+        assertTrue(html.contains("<th scope=\"row\">Jahressumme</th><td>5.210</td>"), "year total");
+    }
+
+    // -----------------------------------------------------------------------------------------
     // Fixtures / Testdaten
     // -----------------------------------------------------------------------------------------
+
+    /** Copy of {@code p} carrying the REQ-043 K-3 failed-session counters. */
+    private static PeriodUsage withFailedSessions(PeriodUsage p, Long search, Long booking,
+                                                  LocalDate from) {
+        return new PeriodUsage(p.label(), p.rangeLabel(), p.rangeFrom(), p.rangeTo(), p.hasData(),
+            p.visits(), p.visitCount(), p.searchRequests(), p.searchRequestsOk(), p.bookingRequests(),
+            p.bookingRequestsOk(), p.sessionsWithSearch(), p.sessionsWithBooking(), p.searchRate(),
+            p.bookingRate(), p.closeRate(), null, null, null, search, booking, from);
+    }
 
     /** The §12.2 example snapshot: September 2026 inside the running year 2026. */
     private static UsageStats fullYear() {

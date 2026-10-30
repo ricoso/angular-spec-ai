@@ -120,6 +120,12 @@ public class LimitsSectionRenderer {
     static final String LIMIT_HISTORY = "Historie: Daten gibt es erst ab dem Erfassungsbeginn der "
         + "jeweiligen Quelle; davor wird nie rückwirkend gerechnet. Danach ausgefallene Nächte "
         + "werden bis zu 25 Tage nachgeholt.";
+    /** REQ-043: the load figure „Anfragen" of the usage section / Last-Kennzahl. */
+    static final String LIMIT_REQUESTS = "Anfragen: jeder Terminsuch-Aufruf, inklusive Fehler – ein "
+        + "Kunde sucht meist mehrfach (andere Filiale, anderer Tag), sie zeigen die Last, nicht die Zahl "
+        + "der Kunden. Die Fehler bei Terminsuchen und Buchungen sind Sitzungen, in denen jeder Versuch "
+        + "scheiterte; gezählt seit REQ-043 und beim Deploy so weit nachgerechnet, wie Log Analytics "
+        + "zurückreicht (30 Tage) – ältere Tage zeigen „Fehler nicht erfasst\".";
     /** §17 {@code LIMIT_TIRE_SEASON}. */
     static final String LIMIT_TIRE_SEASON = "Radwechsel ist nur in der Saison buchbar.";
 
@@ -197,6 +203,9 @@ public class LimitsSectionRenderer {
         }
         if (dropoff) {
             limits.add(LIMIT_DROPOFF);
+        }
+        if (usage != null) {
+            limits.add(LIMIT_REQUESTS);
         }
         limits.add(LIMIT_HISTORY);
         if (bookings) {

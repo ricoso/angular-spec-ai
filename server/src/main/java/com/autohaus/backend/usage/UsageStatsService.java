@@ -336,6 +336,34 @@ public class UsageStatsService {
         }
 
         long visitCount = total.visits().total();
+        // REQ-043: requests are summed over the recorded days only — older day rows lack them.
+        Long apiRequests = null;
+        Long fileRequests = null;
+        LocalDate requestsFrom = null;
+        for (Map.Entry<LocalDate, DailyUsage> day : range.entrySet()) {
+            DailyUsage usage = day.getValue();
+            if (usage.apiRequests() != null || usage.fileRequests() != null) {
+                apiRequests = (apiRequests == null ? 0L : apiRequests)
+                    + (usage.apiRequests() == null ? 0L : usage.apiRequests());
+                fileRequests = (fileRequests == null ? 0L : fileRequests)
+                    + (usage.fileRequests() == null ? 0L : usage.fileRequests());
+                requestsFrom = requestsFrom == null ? day.getKey() : requestsFrom;
+            }
+        }
+        // REQ-043 K-3: the failed-session counters likewise exist only on recomputed days.
+        Long searchSessionsFailed = null;
+        Long bookingSessionsFailed = null;
+        LocalDate sessionsFailedFrom = null;
+        for (Map.Entry<LocalDate, DailyUsage> day : range.entrySet()) {
+            DailyUsage usage = day.getValue();
+            if (usage.searchSessionsFailed() != null && usage.bookingSessionsFailed() != null) {
+                searchSessionsFailed = (searchSessionsFailed == null ? 0L : searchSessionsFailed)
+                    + usage.searchSessionsFailed();
+                bookingSessionsFailed = (bookingSessionsFailed == null ? 0L : bookingSessionsFailed)
+                    + usage.bookingSessionsFailed();
+                sessionsFailedFrom = sessionsFailedFrom == null ? day.getKey() : sessionsFailedFrom;
+            }
+        }
         return new PeriodUsage(
             label,
             rangeLabel(from, to),
@@ -352,7 +380,13 @@ public class UsageStatsService {
             total.sessionsWithBooking(),
             computeConversionRate(total.sessionsWithSearch(), visitCount),
             computeConversionRate(total.sessionsWithBooking(), visitCount),
-            computeConversionRate(total.sessionsWithBooking(), total.sessionsWithSearch()));
+            computeConversionRate(total.sessionsWithBooking(), total.sessionsWithSearch()),
+            apiRequests,
+            fileRequests,
+            requestsFrom,
+            searchSessionsFailed,
+            bookingSessionsFailed,
+            sessionsFailedFrom);
     }
 
     /**

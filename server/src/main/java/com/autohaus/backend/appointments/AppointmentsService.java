@@ -43,6 +43,15 @@ public class AppointmentsService {
      */
     static final String RENTAL_WISH_PREFIX = "Mietwagen-Wunsch: ";
 
+    /**
+     * REQ-043 B-2: last line of the note on every wheel/tire change booking, so the dispatch can
+     * tell online bookings apart (customer wish). Not a UI text, so not part of the i18n catalogue.
+     */
+    static final String OTV_MARKER = "Buchung erfolgte über OTV";
+
+    /** Variant key of the Boxenstopp group (same literal as {@code SetupService}). */
+    private static final String TIRE_CHANGE_VARIANT = "tireChange";
+
     /** SoftNet placeholder when the customer leaves the optional VIN empty (unchanged since REQ-009). */
     static final String VIN_UNKNOWN = "UNKNOWN";
 
@@ -291,6 +300,28 @@ public class AppointmentsService {
         return room <= 0 ? wish : wish + "\n" + (note.length() > room ? note.substring(0, room) : note);
     }
 
+    /**
+     * REQ-043 B-2: like {@link #composeNote(String, String)}, plus {@link #OTV_MARKER} as the very
+     * last line when {@code otvMarker} is set. The marker is reserved first, so a long customer
+     * note is shortened instead — never the marker, never the wish.
+     */
+    static String composeNote(String rentalWishName, String customerNote, boolean otvMarker) {
+        if (!otvMarker) {
+            return composeNote(rentalWishName, customerNote);
+        }
+        String body = composeNote(rentalWishName, customerNote);
+        if (body == null) {
+            return OTV_MARKER;
+        }
+        int room = NOTE_MAX_LENGTH - OTV_MARKER.length() - 1;
+        return (body.length() > room ? body.substring(0, room) : body) + "\n" + OTV_MARKER;
+    }
+
+    /** REQ-043 B-2: Boxenstopp group, or a "Räderwechsel" service picked in the normal flow. */
+    static boolean isTireChangeBooking(CreateAppointmentRequest dto) {
+        return TIRE_CHANGE_VARIANT.equals(dto.variant()) || Boolean.TRUE.equals(dto.tireChangeBooking());
+    }
+
     private void patchSnapWithBookingData(ObjectNode snap, CreateAppointmentRequest dto, String rentalWishName,
                                           String rentCategoryId) {
         ObjectNode wishlist = snap.has("wishlist") && snap.get("wishlist").isObject()
@@ -320,7 +351,7 @@ public class AppointmentsService {
         if (!car.has("brand") || car.get("brand").asText("").isEmpty()) {
             car.put("brand", "");
         }
-        car.put("license", dto.vehicle().licensePlate());
+        car.put("license", dto.vehicle().licensePlate().trim());
         car.put("VIN", normalizeVin(dto.vehicle().vin()));
         car.put("currentMileage", dto.vehicle().mileage());
         car.put("firstRegMonth", dto.vehicle().firstRegMonth() != null ? dto.vehicle().firstRegMonth() : "01");
@@ -329,7 +360,7 @@ public class AppointmentsService {
             : (existingCar.has("model") ? existingCar.get("model").asText("Unknown") : "Unknown"));
         wishlist.set("car", car);
 
-        String note = composeNote(rentalWishName, dto.note());
+        String note = composeNote(rentalWishName, dto.note(), isTireChangeBooking(dto));
         if (note != null) {
             wishlist.put("note", note);
         }

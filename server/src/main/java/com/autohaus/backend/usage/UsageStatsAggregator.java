@@ -22,10 +22,10 @@ import java.util.Set;
  * Aggregates one calendar day from the app's own access log in Azure Log Analytics (REQ-037
  * §12.4) / Aggregiert einen Kalendertag aus dem Access-Log in Azure Log Analytics.
  *
- * <p>Three KQL queries per day — visits per device class, the {@code /api/v1/snaps} funnel and the
- * {@code /api/v1/appointments} funnel — are combined into a single {@link DailyUsage}. The queries
- * run in the scheduler, never in a request path (§9 Performance). / Drei KQL-Abfragen je Tag,
- * ausschließlich im Scheduler.
+ * <p>Four KQL queries per day — visits per device class, the {@code /api/v1/snaps} funnel, the
+ * {@code /api/v1/appointments} funnel and (REQ-043) all server requests — are combined into a
+ * single {@link DailyUsage}. The queries run in the scheduler, never in a request path (§9
+ * Performance). / Vier KQL-Abfragen je Tag, ausschließlich im Scheduler.
  *
  * <p><b>Time boundaries (BR-7) / Zeitgrenzen:</b> {@code TimeGenerated} is UTC in Log Analytics,
  * the display calendar is {@code Europe/Berlin}. Java therefore computes the day boundaries as
@@ -104,6 +104,10 @@ public class UsageStatsAggregator {
      * counts the marked sessions exactly (BR-4, BR-5). Failed attempts (4xx/5xx) count towards
      * {@code requests} but never towards the funnel. / Zweistufiges {@code summarize}; Fehlversuche
      * zählen in die Request-Zahl, nicht in den Funnel.
+     *
+     * <p>REQ-043 K-3: {@code failedSessions} counts the sessions without a single successful call
+     * — the customers who got stuck. A session that failed once and then succeeded is
+     * {@code ok}, never both. / Sitzungen ganz ohne Erfolg; ein späterer Erfolg zählt als ok.
      */
     private static final String FUNNEL_KQL = """
         ContainerAppConsoleLogs_CL
@@ -116,7 +120,29 @@ public class UsageStatsAggregator {
         | summarize requests = count(), requestsOk = countif(Status < 400),
                     okHits = countif(Status < 400 and isnotempty(SessionId)) by SessionId
         | summarize requests = sum(requests), requestsOk = sum(requestsOk),
-                    sessions = countif(okHits > 0)
+                    sessions = countif(okHits > 0),
+                    failedSessions = countif(okHits == 0 and isnotempty(SessionId))
+        """;
+
+    /**
+     * REQ-043: every request the server answered on one calendar day („Anfragen", the load figure),
+     * split into API calls and file requests (app code, styles, images) / alle Anfragen eines
+     * Kalendertages, getrennt nach API- und Datei-Abrufen.
+     *
+     * <p>Deliberately broader than the funnel: every status (errors and 429 are load too) and lines
+     * without a session id. Excluded: the Azure health ping (≈ 1 440/day, platform, not usage) and
+     * {@code /internal/**} (the status page itself). / Bewusst breiter als der Funnel; Health-Ping
+     * und {@code /internal/**} bleiben draußen.
+     */
+    private static final String REQUESTS_KQL = """
+        ContainerAppConsoleLogs_CL
+        | where ContainerAppName_s == 'gs-terminbuchungs-app'
+        | where TimeGenerated >= datetime(%s) and TimeGenerated < datetime(%s)
+        | where Log_s has 'INFO  HTTP'
+        | extend Url = extract('"url":"([^"]*)"', 1, Log_s)
+        | where isnotempty(Url) and Url != "/api/v1/health" and not(Url startswith "/internal")
+        | summarize apiRequests = countif(Url startswith "/api/"),
+                    fileRequests = countif(not(Url startswith "/api/"))
         """;
 
     private final LogAnalyticsClient logClient;
@@ -148,11 +174,14 @@ public class UsageStatsAggregator {
             DeviceBreakdown visits = queryVisits(from, to);
             FunnelCounts search = queryFunnel(from, to, SEARCH_PATH);
             FunnelCounts booking = queryFunnel(from, to, BOOKING_PATH);
+            long[] requests = queryRequests(from, to);
             return Optional.of(new DailyUsage(
                 visits,
                 search.requests(), search.requestsOk(),
                 booking.requests(), booking.requestsOk(),
-                search.sessions(), booking.sessions()));
+                search.sessions(), booking.sessions(),
+                requests[0], requests[1],
+                search.failedSessions(), booking.failedSessions()));
         } catch (LogAnalyticsClient.LogAnalyticsUnavailableException e) {
             log.warn("Usage aggregation for {} skipped — Log Analytics unavailable: {}",
                 day, e.getMessage());
@@ -195,16 +224,31 @@ public class UsageStatsAggregator {
 
     /**
      * Runs the funnel query for one endpoint / führt die Funnel-Abfrage aus. Row layout:
-     * {@code [requests, requestsOk, sessions]}; an empty result means "no such request that day".
+     * {@code [requests, requestsOk, sessions, failedSessions]}; an empty result means "no such
+     * request that day".
      */
     private FunnelCounts queryFunnel(Instant from, Instant to, String path) {
         List<List<String>> rows = LogAnalyticsClient.rows(
             logClient.query(FUNNEL_KQL.formatted(utc(from), utc(to), path)));
-        if (rows.isEmpty() || rows.get(0).size() < 3) {
-            return new FunnelCounts(0L, 0L, 0L);
+        if (rows.isEmpty() || rows.get(0).size() < 4) {
+            return new FunnelCounts(0L, 0L, 0L, 0L);
         }
         List<String> row = rows.get(0);
-        return new FunnelCounts(parseLong(row.get(0)), parseLong(row.get(1)), parseLong(row.get(2)));
+        return new FunnelCounts(parseLong(row.get(0)), parseLong(row.get(1)), parseLong(row.get(2)),
+            parseLong(row.get(3)));
+    }
+
+    /**
+     * REQ-043: server requests of the day / Anfragen des Tages. Row layout:
+     * {@code [apiRequests, fileRequests]}; returned in the same order.
+     */
+    private long[] queryRequests(Instant from, Instant to) {
+        List<List<String>> rows = LogAnalyticsClient.rows(
+            logClient.query(REQUESTS_KQL.formatted(utc(from), utc(to))));
+        if (rows.isEmpty() || rows.get(0).size() < 2) {
+            return new long[]{0L, 0L};
+        }
+        return new long[]{parseLong(rows.get(0).get(0)), parseLong(rows.get(0).get(1))};
     }
 
     /**
@@ -254,6 +298,7 @@ public class UsageStatsAggregator {
      * @param requests all POST requests / alle POST-Requests
      * @param requestsOk thereof {@code statusCode < 400} / davon erfolgreich
      * @param sessions sessions with at least one successful call / Sitzungen mit Erfolg
+     * @param failedSessions sessions without any successful call / Sitzungen ganz ohne Erfolg
      */
-    private record FunnelCounts(long requests, long requestsOk, long sessions) {}
+    private record FunnelCounts(long requests, long requestsOk, long sessions, long failedSessions) {}
 }

@@ -136,6 +136,9 @@ export function mapAppointmentPreferenceToSoftnet(
  */
 const STORED_TIRES_NAME_PATTERNS = ['räder sind eingelagert', 'radwechsel mit einlagerung'];
 
+/** REQ-043: SoftNet tag rank of the "Räderwechsel" category — mirrors `JobTypesService.TIRE_CHANGE_TAG_RANK`. */
+const TIRE_CHANGE_TAG_RANK = 3;
+
 export const BookingStore = signalStore(
   { providedIn: 'root' },
 
@@ -187,6 +190,26 @@ export const BookingStore = signalStore(
       return selectedServices().some(sel => {
         const name = ops.find(o => o.id === sel.serviceId)?.name.toLowerCase() ?? '';
         return STORED_TIRES_NAME_PATTERNS.some(pattern => name.includes(pattern));
+      });
+    }),
+    /**
+     * REQ-043 B-2: true for a wheel/tire change booking — Boxenstopp deep link, or at least one
+     * selected operation on the "Räderwechsel" tag (rank 3, same rule as the statistics' service
+     * groups; "Hol & Bringservice" hangs on every tag and does not count). The backend then appends
+     * the OTV marker to the note — a false positive only adds a true statement.
+     */
+    hasTireChangeService: computed<boolean>(() => {
+      const groupId = deepLinkGroupId();
+      const branch = selectedBranch();
+      if (groupId && branch?.tireChangeGroupId && groupId === branch.tireChangeGroupId) {
+        return true;
+      }
+      const tireTagIds = new Set(categories().filter(c => c.rank === TIRE_CHANGE_TAG_RANK).map(c => c.id));
+      if (tireTagIds.size === 0) return false;
+      const ops = operations();
+      return selectedServices().some(sel => {
+        const op = ops.find(o => o.id === sel.serviceId);
+        return op !== undefined && op.name !== 'Hol & Bringservice' && op.tagIds.some(tagId => tireTagIds.has(tagId));
       });
     }),
     hasBookingNote: computed(() => bookingNote() !== null && bookingNote() !== ''),
@@ -752,7 +775,7 @@ export const BookingStore = signalStore(
               salutation: customer?.salutation,
             },
             vehicle: {
-              licensePlate: vehicle?.licensePlate ?? '',
+              licensePlate: (vehicle?.licensePlate ?? '').trim(),
               mileage: vehicle?.mileage ?? 0,
               vin: vehicle?.vin,
               model: vehicle?.model,
@@ -764,6 +787,8 @@ export const BookingStore = signalStore(
             rentCategoryId: store.rentalCarRequested() ? store.selectedRentCategoryId() ?? undefined : undefined,
             callbackRequested: extras?.callbackOption === 'yes',
             notifications: mapNotificationChannelToSoftnet(extras?.notificationChannel ?? 'email'),
+            // REQ-043 B-2: only sent for a wheel/tire change — the backend appends the OTV marker.
+            tireChangeBooking: store.hasTireChangeService() ? true : undefined,
           };
 
           return from(appointmentApi.createAppointment(request)).pipe(

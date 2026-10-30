@@ -85,10 +85,11 @@ class StatisticsPageRendererTest {
 
         assertThat(html).startsWith("<nav class=\"st-toc\" aria-labelledby=\"toc-h\">"
             + "<span id=\"toc-h\" class=\"st-toc-hd\">Inhalt:</span><ul>");
-        assertThat(sections(html)).containsExactly("ib", "cap", "rk", "sg", "tm", "us", "fn", "st-limits");
-        assertThat(tocLinks(html)).containsExactly("briefing", "capacity", "branches", "service-groups",
+        assertThat(sections(html)).containsExactly("cap", "rk", "sg", "tm", "us", "fn", "st-limits");
+        assertThat(tocLinks(html)).containsExactly("capacity", "branches", "service-groups",
             "timing", "us-h", "funnel", "limits");
-        assertThat(html).contains("<li><a href=\"#briefing\">Auf einen Blick</a></li>")
+        // REQ-043 K-2: S0 „Auf einen Blick" is hidden — neither section nor jump link.
+        assertThat(html).doesNotContain("#briefing").doesNotContain("id=\"briefing\"")
             .contains("<li><a href=\"#capacity\">Freie Termine</a></li>")
             .contains("<li><a href=\"#branches\">Standorte</a></li>")
             .contains("<li><a href=\"#service-groups\">Servicegruppen</a></li>")
@@ -121,7 +122,7 @@ class StatisticsPageRendererTest {
         String html = renderer.render(new StatisticsPage(UsageStats.unavailable(), insights(true, false),
             null, Briefing.empty()));
 
-        assertThat(sections(html)).containsExactly("ib", "rk", "sg", "tm", "us", "st-limits");
+        assertThat(sections(html)).containsExactly("rk", "sg", "tm", "us", "st-limits");
         verify(funnel, never()).render(any());
     }
 
@@ -130,8 +131,8 @@ class StatisticsPageRendererTest {
     void rendersCapacityOnly() {
         String html = renderer.render(new StatisticsPage(null, null, capacity(), Briefing.empty()));
 
-        assertThat(sections(html)).containsExactly("ib", "cap", "st-limits");
-        assertThat(tocLinks(html)).containsExactly("briefing", "capacity", "limits");
+        assertThat(sections(html)).containsExactly("cap", "st-limits");
+        assertThat(tocLinks(html)).containsExactly("capacity", "limits");
         verify(usage, never()).render(any());
     }
 
@@ -160,8 +161,8 @@ class StatisticsPageRendererTest {
 
         String html = renderer.render(new StatisticsPage(null, insights(true, false), null, Briefing.empty()));
 
-        assertThat(tocLinks(html)).containsExactly("briefing", "service-groups", "limits");
-        assertThat(sections(html)).containsExactly("ib", "sg", "st-limits");
+        assertThat(tocLinks(html)).containsExactly("service-groups", "limits");
+        assertThat(sections(html)).containsExactly("sg", "st-limits");
     }
 
     @Test

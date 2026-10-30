@@ -30,6 +30,17 @@ import java.time.LocalDate;
  *     otherwise one decimal (BR-6)
  * @param bookingRate total conversion {@code sessionsWithBooking / visits} / Buchungsquote
  * @param closeRate {@code sessionsWithBooking / sessionsWithSearch} / Abschlussquote
+ * @param apiRequests REQ-043 K-1: API requests of the recorded days (server load, since K-3 only
+ *     in {@code usage.json}, no longer on the page) / API-Aufrufe; {@code null} = nicht erfasst
+ * @param fileRequests REQ-043: file requests (app code, images) of the recorded days / Datei-Abrufe
+ * @param requestsFrom first day of the period that carries the counters, {@code null} when none —
+ *     later than {@code rangeFrom} means the figures are partial / erster erfasster Tag
+ * @param searchSessionsFailed REQ-043 K-3: sessions whose every search failed, summed over the
+ *     recorded days; {@code null} → not recorded / Sitzungen ohne Suchergebnis
+ * @param bookingSessionsFailed REQ-043 K-3: sessions whose every booking attempt failed /
+ *     Sitzungen ohne erfolgreiche Buchung trotz Versuch
+ * @param sessionsFailedFrom first day of the period that carries both failure counters,
+ *     {@code null} when none / erster Tag mit Fehler-Zählern
  */
 public record PeriodUsage(
     String label,
@@ -47,5 +58,37 @@ public record PeriodUsage(
     long sessionsWithBooking,
     Double searchRate,
     Double bookingRate,
-    Double closeRate
-) {}
+    Double closeRate,
+    Long apiRequests,
+    Long fileRequests,
+    LocalDate requestsFrom,
+    Long searchSessionsFailed,
+    Long bookingSessionsFailed,
+    LocalDate sessionsFailedFrom
+) {
+
+    /** Pre-REQ-043 shape without the request counter / Form vor REQ-043. */
+    public PeriodUsage(String label, String rangeLabel, LocalDate rangeFrom, LocalDate rangeTo,
+                       boolean hasData, DeviceBreakdown visits, long visitCount, long searchRequests,
+                       long searchRequestsOk, long bookingRequests, long bookingRequestsOk,
+                       long sessionsWithSearch, long sessionsWithBooking, Double searchRate,
+                       Double bookingRate, Double closeRate) {
+        this(label, rangeLabel, rangeFrom, rangeTo, hasData, visits, visitCount, searchRequests,
+            searchRequestsOk, bookingRequests, bookingRequestsOk, sessionsWithSearch,
+            sessionsWithBooking, searchRate, bookingRate, closeRate, null, null, null, null, null,
+            null);
+    }
+
+    /**
+     * REQ-043 K-3: sessions that searched — {@code ok} plus failed. Without the failure counter
+     * only the successful sessions are known. / Sitzungen mit Terminsuche, ok + Fehler.
+     */
+    public long searchSessions() {
+        return sessionsWithSearch + (searchSessionsFailed == null ? 0L : searchSessionsFailed);
+    }
+
+    /** REQ-043 K-3: sessions that tried to book — {@code ok} plus failed. / ok + Fehler. */
+    public long bookingSessions() {
+        return sessionsWithBooking + (bookingSessionsFailed == null ? 0L : bookingSessionsFailed);
+    }
+}

@@ -126,6 +126,74 @@ class UsageStatsServiceTest {
         assertEquals(33L, stats.year().visitCount(), "the year block holds September and October");
     }
 
+    // ---- REQ-043: requests are summed over the recorded days only ----
+
+    @Test
+    void sumsRequestCountersOverRecordedDaysAndNamesTheFirstOne() {
+        UsageStatsService service = service("2026-09-21T10:00:00Z");
+        Map<LocalDate, DailyUsage> days = new LinkedHashMap<>();
+        days.put(LocalDate.of(2026, 9, 18), day(10, 0, 0, 0));                 // before REQ-043
+        days.put(LocalDate.of(2026, 9, 19), withRequests(day(20, 0, 0, 0), 300L, 1_200L));
+        days.put(LocalDate.of(2026, 9, 20), withRequests(day(5, 0, 0, 0), 0L, 0L));
+
+        UsageStats stats = service.buildPeriods(history(days), true, Map.of(), true, null);
+
+        assertEquals(300L, stats.month().apiRequests());
+        assertEquals(1_200L, stats.month().fileRequests());
+        assertEquals(LocalDate.of(2026, 9, 19), stats.month().requestsFrom(),
+            "the first recorded day, not the first day of the month");
+        assertEquals(35L, stats.month().visitCount(), "visits still count every day");
+        assertNull(stats.months().get(7).apiRequests(), "August: no day row, no requests");
+    }
+
+    @Test
+    void requestCountersStayNullWhenNoDayCarriesThem() {
+        UsageStatsService service = service("2026-09-21T10:00:00Z");
+        Map<LocalDate, DailyUsage> days = new LinkedHashMap<>();
+        days.put(LocalDate.of(2026, 9, 20), day(10, 0, 0, 0));
+
+        UsageStats stats = service.buildPeriods(history(days), true, Map.of(), true, null);
+
+        assertNull(stats.month().apiRequests(), "„nicht erfasst\" is not 0");
+        assertNull(stats.month().fileRequests());
+        assertNull(stats.month().requestsFrom());
+    }
+
+    // ---- REQ-043 K-3: failed sessions are summed over the recorded days only ----
+
+    @Test
+    void sumsFailedSessionsOverRecordedDaysAndNamesTheFirstOne() {
+        UsageStatsService service = service("2026-09-21T10:00:00Z");
+        Map<LocalDate, DailyUsage> days = new LinkedHashMap<>();
+        days.put(LocalDate.of(2026, 9, 18), day(10, 40, 0, 0));                // before K-3
+        days.put(LocalDate.of(2026, 9, 19), withFailedSessions(day(20, 30, 0, 0), 4L, 1L));
+        days.put(LocalDate.of(2026, 9, 20), withFailedSessions(day(5, 10, 0, 0), 2L, 0L));
+
+        UsageStats stats = service.buildPeriods(history(days), true, Map.of(), true, null);
+
+        assertEquals(6L, stats.month().searchSessionsFailed());
+        assertEquals(1L, stats.month().bookingSessionsFailed());
+        assertEquals(LocalDate.of(2026, 9, 19), stats.month().sessionsFailedFrom(),
+            "the first recorded day, not the first day of the month");
+        assertEquals(80L, stats.month().sessionsWithSearch(), "ok sessions still count every day");
+        assertEquals(86L, stats.month().searchSessions(), "Terminsuchen = ok + failed");
+        assertNull(stats.months().get(7).searchSessionsFailed(), "August: no day row, nothing recorded");
+    }
+
+    @Test
+    void failedSessionsStayNullWhenNoDayCarriesThem() {
+        UsageStatsService service = service("2026-09-21T10:00:00Z");
+        Map<LocalDate, DailyUsage> days = new LinkedHashMap<>();
+        days.put(LocalDate.of(2026, 9, 20), day(10, 12, 0, 0));
+
+        UsageStats stats = service.buildPeriods(history(days), true, Map.of(), true, null);
+
+        assertNull(stats.month().searchSessionsFailed(), "„nicht erfasst\" is not 0");
+        assertNull(stats.month().bookingSessionsFailed());
+        assertNull(stats.month().sessionsFailedFrom());
+        assertEquals(12L, stats.month().searchSessions(), "only the ok sessions are known");
+    }
+
     // ---- TC-18: the midnight gap / Mitternachtslücke (BR-9) ----
 
     /**
@@ -385,6 +453,20 @@ class UsageStatsServiceTest {
         days.forEach((day, usage) -> isoDays.put(day.toString(), usage));
         return new UsageHistory(UsageHistory.CURRENT_SCHEMA_VERSION,
             Instant.parse("2026-09-21T01:30:12Z"), isoDays);
+    }
+
+    /** Copy of {@code d} with the REQ-043 request counters. */
+    private static DailyUsage withRequests(DailyUsage d, Long api, Long files) {
+        return new DailyUsage(d.visits(), d.searchRequests(), d.searchRequestsOk(), d.bookingRequests(),
+            d.bookingRequestsOk(), d.sessionsWithSearch(), d.sessionsWithBooking(), api, files,
+            null, null);
+    }
+
+    /** Copy of {@code d} with the REQ-043 K-3 failed-session counters. */
+    private static DailyUsage withFailedSessions(DailyUsage d, Long search, Long booking) {
+        return new DailyUsage(d.visits(), d.searchRequests(), d.searchRequestsOk(), d.bookingRequests(),
+            d.bookingRequestsOk(), d.sessionsWithSearch(), d.sessionsWithBooking(), 0L, 0L,
+            search, booking);
     }
 
     /** A day row with {@code mobile} visits plus the funnel counters. */

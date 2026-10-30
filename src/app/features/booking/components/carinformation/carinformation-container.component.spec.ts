@@ -112,6 +112,17 @@ describe('CarinformationContainerComponent', () => {
       expect(exposed.privacyError()).toBe(false);
     });
 
+    it('should reject a license plate longer than 20 chars (REQ-043, SoftNet limit)', () => {
+      const exposed = component as unknown as {
+        vehicleForm: { get: (name: string) => { setValue: (v: string) => void; hasError: (e: string) => boolean } | null };
+      };
+      const plate = exposed.vehicleForm.get('licensePlate');
+      plate?.setValue('x'.repeat(20));
+      expect(plate?.hasError('maxlength')).toBe(false);
+      plate?.setValue('x'.repeat(21));
+      expect(plate?.hasError('maxlength')).toBe(true);
+    });
+
     it('should not save to store when forms are invalid', () => {
       const exposed = component as unknown as { onSubmit: (e: Event) => void };
       exposed.onSubmit({ preventDefault: jest.fn() } as unknown as Event);

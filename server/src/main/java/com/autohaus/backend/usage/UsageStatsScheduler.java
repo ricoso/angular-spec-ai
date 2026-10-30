@@ -62,6 +62,14 @@ public class UsageStatsScheduler {
     /** How many days back the nightly catch-up looks (AC-9, within Log Analytics retention). */
     public static final int CATCH_UP_DAYS = 25;
 
+    /**
+     * REQ-043: how far back a day row without the newer counters is recomputed — every day that
+     * started after „now minus 30 days" is still complete in Log Analytics (retention 30 days),
+     * so 29 days never overwrite a row with a half-purged day. / Nachberechnung alter Zeilen,
+     * solange Log Analytics den ganzen Tag noch hält.
+     */
+    public static final int BACKFILL_DAYS = 29;
+
     /** Conditional write attempts before giving up (E3, AC-10) / Schreibversuche. */
     public static final int MAX_WRITE_ATTEMPTS = 3;
 
@@ -123,6 +131,40 @@ public class UsageStatsScheduler {
     public void onStartup() {
         log.info("REQ-037 usage statistics active — initial refresh on startup");
         refreshCurrentUsage();
+        backfillOnStartup();
+    }
+
+    /**
+     * REQ-043: recomputes day rows without the newer counters right after a deploy instead of at
+     * 03:30 — by then the oldest of them would have dropped out of the 30-day log retention. Runs
+     * the regular, idempotent rollup (BR-8) and only when such a row exists, so every later start
+     * costs one blob read. / Nachberechnung direkt nach dem Deploy, nur wenn nötig.
+     */
+    void backfillOnStartup() {
+        if (!blobClient.isConfigured()) {
+            return;
+        }
+        try {
+            UsageBlobClient.LoadedHistory loaded = blobClient.loadUsageHistory();
+            if (!loaded.usable()) {
+                return;
+            }
+            LocalDate today = LocalDate.now(clock);
+            long legacy = loaded.days().entrySet().stream()
+                .filter(e -> !e.getKey().isBefore(today.minusDays(BACKFILL_DAYS))
+                    && e.getKey().isBefore(today) && !e.getValue().hasAllCounters())
+                .count();
+            if (legacy == 0) {
+                return;
+            }
+            log.info("usage backfill on startup: {} day row(s) without the REQ-043 counters", legacy);
+            runRollup();
+            refreshCurrentUsage();
+        } catch (UsageBlobClient.BlobUnavailableException e) {
+            log.warn("usage backfill on startup skipped — blob unavailable: {}", e.getMessage());
+        } catch (RuntimeException e) {
+            log.error("usage backfill on startup failed unexpectedly: {}", e.getMessage(), e);
+        }
     }
 
     /** Live refresh on the configured cadence (default every 15 min). */
@@ -384,14 +426,20 @@ public class UsageStatsScheduler {
     /**
      * The days the nightly run (re)computes / die Tage des nächtlichen Laufs: yesterday always
      * (idempotent replace, BR-8), the {@value #CATCH_UP_DAYS} days before it only when they are
-     * missing (AC-9). Ascending order keeps the log readable. / Aufsteigend sortiert.
+     * missing (AC-9) — or, REQ-043, when their row predates the newer counters
+     * ({@link DailyUsage#hasAllCounters()}): the day is then recomputed once from the same logs,
+     * up to {@value #BACKFILL_DAYS} days back. Ascending order keeps the log readable. /
+     * Aufsteigend sortiert; Tage ohne die neuen Zähler werden einmalig nachberechnet.
      */
     private static List<LocalDate> rollupDays(LocalDate today,
                                               SortedMap<LocalDate, DailyUsage> present) {
         List<LocalDate> days = new ArrayList<>();
-        for (int offset = CATCH_UP_DAYS; offset >= 1; offset--) {
+        for (int offset = BACKFILL_DAYS; offset >= 1; offset--) {
             LocalDate day = today.minusDays(offset);
-            if (offset == 1 || !present.containsKey(day)) {
+            DailyUsage row = present.get(day);
+            boolean missing = row == null && offset <= CATCH_UP_DAYS;
+            boolean legacy = row != null && !row.hasAllCounters();
+            if (offset == 1 || missing || legacy) {
                 days.add(day);
             }
         }

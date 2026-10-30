@@ -478,6 +478,80 @@ describe('BookingStore', () => {
     });
   });
 
+  // REQ-043 B-2: a wheel/tire change booking carries the flag for the backend's OTV note marker.
+  describe('hasTireChangeService (REQ-043)', () => {
+    const TIRE_TAG = { id: 'tag-tire', name: 'Räderwechsel', rank: 3 };
+    const INSPECTION_TAG = { id: 'tag-insp', name: 'Inspektion', rank: 0 };
+    const TIRE_OP = { id: 'op-tire', name: 'Räderwechsel - ich bringe meine Räder mit', description: null, tagIds: ['tag-tire'], order: 1, imageId: null };
+    const INSPECTION_OP = { id: 'op-insp', name: 'Inspektion', description: null, tagIds: ['tag-insp'], order: 2, imageId: null };
+    const PICKUP_OP = { id: 'op-pickup', name: 'Hol & Bringservice', description: null, tagIds: ['tag-insp', 'tag-tire'], order: 3, imageId: null };
+    const BOXENSTOPP_BRANCH: BranchConfig = {
+      branchId: 'b-box', name: 'Test Branch', address: { street: 'S', zip: '1', city: 'C' }, brands: [], tireChangeGroupId: 'g-tire'
+    };
+    const flush = (): Promise<void> => new Promise<void>(resolve => setTimeout(resolve, 0));
+
+    async function loadCatalog(): Promise<void> {
+      apiSpy.getCategoriesByBranch = jest.fn().mockResolvedValue([INSPECTION_TAG, TIRE_TAG]);
+      apiSpy.getOperationsByBranch = jest.fn().mockResolvedValue([TIRE_OP, INSPECTION_OP, PICKUP_OP]);
+      store.loadCategoriesForBranch('b1');
+      store.loadOperationsForBranch('b1');
+      await flush();
+    }
+
+    function select(operationId: string): void {
+      store.confirmServiceOptions(operationId as ServiceType, []);
+    }
+
+    it('is false when nothing is selected', async () => {
+      await loadCatalog();
+      expect(store.hasTireChangeService()).toBe(false);
+    });
+
+    it('is true for an operation on the "Räderwechsel" tag (rank 3)', async () => {
+      await loadCatalog();
+      select(INSPECTION_OP.id);
+      select(TIRE_OP.id);
+      expect(store.hasTireChangeService()).toBe(true);
+    });
+
+    it('is false for other services and for "Hol & Bringservice" (hangs on every tag)', async () => {
+      await loadCatalog();
+      select(INSPECTION_OP.id);
+      select(PICKUP_OP.id);
+      expect(store.hasTireChangeService()).toBe(false);
+    });
+
+    it('is true in Boxenstopp mode, independent of the selection', () => {
+      store.selectBranch(BOXENSTOPP_BRANCH);
+      store.setDeepLinkGroupId('g-tire');
+      expect(store.hasTireChangeService()).toBe(true);
+    });
+
+    it('submitBooking sends tireChangeBooking only for a tire change and a trimmed plate', async () => {
+      const appointmentApi = TestBed.inject(AppointmentApiService) as unknown as { createAppointment: jest.Mock };
+      const slot: AppointmentSlot = {
+        id: 'snap-1', date: '2026-10-16', displayDate: '16.10.2026', dayAbbreviation: 'Fr',
+        time: '08:00', displayTime: '08:00 Uhr'
+      };
+      await loadCatalog();
+      store.setVehicleInfo({ licensePlate: '  W-AB 123 ', mileage: 45000 });
+
+      select(INSPECTION_OP.id);
+      store.selectAppointment(slot);
+      store.submitBooking();
+      await flush();
+      const plain = appointmentApi.createAppointment.mock.calls.at(-1)?.[0];
+      expect(plain.tireChangeBooking).toBeUndefined();
+      expect(plain.vehicle.licensePlate).toBe('W-AB 123');
+
+      select(TIRE_OP.id);
+      store.selectAppointment(slot);
+      store.submitBooking();
+      await flush();
+      expect(appointmentApi.createAppointment.mock.calls.at(-1)?.[0].tireChangeBooking).toBe(true);
+    });
+  });
+
   // REQ-041: recall campaign mode — own SoftNet group/variant, single auto-selected operation.
   describe('recall mode (REQ-041)', () => {
     const RECALL_GROUP_ID = '6ac7939ba4c0acee699905a8';

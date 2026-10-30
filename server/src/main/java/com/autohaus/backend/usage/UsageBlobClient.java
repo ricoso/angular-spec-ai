@@ -283,7 +283,12 @@ public class UsageBlobClient {
             && visits.unknown() >= 0
             && usage.searchRequests() >= 0 && usage.searchRequestsOk() >= 0
             && usage.bookingRequests() >= 0 && usage.bookingRequestsOk() >= 0
-            && usage.sessionsWithSearch() >= 0 && usage.sessionsWithBooking() >= 0;
+            && usage.sessionsWithSearch() >= 0 && usage.sessionsWithBooking() >= 0
+            // REQ-043: missing on day rows from before the counter existed — that is not an error.
+            && (usage.apiRequests() == null || usage.apiRequests() >= 0)
+            && (usage.fileRequests() == null || usage.fileRequests() >= 0)
+            && (usage.searchSessionsFailed() == null || usage.searchSessionsFailed() >= 0)
+            && (usage.bookingSessionsFailed() == null || usage.bookingSessionsFailed() >= 0);
     }
 
     private static LoadedHistory unusable(String etag) {

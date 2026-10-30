@@ -373,6 +373,79 @@ class AppointmentsServiceTest {
         assertEquals("Mietwagen-Wunsch: Kleinwagen", AppointmentsService.composeNote("Kleinwagen", null));
     }
 
+    // === REQ-043 B-2: OTV marker on wheel/tire change bookings ===
+
+    @Test
+    void composeNote_otvMarker_isAlwaysTheLastLine() {
+        String marker = AppointmentsService.OTV_MARKER;
+        assertEquals(marker, AppointmentsService.composeNote(null, null, true));
+        assertEquals(marker, AppointmentsService.composeNote(null, "  ", true));
+        assertEquals("Hallo\n" + marker, AppointmentsService.composeNote(null, "Hallo", true));
+        assertEquals("Mietwagen-Wunsch: Kleinwagen\nHallo\n" + marker,
+            AppointmentsService.composeNote("Kleinwagen", "Hallo", true));
+        assertEquals("Hallo", AppointmentsService.composeNote(null, "Hallo", false));
+    }
+
+    @Test
+    void composeNote_otvMarker_longNoteIsShortenedButWishAndMarkerAreKept() {
+        String note = AppointmentsService.composeNote("Oberklasse", "x".repeat(2500), true);
+
+        assertEquals(AppointmentsService.NOTE_MAX_LENGTH, note.length());
+        assertTrue(note.startsWith("Mietwagen-Wunsch: Oberklasse\n"), note.substring(0, 40));
+        assertTrue(note.endsWith("\n" + AppointmentsService.OTV_MARKER));
+    }
+
+    @Test
+    void createAppointment_boxenstoppVariant_appendsOtvMarkerToCustomerNote() {
+        when(snapCache.getRawSnap("snap-tire")).thenReturn(baseSnap());
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        service.createAppointment(tireDto("snap-tire", "tireChange", "Bitte Felgen prüfen", null));
+
+        assertEquals("Bitte Felgen prüfen\n" + AppointmentsService.OTV_MARKER, sentNote());
+    }
+
+    @Test
+    void createAppointment_tireChangeServiceInNormalFlow_appendsOtvMarker() {
+        when(snapCache.getRawSnap("snap-tire")).thenReturn(baseSnap());
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        service.createAppointment(tireDto("snap-tire", null, null, true));
+
+        assertEquals(AppointmentsService.OTV_MARKER, sentNote());
+    }
+
+    @Test
+    void createAppointment_withoutTireChange_hasNoOtvMarker() {
+        when(snapCache.getRawSnap("snap-plain")).thenReturn(baseSnap());
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        service.createAppointment(tireDto("snap-plain", "default", "Bitte Klima prüfen", false));
+
+        assertEquals("Bitte Klima prüfen", sentNote());
+    }
+
+    // === REQ-043 B-1: license plate goes to SoftNet trimmed ===
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void createAppointment_licensePlate_isSentTrimmed() {
+        when(snapCache.getRawSnap("snap-plate")).thenReturn(baseSnap());
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        service.createAppointment(new CreateAppointmentRequest(
+            "snap-plate", "branch-1", null,
+            new CreateAppointmentRequest.CustomerDto(
+                "test@test.de", "Petra", "Voß", "0170", null,
+                "Wuppertaler Str. 12", "42103", "Wuppertal", "DE", "de", null),
+            new CreateAppointmentRequest.VehicleDto("  W-TEST-99 ", 45000, null, null, null, null),
+            null, null, null, null));
+
+        Map<String, Object> wishlist = (Map<String, Object>) captureSentSnap().get("wishlist");
+        Map<String, Object> car = (Map<String, Object>) wishlist.get("car");
+        assertEquals("W-TEST-99", car.get("license"));
+    }
+
     @Test
     void normalizeVin_trimsAndUpperCases_blankOrMissingStaysUnknown() {
         assertEquals("WAUZZZ8V0JA000001", AppointmentsService.normalizeVin(" wauzzz8v0ja000001 "));
@@ -773,6 +846,23 @@ class AppointmentsServiceTest {
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(softnetApi).createAppointment(captor.capture(), eq("mock-group-id"));
         return captor.getValue();
+    }
+
+    /** REQ-043: booking request with variant, customer note and the tire-change flag. */
+    private CreateAppointmentRequest tireDto(String snapId, String variant, String note, Boolean tireChangeBooking) {
+        return new CreateAppointmentRequest(
+            snapId, "branch-1", variant,
+            new CreateAppointmentRequest.CustomerDto(
+                "test@test.de", "Petra", "Voß", "0170", null,
+                "Wuppertaler Str. 12", "42103", "Wuppertal", "DE", "de", null),
+            new CreateAppointmentRequest.VehicleDto("W-TEST-99", 45000, null, "A4", "03", "2023"),
+            note, null, null, null, tireChangeBooking);
+    }
+
+    @SuppressWarnings("unchecked")
+    private String sentNote() {
+        Map<String, Object> wishlist = (Map<String, Object>) captureSentSnap().get("wishlist");
+        return (String) wishlist.get("note");
     }
 
     @SuppressWarnings("unchecked")

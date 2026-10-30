@@ -30,11 +30,11 @@ const INSIGHTS_JSON_URL = '/internal/report/insights.json';
 const CAPACITY_JSON_URL = '/internal/report/capacity.json';
 const UNKNOWN_PATHS = ['/internal/report/xyz', '/internal/report/a/b'];
 
-/** S0–S7 in the order of §11.2 (S5 is the REQ-037 section). */
-const STATISTICS_SECTIONS = ['ib', 'cap', 'rk', 'sg', 'tm', 'us', 'fn', 'st-limits'];
+/** S1–S7 in the order of §11.2 (S5 is the REQ-037 section); S0 is hidden since REQ-043. */
+const STATISTICS_SECTIONS = ['cap', 'rk', 'sg', 'tm', 'us', 'fn', 'st-limits'];
 
-/** Sections filled by the e2e-seed profile (S0–S4, S6). */
-const SEEDED_SECTIONS = ['ib', 'cap', 'rk', 'sg', 'tm', 'fn'];
+/** Sections filled by the e2e-seed profile (S1–S4, S6; S0 hidden since REQ-043). */
+const SEEDED_SECTIONS = ['cap', 'rk', 'sg', 'tm', 'fn'];
 
 /** Sections of the bugs tab — never on the statistics tab (BR-3). */
 const BUGS_SELECTOR = 'section.ai, section.ov, section.err, section.nr, .ai, .err';

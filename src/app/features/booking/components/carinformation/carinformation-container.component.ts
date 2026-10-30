@@ -9,6 +9,7 @@ import { WizardBreadcrumbComponent } from '@shared/components/wizard-breadcrumb/
 import { WIZARD_STEPS } from '@shared/components/wizard-breadcrumb/wizard-steps.config';
 
 import type { CustomerInfo, VehicleInfo } from '../../models/customer.model';
+import { LICENSE_PLATE_MAX_LENGTH } from '../../models/customer.model';
 import { BookingStore } from '../../stores/booking.store';
 import { optionalVinValidator, requiredVinValidator } from '../../validators/optional-vin.validator';
 
@@ -65,7 +66,8 @@ export class CarinformationContainerComponent {
     // any other value is accepted. Angular's `required` alone would let a lone space through,
     // so `pattern(/\S/)` enforces "must contain at least one non-whitespace char".
     // Kennzeichen: nur leer / reines Leerzeichen ungültig, jeder andere Wert erlaubt.
-    licensePlate: ['', [Validators.required, Validators.pattern(/\S/)]],
+    // REQ-043 B-1: at most 20 chars — SoftNet rejects longer plates.
+    licensePlate: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(LICENSE_PLATE_MAX_LENGTH)]],
     // REQ-031 BR-6: whole number >= 10 — SoftNet treats 0 as "not set"
     mileage: [null as number | null, [Validators.required, Validators.pattern(/^[0-9]+$/), Validators.min(10)]],
     // REQ-039: VIN is fully optional — empty passes; if entered it must be 17 letters/digits.

@@ -60,6 +60,8 @@ export interface CreateAppointmentRequest {
   callbackRequested?: boolean;
   /** REQ-027: SoftNet `notifications` ({ SMS, SMTP }). */
   notifications?: { SMS: boolean; SMTP: boolean };
+  /** REQ-043: wheel/tire change booking — backend appends "Buchung erfolgte über OTV" to the note. */
+  tireChangeBooking?: boolean;
 }
 
 export interface AppointmentResponse {

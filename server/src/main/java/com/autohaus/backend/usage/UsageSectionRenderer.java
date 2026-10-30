@@ -111,6 +111,10 @@ public class UsageSectionRenderer {
             + "noch gespeichert; keine Cookies, keine IP-Adressen, kein Fingerprinting, kein "
             + "Drill-down. &bdquo;Besuche&ldquo; sind App-Starts (Sitzungen), keine eindeutigen "
             + "Personen: ein Reload zählt erneut, ein Besuch über Mitternacht zählt an beiden Tagen. "
+            + "&bdquo;Anfragen&ldquo; sind alle Terminsuch-Aufrufe an den Server, inklusive Fehler "
+            + "&mdash; ein Kunde sucht meist mehrfach. &bdquo;Terminsuchen&ldquo; und "
+            + "&bdquo;Buchungen&ldquo; zählen Sitzungen: ok heißt mindestens ein Versuch hat "
+            + "geklappt, Fehler heißt jeder Versuch dieser Sitzung ist gescheitert. "
             + "Der laufende Tag ist wegen der Ingestion-Latenz von 5&ndash;15 Minuten unvollständig; "
             + "Tablets werden durch den iPadOS-Desktop-Modus leicht unterzählt. Zeiträume ohne "
             + "Erfassung zeigen &bdquo;&mdash;&ldquo;, niemals &bdquo;0&ldquo;.";
@@ -255,42 +259,55 @@ public class UsageSectionRenderer {
     // -----------------------------------------------------------------------------------------
 
     /**
-     * Three tiles: visits → searches → bookings, each with its absolute number. The request counts
-     * appear only as a subtitle — a conversion rate must never be derived from them (AC-5). / Drei
-     * Kacheln mit Absolutzahlen; Request-Zahlen nur als Untertitel.
+     * Three tiles: requests → searches → bookings (REQ-043). Each big number is split into
+     * „ok · Fehler" right below it, so the two always add up to it. „Anfragen" counts search
+     * calls, „Terminsuchen" and „Buchungen" count sessions; the visits stay in the rates, the
+     * device split and the funnel. / Jede große Zahl wird darunter in ok und Fehler aufgeteilt.
      */
     private static String tiles(PeriodUsage p) {
         StringBuilder h = new StringBuilder(2048);
         h.append("<div class=\"cats us-tiles\">");
-        h.append(tile("Besuche", "App-Starts", true, p.visitCount(),
-            "Sitzungen &middot; ein Reload zählt erneut &middot; keine eindeutigen Personen"));
-        h.append(tile("Terminsuchen", "/snaps", false, p.sessionsWithSearch(),
-            requestSubtitle(p.searchRequests(), p.searchRequestsOk())));
-        h.append(tile("Buchungen", "/appointments", false, p.sessionsWithBooking(),
-            requestSubtitle(p.bookingRequests(), p.bookingRequestsOk())));
+        h.append(tile("Anfragen", "/snaps", p.searchRequests(),
+            okFailed(p.searchRequestsOk(), Math.max(0L, p.searchRequests() - p.searchRequestsOk()))));
+        h.append(sessionTile("Terminsuchen", "/snaps", p, p.sessionsWithSearch(),
+            p.searchSessionsFailed(), p.searchSessions()));
+        h.append(sessionTile("Buchungen", "/appointments", p, p.sessionsWithBooking(),
+            p.bookingSessionsFailed(), p.bookingSessions()));
         h.append("</div>");
         return h.toString();
     }
 
-    /**
-     * One neutral info tile / eine neutrale Info-Kachel.
-     *
-     * @param plainSlot {@code true} renders the endpoint slot as {@code .cat-ep-plain} (plain text
-     *     instead of monospace), which the „Besuche" tile needs for „App-Starts"
-     */
-    private static String tile(String name, String slot, boolean plainSlot, long value, String sub) {
+    /** One neutral info tile / eine neutrale Info-Kachel. */
+    private static String tile(String name, String slot, long value, String sub) {
         return "<div class=\"cat cat-info\"><div class=\"cat-hd\"><span class=\"dot\"></span>"
             + "<span class=\"cat-name\">" + esc(name) + "</span>"
-            + "<span class=\"" + (plainSlot ? "cat-ep-plain" : "cat-ep") + "\">" + esc(slot)
+            + "<span class=\"cat-ep\">" + esc(slot)
             + "</span></div><div class=\"cat-num\">" + esc(num(value)) + "</div>"
             + "<div class=\"cat-sub\">" + sub + "</div></div>";
     }
 
-    /** „1.180 Anfragen · 1.141 ok · 39 Fehler" — failures stay visible (BR-5). */
-    private static String requestSubtitle(long requests, long requestsOk) {
-        long failed = Math.max(0L, requests - requestsOk);
-        return esc(num(requests)) + " Anfragen &middot; " + esc(num(requestsOk)) + " ok &middot; "
-            + esc(num(failed)) + " Fehler";
+    /**
+     * REQ-043 K-3: a session tile — sessions that tried (ok + failed), split below. Without the
+     * failure counter only the ok sessions are known: the tile then shows those and says that the
+     * failures are not recorded, never „0 Fehler"; a later first day is named, so a partial sum is
+     * never read as the whole period. / Ohne Fehler-Zähler nie „0 Fehler".
+     */
+    private static String sessionTile(String name, String slot, PeriodUsage p, long ok, Long failed,
+                                      long total) {
+        if (failed == null) {
+            return tile(name, slot, ok, esc(num(ok)) + " ok &middot; Fehler nicht erfasst");
+        }
+        String sub = okFailed(ok, failed);
+        if (p.sessionsFailedFrom() != null && p.rangeFrom() != null
+            && p.sessionsFailedFrom().isAfter(p.rangeFrom())) {
+            sub += " &middot; Fehler erfasst ab " + esc(DAY.format(p.sessionsFailedFrom()));
+        }
+        return tile(name, slot, total, sub);
+    }
+
+    /** „37.892 ok · 1.356 Fehler" — failures stay visible (BR-5). */
+    private static String okFailed(long ok, long failed) {
+        return esc(num(ok)) + " ok &middot; " + esc(num(failed)) + " Fehler";
     }
 
     // -----------------------------------------------------------------------------------------
@@ -419,9 +436,10 @@ public class UsageSectionRenderer {
         if (!yearLabel.isEmpty()) {
             h.append(' ').append(esc(yearLabel));
         }
-        h.append(" &mdash; Besuche, Terminsuchen, Buchungen und Buchungsquote je Kalendermonat; "
+        h.append(" &mdash; Anfragen (Terminsuch-Aufrufe), Terminsuchen, Buchungen und "
+            + "Buchungsquote je Kalendermonat; "
             + "Monate ohne Erfassung zeigen einen Gedankenstrich.</caption>");
-        h.append("<thead><tr><th scope=\"col\">Monat</th><th scope=\"col\">Besuche</th>"
+        h.append("<thead><tr><th scope=\"col\">Monat</th><th scope=\"col\">Anfragen</th>"
             + "<th scope=\"col\" class=\"opt\">Terminsuchen (ok)</th>"
             + "<th scope=\"col\">Buchungen (ok)</th><th scope=\"col\">Buchungsquote</th></tr></thead>");
 
@@ -431,8 +449,8 @@ public class UsageSectionRenderer {
         }
         h.append("</tbody>");
 
-        h.append("<tfoot><tr><th scope=\"row\">Jahressumme</th><td>")
-            .append(esc(num(year.visitCount()))).append("</td><td class=\"opt\">")
+        h.append("<tfoot><tr><th scope=\"row\">Jahressumme</th>")
+            .append("<td>").append(esc(num(year.searchRequests()))).append("</td><td class=\"opt\">")
             .append(esc(num(year.sessionsWithSearch()))).append("</td><td>")
             .append(esc(num(year.sessionsWithBooking()))).append("</td><td>")
             .append(percent(year.bookingRate())).append("</td></tr></tfoot>");
@@ -462,7 +480,7 @@ public class UsageSectionRenderer {
         h.append("</th>");
 
         if (m.hasData()) {
-            h.append("<td>").append(esc(num(m.visitCount()))).append("</td>");
+            h.append("<td>").append(esc(num(m.searchRequests()))).append("</td>");
             h.append("<td class=\"opt\">").append(esc(num(m.sessionsWithSearch()))).append("</td>");
             h.append("<td>").append(esc(num(m.sessionsWithBooking()))).append("</td>");
             h.append(m.bookingRate() != null

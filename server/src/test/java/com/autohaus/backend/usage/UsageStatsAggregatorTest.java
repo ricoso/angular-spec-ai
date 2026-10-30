@@ -66,10 +66,14 @@ class UsageStatsAggregatorTest {
             if (kql.contains("summarize visits = count() by Device")) {
                 return deviceResponse();
             }
-            // Funnel rows: [requests, requestsOk, sessions] — the numbers of the §10.3 example.
+            if (kql.contains("fileRequests")) {
+                // REQ-043 row: [apiRequests, fileRequests].
+                return requestsResponse(1708, 6170);
+            }
+            // Funnel rows: [requests, requestsOk, sessions, failedSessions] — §10.3 plus REQ-043.
             return kql.contains("/api/v1/snaps")
-                ? funnelResponse(61, 58, 27)
-                : funnelResponse(11, 10, 9);
+                ? funnelResponse(61, 58, 27, 2)
+                : funnelResponse(11, 10, 9, 1);
         });
     }
 
@@ -92,6 +96,22 @@ class UsageStatsAggregatorTest {
         assertEquals(10L, usage.bookingRequestsOk());
         assertEquals(27L, usage.sessionsWithSearch());
         assertEquals(9L, usage.sessionsWithBooking());
+        assertEquals(1708L, usage.apiRequests());
+        assertEquals(6170L, usage.fileRequests());
+        assertEquals(2L, usage.searchSessionsFailed());
+        assertEquals(1L, usage.bookingSessionsFailed());
+    }
+
+    /**
+     * REQ-043 K-3: a failed session has no successful call at all — sessions without id are not
+     * customers and never count. / Sitzung ganz ohne Erfolg, ohne Session-ID zählt nicht.
+     */
+    @Test
+    void funnelQueryCountsSessionsWithoutAnySuccessAsFailed() {
+        aggregator.aggregateDailyUsage(DAY);
+
+        String funnel = queries.stream().filter(q -> q.contains("/api/v1/snaps")).findFirst().orElseThrow();
+        assertTrue(funnel.contains("failedSessions = countif(okHits == 0 and isnotempty(SessionId))"));
     }
 
     /**
@@ -168,7 +188,8 @@ class UsageStatsAggregatorTest {
     void excludesHealthInternalAndSessionlessLines() {
         aggregator.aggregateDailyUsage(DAY);
 
-        assertEquals(3, queries.size(), "one device query plus one funnel query per endpoint");
+        assertEquals(4, queries.size(),
+            "one device query, one funnel query per endpoint and the REQ-043 request query");
         for (String kql : queries) {
             assertTrue(kql.contains("ContainerAppName_s == 'gs-terminbuchungs-app'"),
                 "the shared default workspace must be filtered by container app: " + kql);
@@ -187,6 +208,14 @@ class UsageStatsAggregatorTest {
         assertTrue(search.contains("countif(Status < 400 and isnotempty(SessionId))"), search);
         assertTrue(search.contains("requestsOk = countif(Status < 400)"), search);
         assertNotNull(queryContaining("/api/v1/appointments"));
+
+        // REQ-043: the load figure counts every status and sessionless lines, but never the
+        // health ping or the status page itself.
+        String requests = queryContaining("fileRequests");
+        assertTrue(requests.contains("Url != \"/api/v1/health\""), requests);
+        assertTrue(requests.contains("not(Url startswith \"/internal\")"), requests);
+        assertFalse(requests.contains("SessionId"), "sessionless requests are load too");
+        assertFalse(requests.contains("Status"), "failed requests are load too");
     }
 
     /**
@@ -277,14 +306,27 @@ class UsageStatsAggregatorTest {
         return root;
     }
 
-    /** Log Analytics response with the single funnel row {@code [requests, requestsOk, sessions]}. */
-    private JsonNode funnelResponse(long requests, long requestsOk, long sessions) {
+    /** REQ-043: Log Analytics response with the single row {@code [apiRequests, fileRequests]}. */
+    private JsonNode requestsResponse(long apiRequests, long fileRequests) {
+        ObjectNode root = om.createObjectNode();
+        ArrayNode row = root.putArray("tables").addObject().putArray("rows").addArray();
+        row.add(String.valueOf(apiRequests));
+        row.add(String.valueOf(fileRequests));
+        return root;
+    }
+
+    /**
+     * Log Analytics response with the single funnel row
+     * {@code [requests, requestsOk, sessions, failedSessions]}.
+     */
+    private JsonNode funnelResponse(long requests, long requestsOk, long sessions, long failedSessions) {
         ObjectNode root = om.createObjectNode();
         ArrayNode rows = root.putArray("tables").addObject().putArray("rows");
         ArrayNode row = rows.addArray();
         row.add(String.valueOf(requests));
         row.add(String.valueOf(requestsOk));
         row.add(String.valueOf(sessions));
+        row.add(String.valueOf(failedSessions));
         return root;
     }
 

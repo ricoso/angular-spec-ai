@@ -5,6 +5,8 @@ import { ReactiveFormsModule } from '@angular/forms';
 import type { TranslationKey } from '@core/i18n';
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 
+import { LICENSE_PLATE_MAX_LENGTH } from '../../../../models/customer.model';
+
 @Component({
   selector: 'app-vehicle-form',
   standalone: true,
@@ -29,6 +31,9 @@ export class VehicleFormComponent {
   public readonly vinHintKey = input<TranslationKey>(i18nKeys.booking.carinformation.form.vin.requiredHint);
 
   protected readonly carinformation = i18nKeys.booking.carinformation;
+
+  /** REQ-043 B-1: native `maxlength` of the plate input — typing stops at the SoftNet limit. */
+  protected readonly licensePlateMaxLength = LICENSE_PLATE_MAX_LENGTH;
 
   // Synchronous form-state ticker driving the error computeds. We subscribe to
   // each CHILD control's events (incl. TouchedChangeEvent) — NOT the group's —
@@ -55,6 +60,7 @@ export class VehicleFormComponent {
     const ctrl = this.form().get('licensePlate');
     if (!ctrl || !ctrl.touched || ctrl.valid) { return null; }
     if (ctrl.hasError('required')) { return this.carinformation.form.licensePlate.error.required; }
+    if (ctrl.hasError('maxlength')) { return this.carinformation.form.licensePlate.error.tooLong; }
     return this.carinformation.form.licensePlate.error.invalidFormat;
   });
 

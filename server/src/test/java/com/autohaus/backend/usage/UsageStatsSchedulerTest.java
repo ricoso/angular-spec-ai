@@ -175,6 +175,79 @@ class UsageStatsSchedulerTest {
             "a gap outside the window is not invented either");
     }
 
+    @Test
+    void recomputesLegacyRowsOnceWithinTheBackfillWindow() {
+        // REQ-043: rows from before the newer counters get recomputed from the same logs — up to
+        // 29 days back (complete days at 30-day retention); rows outside keep their values.
+        SortedMap<LocalDate, DailyUsage> persisted = new TreeMap<>();
+        LocalDate legacyInside = LocalDate.of(2026, 9, 1);
+        LocalDate firstShapeInside = LocalDate.of(2026, 9, 10);
+        LocalDate legacyBeyondCatchUp = LocalDate.of(2026, 8, 24);   // offset 28
+        LocalDate legacyOutside = LocalDate.of(2026, 8, 20);         // offset 32
+        LocalDate gapBeyondCatchUp = LocalDate.of(2026, 8, 25);      // offset 27, missing
+        for (LocalDate day = LocalDate.of(2026, 8, 1); !day.isAfter(LocalDate.of(2026, 9, 20));
+             day = day.plusDays(1)) {
+            persisted.put(day, day(5));
+        }
+        persisted.put(legacyInside, legacyDay(5));
+        persisted.put(firstShapeInside, withoutFailedSessions(day(5)));
+        persisted.put(legacyBeyondCatchUp, legacyDay(5));
+        persisted.put(legacyOutside, legacyDay(5));
+        persisted.remove(gapBeyondCatchUp);
+        givenHistory(persisted);
+        when(aggregator.aggregateDailyUsage(any())).thenReturn(Optional.of(day(7)));
+
+        scheduler(12).rollUpPreviousDay();
+
+        verify(aggregator, times(4)).aggregateDailyUsage(any());
+        verify(aggregator).aggregateDailyUsage(legacyInside);
+        verify(aggregator).aggregateDailyUsage(firstShapeInside);
+        verify(aggregator).aggregateDailyUsage(legacyBeyondCatchUp);
+        verify(aggregator).aggregateDailyUsage(LocalDate.of(2026, 9, 20));
+        verify(aggregator, never()).aggregateDailyUsage(legacyOutside);
+        verify(aggregator, never()).aggregateDailyUsage(gapBeyondCatchUp);
+
+        Map<String, DailyUsage> written = captureWrittenHistory().days();
+        assertEquals(56L, written.get(legacyInside.toString()).apiRequests(), "backfilled");
+        assertEquals(0L, written.get(firstShapeInside.toString()).searchSessionsFailed(), "backfilled");
+        assertNull(written.get(legacyOutside.toString()).apiRequests(), "outside the window stays unrecorded");
+        assertFalse(written.containsKey(gapBeyondCatchUp.toString()),
+            "the backfill only repairs rows — missing days keep the 25-day catch-up (AC-9)");
+    }
+
+    // ---- REQ-043: backfill right after the deploy / Nachberechnung direkt nach dem Deploy ----
+
+    @Test
+    void backfillsLegacyRowsOnStartupInsteadOfWaitingForTheNight() {
+        SortedMap<LocalDate, DailyUsage> persisted = new TreeMap<>();
+        persisted.put(LocalDate.of(2026, 9, 10), legacyDay(5));
+        persisted.put(LocalDate.of(2026, 9, 20), day(5));
+        givenHistory(persisted);
+        when(aggregator.aggregateDailyUsage(any())).thenReturn(Optional.of(day(7)));
+
+        scheduler(12).backfillOnStartup();
+
+        verify(aggregator).aggregateDailyUsage(LocalDate.of(2026, 9, 10));
+        verify(aggregator).aggregateDailyUsage(LocalDate.of(2026, 9, 20));
+        verify(aggregator).aggregateDailyUsage(TODAY);
+        Map<String, DailyUsage> written = captureWrittenHistory().days();
+        assertTrue(written.get("2026-09-10").hasAllCounters(), "the legacy row is complete now");
+        assertNotNull(store.current(), "the page shows the backfilled rows right away");
+    }
+
+    @Test
+    void startupBackfillIsANoOpWhenEveryRowIsComplete() {
+        SortedMap<LocalDate, DailyUsage> persisted = new TreeMap<>();
+        persisted.put(LocalDate.of(2026, 8, 1), legacyDay(5));   // beyond the logs, stays as is
+        persisted.put(LocalDate.of(2026, 9, 20), day(5));
+        givenHistory(persisted);
+
+        scheduler(12).backfillOnStartup();
+
+        verify(aggregator, never()).aggregateDailyUsage(any());
+        verify(blobClient, never()).saveUsageHistory(any(), any());
+    }
+
     /**
      * TC-12/NFR-Datenschutz-7: the retention purge runs <b>independently</b> of whether a new day
      * value could be determined. The deletion deadline must never pause unnoticed just because Log
@@ -260,8 +333,22 @@ class UsageStatsSchedulerTest {
             new UsageStatsProperties.Storage("gsterminbuchungstats", "usage-stats", "usage-daily.json"));
     }
 
-    /** A day row with {@code visits} mobile visits and a plausible funnel. */
+    /** A day row with {@code visits} mobile visits, a plausible funnel and the REQ-043 counters. */
     private static DailyUsage day(long visits) {
+        return new DailyUsage(new DeviceBreakdown(visits, 0L, 0L, 0L),
+            visits, visits, visits / 4, visits / 4, visits / 2, visits / 4, visits * 8, visits * 30,
+            visits / 10, visits / 20);
+    }
+
+    /** A day row as written by the first REQ-043 deploy — request counters, no failed sessions. */
+    private static DailyUsage withoutFailedSessions(DailyUsage d) {
+        return new DailyUsage(d.visits(), d.searchRequests(), d.searchRequestsOk(), d.bookingRequests(),
+            d.bookingRequestsOk(), d.sessionsWithSearch(), d.sessionsWithBooking(), d.apiRequests(),
+            d.fileRequests(), null, null);
+    }
+
+    /** A day row as written before REQ-043 — without request counters. */
+    private static DailyUsage legacyDay(long visits) {
         return new DailyUsage(new DeviceBreakdown(visits, 0L, 0L, 0L),
             visits, visits, visits / 4, visits / 4, visits / 2, visits / 4);
     }

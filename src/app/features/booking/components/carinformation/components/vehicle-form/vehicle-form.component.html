@@ -9,6 +9,7 @@
         class="form-control"
         [class.is-invalid]="form().get('licensePlate')?.invalid && form().get('licensePlate')?.touched"
         formControlName="licensePlate"
+        [attr.maxlength]="licensePlateMaxLength"
         [placeholder]="carinformation.form.licensePlate.placeholder | translate"
         autocomplete="off"
         aria-required="true"

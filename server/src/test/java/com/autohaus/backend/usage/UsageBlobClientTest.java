@@ -480,6 +480,34 @@ class UsageBlobClientTest {
         assertEquals(7L, reloaded.days().get(DAY).sessionsWithBooking());
     }
 
+    /**
+     * REQ-043: a file written before the request counters existed stays usable — the counters come
+     * back as {@code null} („nicht erfasst"), never as {@code 0}. / Alte Datei bleibt lesbar.
+     */
+    @Test
+    void readsAFileFromBeforeTheRequestCountersAsNotRecorded() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        UsageBlobClient client = new IdentityPinnedBlobClient(properties(ACCOUNT), builder);
+        String legacy = "{\"schemaVersion\":1,\"updatedAt\":\"2026-09-21T01:30:12Z\",\"days\":{"
+            + "\"2026-09-20\":{\"visits\":{\"mobile\":41,\"tablet\":0,\"desktop\":12,\"unknown\":1},"
+            + "\"searchRequests\":61,\"searchRequestsOk\":58,\"bookingRequests\":11,"
+            + "\"bookingRequestsOk\":10,\"sessionsWithSearch\":27,\"sessionsWithBooking\":9}}}";
+        expectTokenRequest(server);
+        server.expect(requestTo(BLOB_URL)).andExpect(method(HttpMethod.GET))
+            .andRespond(request -> withSuccess(legacy, MediaType.APPLICATION_JSON)
+                .header("ETag", ETAG)
+                .createResponse(request));
+
+        UsageBlobClient.LoadedHistory loaded = client.loadUsageHistory();
+
+        server.verify();
+        assertTrue(loaded.usable(), "a pre-REQ-043 file is not an E4 case");
+        assertEquals(41L, loaded.days().get(DAY).visits().mobile());
+        assertNull(loaded.days().get(DAY).apiRequests());
+        assertNull(loaded.days().get(DAY).fileRequests());
+    }
+
     // ---- HTTP fixtures / HTTP-Testdaten ----
 
     private static final String ACCOUNT = "gsterminbuchungstats";

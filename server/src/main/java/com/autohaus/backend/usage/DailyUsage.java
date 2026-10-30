@@ -19,6 +19,17 @@ package com.autohaus.backend.usage;
  * @param bookingRequestsOk thereof {@code statusCode < 400} / davon erfolgreich
  * @param sessionsWithSearch sessions with at least one successful search / Sitzungen mit Suche
  * @param sessionsWithBooking sessions with at least one successful booking / Sitzungen mit Buchung
+ * @param apiRequests REQ-043: every {@code /api/**} request of the day except the health ping, any
+ *     status, with or without session; {@code null} = not recorded (day rows from before REQ-043) /
+ *     alle API-Aufrufe; {@code null} = nicht erfasst
+ * @param fileRequests REQ-043: every other request the server answered — app code, styles,
+ *     images, logos — except {@code /internal/**}; together with {@code apiRequests} the server
+ *     load (since K-3 only in {@code usage.json}) / Datei-Abrufe (App, Bilder)
+ * @param searchSessionsFailed REQ-043 K-3: sessions that searched but never got a result — every
+ *     {@code /api/v1/snaps} call of the session failed; together with {@code sessionsWithSearch}
+ *     the „Terminsuchen" tile ({@code null} = nicht erfasst) / Sitzungen, deren jede Suche scheiterte
+ * @param bookingSessionsFailed REQ-043 K-3: sessions whose every booking attempt failed — the
+ *     customers who got stuck / Sitzungen, deren jeder Buchungsversuch scheiterte
  */
 public record DailyUsage(
     DeviceBreakdown visits,
@@ -27,12 +38,38 @@ public record DailyUsage(
     long bookingRequests,
     long bookingRequestsOk,
     long sessionsWithSearch,
-    long sessionsWithBooking
+    long sessionsWithBooking,
+    Long apiRequests,
+    Long fileRequests,
+    Long searchSessionsFailed,
+    Long bookingSessionsFailed
 ) {
+
+    /**
+     * Pre-REQ-043 shape without the request counters (→ {@code null}, „nicht erfasst") / Form vor
+     * REQ-043.
+     */
+    public DailyUsage(DeviceBreakdown visits, long searchRequests, long searchRequestsOk,
+                      long bookingRequests, long bookingRequestsOk, long sessionsWithSearch,
+                      long sessionsWithBooking) {
+        this(visits, searchRequests, searchRequestsOk, bookingRequests, bookingRequestsOk,
+            sessionsWithSearch, sessionsWithBooking, null, null, null, null);
+    }
 
     /** A day without any usage — all counters zero / Tag ohne Nutzung, alle Zähler auf 0. */
     public static DailyUsage empty() {
-        return new DailyUsage(new DeviceBreakdown(0L, 0L, 0L, 0L), 0L, 0L, 0L, 0L, 0L, 0L);
+        return new DailyUsage(new DeviceBreakdown(0L, 0L, 0L, 0L), 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L,
+            0L, 0L);
+    }
+
+    /**
+     * REQ-043: whether the row carries every counter added after REQ-037 — rows from before are
+     * recomputed once while Log Analytics still holds their day (see {@code UsageStatsScheduler}).
+     * / ob die Zeile alle nachträglich eingeführten Zähler trägt.
+     */
+    public boolean hasAllCounters() {
+        return apiRequests != null && fileRequests != null
+            && searchSessionsFailed != null && bookingSessionsFailed != null;
     }
 
     /**
@@ -54,6 +91,18 @@ public record DailyUsage(
             bookingRequests + other.bookingRequests(),
             bookingRequestsOk + other.bookingRequestsOk(),
             sessionsWithSearch + other.sessionsWithSearch(),
-            sessionsWithBooking + other.sessionsWithBooking());
+            sessionsWithBooking + other.sessionsWithBooking(),
+            plusNullable(apiRequests, other.apiRequests()),
+            plusNullable(fileRequests, other.fileRequests()),
+            plusNullable(searchSessionsFailed, other.searchSessionsFailed()),
+            plusNullable(bookingSessionsFailed, other.bookingSessionsFailed()));
+    }
+
+    /** {@code null} + {@code null} stays „nicht erfasst"; otherwise the recorded values add up. */
+    private static Long plusNullable(Long a, Long b) {
+        if (a == null) {
+            return b;
+        }
+        return b == null ? a : a + b;
     }
 }

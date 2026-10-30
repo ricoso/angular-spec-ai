@@ -477,7 +477,7 @@ class ReportControllerTest {
             String bugs = page("/internal/report/bugs");
 
             assertEquals(sections(byDefault), sections(statistics), "same sections on both statistics paths");
-            assertEquals(List.of("ib", "cap", "rk", "sg", "tm", "us", "fn", "st-limits"), sections(statistics));
+            assertEquals(List.of("cap", "rk", "sg", "tm", "us", "fn", "st-limits"), sections(statistics));
 
             assertTrue(bugs.contains("<main id=\"content\">" + REPORT_FRAGMENT + "</main>"),
                 "BR-3: the fragment byte-identical inside main");
@@ -1114,23 +1114,23 @@ class ReportControllerTest {
             new KillSwitchRow(1, true, false, false, false, true, 200, 404, 404, 200,
                 List.of("us", "st-limits"), List.of("us-h", "limits")),
             new KillSwitchRow(2, true, true, false, false, true, 200, 200, 404, 200,
-                List.of("ib", "rk", "sg", "tm", "us", "st-limits"),
-                List.of("briefing", "branches", "service-groups", "timing", "us-h", "limits")),
+                List.of("rk", "sg", "tm", "us", "st-limits"),
+                List.of("branches", "service-groups", "timing", "us-h", "limits")),
             new KillSwitchRow(3, true, true, true, false, true, 200, 200, 200, 200,
-                List.of("ib", "cap", "rk", "sg", "tm", "us", "st-limits"),
-                List.of("briefing", "capacity", "branches", "service-groups", "timing", "us-h", "limits")),
+                List.of("cap", "rk", "sg", "tm", "us", "st-limits"),
+                List.of("capacity", "branches", "service-groups", "timing", "us-h", "limits")),
             new KillSwitchRow(4, true, true, true, true, true, 200, 200, 200, 200,
-                List.of("ib", "cap", "rk", "sg", "tm", "us", "fn", "st-limits"),
-                List.of("briefing", "capacity", "branches", "service-groups", "timing", "us-h", "funnel",
+                List.of("cap", "rk", "sg", "tm", "us", "fn", "st-limits"),
+                List.of("capacity", "branches", "service-groups", "timing", "us-h", "funnel",
                     "limits")),
             new KillSwitchRow(5, true, false, false, true, true, 200, 200, 404, 200,
                 List.of("us", "fn", "st-limits"), List.of("us-h", "funnel", "limits")),
             // Rows 6–8: the funnel switch is „beliebig" — set to true to prove it has no effect.
             new KillSwitchRow(6, false, true, false, true, true, 200, 200, 404, 404,
-                List.of("ib", "rk", "sg", "tm", "st-limits"),
-                List.of("briefing", "branches", "service-groups", "timing", "limits")),
+                List.of("rk", "sg", "tm", "st-limits"),
+                List.of("branches", "service-groups", "timing", "limits")),
             new KillSwitchRow(7, false, false, true, true, true, 200, 404, 200, 404,
-                List.of("ib", "cap", "st-limits"), List.of("briefing", "capacity", "limits")),
+                List.of("cap", "st-limits"), List.of("capacity", "limits")),
             new KillSwitchRow(8, false, false, false, true, false, 404, 404, 404, 404,
                 List.of(), List.of()));
     }
@@ -1202,7 +1202,7 @@ class ReportControllerTest {
                 assertMainIsNotWrapped(html);
             }
             assertEquals(anchorsOf(statistics), tocLinks(statistics));
-            assertEquals(List.of("briefing", "capacity", "branches", "service-groups", "timing", "us-h",
+            assertEquals(List.of("capacity", "branches", "service-groups", "timing", "us-h",
                 "limits"), tocLinks(statistics));
             assertTrue(statistics.contains("Auswertung bis gestern (22.10.2026)"), "META_STATISTICS");
             assertTrue(statistics.contains("Kapazitäts-Scan vom 22.10.2026"), "META_STATISTICS scan part");

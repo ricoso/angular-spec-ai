@@ -65,6 +65,13 @@ public class StatisticsPageRenderer {
 
     /** Anchor of S0 / Sprungziel S0. */
     static final String ANCHOR_BRIEFING = "briefing";
+
+    /**
+     * REQ-043 K-2: S0 „Auf einen Blick" (Engpass, Renner &amp; Abendbuchungen, …) is hidden — too
+     * much information on the page (user decision 2026-10-29). Calculator and renderer stay intact;
+     * {@code true} brings the section and its jump link back. / S0 ausgeblendet, Code bleibt.
+     */
+    static final boolean BRIEFING_VISIBLE = false;
     /** Anchor of S1. */
     static final String ANCHOR_CAPACITY = "capacity";
     /** Anchor of S2. */
@@ -156,8 +163,9 @@ public class StatisticsPageRenderer {
         List<String[]> toc = new ArrayList<>(8);
         StringBuilder sections = new StringBuilder(65536);
 
-        // S0 — only with at least one of its two sources (I-1/I-3 capacity, I-2/I-4 bookings).
-        if (page.briefing() != null && briefingSource) {
+        // S0 — only with at least one of its two sources (I-1/I-3 capacity, I-2/I-4 bookings);
+        // hidden since REQ-043 (BRIEFING_VISIBLE).
+        if (BRIEFING_VISIBLE && page.briefing() != null && briefingSource) {
             add(briefingRenderer.render(page.briefing()), ANCHOR_BRIEFING, TOC_BRIEFING, toc, sections);
         }
         // S1 — capacity scan (K1).

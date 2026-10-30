@@ -138,6 +138,13 @@ class CreateAppointmentRequestValidationTest {
     }
 
     @Test
+    void licensePlate_over20Chars_violatesSize() {
+        // REQ-043 B-1: SoftNet rejects car.licenseNr > 20 chars with an HTTP 500.
+        assertEquals(0, plateViolations("x".repeat(CreateAppointmentRequest.LICENSE_PLATE_MAX_LENGTH)));
+        assertEquals(1, plateViolations("x".repeat(CreateAppointmentRequest.LICENSE_PLATE_MAX_LENGTH + 1)));
+    }
+
+    @Test
     void createAppointmentRequest_validVehicleMileage_hasNoViolations() {
         CreateAppointmentRequest request = new CreateAppointmentRequest(
             "snap-1",

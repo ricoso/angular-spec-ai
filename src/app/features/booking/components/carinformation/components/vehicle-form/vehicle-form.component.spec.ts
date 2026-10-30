@@ -25,7 +25,7 @@ describe('VehicleFormComponent', () => {
     component = fixture.componentInstance;
 
     const form = fb.group({
-      licensePlate: ['', [Validators.required, Validators.pattern(/^[A-ZÄÖÜ]{1,3}-[A-Z]{1,2}\s?\d{1,4}$/i)]],
+      licensePlate: ['', [Validators.required, Validators.pattern(/^[A-ZÄÖÜ]{1,3}-[A-Z]{1,2}\s?\d{1,4}$/i), Validators.maxLength(20)]],
       // REQ-031 BR-6: spiegelt die echten Container-Validators (ganze Zahl >= 10)
       mileage: [null as number | null, [Validators.required, Validators.pattern(/^[0-9]+$/), Validators.min(10)]],
       // REQ-039: spiegelt den echten Container-Validator (FIN freiwillig)
@@ -70,6 +70,22 @@ describe('VehicleFormComponent', () => {
       ctrl?.setValue('INVALID-PLATE-!!!');
       ctrl?.markAsTouched();
       expect(exposed.licensePlateErrors()).toBe('booking.carinformation.form.licensePlate.error.invalidFormat');
+    });
+
+    it('should return tooLong error key when licensePlate exceeds 20 chars (REQ-043)', () => {
+      const exposed = component as unknown as {
+        licensePlateErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('licensePlate');
+      ctrl?.setValue('max.mustermann@example.de');
+      ctrl?.markAsTouched();
+      expect(exposed.licensePlateErrors()).toBe('booking.carinformation.form.licensePlate.error.tooLong');
+    });
+
+    it('should expose the SoftNet plate limit for the native maxlength (REQ-043)', () => {
+      const exposed = component as unknown as { licensePlateMaxLength: number };
+      expect(exposed.licensePlateMaxLength).toBe(20);
     });
 
     it('should return null licensePlateErrors when valid', () => {
