@@ -3,7 +3,7 @@ import type { ComponentFixture} from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter,Router } from '@angular/router';
 
-import { TranslateService } from '@core/i18n';
+import { TranslateService, translations } from '@core/i18n';
 
 import type { AppointmentSlot } from '../../models/appointment.model';
 import { AppointmentApiService } from '../../services/appointment-api.service';
@@ -424,5 +424,55 @@ describe('AppointmentSelectionContainerComponent', () => {
 
       expect(clearSpy).not.toHaveBeenCalled();
     });
+  });
+
+  describe('empty date strip texts (REQ-044)', () => {
+    const RECALL_VIN = 'WVWZZZ1KZAW000123';
+
+    const noAppointmentsKeys = (): { title: string; hint: string } =>
+      (component as unknown as { noAppointmentsKeys: () => { title: string; hint: string } }).noAppointmentsKeys();
+
+    it('keeps the generic texts outside the recall mode', () => {
+      expect(store.isRecallMode()).toBe(false);
+      expect(noAppointmentsKeys()).toEqual({
+        title: 'booking.appointment.noAppointments',
+        hint: 'booking.appointment.noAppointmentsHint'
+      });
+    });
+
+    it('shows the supply-shortage texts in the recall mode', () => {
+      store.activateRecallMode(RECALL_VIN);
+
+      expect(noAppointmentsKeys()).toEqual({
+        title: 'booking.recall.noAppointments',
+        hint: 'booking.recall.noAppointmentsHint'
+      });
+    });
+
+    it('falls back to the generic texts after leaving the recall mode', () => {
+      store.activateRecallMode(RECALL_VIN);
+      store.clearRecallMode();
+
+      expect(noAppointmentsKeys().title).toBe('booking.appointment.noAppointments');
+    });
+
+    it('pins the German wording of the supply-shortage notice', () => {
+      expect(translations.de.booking.recall.noAppointments)
+        .toBe('Aufgrund von Lieferengpässen der Schraube sind aktuell in diesem Standort keine Termine verfügbar.');
+      expect(translations.de.booking.recall.noAppointmentsHint)
+        .toBe('Bitte versuchen Sie es zu einem späteren Zeitpunkt oder versuchen Sie es in einem unserer anderen Standorte.');
+    });
+
+    it.each(Object.keys(translations) as (keyof typeof translations)[])(
+      'has its own supply-shortage texts in %s',
+      (language) => {
+        const { recall, appointment } = translations[language].booking;
+
+        expect(recall.noAppointments.trim()).not.toBe('');
+        expect(recall.noAppointmentsHint.trim()).not.toBe('');
+        expect(recall.noAppointments).not.toBe(appointment.noAppointments);
+        expect(recall.noAppointmentsHint).not.toBe(appointment.noAppointmentsHint);
+      }
+    );
   });
 });

@@ -9,7 +9,7 @@ import { convertToBerlinTime } from '@shared/pipes/berlin-time.pipe';
 import { LOCALE_BY_LANGUAGE, toLocalDate, withoutDot } from '@shared/utils/date-locale.util';
 import { EMPTY, switchMap, timer } from 'rxjs';
 
-import type { AppointmentSlot, DateTile, SlotSection } from '../../models/appointment.model';
+import type { AppointmentSlot, DateTile, NoAppointmentsKeys, SlotSection } from '../../models/appointment.model';
 import { BookingStore } from '../../stores/booking.store';
 
 import { AppointmentCardComponent } from './appointment-card.component';
@@ -46,6 +46,8 @@ export class AppointmentSelectionContainerComponent {
   protected readonly error = this.store.error;
   /** REQ-031: steuert das Snap-Conflict-Banner. */
   protected readonly hasSnapConflict = this.store.hasSnapConflict;
+  /** REQ-044: the OTV was opened via the recall URL (REQ-041). */
+  protected readonly isRecallMode = this.store.isRecallMode;
   /** REQ-039: with/without rental car and the empty state when no slot has a car. */
   protected readonly rentalCarRequested = this.store.rentalCarRequested;
   protected readonly hasNoRentalCarAppointments = this.store.hasNoRentalCarAppointments;
@@ -154,6 +156,17 @@ export class AppointmentSelectionContainerComponent {
 
   /** REQ-039 AC-M10: the chosen slot comes with a reserved rental car. */
   protected readonly selectedIncludesRentalCar = computed(() => this.selectedAppointment()?.rentalCarIncluded === true);
+
+  /**
+   * REQ-044: texts of the empty date strip. In the recall campaign (own SoftNet group, one fixed
+   * service) an empty search is explained with the supply shortage of the screw; every other entry
+   * keeps the generic "no appointments" text.
+   */
+  protected readonly noAppointmentsKeys = computed<NoAppointmentsKeys>(() =>
+    this.isRecallMode()
+      ? { title: this.booking.recall.noAppointments, hint: this.booking.recall.noAppointmentsHint }
+      : { title: this.booking.appointment.noAppointments, hint: this.booking.appointment.noAppointmentsHint }
+  );
 
   protected onDateSelect(date: string): void {
     this.viewedDate.set(date);

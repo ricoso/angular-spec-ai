@@ -78,8 +78,8 @@
             <div class="notice appointment-selection__empty" role="status">
               <i class="bi bi-info-circle" aria-hidden="true"></i>
               <div>
-                <p><strong>{{ booking.appointment.noAppointments | translate }}</strong></p>
-                <p>{{ booking.appointment.noAppointmentsHint | translate }}</p>
+                <p><strong>{{ noAppointmentsKeys().title | translate }}</strong></p>
+                <p>{{ noAppointmentsKeys().hint | translate }}</p>
               </div>
               <button type="button" class="btn btn-primary appointment-selection__reload-button" (click)="onRetry()">
                 {{ booking.appointment.reload | translate }}

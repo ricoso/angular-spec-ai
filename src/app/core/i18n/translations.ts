@@ -85,7 +85,9 @@ export const translations = {
         badge: 'Rückrufaktion',
         title: 'Termin für Ihre Rückrufaktion',
         description: 'Sie buchen einen Termin für eine Rückrufaktion. Der passende Service ist bereits ausgewählt.',
-        vinDetected: 'Erkannte FIN'
+        vinDetected: 'Erkannte FIN',
+        noAppointments: 'Aufgrund von Lieferengpässen der Schraube sind aktuell in diesem Standort keine Termine verfügbar.',
+        noAppointmentsHint: 'Bitte versuchen Sie es zu einem späteren Zeitpunkt oder versuchen Sie es in einem unserer anderen Standorte.'
       },
       branch: {
         infoLabel: 'Ihr Standort',
@@ -466,7 +468,9 @@ vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der
         badge: 'Recall campaign',
         title: 'Appointment for your recall campaign',
         description: 'You are booking an appointment for a recall campaign. The matching service is already selected.',
-        vinDetected: 'Detected VIN'
+        vinDetected: 'Detected VIN',
+        noAppointments: 'Due to supply shortages of the screw, no appointments are currently available at this location.',
+        noAppointmentsHint: 'Please try again later or try one of our other locations.'
       },
       branch: {
         infoLabel: 'Your location',
@@ -847,7 +851,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of
         badge: 'Відклична кампанія',
         title: 'Запис на відкличну кампанію',
         description: 'Ви записуєтесь на відкличну кампанію. Відповідну послугу вже обрано.',
-        vinDetected: 'Виявлений VIN'
+        vinDetected: 'Виявлений VIN',
+        noAppointments: 'Через перебої з постачанням гвинта наразі в цьому місці немає доступних візитів.',
+        noAppointmentsHint: 'Будь ласка, спробуйте пізніше або виберіть одне з наших інших місць.'
       },
       branch: {
         infoLabel: 'Ваше місце',
@@ -1233,7 +1239,9 @@ vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснен
         badge: 'Campagne de rappel',
         title: 'Rendez-vous pour votre campagne de rappel',
         description: 'Vous prenez rendez-vous pour une campagne de rappel. Le service correspondant est déjà sélectionné.',
-        vinDetected: 'NIV détecté'
+        vinDetected: 'NIV détecté',
+        noAppointments: 'En raison de difficultés d\'approvisionnement de la vis, aucun rendez-vous n\'est actuellement disponible sur ce site.',
+        noAppointmentsHint: 'Veuillez réessayer plus tard ou essayer l\'un de nos autres sites.'
       },
       branch: {
         infoLabel: 'Votre lieu',
@@ -1619,7 +1627,9 @@ vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du
         badge: 'حملة استدعاء',
         title: 'موعد لحملة الاستدعاء الخاصة بك',
         description: 'أنت تحجز موعدًا لحملة استدعاء. تم بالفعل اختيار الخدمة المناسبة.',
-        vinDetected: 'رقم VIN المكتشف'
+        vinDetected: 'رقم VIN المكتشف',
+        noAppointments: 'بسبب نقص في توريد المسمار، لا توجد مواعيد متاحة حاليًا في هذا الموقع.',
+        noAppointmentsHint: 'يرجى المحاولة لاحقًا أو اختيار أحد مواقعنا الأخرى.'
       },
       branch: {
         infoLabel: 'موقعك',

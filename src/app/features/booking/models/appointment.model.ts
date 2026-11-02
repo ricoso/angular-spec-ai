@@ -44,3 +44,12 @@ export interface SlotSection {
   label: TranslationKey;
   slots: AppointmentSlot[];
 }
+
+/**
+ * i18n keys of the empty date strip (no appointment found). The recall campaign has its own wording.
+ * DE: Texte des Leerzustands / EN: Empty-state texts
+ */
+export interface NoAppointmentsKeys {
+  title: TranslationKey;
+  hint: TranslationKey;
+}
