@@ -1,3 +1,5 @@
+<!-- REQ-039: brand grid as in mockups/wizard.css (.brand-grid) — 2/3/6 columns, logo cards with
+     grey border, selected card with primary border. -->
 <div class="brand-grid" role="radiogroup" [attr.aria-label]="booking.brand.ariaGroupLabel | translate">
   @for (brand of enrichedBrands(); track brand.id) {
     <div class="brand-grid__item">
@@ -5,16 +7,17 @@
         type="radio"
         name="brand"
         [id]="'brand-' + brand.id"
-        class="brand-grid__radio"
+        class="brand-grid__radio visually-hidden"
         [value]="brand.id"
         [checked]="brand.id === selectedBrand()"
         [attr.aria-label]="brand.name"
         (change)="onSelect(brand)"
       />
-      <label [for]="'brand-' + brand.id" class="brand-card">
-        <span class="brand-card__check" aria-hidden="true">
-          <mat-icon>check</mat-icon>
-        </span>
+      <label
+        [for]="'brand-' + brand.id"
+        class="brand-card"
+        [class.selected]="brand.id === selectedBrand()"
+      >
         @if (brand.logoPath) {
           <img
             [src]="brand.logoPath"
@@ -23,7 +26,7 @@
             aria-hidden="true"
           />
         }
-        <span class="brand-card__name">{{ brand.name }}</span>
+        <span class="brand-card__name visually-hidden">{{ brand.name }}</span>
       </label>
     </div>
   }

@@ -13,6 +13,10 @@ Implementiert ein Requirement basierend auf der Spezifikation.
 > **Kein Auto-Commit:** Änderungen werden NICHT automatisch committed oder gepusht.
 > Der Benutzer prüft lokal und entscheidet selbst über Commit + Push.
 
+> **VERBINDLICH (REQ-023):** Smoke-Tests und E2E-Tests sind PFLICHTBESTANDTEIL jeder Feature-Implementierung.
+> Ohne grünen Smoke-Test UND grünen `npm run e2e:backend`-Run ist die Implementierung **NICHT abgeschlossen**.
+> Step 6.5 ist ein BLOCKER — bei FAIL darf Step 7 nicht starten und es darf NICHT committed werden.
+
 ## Usage
 
 ```
@@ -38,6 +42,7 @@ Implementiert ein Requirement basierend auf der Spezifikation.
 | Step 4 | Styling angewendet |
 | Step 5 | Tests geschrieben + >80% |
 | **Step 6** | **lint + type-check + tests (3 parallele Agents)** |
+| **Step 6.5** | **Smoke-Test + E2E (`npm run e2e:backend`) GRUEN — VERBINDLICH** |
 | **Step 7** | **`/check-all` Score >= 90 + qualitaets.md generiert** |
 | Step 8 | Implementierung abgeschlossen, Änderungen lokal bereit |
 
@@ -92,6 +97,8 @@ fi
 | 3 | **i18n** | `.claude/skills/i18n-typings.md` | UI-Sprachen (DE/EN/etc.), Translation Pattern |
 | 4 | **Routing** | `.claude/skills/routing-patterns.md` | Resolver, Guards, Lazy Loading, HashLocation |
 | 5 | **Forms** | `.claude/skills/forms.md` | Reactive Forms (auch wenn Feature keine Forms hat → bestätigen!) |
+
+> **Zusätzlich, wenn das REQ das Spring-Backend oder Payloads an SoftNet berührt:** `.claude/skills/spring-backend.md` lesen. Regel dort: unbekannte Angaben (VIN, Modell, Erstzulassung, …) **weglassen**, nie mit Platzhaltern (`UNKNOWN`, `Unknown`, `N/A`) befüllen; Payload-Änderungen vor dem Deploy gegen INT testen.
 
 **Nach dem Lesen — Bestätige explizit:**
 
@@ -184,32 +191,100 @@ npm run test:coverage
 
 ### Step 6: Technische Prüfung (PFLICHT! BLOCKER! PARALLEL AGENTS!)
 
-> **ALLE 3 Prüfungen MUESSEN ausgeführt werden!**
-> **ALLE 3 als parallele Agents starten** (3 Tool-Aufrufe in EINER Nachricht)!
-> **Bei Fehler: Fixen und erneut ALLE 3 parallel als Agents ausführen bis GRUEN!**
+> **ALLE 4 Prüfungen MUESSEN ausgeführt werden!**
+> **ALLE 4 als parallele Agents starten** (4 Tool-Aufrufe in EINER Nachricht)!
+> **Bei Fehler: Fixen und erneut ALLE 4 parallel als Agents ausführen bis GRUEN!**
 
-**3 parallele Agents starten (EINE Nachricht, 3 Tool-Aufrufe):**
+**4 parallele Agents starten (EINE Nachricht, 4 Tool-Aufrufe):**
 
 | # | Agent Description | Command | Prüft |
 |---|-------------------|---------|-------|
 | 1 | `"Run lint:fix"` | `npm run lint:fix` | ESLint Regeln + Auto-Fix |
 | 2 | `"Run type-check"` | `npm run type-check` | TypeScript Typen |
 | 3 | `"Run test:coverage"` | `npm run test:coverage` | Jest Tests + Coverage >80% |
+| 4 | `"Run backend tests"` | `cd server && ./gradlew test` | Spring Boot Backend Tests |
 
-> **WICHTIG:** Die 3 Agents sind voneinander UNABHÄNGIG und MUESSEN parallel gestartet werden!
+> **WICHTIG:** Die 4 Agents sind voneinander UNABHÄNGIG und MUESSEN parallel gestartet werden!
 
-**Ergebnis dokumentieren (erst wenn ALLE 3 Agents fertig):**
+**Ergebnis dokumentieren (erst wenn ALLE 4 Agents fertig):**
 ```
-TECHNISCHE PRÜFUNG (3 parallele Agents):
-- lint:fix     → [PASS / FAIL + Fehler]
-- type-check   → [PASS / FAIL + Fehler]
-- test:coverage → [PASS (XX%) / FAIL + fehlgeschlagene Tests]
+TECHNISCHE PRÜFUNG (4 parallele Agents):
+- lint:fix       → [PASS / FAIL + Fehler]
+- type-check     → [PASS / FAIL + Fehler]
+- test:coverage  → [PASS (XX%) / FAIL + fehlgeschlagene Tests]
+- backend:test   → [PASS (XX%) / FAIL + fehlgeschlagene Tests]
 ```
 
-> **STOP bei FAIL!** Erst fixen, dann erneut ALLE 3 parallel als Agents prüfen.
-> **Step 7 darf NICHT starten wenn Step 6 nicht GRUEN ist!**
+> **STOP bei FAIL!** Erst fixen, dann erneut ALLE 4 parallel als Agents prüfen.
+> **Step 6.5 darf NICHT starten wenn Step 6 nicht GRUEN ist!**
 
 **GATE 6:** lint + type-check + tests
+
+---
+
+### Step 6.5: Smoke-Test + E2E (PFLICHT! BLOCKER! VERBINDLICH!)
+
+> **Smoke-Tests und E2E-Tests sind verpflichtender Bestandteil jeder Feature-Implementierung.**
+> **Ohne grünen Smoke-Test UND grünen E2E-Run ist die Implementierung NICHT abgeschlossen.**
+> **Festgelegt durch REQ-023 — gilt rueckwirkend fuer alle zukuenftigen Features.**
+
+**6.5a — Smoke-Test (ca. 30 s):**
+
+Verifiziert, dass die App ueberhaupt startet, Backend gesund ist und das Angular-Bundle ausgeliefert wird:
+
+```bash
+# Frontend Build
+npm run build
+
+# Backend in Hintergrund starten
+(cd server && ./gradlew bootRun) &
+BACKEND_PID=$!
+
+# Bis zu 60 s auf Health warten
+for i in $(seq 1 60); do
+  if curl -sf http://localhost:3000/api/v1/health >/dev/null; then break; fi
+  sleep 1
+done
+
+# Health-Check + Root-Page-Check
+curl -sf http://localhost:3000/api/v1/health | grep -q '"status":"healthy"' \
+  || (echo "SMOKE FAIL: Health-Check"; kill $BACKEND_PID; exit 1)
+curl -sf http://localhost:3000/ | grep -q '<app-root' \
+  || (echo "SMOKE FAIL: Angular-Root nicht ausgeliefert"; kill $BACKEND_PID; exit 1)
+
+kill $BACKEND_PID
+echo "SMOKE PASS"
+```
+
+**6.5b — E2E (full, ca. 5–10 min):**
+
+```bash
+npm run e2e:backend
+```
+
+Erwartung: alle Specs grün in Desktop + Tablet + Mobile.
+
+**Ergebnis dokumentieren:**
+
+```
+SMOKE + E2E:
+- Smoke-Test         → [PASS / FAIL + Fehlerausgabe]
+- E2E (Desktop)      → [PASS (XX/XX) / FAIL + Spec-Namen]
+- E2E (Tablet)       → [PASS (XX/XX) / FAIL + Spec-Namen]
+- E2E (Mobile)       → [PASS (XX/XX) / FAIL + Spec-Namen]
+```
+
+> **STOP bei FAIL!**
+> - Smoke-FAIL → Container-Setup, Health-Endpoint oder Build defekt → fix, Step 6 + 6.5 erneut
+> - E2E-FAIL → echte Regression oder Flake. **Flake-Fix ist Pflicht** (kein „retry & ignore")
+> **Step 7 darf NICHT starten wenn Step 6.5 nicht GRUEN ist!**
+> **Es darf NICHT committed werden bei FAIL!**
+
+**Bei neuen Features ohne dedizierten E2E-Test:**
+- Eine neue Spec `playwright/<REQ-ID>-<feature>.spec.ts` MUSS angelegt werden, die mindestens den Happy-Path des Features validiert (Filiale → … → Submit).
+- Ziel: User-Flow-Abdeckung ≥ 95 % (Vorgabe REQ-023).
+
+**GATE 6.5:** Smoke-Test grün + E2E grün in allen 3 Viewports
 
 ---
 
@@ -287,11 +362,71 @@ Nächste Schritte (manuell):
 - [ ] **Step 6: `npm run lint:fix`**
 - [ ] **Step 6: `npm run type-check`**
 - [ ] **Step 6: `npm run test:coverage`**
+- [ ] **Step 6: `cd server && ./gradlew test` (Backend-Tests)**
+- [ ] **Step 6.5: Smoke-Test (Frontend-Build + Backend-Health-Check) PASS**
+- [ ] **Step 6.5: `npm run e2e:backend` GRUEN in Desktop + Tablet + Mobile (PFLICHT, REQ-023)**
+- [ ] **Step 6.5: Bei neuem Feature ohne Spec → neue `playwright/<REQ-ID>-*.spec.ts` angelegt (≥ Happy-Path)**
 - [ ] **Step 7: `/check-all` ausgeführt (Score >= 90/100)**
 - [ ] **Step 7: `qualitaets.md` generiert**
 - [ ] **Step 7: E2E Tests bestanden (check-e2e)**
 - [ ] **Step 7: Feature-Dokumentation in DE + EN generiert (check-documentation)**
 - [ ] Step 8: Fertigmeldung ausgegeben (Änderungen LOKAL, kein Commit/Push)
+
+---
+
+## Backend-Architektur & Deployment
+
+### Architektur
+
+```
+Browser → Angular App → Spring Boot Backend (:3000) → SoftNet API
+```
+
+- **Spring Boot Backend** (`server/`): Middleware/Proxy zwischen Angular und SoftNet API
+- **Frontend API-Services**: Machen HTTP-Calls an `/api/v1/...` (KEINE statischen Mock-Daten!)
+- **Backend**: Ruft echte SoftNet API auf, transformiert Responses fuer das Frontend
+- **Store bleibt unveraendert**: Ruft weiterhin die API-Services auf
+
+### Deployment-Modi (gleicher Code, andere Env-Werte)
+
+| Modus | SoftNet-Instanz | Env-Quelle | Wo |
+|-------|----------------|-----------|-----|
+| **Dev** | Integration (`int-api.soft-nrg.com`) | `application.yml` / `.env`-Datei (lokal) | Lokal + GitHub Actions |
+| **Prod** | Production (`api.soft-nrg.com`) | GitLab Secrets Store → K8s Env Vars | Kubernetes Pod |
+
+> **Prod-Deployment:** Die Env-Werte werden NICHT als Datei deployed.
+> Stattdessen injiziert GitLab CI/CD die Secrets als Environment Variables
+> in den Kubernetes Pod (via `CI/CD > Settings > Variables`).
+> Spring Boot liest sowohl `application.yml` als auch `System.getenv()`.
+
+### E2E-Tests
+
+| Command | Beschreibung | Wann |
+|---------|-------------|------|
+| `npm run e2e:backend` | Angular Build + Spring Boot Backend + Playwright | GitHub Actions (Dev-Werte) |
+| `npm run e2e:backend` | Gleicher Command | Im Pod (Prod-Werte) |
+
+> **PFLICHT:** E2E-Tests laufen IMMER mit Backend — kein Click-Dummy-Modus mehr!
+> Frontend-Services machen IMMER echte HTTP-Calls zum Backend.
+
+### Commands
+
+```bash
+# Frontend
+npm start              # Angular Dev Server (:4200, braucht Backend auf :3000)
+npm test               # Jest Watch
+npm run test:coverage  # Coverage Report
+npm run lint:fix       # ESLint Auto-fix
+npm run type-check     # TypeScript Check
+
+# Backend
+cd server && ./gradlew bootRun   # Spring Boot Server (:3000)
+cd server && ./gradlew test      # Backend Tests
+cd server && ./gradlew test jacocoTestReport  # Backend Coverage
+
+# E2E (IMMER mit Backend!)
+npm run e2e:backend    # Build + Spring Boot Backend + Playwright (3 Viewports)
+```
 
 ---
 
@@ -301,3 +436,4 @@ Nächste Schritte (manuell):
 - Skills: `.claude/skills/*.md` (ALLE 5 lesen!)
 - Styling: `src/styles/_variables.scss`
 - Quality Template: `docs/requirements/QUALITAETS-TEMPLATE.md`
+- Backend: `server/` (Spring Boot, `application.yml` fuer Konfiguration)

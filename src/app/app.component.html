@@ -3,17 +3,14 @@
   {{ app.skipLink | translate }}
 </a>
 
+<!-- REQ-039: shell as in mockups/0X-*.html — white frame with header (title, accessibility,
+     cart), the routed wizard page and its action bar; on desktop centred on the header colour. -->
 <div class="app-layout">
-  <!-- Header -->
-  <app-header />
+  <div class="app-shell">
+    <app-floating-overlay />
 
-  <!-- Main Content -->
-  <main id="main-content" class="app-main" role="main">
-    <router-outlet />
-  </main>
-
-  <!-- Footer -->
-  <footer class="app-footer" role="contentinfo">
-    <p>Autohaus GmbH</p>
-  </footer>
+    <main id="main-content" class="app-main" role="main">
+      <router-outlet />
+    </main>
+  </div>
 </div>

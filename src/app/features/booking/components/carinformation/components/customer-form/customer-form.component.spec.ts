@@ -30,7 +30,7 @@ describe('CustomerFormComponent', () => {
       street: ['', [Validators.required]],
       postalCode: ['', [Validators.required, Validators.pattern(/^\d{5}$/)]],
       city: ['', [Validators.required, Validators.pattern(/^[a-zA-ZÀ-ÖØ-öø-ÿ\s-]+$/)]],
-      mobilePhone: ['', [Validators.required, Validators.pattern(/^0[0-9]+$/)]]
+      mobilePhone: ['', [Validators.required, Validators.pattern(/^(\+|0)[0-9\s]+$/)]]
     });
 
     fixture.componentRef.setInput('form', form);
@@ -60,6 +60,20 @@ describe('CustomerFormComponent', () => {
       const ctrl = exposed.form().get('email');
       ctrl?.markAsTouched();
       expect(exposed.emailErrors()).toBe('booking.carinformation.form.email.error.required');
+    });
+
+    it('should show required errors after markAllAsTouched without any input (submit case)', () => {
+      const exposed = component as unknown as {
+        emailErrors: () => string | null;
+        firstNameErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      // Read first so the computeds are cached — they must still react to the touched change.
+      expect(exposed.emailErrors()).toBeNull();
+      expect(exposed.firstNameErrors()).toBeNull();
+      exposed.form().markAllAsTouched();
+      expect(exposed.emailErrors()).toBe('booking.carinformation.form.email.error.required');
+      expect(exposed.firstNameErrors()).toBe('booking.carinformation.form.firstName.error.required');
     });
 
     it('should return email error key when email invalid format', () => {

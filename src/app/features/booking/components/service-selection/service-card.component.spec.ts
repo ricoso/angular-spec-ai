@@ -1,7 +1,7 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { AVAILABLE_SERVICES } from '../../models/service.model';
+import type { ApiCategory, ApiOperation } from '../../models/service.model';
 
 import { ServiceCardComponent } from './service-card.component';
 
@@ -9,15 +9,37 @@ describe('ServiceCardComponent', () => {
   let component: ServiceCardComponent;
   let fixture: ComponentFixture<ServiceCardComponent>;
 
-  const brakeFluidService = AVAILABLE_SERVICES[2]; // brake-fluid — no options
-  const tireChangeService = AVAILABLE_SERVICES[3]; // tire-change — has options
+  const inspectionCategory: ApiCategory = {
+    id: 'tag-inspektion',
+    name: 'Inspektion',
+    rank: 0
+  };
+
+  const operations: ApiOperation[] = [
+    {
+      id: 'op-1',
+      name: 'Inspektion',
+      description: 'Servicearbeiten nach Wartungsplan. Bitte bringen Sie Ihr Serviceheft mit.',
+      tagIds: ['tag-inspektion'],
+      order: 1.1,
+      imageId: 'img-1'
+    },
+    {
+      id: 'op-2',
+      name: 'Ölwechsel',
+      description: null,
+      tagIds: ['tag-inspektion'],
+      order: 1.2,
+      imageId: null
+    }
+  ];
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ServiceCardComponent]
     })
       .overrideComponent(ServiceCardComponent, {
-        set: { template: '<div class="mocked">Mocked Service Card</div>' }
+        set: { template: '<div class="mocked">Mocked</div>' }
       })
       .compileComponents();
 
@@ -25,191 +47,135 @@ describe('ServiceCardComponent', () => {
     component = fixture.componentInstance;
   });
 
-  describe('Simple service (brake-fluid, no options)', () => {
-    beforeEach(() => {
-      fixture.componentRef.setInput('service', brakeFluidService);
-      fixture.detectChanges();
-    });
+  function setInputs(opts: { ops?: ApiOperation[]; isSelected?: boolean; selectedIds?: string[] } = {}): void {
+    fixture.componentRef.setInput('category', inspectionCategory);
+    fixture.componentRef.setInput('operations', opts.ops ?? operations);
+    fixture.componentRef.setInput('isSelected', opts.isSelected ?? false);
+    fixture.componentRef.setInput('selectedOperationIds', opts.selectedIds ?? []);
+    fixture.detectChanges();
+  }
+
+  describe('Category card with operations', () => {
+    beforeEach(() => { setInputs(); });
 
     it('should create', () => {
       expect(component).toBeTruthy();
     });
 
-    it('should emit serviceClicked on card click', () => {
-      const spy = jest.fn();
-      component.serviceClicked.subscribe(spy);
-      const exposed = component as unknown as { onCardClick: () => void };
-      exposed.onCardClick();
-      expect(spy).toHaveBeenCalledWith('brake-fluid');
+    it('should expose operationCount = operations length', () => {
+      const exposed = component as unknown as { operationCount: () => number };
+      expect(exposed.operationCount()).toBe(2);
     });
 
-    it('should not have options', () => {
-      const exposed = component as unknown as { hasOptions: () => boolean };
-      expect(exposed.hasOptions()).toBe(false);
-    });
-
-    it('should not show confirm button for non-option service', () => {
-      const exposed = component as unknown as { showConfirmButton: () => boolean };
-      expect(exposed.showConfirmButton()).toBe(false);
-    });
-
-    it('should not show deselect button for non-option service', () => {
-      const exposed = component as unknown as { showDeselectButton: () => boolean };
-      expect(exposed.showDeselectButton()).toBe(false);
-    });
-
-    it('should have hasOptionsChanged as false when no confirmed or selected', () => {
-      const exposed = component as unknown as { hasOptionsChanged: () => boolean };
-      expect(exposed.hasOptionsChanged()).toBe(false);
-    });
-  });
-
-  describe('Service with options — not selected', () => {
-    beforeEach(() => {
-      fixture.componentRef.setInput('service', tireChangeService);
-      fixture.componentRef.setInput('isSelected', false);
-      fixture.detectChanges();
-    });
-
-    it('should have options', () => {
+    it('hasOptions() is true when operations are present', () => {
       const exposed = component as unknown as { hasOptions: () => boolean };
       expect(exposed.hasOptions()).toBe(true);
     });
 
-    it('should toggle isExpanded on card click for service with options', () => {
-      const exposed = component as unknown as {
-        onCardClick: () => void;
-        isExpanded: () => boolean;
-      };
-      expect(exposed.isExpanded()).toBe(false);
-      exposed.onCardClick();
-      expect(exposed.isExpanded()).toBe(true);
-      exposed.onCardClick();
-      expect(exposed.isExpanded()).toBe(false);
-    });
-
-    it('should not emit serviceClicked on card click for service with options', () => {
+    it('emits serviceClicked with category-id on click', () => {
       const spy = jest.fn();
       component.serviceClicked.subscribe(spy);
       const exposed = component as unknown as { onCardClick: () => void };
       exposed.onCardClick();
-      expect(spy).not.toHaveBeenCalled();
+      expect(spy).toHaveBeenCalledWith('tag-inspektion');
     });
 
-    it('should show confirm button when expanded and not selected', () => {
-      const exposed = component as unknown as {
-        onCardClick: () => void;
-        showConfirmButton: () => boolean;
-      };
-      exposed.onCardClick(); // expand
-      expect(exposed.showConfirmButton()).toBe(true);
-    });
-
-    it('should not show confirm button when collapsed', () => {
-      const exposed = component as unknown as { showConfirmButton: () => boolean };
-      expect(exposed.showConfirmButton()).toBe(false);
-    });
-
-    it('should not show deselect button when not selected', () => {
-      const exposed = component as unknown as { showDeselectButton: () => boolean };
-      expect(exposed.showDeselectButton()).toBe(false);
-    });
-
-    it('should track checkbox option selection', () => {
-      const exposed = component as unknown as {
-        onCheckboxChange: (optionId: string, checked: boolean) => void;
-        selectedCheckboxOptions: () => Set<string>;
-      };
-      exposed.onCheckboxChange('bring-own-tires', true);
-      expect(exposed.selectedCheckboxOptions().has('bring-own-tires')).toBe(true);
-    });
-
-    it('should untrack checkbox option on deselection', () => {
-      const exposed = component as unknown as {
-        onCheckboxChange: (optionId: string, checked: boolean) => void;
-        selectedCheckboxOptions: () => Set<string>;
-      };
-      exposed.onCheckboxChange('bring-own-tires', true);
-      exposed.onCheckboxChange('bring-own-tires', false);
-      expect(exposed.selectedCheckboxOptions().has('bring-own-tires')).toBe(false);
-    });
-
-    it('should emit serviceConfirmed on confirm', () => {
-      const spy = jest.fn();
-      component.serviceConfirmed.subscribe(spy);
-      const exposed = component as unknown as {
-        onCheckboxChange: (optionId: string, checked: boolean) => void;
-        onConfirm: () => void;
-      };
-      exposed.onCheckboxChange('stored-tires', true);
-      exposed.onConfirm();
-      expect(spy).toHaveBeenCalledWith({ serviceId: 'tire-change', optionIds: ['stored-tires'] });
-    });
-
-    it('should not emit serviceConfirmed if no option selected', () => {
-      const spy = jest.fn();
-      component.serviceConfirmed.subscribe(spy);
-      const exposed = component as unknown as { onConfirm: () => void };
-      exposed.onConfirm();
-      expect(spy).not.toHaveBeenCalled();
+    it('selectedCount follows selectedOperationIds', () => {
+      setInputs({ isSelected: true, selectedIds: ['op-1'] });
+      const exposed = component as unknown as { selectedCount: () => number };
+      expect(exposed.selectedCount()).toBe(1);
     });
   });
 
-  describe('Service with options — selected with options', () => {
-    beforeEach(() => {
-      fixture.componentRef.setInput('service', tireChangeService);
-      fixture.componentRef.setInput('isSelected', true);
-      fixture.componentRef.setInput('selectedOptionIds', ['bring-own-tires']);
-      fixture.detectChanges();
+  describe('Empty category (no operations)', () => {
+    beforeEach(() => { setInputs({ ops: [] }); });
+
+    it('hasOptions() is false', () => {
+      const exposed = component as unknown as { hasOptions: () => boolean };
+      expect(exposed.hasOptions()).toBe(false);
     });
 
-    it('should show deselect button when selected, expanded, and no option change', () => {
-      const exposed = component as unknown as {
-        onCardClick: () => void;
-        showDeselectButton: () => boolean;
-      };
-      exposed.onCardClick(); // expand
-      expect(exposed.showDeselectButton()).toBe(true);
-    });
-
-    it('should not show confirm button when selected, expanded, and no option change', () => {
-      const exposed = component as unknown as {
-        onCardClick: () => void;
-        showConfirmButton: () => boolean;
-      };
-      exposed.onCardClick(); // expand
-      expect(exposed.showConfirmButton()).toBe(false);
-    });
-
-    it('should detect options change when checkbox differs from confirmed', () => {
-      const exposed = component as unknown as {
-        onCardClick: () => void;
-        onCheckboxChange: (optionId: string, checked: boolean) => void;
-        hasOptionsChanged: () => boolean;
-        showConfirmButton: () => boolean;
-        showDeselectButton: () => boolean;
-      };
-      exposed.onCardClick(); // expand
-      exposed.onCheckboxChange('stored-tires', true);
-      expect(exposed.hasOptionsChanged()).toBe(true);
-      expect(exposed.showConfirmButton()).toBe(true);
-      expect(exposed.showDeselectButton()).toBe(false);
-    });
-
-    it('should emit serviceDeselected and reset checkboxes on deselect', () => {
+    it('emits serviceClicked with category-id on click', () => {
       const spy = jest.fn();
-      component.serviceDeselected.subscribe(spy);
-      const exposed = component as unknown as {
-        onCheckboxChange: (optionId: string, checked: boolean) => void;
-        onDeselect: () => void;
-        selectedCheckboxOptions: () => Set<string>;
-        isExpanded: () => boolean;
-      };
-      exposed.onCheckboxChange('bring-own-tires', true);
-      exposed.onDeselect();
-      expect(spy).toHaveBeenCalledWith('tire-change');
-      expect(exposed.selectedCheckboxOptions().size).toBe(0);
-      expect(exposed.isExpanded()).toBe(false);
+      component.serviceClicked.subscribe(spy);
+      const exposed = component as unknown as { onCardClick: () => void };
+      exposed.onCardClick();
+      expect(spy).toHaveBeenCalledWith('tag-inspektion');
+    });
+  });
+
+  describe('REQ-025 (b) Iter. 3: Description rendering', () => {
+    it('exposes description on operation with non-null value', () => {
+      setInputs();
+      const exposed = component as unknown as { operations: () => ApiOperation[] };
+      const op = exposed.operations().find(o => o.id === 'op-1')!;
+      expect(op.description).toContain('Serviceheft');
+    });
+
+    it('handles null description gracefully', () => {
+      setInputs();
+      const exposed = component as unknown as { operations: () => ApiOperation[] };
+      const op = exposed.operations().find(o => o.id === 'op-2')!;
+      expect(op.description).toBeNull();
+    });
+  });
+
+  describe('Bootstrap-Icon Mapping (rank → bi-Klasse)', () => {
+    it('rank 0 → bi-tools', () => {
+      setInputs();
+      const exposed = component as unknown as { iconClass: () => string };
+      expect(exposed.iconClass()).toBe('bi-tools');
+    });
+
+    const ranks: { rank: number; cls: string }[] = [
+      { rank: 1, cls: 'bi-clipboard-check' },
+      { rank: 2, cls: 'bi-droplet-half' },
+      { rank: 3, cls: 'bi-record-circle' },
+      { rank: 4, cls: 'bi-check2-circle' },
+      { rank: 5, cls: 'bi-search' },
+      { rank: 6, cls: 'bi-car-front' },
+      { rank: 99, cls: 'bi-arrow-left-right' }
+    ];
+    ranks.forEach(({ rank, cls }) => {
+      it(`rank ${rank} → ${cls}`, () => {
+        fixture.componentRef.setInput('category', { id: 't', name: 'X', rank });
+        fixture.componentRef.setInput('operations', operations);
+        fixture.componentRef.setInput('isSelected', false);
+        fixture.componentRef.setInput('selectedOperationIds', []);
+        fixture.detectChanges();
+        const exposed = component as unknown as { iconClass: () => string };
+        expect(exposed.iconClass()).toBe(cls);
+      });
+    });
+
+    it('unknown rank → bi-tools (default fallback)', () => {
+      fixture.componentRef.setInput('category', { id: 't', name: 'X', rank: 42 });
+      fixture.componentRef.setInput('operations', operations);
+      fixture.componentRef.setInput('isSelected', false);
+      fixture.componentRef.setInput('selectedOperationIds', []);
+      fixture.detectChanges();
+      const exposed = component as unknown as { iconClass: () => string };
+      expect(exposed.iconClass()).toBe('bi-tools');
+    });
+
+    it('id "virtual-pickup-delivery" → bi-arrow-left-right (egal welcher rank)', () => {
+      fixture.componentRef.setInput('category', { id: 'virtual-pickup-delivery', name: 'Hol & Bringservice', rank: 0 });
+      fixture.componentRef.setInput('operations', operations);
+      fixture.componentRef.setInput('isSelected', false);
+      fixture.componentRef.setInput('selectedOperationIds', []);
+      fixture.detectChanges();
+      const exposed = component as unknown as { iconClass: () => string };
+      expect(exposed.iconClass()).toBe('bi-arrow-left-right');
+    });
+
+    it('name "Hol & Bringservice" → bi-arrow-left-right (egal welcher rank)', () => {
+      fixture.componentRef.setInput('category', { id: 'tag-foo', name: 'Hol & Bringservice', rank: 2 });
+      fixture.componentRef.setInput('operations', operations);
+      fixture.componentRef.setInput('isSelected', false);
+      fixture.componentRef.setInput('selectedOperationIds', []);
+      fixture.detectChanges();
+      const exposed = component as unknown as { iconClass: () => string };
+      expect(exposed.iconClass()).toBe('bi-arrow-left-right');
     });
   });
 });

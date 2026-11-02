@@ -1,57 +1,157 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="appointment-selection" aria-labelledby="appointment-title">
+<section class="page-wrap appointment-selection" aria-labelledby="appointment-title">
 
-  <h1 class="appointment-selection__title" id="appointment-title">
+  <h1 class="appointment-selection__title page-title" id="appointment-title">
     {{ booking.appointment.title | translate }}
   </h1>
+  <p class="page-subtitle">{{ booking.appointment.subtitle | translate }}</p>
 
-  <div
-    class="appointment-selection__grid"
-    role="radiogroup"
-    [attr.aria-label]="booking.appointment.ariaGroupLabel | translate"
-  >
-    @for (appointment of appointments(); track appointment.id) {
-      <app-appointment-card
-        [appointment]="appointment"
-        [isSelected]="selectedAppointment()?.id === appointment.id"
-        (appointmentSelected)="onAppointmentSelect($event)"
+  @if (hasSnapConflict()) {
+    <app-snap-conflict-banner (closed)="onSnapConflictBannerClosed()" />
+  }
+
+  @if (isLoading()) {
+    <div class="appointment-selection__loading text-center py-5" role="status" aria-live="polite">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ booking.api.loading | translate }}</span>
+      </div>
+      <p class="appointment-selection__loading-text mt-3">{{ booking.api.loading | translate }}</p>
+    </div>
+  } @else if (error()) {
+    <div class="appointment-selection__error text-center py-5" role="alert" aria-live="assertive">
+      <i class="bi bi-exclamation-circle appointment-selection__error-icon" aria-hidden="true"></i>
+      <h2 class="appointment-selection__error-title">{{ booking.api.errorTitle | translate }}</h2>
+      <p class="appointment-selection__error-message">{{ booking.api.errorUnknown | translate }}</p>
+      <button
+        type="button"
+        class="btn btn-primary appointment-selection__retry-button"
+        (click)="onRetry()">
+        <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>
+        {{ booking.api.retryButton | translate }}
+      </button>
+    </div>
+  } @else {
+    @if (hasNoRentalCarAppointments()) {
+      <!-- REQ-039 E-1/E-2: kein Termin mit Mietwagen — kein stiller Fallback auf alle Termine -->
+      <app-rental-car-empty-state
+        class="appointment-selection__rental-empty"
+        [showLaterAvailable]="true"
+        (showLater)="onShowLaterAppointments()"
+        (continueWithout)="onContinueWithoutRentalCar()"
       />
+    } @else {
+      @if (rentalCarRequested()) {
+        <p class="notice appointment-selection__rental-filter" role="status">
+          <i class="bi bi-car-front" aria-hidden="true"></i>
+          <span>{{ booking.appointment.rentalCar.filterActive | translate }}</span>
+        </p>
+      }
+
+      <!-- REQ-039: Kalenderkarte mit Datumskacheln (mockups/04-termin.html .calendar/.date-list) -->
+      <section class="calendar" aria-labelledby="calendar-heading">
+        <h2 class="calendar__heading" id="calendar-heading">
+          <i class="bi bi-calendar-event" aria-hidden="true"></i>{{ stripMonthLabel() }}
+        </h2>
+        <div
+          class="date-strip"
+          role="radiogroup"
+          [attr.aria-label]="booking.appointment.ariaGroupLabel | translate"
+        >
+          @for (entry of availableDates(); track entry.date) {
+            <div
+              class="date-tile"
+              [class.selected]="entry.date === selectedDate()"
+              role="radio"
+              tabindex="0"
+              [attr.aria-checked]="entry.date === selectedDate()"
+              [attr.aria-label]="entry.ariaLabel"
+              (click)="onDateSelect(entry.date)"
+              (keydown.enter)="onDateSelect(entry.date); $event.preventDefault()"
+              (keydown.space)="onDateSelect(entry.date); $event.preventDefault()"
+            >
+              <span class="date-tile__weekday">{{ entry.weekday }}</span>
+              <span class="date-tile__day">{{ entry.day }}</span>
+              <span class="date-tile__month">{{ entry.month }}</span>
+            </div>
+          } @empty {
+            <div class="notice appointment-selection__empty" role="status">
+              <i class="bi bi-info-circle" aria-hidden="true"></i>
+              <div>
+                <p><strong>{{ noAppointmentsKeys().title | translate }}</strong></p>
+                <p>{{ noAppointmentsKeys().hint | translate }}</p>
+              </div>
+              <button type="button" class="btn btn-primary appointment-selection__reload-button" (click)="onRetry()">
+                {{ booking.appointment.reload | translate }}
+              </button>
+            </div>
+          }
+          <button
+            class="appointment-selection__calendar-link date-strip__more"
+            type="button"
+            (click)="onCalendarLinkClick($event)"
+          >
+            <i class="bi bi-calendar-event" aria-hidden="true"></i>
+            <span>{{ booking.appointment.calendarLink | translate }}</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Zeitslots des gewählten Tages, getrennt nach Vormittag/Nachmittag -->
+      @if (slotSections().length > 0) {
+        <section class="time-slots" [attr.aria-label]="booking.appointment.ariaGroupLabel | translate">
+          @for (section of slotSections(); track section.key) {
+            <div class="slot-section">
+              <h3 class="slot-section__head">{{ section.label | translate }}</h3>
+              <div class="slot-grid" role="radiogroup" [attr.aria-label]="section.label | translate">
+                @for (slot of section.slots; track slot.id) {
+                  <app-appointment-card
+                    [appointment]="slot"
+                    [isSelected]="selectedAppointment()?.id === slot.id"
+                    (appointmentSelected)="onAppointmentSelect($event)"
+                  />
+                }
+              </div>
+            </div>
+          }
+        </section>
+      }
+
+      <!-- Auswahl-Hinweis (grün) -->
+      @if (hasAppointmentSelected()) {
+        <div class="notice notice--success appointment-selection__summary" role="status" aria-live="polite">
+          <i class="bi bi-check-circle" aria-hidden="true"></i>
+          <p>
+            <strong>{{ booking.appointment.selectedLabel | translate }}</strong> {{ selectedSummary() }}
+            @if (selectedIncludesRentalCar()) {
+              <span class="appointment-selection__summary-rental">— {{ booking.appointment.rentalCar.included | translate }}</span>
+            }
+          </p>
+        </div>
+      }
     }
-  </div>
 
-  <button
-    class="appointment-selection__calendar-link"
-    type="button"
-    (click)="onCalendarLinkClick($event)"
-  >
-    {{ booking.appointment.calendarLink | translate }}
-  </button>
+    <!-- Eine Aktionsleiste für Normal- und Mietwagen-Leerzustand; „Weiter“ erst nach Terminwahl -->
+    <nav class="appointment-selection__nav wizard-nav" [attr.aria-label]="booking.appointment.navAriaLabel | translate">
+      <button
+        type="button"
+        class="btn btn-outline-secondary appointment-selection__back-button"
+        [attr.aria-label]="booking.appointment.backButton | translate"
+        (click)="onBack()"
+      >
+        {{ booking.appointment.backButton | translate }}
+      </button>
 
-  <nav class="appointment-selection__nav" [attr.aria-label]="booking.appointment.navAriaLabel | translate">
-    <button
-      mat-flat-button
-      class="appointment-selection__back-button"
-      type="button"
-      [attr.aria-label]="booking.appointment.backButton | translate"
-      (click)="onBack()"
-    >
-      <mat-icon aria-hidden="true">arrow_back</mat-icon>
-      {{ booking.appointment.backButton | translate }}
-    </button>
-
-    <button
-      mat-flat-button
-      color="primary"
-      class="appointment-selection__continue-button"
-      type="button"
-      [disabled]="!hasAppointmentSelected()"
-      [attr.aria-label]="booking.appointment.continueButton | translate"
-      (click)="onContinue()"
-    >
-      {{ booking.appointment.continueButton | translate }}
-      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-    </button>
-  </nav>
+      <button
+        type="button"
+        class="btn btn-primary appointment-selection__continue-button"
+        [disabled]="!hasAppointmentSelected()"
+        [attr.aria-label]="booking.appointment.continueButton | translate"
+        (click)="onContinue()"
+      >
+        {{ booking.appointment.continueButton | translate }}
+      </button>
+    </nav>
+  }
 
 </section>

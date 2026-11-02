@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Serviceauswahl · Werkstatttermin · REQ-039 Mockup</title>
+  <link rel="stylesheet" href="wizard.css">
+</head>
+<body class="mockup-page" data-mockup-step="2">
+  <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+  <div class="mockup-shell" data-testid="mockup-shell">
+    <header class="host-header" aria-label="Werkstatttermin – Referenz-Hostheader">
+      <p class="host-header__title">Werkstatttermin</p>
+      <details class="host-header__menu">
+        <summary class="host-header__action" aria-label="Darstellungseinstellungen"><i class="bi bi-universal-access" aria-hidden="true"></i></summary>
+        <div class="host-header__panel"><p><strong>Darstellung</strong></p><label class="host-header__setting"><input id="contrast-toggle" type="checkbox"> Hoher Kontrast</label><p>Die Referenz-Kontrastpalette gilt nur für diese Vorschau.</p></div>
+      </details>
+      <details class="host-header__menu">
+        <summary class="host-header__action" aria-label="Drei ausgewählte Services ansehen"><i class="bi bi-bag-fill" aria-hidden="true"></i></summary>
+        <div class="host-header__panel"><p><strong>Ihre Services – Musterzustand</strong></p><p>Ölwechsel-Service, Dialogannahme und Sicherheits-Check.</p></div>
+      </details>
+      <a class="host-header__action host-header__action--close" href="../mockup.html" aria-label="Zur Mockup-Galerie"><i class="bi bi-x-circle" aria-hidden="true"></i></a>
+    </header>
+    <nav class="wizard" aria-label="Buchungsfortschritt: Schritt 2 von 6" data-testid="wizard">
+      <ol class="wizard__steps">
+        <li class="wizard__step wizard__step--done" data-state="done" data-original-index="1">
+          <a class="wizard__control wizard__step-button" href="01-marke.html" aria-label="Schritt 1 von 6: Marke, abgeschlossen. Zurück zu diesem Schritt" data-testid="wizard-step-1"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Marke</span></a>
+        </li>
+        <li class="wizard__step wizard__step--active" data-state="active" data-original-index="2">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-current="step" aria-label="Schritt 2 von 6: Serviceauswahl, aktuell" data-testid="wizard-step-2"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Service</span></button>
+        </li>
+        <li class="wizard__step wizard__step--future" data-state="future" data-original-index="3">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-label="Schritt 3 von 6: Hinweise, noch nicht erreichbar" data-testid="wizard-step-3"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Hinweise</span></button>
+        </li>
+        <li class="wizard__step wizard__step--future" data-state="future" data-original-index="4">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-label="Schritt 4 von 6: Termin, noch nicht erreichbar" data-testid="wizard-step-4"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Termin</span></button>
+        </li>
+        <li class="wizard__step wizard__step--future" data-state="future" data-original-index="5">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-label="Schritt 5 von 6: Kontakt- und Fahrzeugdaten, noch nicht erreichbar" data-testid="wizard-step-5"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Kontakt- &amp; Fahrzeugdaten</span></button>
+        </li>
+        <li class="wizard__step wizard__step--future" data-state="future" data-original-index="6">
+          <button class="wizard__control wizard__step-button" type="button" aria-disabled="true" aria-label="Schritt 6 von 6: Übersicht, noch nicht erreichbar" data-testid="wizard-step-6"><span class="wizard__marker" aria-hidden="true"></span><span class="wizard__label">Übersicht</span></button>
+        </li>
+      </ol>
+      <p class="wizard__current" data-testid="wizard-current-title" aria-live="polite">Serviceauswahl</p>
+      <p class="wizard__counter">Schritt 2 von 6</p>
+    </nav>
+    <main class="step-content" id="main-content" data-testid="step-content" aria-describedby="mockup-description">
+      <p class="visually-hidden" id="mockup-description">Statische Designvorschau. Die Servicebereiche und die Zusammenfassung zeigen einen festen Musterzustand. Checkboxen demonstrieren nur lokale Auswahlzustände; Eingaben werden nicht gespeichert.</p>
+      <div class="step-content__heading">
+        <h1 class="step-content__title">Welche Services möchten Sie buchen?</h1>
+        <p class="step-content__subtitle">Wählen Sie die gewünschten Services aus.</p>
+      </div>
+      <div class="service-pills" role="group" aria-label="Servicebereiche – dargestellte Auswahl">
+        <span class="service-pills__item service-pills__item--active"><i class="bi bi-wrench" aria-hidden="true"></i> Inspektion <span class="service-pills__count" aria-label="2 von 3 Arbeiten ausgewählt">2/3</span></span>
+        <span class="service-pills__item"><i class="bi bi-clipboard-check" aria-hidden="true"></i> TÜV &amp; AU <span class="service-pills__count" aria-label="3 Arbeiten">3</span></span>
+        <span class="service-pills__item"><i class="bi bi-droplet" aria-hidden="true"></i> Bremsflüssigkeitswechsel <span class="service-pills__count" aria-label="3 Arbeiten">3</span></span>
+        <span class="service-pills__item"><i class="bi bi-record-circle" aria-hidden="true"></i> Räderwechsel <span class="service-pills__count" aria-label="4 Arbeiten">4</span></span>
+        <span class="service-pills__item"><i class="bi bi-check-circle" aria-hidden="true"></i> Aktionen / Checks <span class="service-pills__count service-pills__count--selected" aria-label="1 von 4 Arbeiten ausgewählt">1/4</span></span>
+        <span class="service-pills__item"><i class="bi bi-search" aria-hidden="true"></i> Reparatur / Beanstandung <span class="service-pills__count" aria-label="3 Arbeiten">3</span></span>
+        <span class="service-pills__item"><i class="bi bi-car-front" aria-hidden="true"></i> Karosserie / Frontscheibenwechsel <span class="service-pills__count" aria-label="2 Arbeiten">2</span></span>
+        <span class="service-pills__item"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Hol- &amp; Bringservice <span class="service-pills__count" aria-label="1 Arbeit">1</span></span>
+      </div>
+      <section class="service-panel" aria-labelledby="inspection-heading">
+        <h2 class="service-panel__heading" id="inspection-heading"><i class="bi bi-wrench" aria-hidden="true"></i> Verfügbare Arbeiten im Bereich Inspektion</h2>
+        <fieldset class="choice-list">
+          <legend class="visually-hidden">Arbeiten auswählen</legend>
+          <label class="choice-list__row" for="service-oil">
+            <input id="service-oil" type="checkbox" checked>
+            <span><strong>Ölwechsel-Service (inkl. Filter &amp; Dichtung)</strong> (190,00 € inkl. MwSt.)<span class="choice-list__description">Regelmäßiger Austausch nach Herstellervorgaben zur Werterhaltung des Motors.</span></span>
+          </label>
+          <label class="choice-list__row" for="service-dialogue">
+            <input id="service-dialogue" type="checkbox" checked>
+            <span>Dialogannahme<span class="choice-list__description">Gemeinsame Sichtung Ihres Fahrzeugs auf der Hebebühne mit unserem Serviceberater.</span></span>
+          </label>
+          <label class="choice-list__row" for="service-brakes">
+            <input id="service-brakes" type="checkbox">
+            <span>Bremsen prüfen und bei Bedarf erneuern<span class="choice-list__description">Wir prüfen den Zustand Ihrer Bremsbeläge und -scheiben und unterbreiten Ihnen ein Angebot.</span></span>
+          </label>
+        </fieldset>
+      </section>
+      <div class="notice notice--success" role="note" aria-label="Zusammenfassung der dargestellten Serviceauswahl">
+        <i class="bi bi-check-circle" aria-hidden="true"></i>
+        <div><p><strong>Inspektion:</strong> Ölwechsel-Service (inkl. Filter &amp; Dichtung); Dialogannahme<br><strong>Aktionen / Checks:</strong> Sicherheits-Check</p></div>
+      </div>
+    </main>
+    <nav class="step-actions" aria-label="Schrittnavigation">
+      <a class="button button--secondary" href="01-marke.html" data-testid="wizard-back">Zurück</a>
+      <a class="button" href="03-hinweise.html" data-testid="wizard-next">Weiter</a>
+    </nav>
+  </div>
+</body>
+</html>

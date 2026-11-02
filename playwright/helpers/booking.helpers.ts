@@ -7,43 +7,95 @@ import { navigateTo, waitForAngular } from './app.helpers';
  * Reusable actions for the booking flow (brand -> location -> services)
  */
 
-/** Navigate to the brand selection page */
-export async function goToBrandSelection(page: Page): Promise<void> {
-  await navigateTo(page, '/home/brand');
-}
-
-/** Navigate to the location selection page (requires brand to be selected) */
+/** Navigate to the location selection page (Wizard Step 1) */
 export async function goToLocationSelection(page: Page): Promise<void> {
   await navigateTo(page, '/home/location');
 }
 
-/** Select a brand by clicking on the brand button */
+/**
+ * Navigate to the brand selection page.
+ * REQ-013: Wizard order changed — Location is now Step 1, Brand is Step 2.
+ * Must select a location first to satisfy the brand-selected guard.
+ */
+export async function goToBrandSelection(page: Page): Promise<void> {
+  await goToLocationSelection(page);
+  // Click first available location card so the guard lets us into /home/brand
+  const card = page.locator('.location-card').first();
+  await expect(card).toBeVisible({ timeout: 15000 });
+  await card.click();
+  // Flake fix (REQ-039 E2E): the former fallback `navigateTo('/home/brand')` reloaded the app,
+  // dropped the store and let the guard bounce back to /home/location. Wait for the in-app
+  // navigation instead and only re-click if the first click was swallowed.
+  try {
+    await page.waitForURL(/\/home\/brand/, { timeout: 10_000 });
+  } catch {
+    await card.click();
+    await page.waitForURL(/\/home\/brand/, { timeout: 15_000 });
+  }
+  await waitForAngular(page);
+}
+
+/** Click the Back button on the brand selection page (navigates to /home/location) */
+export async function clickBrandBack(page: Page): Promise<void> {
+  const backButton = page.locator('.brand-selection__back-button');
+  await expect(backButton).toBeVisible();
+  await backButton.click();
+  await waitForAngular(page);
+}
+
+/** Select the first available brand dynamically */
+export async function selectFirstBrand(page: Page): Promise<string> {
+  await goToBrandSelection(page);
+  // Migration: brand-cards uses radio + label pattern (no buttons). Click the first card.
+  const card = page.locator('.brand-card').first();
+  await expect(card).toBeVisible({ timeout: 15000 });
+  const brandName = (await card.locator('.brand-card__name').textContent() ?? '').trim();
+  await card.click();
+  await waitForAngular(page);
+  return brandName;
+}
+
+/** Select the first available location dynamically */
+export async function selectFirstLocation(page: Page): Promise<string> {
+  // Migration: location-cards uses radio + label pattern. Click the first card label.
+  const card = page.locator('.location-card').first();
+  await expect(card).toBeVisible({ timeout: 15000 });
+  const locationName = (await card.locator('.location-card__address').first().textContent() ?? '').trim();
+  await card.click();
+  await waitForAngular(page);
+  return locationName;
+}
+
+/** Select a brand by clicking on the brand card with matching name */
 export async function selectBrand(page: Page, brandName: string): Promise<void> {
   await goToBrandSelection(page);
-  const button = page.locator('button', { hasText: brandName });
-  await expect(button).toBeVisible();
-  await button.click();
+  // Card has visually-hidden .brand-card__name with the brand text
+  const card = page.locator('.brand-card').filter({
+    has: page.locator('.brand-card__name', { hasText: brandName })
+  });
+  await expect(card).toBeVisible({ timeout: 15000 });
+  await card.click();
   await waitForAngular(page);
 }
 
-/** Select a location by clicking on the location button */
+/** Select a location by clicking on the location card with matching name */
 export async function selectLocation(page: Page, locationName: string): Promise<void> {
-  const button = page.locator('button', { hasText: locationName });
-  await expect(button).toBeVisible();
-  await button.click();
+  const card = page.locator('.location-card', { hasText: locationName }).first();
+  await expect(card).toBeVisible();
+  await card.click();
   await waitForAngular(page);
 }
 
-/** Get all visible brand button texts */
+/** Get all visible brand names (from .brand-card__name) */
 export async function getBrandButtonTexts(page: Page): Promise<string[]> {
-  const buttons = page.locator('.brand-grid__button, [class*="brand"] button');
-  return buttons.allTextContents().then(texts => texts.map(t => t.trim()));
+  const names = page.locator('.brand-card__name');
+  return names.allTextContents().then(texts => texts.map(t => t.trim()));
 }
 
-/** Get all visible location button texts */
+/** Get all visible location names */
 export async function getLocationButtonTexts(page: Page): Promise<string[]> {
-  const buttons = page.locator('.location-grid__button');
-  return buttons.allTextContents().then(texts => texts.map(t => t.trim()));
+  const names = page.locator('.location-card__address');
+  return names.allTextContents().then(texts => texts.map(t => t.trim()));
 }
 
 /** Get the page title heading text */
@@ -76,15 +128,33 @@ export async function completeBrandToLocationFlow(
  */
 export async function goToServiceSelection(
   page: Page,
-  brandName = 'Audi',
-  locationName = 'München'
+  brandName?: string,
+  locationName?: string
 ): Promise<void> {
-  await selectBrand(page, brandName);
-  // Wait for location page to render with buttons
-  await page.locator('.location-grid__button').first().waitFor({ state: 'visible', timeout: 10000 });
-  await selectLocation(page, locationName);
-  // Wait for service cards to appear (confirms we reached the services page)
-  await page.locator('.service-card').first().waitFor({ state: 'visible', timeout: 10000 });
+  // Wizard order (REQ-013): Location (1) -> Brand (2) -> Services (3).
+  // Selecting a location card auto-navigates to the brand page; selecting a brand
+  // card auto-navigates to the services page (REQ-026 carousel UI).
+  if (locationName) {
+    await goToLocationSelection(page);
+    await selectLocation(page, locationName);
+    await page.locator('.brand-card').first().waitFor({ state: 'visible', timeout: 15000 });
+    if (brandName) {
+      const brandCard = page.locator('.brand-card').filter({
+        has: page.locator('.brand-card__name', { hasText: brandName })
+      });
+      await brandCard.click();
+      await waitForAngular(page);
+    } else {
+      await page.locator('.brand-card').first().click();
+      await waitForAngular(page);
+    }
+  } else if (brandName) {
+    await selectBrand(page, brandName);
+  } else {
+    await selectFirstBrand(page);
+  }
+  // Wait for the services carousel to render (confirms we reached the services page).
+  await page.locator('app-service-card').first().waitFor({ state: 'visible', timeout: 15000 });
   await waitForAngular(page);
 }
 
@@ -97,7 +167,7 @@ export async function goToServiceSelection(
  */
 export async function selectService(page: Page, serviceName: string): Promise<void> {
   const card = page.locator('.service-card').filter({
-    has: page.locator('.service-card__title', { hasText: serviceName })
+    has: page.locator('.service-card-mini__title', { hasText: serviceName })
   });
   await expect(card).toBeVisible();
   await card.click();
@@ -107,13 +177,13 @@ export async function selectService(page: Page, serviceName: string): Promise<vo
 /** Get the service card locator by its title text (precise match via __title) */
 export function getServiceCard(page: Page, serviceName: string) {
   return page.locator('.service-card').filter({
-    has: page.locator('.service-card__title', { hasText: serviceName })
+    has: page.locator('.service-card-mini__title', { hasText: serviceName })
   });
 }
 
 /** Get visible service card title texts */
 export async function getServiceCardTitles(page: Page): Promise<string[]> {
-  const titles = page.locator('.service-card__title');
+  const titles = page.locator('.service-card-mini__title');
   return titles.allTextContents().then(texts => texts.map(t => t.trim()));
 }
 
@@ -138,13 +208,11 @@ export async function confirmServiceWithOptions(
     await waitForAngular(page);
   }
 
-  // Click each mat-checkbox label to toggle the checkbox
-  // The mat-checkbox component handles click on the label element
+  // Migration: Bootstrap form-check pattern — click the label which toggles the input.
   for (const text of optionTexts) {
-    const matCheckbox = card.locator('mat-checkbox', { hasText: text });
-    await expect(matCheckbox).toBeVisible();
-    // Use the label element which triggers the mat-checkbox correctly
-    await matCheckbox.locator('label.mdc-label').click();
+    const checkbox = card.locator('label.form-check-label, .form-check', { hasText: text }).first();
+    await expect(checkbox).toBeVisible();
+    await checkbox.click();
     await waitForAngular(page);
   }
 
@@ -227,11 +295,19 @@ export async function deselectTireChange(page: Page): Promise<void> {
  */
 export async function completeBrandToServiceFlow(
   page: Page,
-  brandName = 'Audi',
-  locationName = 'München'
+  brandName?: string,
+  locationName?: string
 ): Promise<void> {
-  await selectBrand(page, brandName);
-  await selectLocation(page, locationName);
+  if (brandName) {
+    await selectBrand(page, brandName);
+  } else {
+    await selectFirstBrand(page);
+  }
+  if (locationName) {
+    await selectLocation(page, locationName);
+  } else {
+    await selectFirstLocation(page);
+  }
   await waitForAngular(page);
 }
 
@@ -277,39 +353,18 @@ export async function goToNotesPage(
     serviceNames?: string[];
   }
 ): Promise<void> {
-  const brandName = options?.brandName ?? 'Audi';
-  const locationName = options?.locationName ?? 'München';
-  const defaultServiceNames = options?.serviceNames;
+  const brandName = options?.brandName;
+  const locationName = options?.locationName;
 
   await goToServiceSelection(page, brandName, locationName);
 
-  // Determine service names to select
-  // If none provided, auto-detect language and use brake-fluid (no options, simplest toggle)
-  let serviceNames: string[];
-  if (defaultServiceNames) {
-    serviceNames = defaultServiceNames;
-  } else {
-    // Auto-detect: check if brake-fluid card has DE or EN title
-    const brakeFluidDE = page.locator('.service-card').filter({
-      has: page.locator('.service-card__title', { hasText: 'Wechsel Bremsflüssigkeit' })
-    });
-    const isDE = await brakeFluidDE.isVisible().catch(() => false);
-    serviceNames = isDE ? ['Wechsel Bremsflüssigkeit'] : ['Brake Fluid Change'];
-  }
+  // REQ-026 service UI: a carousel of category mini-cards plus a detail panel that
+  // auto-shows the first category's operations. Selecting at least one operation
+  // satisfies the "service selected" guard.
+  await selectFirstAvailableOperation(page);
 
-  // Select each requested service
-  for (const serviceName of serviceNames) {
-    // brake-fluid has no options -> direct toggle
-    if (serviceName === 'Wechsel Bremsflüssigkeit' || serviceName === 'Brake Fluid Change') {
-      await selectService(page, serviceName);
-    } else {
-      // Services with options need at least 1 checkbox + confirm
-      await confirmServiceWithOptions(page, serviceName, [await getFirstOptionText(page, serviceName)]);
-    }
-  }
-
-  // Click the Continue button on the services page to navigate to /home/notes
-  const continueButton = page.locator('.summary-bar__continue-button');
+  // Click the Continue button in the services bottom bar to navigate to /home/notes.
+  const continueButton = page.locator('.services-bottom-bar .btn-primary');
   await expect(continueButton).toBeVisible();
   await expect(continueButton).toBeEnabled();
   await continueButton.click();
@@ -318,25 +373,44 @@ export async function goToNotesPage(
   await waitForAngular(page);
 }
 
-/** Get the first option text for a service card (used as default selection) */
-async function getFirstOptionText(page: Page, serviceName: string): Promise<string> {
-  const card = getServiceCard(page, serviceName);
+/**
+ * Select a service operation in the REQ-026 service detail panel.
+ *
+ * Prefers the "Inspektion"/"Inspection" operation: it is reliably offered for the
+ * default brand (Audi) at the default branch on the SoftNet INT system and returns
+ * available appointment slots. Falls back to any operation if it is not present.
+ * Walks the category carousel because operations only render for the active category.
+ */
+async function selectFirstAvailableOperation(page: Page): Promise<void> {
+  const categoryCards = page.locator('app-service-card');
+  const cardCount = await categoryCards.count();
 
-  // Expand card if not already expanded
-  const options = card.locator('.service-card__options');
-  if (!(await options.isVisible())) {
-    await card.click();
-    await waitForAngular(page);
+  const preferred = page
+    .locator('.service-option', { hasText: /inspektion|inspection/i })
+    .locator('input[type="checkbox"]')
+    .first();
+  const anyOption = page.locator('.service-option input[type="checkbox"]').first();
+
+  // Pass 0: try to find the preferred ("Inspektion") service; pass 1: any operation.
+  for (let pass = 0; pass < 2; pass++) {
+    const target = pass === 0 ? preferred : anyOption;
+    // i === -1 checks the auto-activated first category without re-clicking.
+    for (let i = -1; i < cardCount; i++) {
+      if (i >= 0) {
+        await categoryCards.nth(i).click();
+        await waitForAngular(page);
+      }
+      if (await target.isVisible().catch(() => false)) {
+        if (!(await target.isChecked())) {
+          await target.check({ force: true });
+          await waitForAngular(page);
+        }
+        return;
+      }
+    }
   }
 
-  const firstCheckbox = card.locator('.service-card__checkbox').first();
-  const text = (await firstCheckbox.textContent() ?? '').trim();
-
-  // Collapse the card again so we start fresh
-  await card.click();
-  await waitForAngular(page);
-
-  return text;
+  throw new Error('No selectable service operation found in the service carousel');
 }
 
 /** Type text into the notes textarea */
@@ -364,6 +438,14 @@ export async function clickNotesContinue(page: Page): Promise<void> {
   const continueButton = page.locator('.notes__continue-button');
   await expect(continueButton).toBeVisible();
   await continueButton.click();
+  // Flake fix (REQ-039 E2E): "Weiter" always navigates — under load the click was occasionally
+  // swallowed and the caller timed out waiting for the appointment page. Re-click once if needed.
+  try {
+    await page.waitForURL(/\/home\/appointment/, { timeout: 10_000 });
+  } catch {
+    await continueButton.click();
+    await page.waitForURL(/\/home\/appointment/, { timeout: 15_000 });
+  }
   await waitForAngular(page);
 }
 
@@ -424,11 +506,26 @@ export async function getAppointmentTimes(page: Page): Promise<string[]> {
   return times.allTextContents().then(texts => texts.map(t => t.trim()));
 }
 
-/** Select an appointment card by index (0-based) */
+/** Select an appointment slot by index (0-based) */
 export async function selectAppointmentCard(page: Page, index: number): Promise<void> {
-  const card = page.locator('.appointment-card').nth(index);
-  await expect(card).toBeVisible();
-  await card.click();
+  // New UI (REQ-026): choose a date tile first; time-slot cards render afterwards.
+  // Walk the date strip until a date with available slots is found.
+  const dateTiles = page.locator('.date-tile');
+  // Flake fix (REQ-039 E2E): count() does not wait — while SoftNet is still loading the strip is
+  // empty, the loop was skipped and the slot assertion failed after 5 s. Wait for the strip first.
+  await expect(dateTiles.first()).toBeVisible({ timeout: 30_000 });
+  const tileCount = await dateTiles.count();
+  const slots = page.locator('app-appointment-card .slot');
+  for (let i = 0; i < tileCount; i++) {
+    await dateTiles.nth(i).click();
+    await waitForAngular(page);
+    if (await slots.first().isVisible().catch(() => false)) {
+      break;
+    }
+  }
+  const slot = slots.nth(index);
+  await expect(slot).toBeVisible();
+  await slot.click();
   await waitForAngular(page);
 }
 
@@ -488,40 +585,50 @@ export async function goToWorkshopCalendarPage(
   await waitForAngular(page);
 }
 
-/** Open the MatDatepicker on the workshop calendar page and select today's date */
-export async function openDatePickerAndSelectToday(page: Page): Promise<void> {
-  // Click the datepicker toggle button to open the calendar
-  const toggle = page.locator('mat-datepicker-toggle button');
-  await expect(toggle).toBeVisible();
-  await toggle.click();
-  await waitForAngular(page);
+/** Format a Date as a native date-input value ("YYYY-MM-DD") in local time. */
+function toDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
-  // Click the today button in the datepicker calendar (it has class .mat-calendar-body-today)
-  const todayCell = page.locator('.mat-calendar-body-today');
-  await expect(todayCell).toBeVisible();
-  await todayCell.click();
+/** Set the native date input (#workshop-date-input) and fire the (change) handler. */
+async function setWorkshopDate(page: Page, value: string): Promise<void> {
+  const input = page.locator('#workshop-date-input');
+  await expect(input).toBeVisible();
+  await input.fill(value);
+  await input.dispatchEvent('change');
   await waitForAngular(page);
 }
 
-/** Open the MatDatepicker and select a specific day (1-31) in the currently visible month */
-export async function openDatePickerAndSelectDay(page: Page, dayNumber: number): Promise<void> {
-  // Click the datepicker toggle button to open the calendar
-  const toggle = page.locator('mat-datepicker-toggle button');
-  await expect(toggle).toBeVisible();
-  await toggle.click();
-  await waitForAngular(page);
+/**
+ * Set the workshop-calendar date to a value a few days in the future so the
+ * 3-day slot grid loads. The native <input type="date"> replaced the old
+ * ng-bootstrap popup; we set its value directly instead of clicking day cells.
+ * The chosen date stays within [min = today, max = today + 1y].
+ */
+export async function openDatePickerAndSelectToday(page: Page): Promise<void> {
+  const target = new Date();
+  target.setDate(target.getDate() + 3);
+  await setWorkshopDate(page, toDateInputValue(target));
+}
 
-  // Click the day cell with the given day number
-  const dayCell = page.locator(`.mat-calendar-body-cell`).filter({ hasText: new RegExp(`^\\s*${dayNumber}\\s*$`) });
-  // There could be multiple matches (prev/next month), click the first enabled one
-  const enabledCells = dayCell.locator(':not(.mat-calendar-body-disabled)');
-  const count = await enabledCells.count();
-  if (count > 0) {
-    await enabledCells.first().click();
-  } else {
-    await dayCell.first().click();
+/**
+ * Set the workshop-calendar date to a specific day number in the current month.
+ * Kept for API compatibility with the old NgbDatepicker helper. Clamps to a
+ * valid day of the current month and stays within the input's [min, max] bounds.
+ */
+export async function openDatePickerAndSelectDay(page: Page, dayNumber: number): Promise<void> {
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const day = Math.min(Math.max(dayNumber, 1), daysInMonth);
+  let target = new Date(now.getFullYear(), now.getMonth(), day);
+  // The native input's min is today — never select a past day in this month.
+  if (target < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+    target = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }
-  await waitForAngular(page);
+  await setWorkshopDate(page, toDateInputValue(target));
 }
 
 /** Get all time-day headings (e.g. ['Mo, 02.03.2026', 'Di, 03.03.2026', 'Mi, 04.03.2026']) */
@@ -626,6 +733,72 @@ export async function goToCarinformationPage(
   await waitForAngular(page);
 }
 
+/**
+ * REQ-040: select the stored-tires wheel-change operation, which makes the VIN mandatory on the
+ * car-information page. The default flow helpers always pick "Inspektion", which never triggers
+ * the FIN requirement.
+ *
+ * SoftNet INT names this operation "Radwechsel mit Einlagerung" in the normal OTV (some groups
+ * also use "… meine Räder sind eingelagert"). We match either canonical phrase — the same two
+ * the backend OperationIdMapper keys off for `stored-tires`. The regex excludes the sibling
+ * "Radwechsel ohne Einlagerung" (bring-own-tires) and the different "store-tires" service
+ * ("… sollen bitte eingelagert werden").
+ */
+export async function selectStoredTiresOperation(page: Page): Promise<void> {
+  const categoryCards = page.locator('app-service-card');
+  const cardCount = await categoryCards.count();
+
+  const storedTires = page
+    .locator('.service-option', { hasText: /sind eingelagert|mit einlagerung/i })
+    .locator('input[type="checkbox"]')
+    .first();
+
+  // i === -1 checks the auto-activated first category without re-clicking.
+  for (let i = -1; i < cardCount; i++) {
+    if (i >= 0) {
+      await categoryCards.nth(i).click();
+      await waitForAngular(page);
+    }
+    if (await storedTires.isVisible().catch(() => false)) {
+      if (!(await storedTires.isChecked())) {
+        await storedTires.check({ force: true });
+        await waitForAngular(page);
+      }
+      return;
+    }
+  }
+
+  throw new Error('Stored-tires operation ("… sind eingelagert" / "… mit Einlagerung") not found in the service carousel');
+}
+
+/**
+ * REQ-040: navigate to the car-information page having selected the stored-tires operation,
+ * so the VIN field is shown and required. Mirrors goToCarinformationPage but swaps the service
+ * pick (Inspektion → "… sind eingelagert").
+ */
+export async function goToCarinformationWithStoredTires(
+  page: Page,
+  options?: { brandName?: string; locationName?: string }
+): Promise<void> {
+  await goToServiceSelection(page, options?.brandName, options?.locationName);
+  await selectStoredTiresOperation(page);
+
+  const servicesContinue = page.locator('.services-bottom-bar .btn-primary');
+  await expect(servicesContinue).toBeEnabled();
+  await servicesContinue.click();
+  await page.locator('.notes').waitFor({ state: 'visible', timeout: 10_000 });
+  await waitForAngular(page);
+
+  await clickNotesContinue(page);
+  await page.locator('.appointment-selection').waitFor({ state: 'visible', timeout: 10_000 });
+  await waitForAngular(page);
+
+  await selectAppointmentCard(page, 0);
+  await clickAppointmentContinue(page);
+  await page.locator('.carinformation').waitFor({ state: 'visible', timeout: 10_000 });
+  await waitForAngular(page);
+}
+
 /** Fill in the customer form with valid test data */
 export async function fillCustomerForm(
   page: Page,
@@ -664,24 +837,44 @@ export async function fillVehicleForm(
   data?: {
     licensePlate?: string;
     mileage?: string;
+    /** REQ-039: optional VIN — only filled when given. */
     vin?: string;
   }
 ): Promise<void> {
   const d = {
     licensePlate: data?.licensePlate ?? 'B-MS1234',
     mileage: data?.mileage ?? '5000',
-    vin: data?.vin ?? 'WDB8XXXXXXA123456',
   };
   await page.locator('input[formcontrolname="licensePlate"]').fill(d.licensePlate);
   await page.locator('input[formcontrolname="mileage"]').fill(d.mileage);
-  await page.locator('input[formcontrolname="vin"]').fill(d.vin);
+  if (data?.vin !== undefined) {
+    await page.locator('input[formcontrolname="vin"]').fill(data.vin);
+  }
   await waitForAngular(page);
 }
 
 /** Check the privacy consent checkbox */
 export async function acceptPrivacyConsent(page: Page): Promise<void> {
-  const checkbox = page.locator('mat-checkbox .mdc-checkbox__native-control, mat-checkbox input[type="checkbox"]').first();
-  await checkbox.click({ force: true });
+  // Migration: Bootstrap form-check input with id="privacy-consent".
+  const checkbox = page.locator('#privacy-consent');
+  await expect(checkbox).toBeVisible();
+  // On small viewports the styled Bootstrap checkbox occasionally swallows the
+  // click without toggling (Playwright's check() then throws). Try the normal
+  // click first, but fall back to setting the checked state directly and
+  // dispatching the events Angular's Reactive Forms listen for.
+  try {
+    await checkbox.check({ force: true, timeout: 5_000 });
+  } catch {
+    // Ignore — handled by the explicit state set below.
+  }
+  if (!(await checkbox.isChecked())) {
+    await checkbox.evaluate((el: HTMLInputElement) => {
+      el.checked = true;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+  await expect(checkbox).toBeChecked();
   await waitForAngular(page);
 }
 

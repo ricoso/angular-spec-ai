@@ -1,15 +1,18 @@
-<section
-  class="service-hints"
-  [attr.aria-label]="booking.notes.hintsTitle | translate"
->
-  <h2 class="service-hints__title">{{ booking.notes.hintsTitle | translate }}</h2>
-
-  @for (hint of visibleHints(); track hint.serviceId) {
-    <div class="service-hints__item" role="note">
-      <span class="icon-framed service-hints__icon" aria-hidden="true">
-        <img [src]="hint.svgIcon" [alt]="''" class="service-hints__svg-icon">
-      </span>
-      <p class="service-hints__text">{{ hint.hintKey | translate }}</p>
+<!-- REQ-039: service hints as blue notice (mockups/03-hinweise.html .notice) —
+     "<Service>: <Hinweis>" per line. -->
+@if (visibleHints().length > 0) {
+  <section class="notice service-hints" aria-labelledby="service-hints-title">
+    <i class="bi bi-info-circle" aria-hidden="true"></i>
+    <div class="service-hints__body">
+      <h2 class="service-hints__title visually-hidden" id="service-hints-title">{{ booking.notes.hintsTitle | translate }}</h2>
+      @for (hint of visibleHints(); track hint.key) {
+        <p class="service-hints__item" role="note">
+          <strong class="service-hints__service-name">{{ hint.serviceName }}:</strong>
+          @if (hint.hint) {
+            <span class="service-hints__text">&#32;{{ hint.hint }}</span>
+          }
+        </p>
+      }
     </div>
-  }
-</section>
+  </section>
+}

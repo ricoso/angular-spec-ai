@@ -107,15 +107,15 @@ describe('AccessibilityMenuComponent', () => {
       component.languageChanged.subscribe(emitSpy);
 
       const exposed = component as unknown as { onLanguageChange: (lang: string) => void };
-      exposed.onLanguageChange('fr');
+      exposed.onLanguageChange('en');
 
-      expect(emitSpy).toHaveBeenCalledWith('fr');
+      expect(emitSpy).toHaveBeenCalledWith('en');
     });
 
-    it('should have all 5 languages available', () => {
+    it('should expose only DE as visible language (UI-Migration: nur Deutsch sichtbar; EN/UK/FR/AR-Translations bleiben im Code)', () => {
       const exposed = component as unknown as { languages: { code: string; label: string }[] };
-      expect(exposed.languages).toHaveLength(5);
-      expect(exposed.languages.map(l => l.code)).toEqual(['de', 'en', 'uk', 'fr', 'ar']);
+      expect(exposed.languages).toHaveLength(1);
+      expect(exposed.languages.map(l => l.code)).toEqual(['de']);
     });
   });
 });

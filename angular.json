@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "angular-21-project": {
+    "terminbuchungsapp": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -19,9 +19,10 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/angular-21-project",
+            "outputPath": "dist/terminbuchungsapp",
             "index": "src/index.html",
             "browser": "src/main.ts",
+            "server": "src/main.server.ts",
             "polyfills": [
               "zone.js"
             ],
@@ -39,7 +40,6 @@
               }
             ],
             "styles": [
-              "@angular/material/prebuilt-themes/indigo-pink.css",
               "src/styles.scss"
             ],
             "scripts": [],
@@ -47,7 +47,9 @@
               "includePaths": [
                 "src/styles"
               ]
-            }
+            },
+            "ssr": false,
+            "prerender": false
           },
           "configurations": {
             "production": {
@@ -81,12 +83,15 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
-              "buildTarget": "angular-21-project:build:production"
+              "buildTarget": "terminbuchungsapp:build:production"
             },
             "development": {
-              "buildTarget": "angular-21-project:build:development"
+              "buildTarget": "terminbuchungsapp:build:development"
             }
           },
           "defaultConfiguration": "development"

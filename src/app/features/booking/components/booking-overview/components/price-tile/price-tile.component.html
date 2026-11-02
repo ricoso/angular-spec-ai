@@ -1,30 +1,53 @@
-<article class="summary-card" aria-labelledby="tile-title-extras">
-  <div class="summary-card__header">
-    <span class="summary-card__icon icon-framed icon-framed--sm icon-framed--primary" aria-hidden="true">
-      <span class="material-icons">info</span>
+<article aria-labelledby="tile-title-extras">
+  <p id="tile-title-extras" class="visually-hidden">
+    {{ bookingOverview.tiles.extras.title | translate }}
+  </p>
+
+  <div class="summary-row">
+    <span class="summary-row__icon" aria-hidden="true">
+      <i class="bi bi-car-front"></i>
     </span>
-    <h2 class="summary-card__title" id="tile-title-extras">
-      {{ bookingOverview.tiles.extras.title | translate }}
-    </h2>
+    <div>
+      <p class="summary-row__label">
+        {{ bookingOverview.tiles.extras.mobilityLabel | translate }}
+      </p>
+      <p class="summary-row__value">{{ mobilityOptionLabel() }}</p>
+      @if (rentalWishName(); as wish) {
+        <p class="summary-row__value summary-row__value--secondary">
+          {{ bookingOverview.rentalCar.wishLabel | translate }}: {{ wish }}
+        </p>
+      }
+    </div>
   </div>
-  <div class="data-grid">
-    <div class="data-field">
-      <span class="data-field__label">{{ bookingOverview.tiles.extras.mobilityLabel | translate }}</span>
-      <span class="data-field__value">{{ mobilityOptionLabel() }}</span>
+
+  <div class="summary-row">
+    <span class="summary-row__icon" aria-hidden="true">
+      <i class="bi bi-clock"></i>
+    </span>
+    <div>
+      <p class="summary-row__label">
+        {{ bookingOverview.tiles.extras.appointmentPreferenceLabel | translate }}
+        ·
+        {{ bookingOverview.tiles.extras.callbackLabel | translate }}
+      </p>
+      <p class="summary-row__value">
+        {{ appointmentPreferenceLabel() }}
+        <span class="text-muted">&mdash; {{ callbackOptionLabel() }}</span>
+      </p>
     </div>
-    <div class="data-field">
-      <span class="data-field__label">{{ bookingOverview.tiles.extras.appointmentPreferenceLabel | translate }}</span>
-      <span class="data-field__value">{{ appointmentPreferenceLabel() }}</span>
-    </div>
-    <div class="data-field">
-      <span class="data-field__label">{{ bookingOverview.tiles.extras.callbackLabel | translate }}</span>
-      <span class="data-field__value">{{ callbackOptionLabel() }}</span>
-    </div>
-    @if (bookingNote()) {
-      <div class="data-field">
-        <span class="data-field__label">{{ bookingOverview.tiles.extras.noteLabel | translate }}</span>
-        <span class="data-field__value">{{ bookingNote() }}</span>
+  </div>
+
+  @if (bookingNote()) {
+    <div class="summary-row">
+      <span class="summary-row__icon" aria-hidden="true">
+        <i class="bi bi-chat-left-text"></i>
+      </span>
+      <div>
+        <p class="summary-row__label">
+          {{ bookingOverview.tiles.extras.noteLabel | translate }}
+        </p>
+        <p class="summary-row__value">{{ bookingNote() }}</p>
       </div>
-    }
-  </div>
+    </div>
+  }
 </article>

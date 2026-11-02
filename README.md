@@ -47,7 +47,7 @@ Claude lernt die Architektur-Patterns und kann Requirements selbststaendig imple
 |-------------|------|
 | Code-Sprache | Englisch (fixiert) |
 | UI-Sprachen | Deutsch + Englisch |
-| Deployment | Click-Dummy (GitHub Pages, HashLocation) |
+| Deployment | Production (Spring Boot Backend + SoftNet API) |
 | State Management | NgRx Signal Store |
 | UI Framework | Angular Material 21 |
 | Unit Tests | Jest 30 (>80% Coverage) |
@@ -82,10 +82,6 @@ docs/requirements/     # Requirement Specs + Quality Reports
 .claude/commands/      # Claude Code Slash-Commands
 .claude/skills/        # Architektur-Skills + Setup-Wizard
 ```
-
-## Github Page
-
-https://ricoso.github.io/angular-spec-ai/#/app
 
 ## Dokumentation
 

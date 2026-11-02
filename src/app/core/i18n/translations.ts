@@ -9,9 +9,22 @@
 export const translations = {
   de: {
     app: {
+      headerTitle: 'Werkstatttermin',
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Zum Hauptinhalt springen'
+      skipLink: 'Zum Hauptinhalt springen',
+      error: {
+        title: 'Es ist ein Fehler aufgetreten',
+        subtext: 'Wir können momentan keine Daten laden. Bitte versuchen Sie es erneut oder kommen Sie später wieder.',
+        offlineHint: 'Bitte prüfen Sie Ihre Internetverbindung.',
+        retryButton: 'Erneut versuchen',
+        retryButtonAriaLabel: 'Erneut versuchen, die Daten zu laden',
+        detailsToggle: 'Technische Details anzeigen',
+        codeLabel: 'Fehler-Code',
+        statusLabel: 'Status',
+        timestampLabel: 'Zeitstempel',
+        requestIdLabel: 'Request-ID'
+      }
     },
 
     header: {
@@ -34,6 +47,9 @@ export const translations = {
       logo: {
         alt: 'Firmenlogo'
       },
+      close: {
+        buttonLabel: 'Buchung schließen und zurück zur Webseite'
+      },
       cart: {
         button: 'Warenkorb',
         title: 'Warenkorb',
@@ -52,21 +68,34 @@ export const translations = {
 
     booking: {
       wizard: {
+        progressLabel: 'Buchungsfortschritt',
+        counter: 'Schritt {current} von {total}',
+        completed: 'Abgeschlossen',
+        current: 'Aktueller Schritt',
+        upcoming: 'Noch nicht verfügbar',
         location: 'Standort',
         brand: 'Marke',
         service: 'Service',
         notes: 'Hinweise',
         appointment: 'Termin',
-        vehicle: 'Fahrzeug',
+        vehicle: 'Kontakt- & Fahrzeugdaten',
         overview: 'Übersicht'
+      },
+      recall: {
+        badge: 'Rückrufaktion',
+        title: 'Termin für Ihre Rückrufaktion',
+        description: 'Sie buchen einen Termin für eine Rückrufaktion. Der passende Service ist bereits ausgewählt.',
+        vinDetected: 'Erkannte FIN',
+        noAppointments: 'Aufgrund von Lieferengpässen der Schraube sind aktuell in diesem Standort keine Termine verfügbar.',
+        noAppointmentsHint: 'Bitte versuchen Sie es zu einem späteren Zeitpunkt oder versuchen Sie es in einem unserer anderen Standorte.'
       },
       branch: {
         infoLabel: 'Ihr Standort',
         infoSeparator: '—'
       },
       brand: {
-        title: 'Welche Marke möchten Sie servicen lassen?',
-        subtitle: 'Am Standort stehen Ihnen folgende Marken zur Verfügung',
+        title: 'Welche Fahrzeugmarke fahren Sie?',
+        subtitle: 'Bitte wählen Sie die gewünschte Marke aus.',
         backButton: 'Zurück',
         noBrandsAvailable: 'Für diesen Standort sind derzeit keine Marken verfügbar.',
         ariaGroupLabel: 'Markenauswahl',
@@ -77,12 +106,18 @@ export const translations = {
         subtitle: 'Wählen Sie Ihren Standort — die Markenlogos helfen Ihnen bei der Orientierung',
         ariaGroupLabel: 'Standortauswahl',
         ariaNavLabel: 'Seitennavigation',
+        searchLabel: 'Standort nach Stadt suchen',
+        searchPlaceholder: 'Stadt eingeben, z. B. Essen',
+        noResults: 'Kein Standort gefunden. Bitte passen Sie Ihre Suche an.',
         continueButton: 'Weiter'
       },
       services: {
+        panelHeading: 'Verfügbare Arbeiten im Bereich {category}',
+        noOperations: 'Keine Services in dieser Kategorie.',
         title: 'Welche Services möchten Sie buchen?',
         subtitle: 'Wählen Sie die gewünschten Services aus.',
         ariaGroupLabel: 'Verfügbare Services',
+        navAriaLabel: 'Seitennavigation',
         continueButton: 'Weiter',
         backButton: 'Zurück',
         confirmButton: 'Bestätigen',
@@ -152,12 +187,32 @@ export const translations = {
         }
       },
       appointment: {
-        title: 'Wählen Sie den für Sie passenden Tag und Uhrzeit aus',
-        calendarLink: 'Hier sehen Sie weitere freie Termine in unserem Werkstattkalender',
+        title: 'Wählen Sie den passenden Tag und Uhrzeit',
+        subtitle: 'Klicken Sie auf ein Datum, um freie Werkstattkapazitäten anzuzeigen.',
+        calendarLink: 'Weitere freie Termine',
+        morning: 'Vormittag',
+        afternoon: 'Nachmittag',
+        selectedLabel: 'Termin gewählt:',
+        noAppointments: 'Keine Termine verfügbar.',
+        noAppointmentsHint: 'Bitte versuchen Sie es erneut oder wählen Sie einen anderen Standort oder Service.',
+        reload: 'Neu laden',
         backButton: 'Zurück',
         continueButton: 'Weiter',
         ariaGroupLabel: 'Terminvorschläge',
-        navAriaLabel: 'Seitennavigation'
+        navAriaLabel: 'Seitennavigation',
+        rentalCar: {
+          included: 'inkl. Mietwagen',
+          filterActive: 'Es werden nur Termine mit Mietwagen angezeigt.',
+          noneAvailable: 'Im angezeigten Zeitraum ist kein Termin mit Mietwagen frei.',
+          continueWithout: 'Ohne Mietwagen fortfahren',
+          showLater: 'Spätere Termine anzeigen'
+        },
+        snapConflict: {
+          title: 'Wunschtermin nicht mehr verfügbar',
+          message: 'In der Zwischenzeit wurde Ihr Wunschtermin leider bereits belegt (hohe Nachfrage). Bitte wählen Sie einen neuen Termin aus. Ihre eingegebenen Daten bleiben erhalten.',
+          autoDismissNote: 'Dieser Hinweis wird in ca. 30 Sekunden automatisch ausgeblendet.',
+          closeAriaLabel: 'Hinweis schließen'
+        }
       },
       workshopCalendar: {
         title: 'Hier sehen Sie weitere freie Termine in unserem Werkstattkalender',
@@ -173,42 +228,41 @@ export const translations = {
         navAriaLabel: 'Seitennavigation'
       },
       notes: {
-        pageTitle: 'Bitte geben Sie uns weitere Hinweise zu Ihrer Buchung',
+        pageTitle: 'Weitere Hinweise zu Ihrer Buchung',
+        pageSubtitle: 'Konfigurieren Sie optionale Wünsche rund um Ihren Termin.',
         sectionTitle: 'Möchten Sie uns noch etwas zu Ihrer Buchung mitteilen?',
-        textareaPlaceholder: 'Bitte tragen Sie hier Ihre Nachricht an uns ein (Hinweise, Buchung weiterer Leistungen, etc.)',
+        textareaPlaceholder: 'Bitte tragen Sie hier Ihre Nachricht an uns ein.',
+        textareaHint: 'Bitte tragen Sie hier Ihre Nachricht an uns ein.',
         charCountAriaLabel: '{current} von {max} Zeichen verwendet',
         hintsTitle: 'Wichtige Hinweise zu Ihren ausgewählten Services',
         backButton: 'Zurück',
         continueButton: 'Weiter',
-        hints: {
-          inspection: 'Bitte beachten Sie: Bringen Sie Ihr Serviceheft mit. Bei umfangreichen Arbeiten kann ein Ersatzfahrzeug bereitgestellt werden — bitte im Voraus anfragen.',
-          tuv: 'Bitte beachten Sie: Für die HU/AU benötigen Sie alle Fahrzeugpapiere. Stellen Sie sicher, dass Ihr Fahrzeug fahrtüchtig und verkehrssicher ist.',
-          brakeFluid: 'Bitte beachten Sie: Der Wechsel der Bremsflüssigkeit ist gemäß Herstellervorgaben alle 2 Jahre empfohlen.',
-          tireChange: 'Bitte beachten Sie: Für die Einlagerung Ihrer Reifen bitten wir um Vorabinformation über Reifenanzahl und -größe. Die Einlagerung ist kostenpflichtig.',
-          actionsChecks: 'Bitte beachten Sie: Für den Garantie-Check benötigen wir die Fahrzeugpapiere und ggf. das Serviceheft.',
-          repair: 'Bitte beachten Sie: Beschreiben Sie Ihre Beanstandung so detailliert wie möglich im Kommentarfeld, damit wir uns optimal vorbereiten können.',
-          bodywork: 'Bitte beachten Sie: Bei Unfallschäden benötigen wir ggf. die Schadennummer Ihrer Versicherung. Bringen Sie relevante Unterlagen mit.'
+        rentCategory: {
+          none: 'Kein Mietwagen'
         },
-        mobilityOptions: {
-          title: 'Mobilitätsoptionen (kostenpflichtig)',
-          label: 'Wählen',
-          none: 'Keine Auswahl',
-          compactCar: 'Kleinwagen',
-          midRange: 'Mittelklasse',
-          luxury: 'Oberklasse'
+        rentalCar: {
+          toggleLabel: 'Mietwagen während des Termins',
+          toggleHint: 'Wir zeigen nur Termine, zu denen ein Mietwagen frei ist.',
+          wishLabel: 'Kategorie-Wunsch (optional)',
+          wishNone: 'Keine Präferenz',
+          wishHint: 'Die Kategorie ist ein Wunsch; das Autohaus bestätigt sie.',
+          notAvailable: 'An diesem Standort ist online keine Mietwagen-Buchung möglich.'
         },
         appointmentPreference: {
-          title: 'Terminpräferenz',
-          label: 'Wählen',
+          title: 'Bevorzugte Tageszeit',
           anytime: 'Jederzeit',
           morning: 'Vormittags',
           afternoon: 'Nachmittags'
         },
         callback: {
           title: 'Weitere Optionen: Rückruf',
-          label: 'Rückruf',
-          none: 'Keine Auswahl',
+          no: 'Nein',
           yes: 'Ja'
+        },
+        notification: {
+          title: 'Benachrichtigung erhalten per',
+          email: 'E-Mail',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -236,16 +290,17 @@ export const translations = {
           city: { label: 'Wohnort', placeholder: 'Berlin',
             error: { required: 'Bitte geben Sie Ihren Wohnort ein.', lettersOnly: 'Wohnort darf nur Buchstaben enthalten.' } },
           mobilePhone: { label: 'Mobilfunknummer', placeholder: '017012345678',
-            hint: 'Bitte geben Sie Ihre Mobilfunknummer ohne Sonderzeichen als Zahl im Format 017012345678 ein.',
-            error: { required: 'Bitte geben Sie Ihre Mobilfunknummer ein.', digitsOnly: 'Mobilfunknummer darf nur Zahlen enthalten.', startsWithZero: 'Die Mobilfunknummer muss mit 0 beginnen.' } },
+            hint: 'Format: 017012345678 oder +491701234567',
+            error: { required: 'Bitte geben Sie Ihre Mobilfunknummer ein.', digitsOnly: 'Mobilfunknummer darf nur Zahlen enthalten.', startsWithZero: 'Mobilfunknummer muss mit 0 oder +49 beginnen.' } },
           licensePlate: { label: 'Kfz. Kennzeichen', placeholder: 'XX-XX1234',
-            error: { required: 'Bitte geben Sie Ihr Kfz-Kennzeichen ein.', invalidFormat: 'Bitte geben Sie ein gültiges Kennzeichen ein (z.B. B-MS1234).' } },
-          mileage: { label: 'Kilometerstand', placeholder: '5000',
-            error: { required: 'Bitte geben Sie den Kilometerstand ein.', digitsOnly: 'Kilometerstand darf nur Zahlen enthalten.' } },
-          vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der FIN',
+            error: { required: 'Bitte geben Sie Ihr Kfz-Kennzeichen ein.', invalidFormat: 'Bitte geben Sie ein gültiges Kennzeichen ein (z.B. B-MS1234).', tooLong: 'Das Kennzeichen darf höchstens 20 Zeichen lang sein.' } },
+          mileage: { label: 'Kilometerstand', unit: 'km', placeholder: 'Bitte Werte ab 10 km eingeben',
+            hint: 'Bitte Werte ab 10 km eingeben',
+            error: { required: 'Bitte geben Sie den Kilometerstand ein.', digitsOnly: 'Kilometerstand darf nur Zahlen enthalten.', min: 'Bitte geben Sie einen Kilometerstand von mindestens 10 km ein.' } },
+vin: { label: 'FIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Erklärung der FIN', optionalHint: 'Freiwillig – hilft der Werkstatt, Ihr Fahrzeug eindeutig zuzuordnen.', requiredHint: 'Zur eindeutigen Zuordnung Ihrer eingelagerten Räder erforderlich.', recallHint: 'Zur eindeutigen Zuordnung der Rückrufaktion zu Ihrem Fahrzeug erforderlich.',
             error: { required: 'Bitte geben Sie die Fahrzeugidentifikationsnummer ein.', invalidLength: 'Die FIN muss genau 17 Zeichen enthalten.', invalidFormat: 'Die FIN darf nur Buchstaben und Zahlen enthalten.' } },
-          privacy: { consent: 'Ich willige in die Verarbeitung meiner personenbezogenen Daten zum Zwecke der Online-Terminvereinbarung ein. Näheres finden Sie in unserer',
-            privacyLink: 'Datenschutzerklärung',
+          privacy: { consent: 'Ich willige in die Verarbeitung meiner personenbezogenen Daten zum Zwecke der Online-Terminvereinbarung ein. Informationen',
+            privacyLink: 'hier',
             error: { required: 'Bitte bestätigen Sie die Datenschutzerklärung.' } },
           requiredHint: 'Pflichtfelder sind mit * gekennzeichnet'
         },
@@ -256,16 +311,25 @@ export const translations = {
         subtitle: 'Bitte prüfen Sie Ihre Angaben bevor Sie den Termin versenden.',
         ariaGridLabel: 'Buchungsübersicht',
         ariaNavLabel: 'Seitennavigation',
+        edit: 'Ändern',
+        rentalCar: {
+          value: 'inkl. (Kategorie nach Absprache)',
+          wishLabel: 'Kategorie-Wunsch'
+        },
+        summaryTitle: 'Zusammenfassung',
+        sidebar: {
+          serviceLabel: 'Gewählter Service',
+          serviceValue: '{brand} Werkstattservice'
+        },
         tiles: {
           appointment: {
-            title: 'Wunschtermin',
-            dateLabel: 'Datum',
-            timeLabel: 'Uhrzeit'
+            title: 'Wunschtermin'
           },
           services: {
             title: 'Gewählter Service',
             intro: 'Folgende Leistungen werden in',
-            introSuffix: 'für Sie angefragt:'
+            introSuffix: 'für Sie angefragt:',
+            empty: 'Keine Leistungen ausgewählt.'
           },
           personalData: {
             title: 'Ihre Daten',
@@ -289,17 +353,61 @@ export const translations = {
         },
         navigation: {
           back: 'Zurück',
-          submit: 'Jetzt anfragen'
+          submit: 'Termin anfragen',
+          submitting: 'Wird gesendet...',
+          submitted: 'Anfrage gesendet'
+        },
+        confirmation: {
+          message: 'Vielen Dank, Ihr Termin ist reserviert. Wir freuen uns auf Ihren Besuch.'
         }
+      },
+      api: {
+        loading: 'Daten werden geladen...',
+        submitting: 'Ihre Anfrage wird gesendet...',
+        errorTitle: 'Fehler beim Laden',
+        errorServerError: 'Der Server ist momentan nicht erreichbar. Bitte versuchen Sie es später erneut.',
+        errorTimeout: 'Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut.',
+        errorTokenFailed: 'Die Sitzung konnte nicht hergestellt werden. Bitte laden Sie die Seite neu.',
+        errorUnknown: 'Ein unbekannter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
+        errorSubmit: 'Die Buchung konnte nicht gesendet werden. Bitte versuchen Sie es erneut.',
+        retryButton: 'Erneut versuchen',
+        fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
+      },
+      overlay: {
+        cartLabel: 'Warenkorb',
+        accessibilityLabel: 'Barrierefreiheit',
+        closeLabel: 'Schließen',
+        cartBadgeLabel: '{count} Artikel im Warenkorb',
+        selectionTitle: 'Ihre Auswahl',
+        locationLabel: 'Standort',
+        brandLabel: 'Marke',
+        servicesLabel: 'Leistungen',
+        appointmentLabel: 'Termin',
+        emptySelection: 'Noch keine Auswahl getroffen.',
+        reportLabel: 'Fehler-Report',
+        reportTooltip: 'Täglichen Fehler-Report öffnen'
       }
     }
   },
 
   en: {
     app: {
+      headerTitle: 'Workshop appointment',
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Skip to main content'
+      skipLink: 'Skip to main content',
+      error: {
+        title: 'An error occurred',
+        subtext: 'We can\'t load data right now. Please try again or come back later.',
+        offlineHint: 'Please check your internet connection.',
+        retryButton: 'Retry',
+        retryButtonAriaLabel: 'Retry loading the data',
+        detailsToggle: 'Show technical details',
+        codeLabel: 'Error code',
+        statusLabel: 'Status',
+        timestampLabel: 'Timestamp',
+        requestIdLabel: 'Request ID'
+      }
     },
 
     header: {
@@ -322,6 +430,9 @@ export const translations = {
       logo: {
         alt: 'Company Logo'
       },
+      close: {
+        buttonLabel: 'Close booking and return to website'
+      },
       cart: {
         button: 'Shopping Cart',
         title: 'Shopping Cart',
@@ -340,21 +451,34 @@ export const translations = {
 
     booking: {
       wizard: {
+        progressLabel: 'Booking progress',
+        counter: 'Step {current} of {total}',
+        completed: 'Completed',
+        current: 'Current step',
+        upcoming: 'Not yet available',
         location: 'Location',
         brand: 'Brand',
         service: 'Service',
         notes: 'Notes',
         appointment: 'Appointment',
-        vehicle: 'Vehicle',
+        vehicle: 'Contact & vehicle details',
         overview: 'Overview'
+      },
+      recall: {
+        badge: 'Recall campaign',
+        title: 'Appointment for your recall campaign',
+        description: 'You are booking an appointment for a recall campaign. The matching service is already selected.',
+        vinDetected: 'Detected VIN',
+        noAppointments: 'Due to supply shortages of the screw, no appointments are currently available at this location.',
+        noAppointmentsHint: 'Please try again later or try one of our other locations.'
       },
       branch: {
         infoLabel: 'Your location',
         infoSeparator: '—'
       },
       brand: {
-        title: 'Which brand would you like to have serviced?',
-        subtitle: 'The following brands are available at your location',
+        title: 'Which vehicle brand do you drive?',
+        subtitle: 'Please choose the brand you need.',
         backButton: 'Back',
         noBrandsAvailable: 'No brands are currently available for this location.',
         ariaGroupLabel: 'Brand selection',
@@ -365,12 +489,18 @@ export const translations = {
         subtitle: 'Select your location — brand logos help you navigate',
         ariaGroupLabel: 'Location selection',
         ariaNavLabel: 'Page navigation',
+        searchLabel: 'Search location by city',
+        searchPlaceholder: 'Enter a city, e.g. Essen',
+        noResults: 'No location found. Please adjust your search.',
         continueButton: 'Continue'
       },
       services: {
+        panelHeading: 'Available work in {category}',
+        noOperations: 'No services in this category.',
         title: 'Which services would you like to book?',
         subtitle: 'Select the desired services.',
         ariaGroupLabel: 'Available services',
+        navAriaLabel: 'Page navigation',
         continueButton: 'Continue',
         backButton: 'Back',
         confirmButton: 'Confirm',
@@ -440,12 +570,32 @@ export const translations = {
         }
       },
       appointment: {
-        title: 'Select your preferred day and time',
-        calendarLink: 'Here you can see more available appointments in our workshop calendar',
+        title: 'Choose a suitable day and time',
+        subtitle: 'Click on a date to see available workshop capacity.',
+        calendarLink: 'More available appointments',
+        morning: 'Morning',
+        afternoon: 'Afternoon',
+        selectedLabel: 'Appointment selected:',
+        noAppointments: 'No appointments available.',
+        noAppointmentsHint: 'Please try again or choose another location or service.',
+        reload: 'Reload',
         backButton: 'Back',
         continueButton: 'Continue',
         ariaGroupLabel: 'Appointment suggestions',
-        navAriaLabel: 'Page navigation'
+        navAriaLabel: 'Page navigation',
+        rentalCar: {
+          included: 'incl. rental car',
+          filterActive: 'Only appointments with a rental car are shown.',
+          noneAvailable: 'No appointment with a rental car is available in this period.',
+          continueWithout: 'Continue without rental car',
+          showLater: 'Show later appointments'
+        },
+        snapConflict: {
+          title: 'Preferred appointment no longer available',
+          message: 'Unfortunately, your preferred appointment has been taken in the meantime (high demand). Please select a new appointment. Your entered data has been preserved.',
+          autoDismissNote: 'This notice will be dismissed automatically in about 30 seconds.',
+          closeAriaLabel: 'Dismiss notice'
+        }
       },
       workshopCalendar: {
         title: 'Here you can see further available appointments in our workshop calendar',
@@ -461,42 +611,41 @@ export const translations = {
         navAriaLabel: 'Page navigation'
       },
       notes: {
-        pageTitle: 'Please provide further notes for your booking',
+        pageTitle: 'Further notes on your booking',
+        pageSubtitle: 'Configure optional preferences for your appointment.',
         sectionTitle: 'Would you like to tell us anything else about your booking?',
-        textareaPlaceholder: 'Please enter your message here (notes, booking of additional services, etc.)',
+        textareaPlaceholder: 'Please enter your message to us here.',
+        textareaHint: 'Please enter your message to us here.',
         charCountAriaLabel: '{current} of {max} characters used',
         hintsTitle: 'Important notes about your selected services',
         backButton: 'Back',
         continueButton: 'Continue',
-        hints: {
-          inspection: 'Please note: Please bring your service booklet. For extensive work, a replacement vehicle may be provided — please enquire in advance.',
-          tuv: 'Please note: For the MOT you will need all vehicle documents. Make sure your vehicle is roadworthy and safe to drive.',
-          brakeFluid: 'Please note: Brake fluid change is recommended every 2 years according to manufacturer specifications.',
-          tireChange: 'Please note: For tire storage, please inform us in advance about the number and size of tires. Storage is subject to a fee.',
-          actionsChecks: 'Please note: For the warranty check we need the vehicle documents and, if applicable, the service booklet.',
-          repair: 'Please note: Please describe your complaint as detailed as possible in the comment field so we can prepare optimally.',
-          bodywork: 'Please note: For accident damage we may need your insurance claim number. Please bring relevant documents.'
+        rentCategory: {
+          none: 'No rental car'
         },
-        mobilityOptions: {
-          title: 'Mobility options (chargeable)',
-          label: 'Select',
-          none: 'No selection',
-          compactCar: 'Compact car',
-          midRange: 'Mid-range',
-          luxury: 'Luxury'
+        rentalCar: {
+          toggleLabel: 'Rental car during the appointment',
+          toggleHint: 'We only show appointments with an available rental car.',
+          wishLabel: 'Preferred category (optional)',
+          wishNone: 'No preference',
+          wishHint: 'The category is a preference; the dealership will confirm it.',
+          notAvailable: 'Online rental car booking is not available at this location.'
         },
         appointmentPreference: {
-          title: 'Appointment preference',
-          label: 'Select',
+          title: 'Preferred time of day',
           anytime: 'Anytime',
           morning: 'Morning',
           afternoon: 'Afternoon'
         },
         callback: {
           title: 'Further options: Callback',
-          label: 'Callback',
-          none: 'No selection',
+          no: 'No',
           yes: 'Yes'
+        },
+        notification: {
+          title: 'Receive notifications via',
+          email: 'Email',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -524,16 +673,17 @@ export const translations = {
           city: { label: 'City', placeholder: 'Berlin',
             error: { required: 'Please enter your city.', lettersOnly: 'City may only contain letters.' } },
           mobilePhone: { label: 'Mobile Phone Number', placeholder: '017012345678',
-            hint: 'Please enter your mobile number without special characters in the format 017012345678.',
-            error: { required: 'Please enter your mobile phone number.', digitsOnly: 'Mobile number may only contain digits.', startsWithZero: 'Mobile number must start with 0.' } },
+            hint: 'Format: 017012345678 or +491701234567',
+            error: { required: 'Please enter your mobile phone number.', digitsOnly: 'Mobile number may only contain digits.', startsWithZero: 'Mobile number must start with 0 or +49.' } },
           licensePlate: { label: 'License Plate', placeholder: 'XX-XX1234',
-            error: { required: 'Please enter your license plate.', invalidFormat: 'Please enter a valid license plate (e.g. B-MS1234).' } },
-          mileage: { label: 'Mileage', placeholder: '5000',
-            error: { required: 'Please enter the current mileage.', digitsOnly: 'Mileage may only contain digits.' } },
-          vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of VIN',
+            error: { required: 'Please enter your license plate.', invalidFormat: 'Please enter a valid license plate (e.g. B-MS1234).', tooLong: 'The license plate may be at most 20 characters long.' } },
+          mileage: { label: 'Mileage', unit: 'km', placeholder: 'Please enter a value of at least 10 km',
+            hint: 'Please enter a value of at least 10 km',
+            error: { required: 'Please enter the current mileage.', digitsOnly: 'Mileage may only contain digits.', min: 'Please enter a mileage of at least 10 km.' } },
+vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explanation of VIN', optionalHint: 'Optional – helps the workshop identify your vehicle.', requiredHint: 'Required so we can match your stored wheels to your vehicle.', recallHint: 'Required to match the recall campaign to your vehicle.',
             error: { required: 'Please enter the vehicle identification number.', invalidLength: 'The VIN must be exactly 17 characters.', invalidFormat: 'The VIN may only contain letters and digits.' } },
-          privacy: { consent: 'I consent to the processing of my personal data for the purpose of online appointment booking. More information can be found in our',
-            privacyLink: 'Privacy Policy',
+          privacy: { consent: 'I consent to the processing of my personal data for the purpose of online appointment booking. More information',
+            privacyLink: 'here',
             error: { required: 'Please accept the privacy policy.' } },
           requiredHint: 'Required fields are marked with *'
         },
@@ -544,16 +694,25 @@ export const translations = {
         subtitle: 'Please review your details before submitting the appointment.',
         ariaGridLabel: 'Booking summary',
         ariaNavLabel: 'Page navigation',
+        edit: 'Edit',
+        rentalCar: {
+          value: 'included (category to be confirmed)',
+          wishLabel: 'Preferred category'
+        },
+        summaryTitle: 'Summary',
+        sidebar: {
+          serviceLabel: 'Selected service',
+          serviceValue: '{brand} workshop service'
+        },
         tiles: {
           appointment: {
-            title: 'Desired Appointment',
-            dateLabel: 'Date',
-            timeLabel: 'Time'
+            title: 'Desired Appointment'
           },
           services: {
             title: 'Selected Service',
             intro: 'The following services will be requested at',
-            introSuffix: 'for you:'
+            introSuffix: 'for you:',
+            empty: 'No services selected.'
           },
           personalData: {
             title: 'Your Details',
@@ -577,17 +736,61 @@ export const translations = {
         },
         navigation: {
           back: 'Back',
-          submit: 'Request Now'
+          submit: 'Request appointment',
+          submitting: 'Sending...',
+          submitted: 'Request Sent'
+        },
+        confirmation: {
+          message: 'Thank you, your appointment is reserved. We look forward to your visit.'
         }
+      },
+      api: {
+        loading: 'Loading data...',
+        submitting: 'Sending your request...',
+        errorTitle: 'Loading Error',
+        errorServerError: 'The server is currently unavailable. Please try again later.',
+        errorTimeout: 'The request took too long. Please try again.',
+        errorTokenFailed: 'The session could not be established. Please reload the page.',
+        errorUnknown: 'An unknown error occurred. Please try again.',
+        errorSubmit: 'The booking could not be sent. Please try again.',
+        retryButton: 'Retry',
+        fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
+      },
+      overlay: {
+        cartLabel: 'Shopping cart',
+        accessibilityLabel: 'Accessibility',
+        closeLabel: 'Close',
+        cartBadgeLabel: '{count} items in cart',
+        selectionTitle: 'Your selection',
+        locationLabel: 'Location',
+        brandLabel: 'Brand',
+        servicesLabel: 'Services',
+        appointmentLabel: 'Appointment',
+        emptySelection: 'No selections made yet.',
+        reportLabel: 'Error report',
+        reportTooltip: 'Open daily error report'
       }
     }
   },
 
   uk: {
     app: {
+      headerTitle: 'Запис на сервіс',
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Перейти до основного вмісту'
+      skipLink: 'Перейти до основного вмісту',
+      error: {
+        title: 'Сталася помилка',
+        subtext: 'Наразі не вдається завантажити дані. Будь ласка, спробуйте знову або поверніться пізніше.',
+        offlineHint: 'Будь ласка, перевірте підключення до Інтернету.',
+        retryButton: 'Повторити',
+        retryButtonAriaLabel: 'Повторити завантаження даних',
+        detailsToggle: 'Показати технічні деталі',
+        codeLabel: 'Код помилки',
+        statusLabel: 'Статус',
+        timestampLabel: 'Часова мітка',
+        requestIdLabel: 'ID запиту'
+      }
     },
 
     header: {
@@ -610,6 +813,9 @@ export const translations = {
       logo: {
         alt: 'Логотип компанії'
       },
+      close: {
+        buttonLabel: 'Закрити бронювання та повернутися на сайт'
+      },
       cart: {
         button: 'Кошик',
         title: 'Кошик',
@@ -628,13 +834,26 @@ export const translations = {
 
     booking: {
       wizard: {
+        progressLabel: 'Перебіг бронювання',
+        counter: 'Крок {current} з {total}',
+        completed: 'Завершено',
+        current: 'Поточний крок',
+        upcoming: 'Ще недоступно',
         location: 'Місце',
         brand: 'Марка',
         service: 'Сервіс',
         notes: 'Примітки',
         appointment: 'Зустріч',
-        vehicle: 'Автомобіль',
+        vehicle: 'Контактні дані та автомобіль',
         overview: 'Огляд'
+      },
+      recall: {
+        badge: 'Відклична кампанія',
+        title: 'Запис на відкличну кампанію',
+        description: 'Ви записуєтесь на відкличну кампанію. Відповідну послугу вже обрано.',
+        vinDetected: 'Виявлений VIN',
+        noAppointments: 'Через перебої з постачанням гвинта наразі в цьому місці немає доступних візитів.',
+        noAppointmentsHint: 'Будь ласка, спробуйте пізніше або виберіть одне з наших інших місць.'
       },
       branch: {
         infoLabel: 'Ваше місце',
@@ -653,12 +872,18 @@ export const translations = {
         subtitle: 'Оберіть ваше місце — логотипи марок допоможуть зорієнтуватися',
         ariaGroupLabel: 'Вибір місця',
         ariaNavLabel: 'Навігація сторінки',
+        searchLabel: 'Пошук місця за містом',
+        searchPlaceholder: 'Введіть місто, напр. Essen',
+        noResults: 'Місце не знайдено. Будь ласка, змініть запит.',
         continueButton: 'Далі'
       },
       services: {
+        panelHeading: 'Доступні роботи в категорії {category}',
+        noOperations: 'У цій категорії немає послуг.',
         title: 'Які послуги ви хотіли б замовити?',
         subtitle: 'Оберіть потрібні послуги.',
         ariaGroupLabel: 'Доступні послуги',
+        navAriaLabel: 'Навігація по сторінках',
         continueButton: 'Далі',
         backButton: 'Назад',
         confirmButton: 'Підтвердити',
@@ -728,12 +953,32 @@ export const translations = {
         }
       },
       appointment: {
-        title: 'Оберіть зручний для вас день та час',
-        calendarLink: 'Тут ви можете побачити більше вільних записів у нашому календарі майстерні',
+        title: 'Виберіть зручний день і час',
+        subtitle: 'Натисніть на дату, щоб побачити вільні місця в майстерні.',
+        calendarLink: 'Інші вільні дати',
+        morning: 'Перша половина дня',
+        afternoon: 'Друга половина дня',
+        selectedLabel: 'Вибраний візит:',
+        noAppointments: 'Немає доступних візитів.',
+        noAppointmentsHint: 'Спробуйте ще раз або виберіть інше місце чи послугу.',
+        reload: 'Оновити',
         backButton: 'Назад',
         continueButton: 'Далі',
         ariaGroupLabel: 'Пропозиції записів',
-        navAriaLabel: 'Навігація по сторінках'
+        navAriaLabel: 'Навігація по сторінках',
+        rentalCar: {
+          included: 'з орендованим автомобілем',
+          filterActive: 'Показано лише візити з орендованим автомобілем.',
+          noneAvailable: 'У цей період немає вільних візитів з орендованим автомобілем.',
+          continueWithout: 'Продовжити без орендованого автомобіля',
+          showLater: 'Показати пізніші візити'
+        },
+        snapConflict: {
+          title: 'Бажаний запис більше недоступний',
+          message: 'На жаль, ваш бажаний запис тим часом уже зайнято (високий попит). Будь ласка, оберіть новий запис. Введені вами дані збережено.',
+          autoDismissNote: 'Це повідомлення автоматично зникне приблизно через 30 секунд.',
+          closeAriaLabel: 'Закрити повідомлення'
+        }
       },
       workshopCalendar: {
         title: 'Тут ви можете побачити додаткові вільні записи у нашому календарі майстерні',
@@ -749,42 +994,41 @@ export const translations = {
         navAriaLabel: 'Навігація по сторінках'
       },
       notes: {
-        pageTitle: 'Будь ласка, надайте додаткові примітки до вашого запису',
+        pageTitle: 'Додаткові примітки до вашого бронювання',
+        pageSubtitle: 'Налаштуйте додаткові побажання щодо вашого візиту.',
         sectionTitle: 'Чи хочете ви повідомити нам щось ще про ваш запис?',
-        textareaPlaceholder: 'Будь ласка, введіть ваше повідомлення тут (примітки, бронювання додаткових послуг тощо)',
+        textareaPlaceholder: 'Будь ласка, введіть тут ваше повідомлення.',
+        textareaHint: 'Будь ласка, введіть тут ваше повідомлення.',
         charCountAriaLabel: '{current} з {max} символів використано',
         hintsTitle: 'Важливі примітки щодо обраних послуг',
         backButton: 'Назад',
         continueButton: 'Далі',
-        hints: {
-          inspection: 'Зверніть увагу: принесіть сервісну книжку. При масштабних роботах може бути надано підмінний автомобіль — запитайте заздалегідь.',
-          tuv: 'Зверніть увагу: для техогляду вам знадобляться всі документи на автомобіль. Переконайтеся, що ваш автомобіль справний та безпечний.',
-          brakeFluid: 'Зверніть увагу: заміна гальмівної рідини рекомендується кожні 2 роки відповідно до вимог виробника.',
-          tireChange: 'Зверніть увагу: для зберігання шин повідомте нас заздалегідь про кількість та розмір шин. Зберігання платне.',
-          actionsChecks: 'Зверніть увагу: для гарантійної перевірки нам потрібні документи на автомобіль та, за потреби, сервісна книжка.',
-          repair: 'Зверніть увагу: опишіть вашу скаргу якомога детальніше у полі коментарів, щоб ми могли оптимально підготуватися.',
-          bodywork: 'Зверніть увагу: при аварійних пошкодженнях нам може знадобитися номер страхового випадку. Принесіть відповідні документи.'
+        rentCategory: {
+          none: 'Без орендного автомобіля'
         },
-        mobilityOptions: {
-          title: 'Варіанти мобільності (платно)',
-          label: 'Обрати',
-          none: 'Без вибору',
-          compactCar: 'Малолітражка',
-          midRange: 'Середній клас',
-          luxury: 'Преміум-клас'
+        rentalCar: {
+          toggleLabel: 'Орендований автомобіль на час візиту',
+          toggleHint: 'Ми показуємо лише візити з вільним орендованим автомобілем.',
+          wishLabel: 'Бажана категорія (необов’язково)',
+          wishNone: 'Без переваги',
+          wishHint: 'Категорія — це побажання; автосалон її підтвердить.',
+          notAvailable: 'Онлайн-бронювання орендованого автомобіля в цьому місці недоступне.'
         },
         appointmentPreference: {
-          title: 'Бажаний час',
-          label: 'Обрати',
+          title: 'Бажаний час доби',
           anytime: 'Будь-який час',
           morning: 'Зранку',
           afternoon: 'Після обіду'
         },
         callback: {
           title: 'Додаткові опції: Зворотний дзвінок',
-          label: 'Зворотний дзвінок',
-          none: 'Без вибору',
+          no: 'Ні',
           yes: 'Так'
+        },
+        notification: {
+          title: 'Отримувати сповіщення через',
+          email: 'Електронна пошта',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -815,10 +1059,11 @@ export const translations = {
             hint: 'Будь ласка, введіть номер без спеціальних символів у форматі 017012345678.',
             error: { required: 'Будь ласка, введіть номер мобільного телефону.', digitsOnly: 'Номер може містити лише цифри.', startsWithZero: 'Номер мобільного телефону має починатися з 0.' } },
           licensePlate: { label: 'Номерний знак', placeholder: 'XX-XX1234',
-            error: { required: 'Будь ласка, введіть номерний знак.', invalidFormat: 'Будь ласка, введіть дійсний номерний знак (напр. B-MS1234).' } },
-          mileage: { label: 'Пробіг', placeholder: '5000',
-            error: { required: 'Будь ласка, введіть пробіг.', digitsOnly: 'Пробіг може містити лише цифри.' } },
-          vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснення VIN',
+            error: { required: 'Будь ласка, введіть номерний знак.', invalidFormat: 'Будь ласка, введіть дійсний номерний знак (напр. B-MS1234).', tooLong: 'Номерний знак може містити не більше 20 символів.' } },
+          mileage: { label: 'Пробіг', unit: 'км', placeholder: 'Будь ласка, вводьте значення від 10 км',
+            hint: 'Будь ласка, вводьте значення від 10 км',
+            error: { required: 'Будь ласка, введіть пробіг.', digitsOnly: 'Пробіг може містити лише цифри.', min: 'Будь ласка, введіть пробіг щонайменше 10 км.' } },
+vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Пояснення VIN', optionalHint: 'Необов’язково – допомагає майстерні точно ідентифікувати ваш автомобіль.', requiredHint: 'Потрібно, щоб зіставити ваші зберігані колеса з вашим автомобілем.', recallHint: 'Потрібно для зіставлення відкличної кампанії з вашим автомобілем.',
             error: { required: 'Будь ласка, введіть ідентифікаційний номер автомобіля.', invalidLength: 'VIN має складатися рівно з 17 символів.', invalidFormat: 'VIN може містити лише літери та цифри.' } },
           privacy: { consent: 'Я погоджуюся на обробку моїх персональних даних з метою онлайн-запису на технічне обслуговування. Детальніше в нашій',
             privacyLink: 'Політиці конфіденційності',
@@ -832,16 +1077,25 @@ export const translations = {
         subtitle: 'Будь ласка, перевірте свої дані перед відправленням запису.',
         ariaGridLabel: 'Огляд бронювання',
         ariaNavLabel: 'Навігація сторінки',
+        edit: 'Редагувати',
+        rentalCar: {
+          value: 'включено (категорія за погодженням)',
+          wishLabel: 'Бажана категорія'
+        },
+        summaryTitle: 'Підсумок',
+        sidebar: {
+          serviceLabel: 'Вибрана послуга',
+          serviceValue: 'Сервіс {brand}'
+        },
         tiles: {
           appointment: {
-            title: 'Бажаний термін',
-            dateLabel: 'Дата',
-            timeLabel: 'Час'
+            title: 'Бажаний термін'
           },
           services: {
             title: 'Обраний сервіс',
             intro: 'Наступні послуги будуть запитані в',
-            introSuffix: 'для вас:'
+            introSuffix: 'для вас:',
+            empty: 'Послуги не вибрано.'
           },
           personalData: {
             title: 'Ваші дані',
@@ -859,21 +1113,72 @@ export const translations = {
             title: 'Ціна',
             vatIncluded: 'вкл. ПДВ',
             staticPrice: '€ 129,00'
+          },
+          extras: {
+            title: 'Примітки та опції',
+            mobilityLabel: 'Мобільність',
+            appointmentPreferenceLabel: 'Бажаний час',
+            callbackLabel: 'Зворотний дзвінок',
+            noteLabel: 'Повідомлення'
           }
         },
         navigation: {
           back: 'Назад',
-          submit: 'Запросити зараз'
+          submit: 'Запросити візит',
+          submitting: 'Надсилається...',
+          submitted: 'Запит надіслано'
+        },
+        confirmation: {
+          message: 'Дякуємо, ваш запис заброньовано. Ми з нетерпінням чекаємо на ваш візит.'
         }
+      },
+      api: {
+        loading: 'Завантаження даних...',
+        submitting: 'Відправлення вашого запиту...',
+        errorTitle: 'Помилка завантаження',
+        errorServerError: 'Сервер наразі недоступний. Будь ласка, спробуйте пізніше.',
+        errorTimeout: 'Запит тривав занадто довго. Будь ласка, спробуйте знову.',
+        errorTokenFailed: 'Не вдалося встановити сеанс. Будь ласка, перезавантажте сторінку.',
+        errorUnknown: 'Сталася невідома помилка. Будь ласка, спробуйте знову.',
+        errorSubmit: 'Не вдалося надіслати бронювання. Будь ласка, спробуйте знову.',
+        retryButton: 'Повторити',
+        fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
+      },
+      overlay: {
+        cartLabel: 'Кошик',
+        accessibilityLabel: 'Доступність',
+        closeLabel: 'Закрити',
+        cartBadgeLabel: '{count} товарів у кошику',
+        selectionTitle: 'Ваш вибір',
+        locationLabel: 'Місцезнаходження',
+        brandLabel: 'Марка',
+        servicesLabel: 'Послуги',
+        appointmentLabel: 'Запис',
+        emptySelection: 'Ще нічого не обрано.',
+        reportLabel: 'Звіт про помилки',
+        reportTooltip: 'Відкрити щоденний звіт про помилки'
       }
     }
   },
 
   fr: {
     app: {
+      headerTitle: 'Rendez-vous atelier',
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'Aller au contenu principal'
+      skipLink: 'Aller au contenu principal',
+      error: {
+        title: 'Une erreur s\'est produite',
+        subtext: 'Nous ne pouvons pas charger les données pour le moment. Veuillez réessayer ou revenir plus tard.',
+        offlineHint: 'Veuillez vérifier votre connexion Internet.',
+        retryButton: 'Réessayer',
+        retryButtonAriaLabel: 'Réessayer de charger les données',
+        detailsToggle: 'Afficher les détails techniques',
+        codeLabel: 'Code d\'erreur',
+        statusLabel: 'Statut',
+        timestampLabel: 'Horodatage',
+        requestIdLabel: 'ID de requête'
+      }
     },
 
     header: {
@@ -896,6 +1201,9 @@ export const translations = {
       logo: {
         alt: 'Logo de l\'entreprise'
       },
+      close: {
+        buttonLabel: 'Fermer la réservation et retourner au site'
+      },
       cart: {
         button: 'Panier',
         title: 'Panier',
@@ -914,13 +1222,26 @@ export const translations = {
 
     booking: {
       wizard: {
+        progressLabel: 'Progression de la réservation',
+        counter: 'Étape {current} sur {total}',
+        completed: 'Terminé',
+        current: 'Étape actuelle',
+        upcoming: 'Pas encore disponible',
         location: 'Lieu',
         brand: 'Marque',
         service: 'Service',
         notes: 'Remarques',
         appointment: 'Rendez-vous',
-        vehicle: 'Véhicule',
+        vehicle: 'Coordonnées et véhicule',
         overview: 'Aperçu'
+      },
+      recall: {
+        badge: 'Campagne de rappel',
+        title: 'Rendez-vous pour votre campagne de rappel',
+        description: 'Vous prenez rendez-vous pour une campagne de rappel. Le service correspondant est déjà sélectionné.',
+        vinDetected: 'NIV détecté',
+        noAppointments: 'En raison de difficultés d\'approvisionnement de la vis, aucun rendez-vous n\'est actuellement disponible sur ce site.',
+        noAppointmentsHint: 'Veuillez réessayer plus tard ou essayer l\'un de nos autres sites.'
       },
       branch: {
         infoLabel: 'Votre lieu',
@@ -939,12 +1260,18 @@ export const translations = {
         subtitle: 'Sélectionnez votre emplacement — les logos des marques vous aident à vous orienter',
         ariaGroupLabel: 'Sélection de l\'emplacement',
         ariaNavLabel: 'Navigation de la page',
+        searchLabel: 'Rechercher un site par ville',
+        searchPlaceholder: 'Saisissez une ville, p. ex. Essen',
+        noResults: 'Aucun site trouvé. Veuillez modifier votre recherche.',
         continueButton: 'Continuer'
       },
       services: {
+        panelHeading: 'Travaux disponibles dans la catégorie {category}',
+        noOperations: 'Aucun service dans cette catégorie.',
         title: 'Quels services souhaitez-vous réserver ?',
         subtitle: 'Sélectionnez les services souhaités.',
         ariaGroupLabel: 'Services disponibles',
+        navAriaLabel: 'Navigation par page',
         continueButton: 'Continuer',
         backButton: 'Retour',
         confirmButton: 'Confirmer',
@@ -1015,11 +1342,31 @@ export const translations = {
       },
       appointment: {
         title: 'Sélectionnez le jour et l\'heure qui vous conviennent',
-        calendarLink: 'Consultez ici d\'autres créneaux disponibles dans notre calendrier d\'atelier',
+        subtitle: 'Cliquez sur une date pour afficher les créneaux disponibles à l\'atelier.',
+        calendarLink: 'Autres créneaux disponibles',
+        morning: 'Matin',
+        afternoon: 'Après-midi',
+        selectedLabel: 'Rendez-vous choisi :',
+        noAppointments: 'Aucun rendez-vous disponible.',
+        noAppointmentsHint: 'Veuillez réessayer ou choisir un autre site ou service.',
+        reload: 'Recharger',
         backButton: 'Retour',
         continueButton: 'Continuer',
         ariaGroupLabel: 'Propositions de rendez-vous',
-        navAriaLabel: 'Navigation par page'
+        navAriaLabel: 'Navigation par page',
+        rentalCar: {
+          included: 'avec véhicule de location',
+          filterActive: 'Seuls les rendez-vous avec véhicule de location sont affichés.',
+          noneAvailable: 'Aucun rendez-vous avec véhicule de location n’est disponible sur cette période.',
+          continueWithout: 'Continuer sans véhicule de location',
+          showLater: 'Afficher des rendez-vous ultérieurs'
+        },
+        snapConflict: {
+          title: 'Le rendez-vous souhaité n\'est plus disponible',
+          message: 'Malheureusement, votre rendez-vous souhaité a été réservé entre-temps (forte demande). Veuillez sélectionner un nouveau rendez-vous. Les données que vous avez saisies sont conservées.',
+          autoDismissNote: 'Cet avis disparaîtra automatiquement dans environ 30 secondes.',
+          closeAriaLabel: 'Fermer l\'avis'
+        }
       },
       workshopCalendar: {
         title: 'Consultez ici les créneaux disponibles dans notre calendrier d\'atelier',
@@ -1035,42 +1382,41 @@ export const translations = {
         navAriaLabel: 'Navigation par page'
       },
       notes: {
-        pageTitle: 'Veuillez fournir des remarques supplémentaires pour votre réservation',
+        pageTitle: 'Remarques complémentaires sur votre réservation',
+        pageSubtitle: 'Configurez des souhaits facultatifs pour votre rendez-vous.',
         sectionTitle: 'Souhaitez-vous nous communiquer autre chose concernant votre réservation ?',
-        textareaPlaceholder: 'Veuillez saisir votre message ici (remarques, réservation de services supplémentaires, etc.)',
+        textareaPlaceholder: 'Veuillez saisir votre message ici.',
+        textareaHint: 'Veuillez saisir votre message ici.',
         charCountAriaLabel: '{current} sur {max} caractères utilisés',
         hintsTitle: 'Remarques importantes concernant vos services sélectionnés',
         backButton: 'Retour',
         continueButton: 'Continuer',
-        hints: {
-          inspection: 'Veuillez noter : apportez votre carnet d\'entretien. Pour les travaux importants, un véhicule de remplacement peut être fourni — veuillez vous renseigner à l\'avance.',
-          tuv: 'Veuillez noter : pour le contrôle technique, vous aurez besoin de tous les documents du véhicule. Assurez-vous que votre véhicule est en état de rouler.',
-          brakeFluid: 'Veuillez noter : le changement de liquide de frein est recommandé tous les 2 ans selon les spécifications du fabricant.',
-          tireChange: 'Veuillez noter : pour l\'entreposage des pneus, informez-nous à l\'avance du nombre et de la taille des pneus. L\'entreposage est payant.',
-          actionsChecks: 'Veuillez noter : pour la vérification de garantie, nous avons besoin des documents du véhicule et éventuellement du carnet d\'entretien.',
-          repair: 'Veuillez noter : décrivez votre réclamation aussi précisément que possible dans le champ de commentaire afin que nous puissions nous préparer au mieux.',
-          bodywork: 'Veuillez noter : en cas de dommages accidentels, nous pourrions avoir besoin de votre numéro de sinistre. Apportez les documents pertinents.'
+        rentalCar: {
+          toggleLabel: 'Véhicule de location pendant le rendez-vous',
+          toggleHint: 'Nous affichons uniquement les rendez-vous avec un véhicule de location disponible.',
+          wishLabel: 'Catégorie souhaitée (facultatif)',
+          wishNone: 'Aucune préférence',
+          wishHint: 'La catégorie est un souhait ; le concessionnaire la confirmera.',
+          notAvailable: 'La réservation en ligne d’un véhicule de location n’est pas possible sur ce site.'
         },
-        mobilityOptions: {
-          title: 'Options de mobilité (payantes)',
-          label: 'Sélectionner',
-          none: 'Aucune sélection',
-          compactCar: 'Voiture compacte',
-          midRange: 'Gamme moyenne',
-          luxury: 'Haut de gamme'
+        rentCategory: {
+          none: 'Pas de voiture de location'
         },
         appointmentPreference: {
-          title: 'Préférence de rendez-vous',
-          label: 'Sélectionner',
+          title: 'Moment préféré de la journée',
           anytime: 'À tout moment',
           morning: 'Le matin',
           afternoon: "L'après-midi"
         },
         callback: {
           title: 'Options supplémentaires : Rappel',
-          label: 'Rappel',
-          none: 'Aucune sélection',
+          no: 'Non',
           yes: 'Oui'
+        },
+        notification: {
+          title: 'Recevoir les notifications par',
+          email: 'E-mail',
+          sms: 'SMS'
         }
       },
       carinformation: {
@@ -1101,10 +1447,11 @@ export const translations = {
             hint: 'Veuillez saisir votre numéro sans caractères spéciaux au format 017012345678.',
             error: { required: 'Veuillez saisir votre numéro de téléphone mobile.', digitsOnly: 'Le numéro ne peut contenir que des chiffres.', startsWithZero: 'Le numéro de mobile doit commencer par 0.' } },
           licensePlate: { label: 'Plaque d\'immatriculation', placeholder: 'XX-XX1234',
-            error: { required: 'Veuillez saisir votre plaque d\'immatriculation.', invalidFormat: 'Veuillez saisir une plaque valide (ex. B-MS1234).' } },
-          mileage: { label: 'Kilométrage', placeholder: '5000',
-            error: { required: 'Veuillez saisir le kilométrage.', digitsOnly: 'Le kilométrage ne peut contenir que des chiffres.' } },
-          vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du NIV',
+            error: { required: 'Veuillez saisir votre plaque d\'immatriculation.', invalidFormat: 'Veuillez saisir une plaque valide (ex. B-MS1234).', tooLong: 'La plaque d\'immatriculation ne doit pas dépasser 20 caractères.' } },
+          mileage: { label: 'Kilométrage', unit: 'km', placeholder: 'Veuillez saisir une valeur d\'au moins 10 km',
+            hint: 'Veuillez saisir une valeur d\'au moins 10 km',
+            error: { required: 'Veuillez saisir le kilométrage.', digitsOnly: 'Le kilométrage ne peut contenir que des chiffres.', min: 'Veuillez saisir un kilométrage d\'au moins 10 km.' } },
+vin: { label: 'NIV', placeholder: 'WDB8XXXXXXA123456', infoLink: 'Explication du NIV', optionalHint: 'Facultatif – aide l’atelier à identifier votre véhicule.', requiredHint: 'Requis pour associer vos roues stockées à votre véhicule.', recallHint: 'Requis pour associer la campagne de rappel à votre véhicule.',
             error: { required: 'Veuillez saisir le numéro d\'identification du véhicule.', invalidLength: 'Le NIV doit comporter exactement 17 caractères.', invalidFormat: 'Le NIV ne peut contenir que des lettres et des chiffres.' } },
           privacy: { consent: 'Je consens au traitement de mes données personnelles aux fins de la prise de rendez-vous en ligne. Pour en savoir plus, consultez notre',
             privacyLink: 'Politique de confidentialité',
@@ -1118,16 +1465,25 @@ export const translations = {
         subtitle: 'Veuillez vérifier vos informations avant d\'envoyer le rendez-vous.',
         ariaGridLabel: 'Récapitulatif de la réservation',
         ariaNavLabel: 'Navigation de la page',
+        edit: 'Modifier',
+        rentalCar: {
+          value: 'inclus (catégorie à confirmer)',
+          wishLabel: 'Catégorie souhaitée'
+        },
+        summaryTitle: 'Récapitulatif',
+        sidebar: {
+          serviceLabel: 'Service choisi',
+          serviceValue: 'Service atelier {brand}'
+        },
         tiles: {
           appointment: {
-            title: 'Rendez-vous souhaité',
-            dateLabel: 'Date',
-            timeLabel: 'Heure'
+            title: 'Rendez-vous souhaité'
           },
           services: {
             title: 'Service sélectionné',
             intro: 'Les prestations suivantes seront demandées à',
-            introSuffix: 'pour vous :'
+            introSuffix: 'pour vous :',
+            empty: 'Aucune prestation sélectionnée.'
           },
           personalData: {
             title: 'Vos données',
@@ -1145,21 +1501,72 @@ export const translations = {
             title: 'Prix',
             vatIncluded: 'TTC',
             staticPrice: '129,00 €'
+          },
+          extras: {
+            title: 'Remarques et options',
+            mobilityLabel: 'Mobilité',
+            appointmentPreferenceLabel: 'Préférence de rendez-vous',
+            callbackLabel: 'Rappel',
+            noteLabel: 'Message'
           }
         },
         navigation: {
           back: 'Retour',
-          submit: 'Demander maintenant'
+          submit: 'Demander un rendez-vous',
+          submitting: 'Envoi en cours...',
+          submitted: 'Demande envoyée'
+        },
+        confirmation: {
+          message: 'Merci, votre rendez-vous est réservé. Nous nous réjouissons de votre visite.'
         }
+      },
+      api: {
+        loading: 'Chargement des données...',
+        submitting: 'Envoi de votre demande en cours...',
+        errorTitle: 'Erreur de chargement',
+        errorServerError: 'Le serveur est actuellement indisponible. Veuillez réessayer plus tard.',
+        errorTimeout: 'La requête a pris trop de temps. Veuillez réessayer.',
+        errorTokenFailed: 'La session n\'a pas pu être établie. Veuillez recharger la page.',
+        errorUnknown: 'Une erreur inconnue s\'est produite. Veuillez réessayer.',
+        errorSubmit: 'La réservation n\'a pas pu être envoyée. Veuillez réessayer.',
+        retryButton: 'Réessayer',
+        fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
+      },
+      overlay: {
+        cartLabel: 'Panier',
+        accessibilityLabel: 'Accessibilité',
+        closeLabel: 'Fermer',
+        cartBadgeLabel: '{count} articles dans le panier',
+        selectionTitle: 'Votre sélection',
+        locationLabel: 'Emplacement',
+        brandLabel: 'Marque',
+        servicesLabel: 'Services',
+        appointmentLabel: 'Rendez-vous',
+        emptySelection: 'Aucune sélection effectuée.',
+        reportLabel: 'Rapport d’erreurs',
+        reportTooltip: 'Ouvrir le rapport d’erreurs quotidien'
       }
     }
   },
 
   ar: {
     app: {
+      headerTitle: 'موعد الورشة',
       title: 'Autohaus GmbH',
       subtitle: 'Fahrzeugauswahl',
-      skipLink: 'انتقل إلى المحتوى الرئيسي'
+      skipLink: 'انتقل إلى المحتوى الرئيسي',
+      error: {
+        title: 'حدث خطأ',
+        subtext: 'لا يمكننا تحميل البيانات في الوقت الحالي. يرجى المحاولة مرة أخرى أو العودة لاحقاً.',
+        offlineHint: 'يرجى التحقق من اتصالك بالإنترنت.',
+        retryButton: 'إعادة المحاولة',
+        retryButtonAriaLabel: 'إعادة محاولة تحميل البيانات',
+        detailsToggle: 'عرض التفاصيل الفنية',
+        codeLabel: 'رمز الخطأ',
+        statusLabel: 'الحالة',
+        timestampLabel: 'الطابع الزمني',
+        requestIdLabel: 'معرف الطلب'
+      }
     },
 
     header: {
@@ -1182,6 +1589,9 @@ export const translations = {
       logo: {
         alt: 'شعار الشركة'
       },
+      close: {
+        buttonLabel: 'إغلاق الحجز والعودة إلى الموقع'
+      },
       cart: {
         button: 'سلة التسوق',
         title: 'سلة التسوق',
@@ -1200,13 +1610,26 @@ export const translations = {
 
     booking: {
       wizard: {
+        progressLabel: 'تقدم الحجز',
+        counter: 'الخطوة {current} من {total}',
+        completed: 'مكتمل',
+        current: 'الخطوة الحالية',
+        upcoming: 'غير متاح بعد',
         location: 'الموقع',
         brand: 'العلامة',
         service: 'الخدمة',
         notes: 'ملاحظات',
         appointment: 'الموعد',
-        vehicle: 'السيارة',
+        vehicle: 'بيانات الاتصال والسيارة',
         overview: 'نظرة عامة'
+      },
+      recall: {
+        badge: 'حملة استدعاء',
+        title: 'موعد لحملة الاستدعاء الخاصة بك',
+        description: 'أنت تحجز موعدًا لحملة استدعاء. تم بالفعل اختيار الخدمة المناسبة.',
+        vinDetected: 'رقم VIN المكتشف',
+        noAppointments: 'بسبب نقص في توريد المسمار، لا توجد مواعيد متاحة حاليًا في هذا الموقع.',
+        noAppointmentsHint: 'يرجى المحاولة لاحقًا أو اختيار أحد مواقعنا الأخرى.'
       },
       branch: {
         infoLabel: 'موقعك',
@@ -1225,12 +1648,18 @@ export const translations = {
         subtitle: 'اختر موقعك — شعارات العلامات التجارية تساعدك في التنقل',
         ariaGroupLabel: 'اختيار الموقع',
         ariaNavLabel: 'التنقل في الصفحة',
+        searchLabel: 'البحث عن موقع حسب المدينة',
+        searchPlaceholder: 'أدخل مدينة، مثل Essen',
+        noResults: 'لم يتم العثور على موقع. يرجى تعديل بحثك.',
         continueButton: 'متابعة'
       },
       services: {
+        panelHeading: 'الأعمال المتاحة في فئة {category}',
+        noOperations: 'لا توجد خدمات في هذه الفئة.',
         title: 'ما هي الخدمات التي ترغب في حجزها؟',
         subtitle: 'اختر الخدمات المطلوبة.',
         ariaGroupLabel: 'الخدمات المتاحة',
+        navAriaLabel: 'التنقل بين الصفحات',
         continueButton: 'التالي',
         backButton: 'رجوع',
         confirmButton: 'تأكيد',
@@ -1300,12 +1729,32 @@ export const translations = {
         }
       },
       appointment: {
-        title: 'اختر اليوم والوقت المناسبين لك',
-        calendarLink: 'هنا يمكنك رؤية المزيد من المواعيد المتاحة في تقويم الورشة',
+        title: 'اختر اليوم والوقت المناسبين',
+        subtitle: 'انقر على تاريخ لعرض السعة المتاحة في الورشة.',
+        calendarLink: 'مواعيد متاحة أخرى',
+        morning: 'صباحًا',
+        afternoon: 'بعد الظهر',
+        selectedLabel: 'الموعد المختار:',
+        noAppointments: 'لا توجد مواعيد متاحة.',
+        noAppointmentsHint: 'يرجى المحاولة مرة أخرى أو اختيار موقع أو خدمة أخرى.',
+        reload: 'إعادة التحميل',
         backButton: 'رجوع',
         continueButton: 'متابعة',
         ariaGroupLabel: 'اقتراحات المواعيد',
-        navAriaLabel: 'التنقل بين الصفحات'
+        navAriaLabel: 'التنقل بين الصفحات',
+        rentalCar: {
+          included: 'مع سيارة مستأجرة',
+          filterActive: 'تُعرض فقط المواعيد مع سيارة مستأجرة.',
+          noneAvailable: 'لا يوجد موعد متاح مع سيارة مستأجرة في هذه الفترة.',
+          continueWithout: 'المتابعة بدون سيارة مستأجرة',
+          showLater: 'عرض مواعيد لاحقة'
+        },
+        snapConflict: {
+          title: 'الموعد المفضل لم يعد متاحًا',
+          message: 'للأسف، تم حجز موعدك المفضل في هذه الأثناء (طلب مرتفع). يرجى اختيار موعد جديد. البيانات التي أدخلتها محفوظة.',
+          autoDismissNote: 'سيتم إخفاء هذا التنبيه تلقائيًا خلال حوالي 30 ثانية.',
+          closeAriaLabel: 'إغلاق التنبيه'
+        }
       },
       workshopCalendar: {
         title: 'هنا يمكنك رؤية المزيد من المواعيد المتاحة في تقويم الورشة',
@@ -1321,42 +1770,41 @@ export const translations = {
         navAriaLabel: 'التنقل بين الصفحات'
       },
       notes: {
-        pageTitle: 'يرجى تقديم ملاحظات إضافية لحجزك',
+        pageTitle: 'ملاحظات إضافية حول حجزك',
+        pageSubtitle: 'حدّد رغباتك الاختيارية المتعلقة بموعدك.',
         sectionTitle: 'هل تود إخبارنا بشيء آخر بخصوص حجزك؟',
-        textareaPlaceholder: 'يرجى إدخال رسالتك هنا (ملاحظات، حجز خدمات إضافية، إلخ)',
+        textareaPlaceholder: 'يرجى إدخال رسالتك إلينا هنا.',
+        textareaHint: 'يرجى إدخال رسالتك إلينا هنا.',
         charCountAriaLabel: '{current} من {max} حرف مستخدم',
         hintsTitle: 'ملاحظات مهمة حول الخدمات المختارة',
         backButton: 'رجوع',
         continueButton: 'متابعة',
-        hints: {
-          inspection: 'يرجى ملاحظة: أحضر دفتر الخدمة الخاص بك. للأعمال الكبيرة يمكن توفير سيارة بديلة — يرجى الاستفسار مسبقاً.',
-          tuv: 'يرجى ملاحظة: للفحص الفني ستحتاج إلى جميع وثائق السيارة. تأكد من أن سيارتك صالحة للقيادة وآمنة.',
-          brakeFluid: 'يرجى ملاحظة: يوصى بتغيير سائل الفرامل كل سنتين وفقاً لمواصفات الشركة المصنعة.',
-          tireChange: 'يرجى ملاحظة: لتخزين الإطارات، أبلغنا مسبقاً بعدد وحجم الإطارات. التخزين مقابل رسوم.',
-          actionsChecks: 'يرجى ملاحظة: لفحص الضمان نحتاج إلى وثائق السيارة وربما دفتر الخدمة.',
-          repair: 'يرجى ملاحظة: صف شكواك بأكبر قدر ممكن من التفصيل في حقل التعليقات حتى نتمكن من التحضير بشكل مثالي.',
-          bodywork: 'يرجى ملاحظة: في حالة أضرار الحوادث قد نحتاج إلى رقم مطالبة التأمين الخاص بك. أحضر المستندات ذات الصلة.'
+        rentCategory: {
+          none: 'بدون سيارة إيجار'
         },
-        mobilityOptions: {
-          title: 'خيارات التنقل (مقابل رسوم)',
-          label: 'اختيار',
-          none: 'بدون اختيار',
-          compactCar: 'سيارة صغيرة',
-          midRange: 'فئة متوسطة',
-          luxury: 'فئة فاخرة'
+        rentalCar: {
+          toggleLabel: 'سيارة مستأجرة أثناء الموعد',
+          toggleHint: 'نعرض فقط المواعيد التي تتوفر فيها سيارة مستأجرة.',
+          wishLabel: 'الفئة المفضلة (اختياري)',
+          wishNone: 'لا تفضيل',
+          wishHint: 'الفئة رغبة فقط؛ وسيؤكدها الوكيل.',
+          notAvailable: 'حجز سيارة مستأجرة عبر الإنترنت غير متاح في هذا الموقع.'
         },
         appointmentPreference: {
-          title: 'تفضيل الموعد',
-          label: 'اختيار',
+          title: 'الوقت المفضل من اليوم',
           anytime: 'أي وقت',
           morning: 'صباحاً',
           afternoon: 'بعد الظهر'
         },
         callback: {
           title: 'خيارات إضافية: معاودة الاتصال',
-          label: 'معاودة الاتصال',
-          none: 'بدون اختيار',
+          no: 'لا',
           yes: 'نعم'
+        },
+        notification: {
+          title: 'استلام الإشعارات عبر',
+          email: 'بريد إلكتروني',
+          sms: 'رسالة نصية'
         }
       },
       carinformation: {
@@ -1387,10 +1835,11 @@ export const translations = {
             hint: 'يرجى إدخال الرقم بدون أحرف خاصة بصيغة 017012345678.',
             error: { required: 'يرجى إدخال رقم هاتفك المحمول.', digitsOnly: 'الرقم يجب أن يحتوي على أرقام فقط.', startsWithZero: 'يجب أن يبدأ رقم الهاتف المحمول بـ 0.' } },
           licensePlate: { label: 'لوحة الترخيص', placeholder: 'XX-XX1234',
-            error: { required: 'يرجى إدخال لوحة الترخيص.', invalidFormat: 'يرجى إدخال لوحة ترخيص صحيحة (مثال: B-MS1234).' } },
-          mileage: { label: 'عداد المسافات', placeholder: '5000',
-            error: { required: 'يرجى إدخال قراءة عداد المسافات.', digitsOnly: 'عداد المسافات يجب أن يحتوي على أرقام فقط.' } },
-          vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم VIN',
+            error: { required: 'يرجى إدخال لوحة الترخيص.', invalidFormat: 'يرجى إدخال لوحة ترخيص صحيحة (مثال: B-MS1234).', tooLong: 'يجب ألا يتجاوز رقم اللوحة 20 حرفًا.' } },
+          mileage: { label: 'عداد المسافات', unit: 'كم', placeholder: 'يرجى إدخال قيمة لا تقل عن 10 كم',
+            hint: 'يرجى إدخال قيمة لا تقل عن 10 كم',
+            error: { required: 'يرجى إدخال قراءة عداد المسافات.', digitsOnly: 'عداد المسافات يجب أن يحتوي على أرقام فقط.', min: 'يرجى إدخال قراءة عداد لا تقل عن 10 كم.' } },
+vin: { label: 'VIN', placeholder: 'WDB8XXXXXXA123456', infoLink: 'شرح رقم VIN', optionalHint: 'اختياري – يساعد الورشة على تحديد سيارتك بدقة.', requiredHint: 'مطلوب لمطابقة إطاراتك المخزنة بسيارتك.', recallHint: 'مطلوب لمطابقة حملة الاستدعاء بسيارتك.',
             error: { required: 'يرجى إدخال رقم تعريف السيارة.', invalidLength: 'يجب أن يتكون رقم VIN من 17 حرفاً بالضبط.', invalidFormat: 'رقم VIN يجب أن يحتوي على أحرف وأرقام فقط.' } },
           privacy: { consent: 'أوافق على معالجة بياناتي الشخصية لغرض حجز موعد عبر الإنترنت. لمزيد من المعلومات راجع',
             privacyLink: 'سياسة الخصوصية',
@@ -1404,16 +1853,25 @@ export const translations = {
         subtitle: 'يرجى مراجعة بياناتك قبل إرسال الموعد.',
         ariaGridLabel: 'ملخص الحجز',
         ariaNavLabel: 'التنقل في الصفحة',
+        edit: 'تعديل',
+        rentalCar: {
+          value: 'مشمولة (الفئة حسب الاتفاق)',
+          wishLabel: 'الفئة المفضلة'
+        },
+        summaryTitle: 'الملخص',
+        sidebar: {
+          serviceLabel: 'الخدمة المختارة',
+          serviceValue: 'خدمة ورشة {brand}'
+        },
         tiles: {
           appointment: {
-            title: 'الموعد المطلوب',
-            dateLabel: 'التاريخ',
-            timeLabel: 'الوقت'
+            title: 'الموعد المطلوب'
           },
           services: {
             title: 'الخدمة المختارة',
             intro: 'سيتم طلب الخدمات التالية في',
-            introSuffix: 'لك:'
+            introSuffix: 'لك:',
+            empty: 'لم يتم تحديد أي خدمات.'
           },
           personalData: {
             title: 'بياناتك',
@@ -1431,12 +1889,50 @@ export const translations = {
             title: 'السعر',
             vatIncluded: 'شامل ضريبة القيمة المضافة',
             staticPrice: '€ 129,00'
+          },
+          extras: {
+            title: 'ملاحظات وخيارات',
+            mobilityLabel: 'التنقل',
+            appointmentPreferenceLabel: 'تفضيل الموعد',
+            callbackLabel: 'معاودة الاتصال',
+            noteLabel: 'رسالة'
           }
         },
         navigation: {
           back: 'رجوع',
-          submit: 'اطلب الآن'
+          submit: 'طلب موعد',
+          submitting: 'جارٍ الإرسال...',
+          submitted: 'تم إرسال الطلب'
+        },
+        confirmation: {
+          message: 'شكرًا لك، تم حجز موعدك. نتطلع إلى زيارتك.'
         }
+      },
+      api: {
+        loading: 'جارٍ تحميل البيانات...',
+        submitting: 'جارٍ إرسال طلبك...',
+        errorTitle: 'خطأ في التحميل',
+        errorServerError: 'الخادم غير متاح حالياً. يرجى المحاولة مرة أخرى لاحقاً.',
+        errorTimeout: 'استغرق الطلب وقتاً طويلاً. يرجى المحاولة مرة أخرى.',
+        errorTokenFailed: 'تعذر إنشاء الجلسة. يرجى إعادة تحميل الصفحة.',
+        errorUnknown: 'حدث خطأ غير معروف. يرجى المحاولة مرة أخرى.',
+        errorSubmit: 'تعذر إرسال الحجز. يرجى المحاولة مرة أخرى.',
+        retryButton: 'إعادة المحاولة',
+        fallbackAddress: 'Musterstraße 1, 00000 Musterhausen'
+      },
+      overlay: {
+        cartLabel: 'سلة التسوق',
+        accessibilityLabel: 'إمكانية الوصول',
+        closeLabel: 'إغلاق',
+        cartBadgeLabel: '{count} عناصر في السلة',
+        selectionTitle: 'اختيارك',
+        locationLabel: 'الموقع',
+        brandLabel: 'العلامة التجارية',
+        servicesLabel: 'الخدمات',
+        appointmentLabel: 'الموعد',
+        emptySelection: 'لم يتم الاختيار بعد.',
+        reportLabel: 'تقرير الأخطاء',
+        reportTooltip: 'فتح تقرير الأخطاء اليومي'
       }
     }
   }
@@ -1466,11 +1962,9 @@ export interface LanguageOption {
 }
 
 export const AVAILABLE_LANGUAGES: LanguageOption[] = [
-  { code: 'de', label: 'Deutsch' },
-  { code: 'en', label: 'English' },
-  { code: 'uk', label: 'Українська' },
-  { code: 'fr', label: 'Français' },
-  { code: 'ar', label: 'العربية' }
+  { code: 'de', label: 'Deutsch' }
+  // EN-Auswahl entfernt — Translation-Daten unten bleiben erhalten,
+  // koennen via 1-Zeilen-Change wieder aktiviert werden.
 ];
 
 /**

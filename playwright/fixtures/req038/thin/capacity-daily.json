@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "referenceService": "wiper-blades",
+  "scans": {
+    "@wd-1": {"state":"partial","startedAt":"@wd-1T20:32:36Z","finishedAt":"@wd-1T20:37:53Z","targetDay":"@wd-0",
+      "branches": {
+        "68f606798d2bb4389ed1af51": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":13},
+        "68b986f88d2bb4389e1c1119": {"status":"ok","firstFreeDate":"@wd+1","workdaysToFirstFree":1,"freeSlotsTargetDay":0},
+        "68f60ef18d2bb4389eee4ddc": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":13},
+        "68f603148d2bb4389ec92d75": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":6},
+        "68f60cd58d2bb4389ee98bbd": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":11},
+        "68f78b538d2bb4389e3590c5": {"status":"error","reason":"no-reference-service"},
+        "68f60f708d2bb4389eef6e6a": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":13},
+        "68d25d008d2bb4389eb9d11a": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":9},
+        "68f6053f8d2bb4389ece92b5": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":6},
+        "68f6047e8d2bb4389ecca880": {"status":"ok","firstFreeDate":"@wd+1","workdaysToFirstFree":1,"freeSlotsTargetDay":0},
+        "68f60df88d2bb4389eec1d39": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":4},
+        "68d25e2c8d2bb4389ebc6b45": {"status":"none"},
+        "68f608428d2bb4389ed6543f": {"status":"ok","firstFreeDate":"@wd+2","workdaysToFirstFree":2,"freeSlotsTargetDay":0},
+        "68f608e98d2bb4389ed80784": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":5},
+        "68f60e658d2bb4389eed1f03": {"status":"ok","firstFreeDate":"@wd+7","workdaysToFirstFree":7,"freeSlotsTargetDay":0},
+        "68d25dbf8d2bb4389ebb6f2b": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":11},
+        "68f60b838d2bb4389ee68bd2": {"status":"error","reason":"timeout"},
+        "68f606f38d2bb4389ed2f0ba": {"status":"ok","firstFreeDate":"@wd+5","workdaysToFirstFree":5,"freeSlotsTargetDay":0},
+        "68f60fe18d2bb4389ef0741d": {"status":"ok","firstFreeDate":"@wd+7","workdaysToFirstFree":7,"freeSlotsTargetDay":0},
+        "6911dd328d2bb4389e2a01c8": {"status":"ok","firstFreeDate":"@wd+8","workdaysToFirstFree":8,"freeSlotsTargetDay":0},
+        "68a41f82acd563b069148661": {"status":"none"},
+        "68b986298d2bb4389e1acd35": {"status":"ok","firstFreeDate":"@wd+3","workdaysToFirstFree":3,"freeSlotsTargetDay":0},
+        "68272511acd563b0699cd562": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":6},
+        "68f604138d2bb4389ecbacaf": {"status":"ok","firstFreeDate":"@wd-0","workdaysToFirstFree":0,"freeSlotsTargetDay":13},
+        "68f60d5a8d2bb4389eeab6d4": {"status":"ok","firstFreeDate":"@wd+1","workdaysToFirstFree":1,"freeSlotsTargetDay":0},
+        "68f78bda8d2bb4389e36b7f0": {"status":"error","reason":"no-reference-service"},
+        "68f605c68d2bb4389ecfe3e9": {"status":"ok","firstFreeDate":"@wd+5","workdaysToFirstFree":5,"freeSlotsTargetDay":0}
+      }
+    }
+  }
+}

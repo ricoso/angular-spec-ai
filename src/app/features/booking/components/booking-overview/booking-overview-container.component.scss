@@ -1,56 +1,117 @@
 @use 'breakpoints' as *;
 
+// REQ-039: overview as in mockups/06-uebersicht.html — summary card (2fr) and appointment card
+// with the request button (1fr); heading and action bar come from the global page layout.
 .booking-overview {
-  max-width: 70em;
-  margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
-
-  &__title {
-    font-size: var(--font-size-2xl);
-    line-height: var(--line-height-tight);
-    color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-sm);
-    font-weight: 700;
-    text-align: center;
+  @include desktop {
+    padding-block-start: 1.5rem;
   }
 
-  &__subtitle {
-    font-size: var(--font-size-md);
-    line-height: var(--line-height-normal);
-    color: var(--color-text-secondary);
-    margin: 0 0 var(--spacing-xl);
-    text-align: center;
+  // Auf Wunsch ausgeblendet (2026-10-12): Die Übersicht hat keine eigene „Zurück"-Aktionsleiste;
+  // der Rücksprung läuft über das Fortschrittsband. Reversibel — diese Regel entfernen zeigt sie wieder.
+  &__navigation {
+    display: none;
   }
 
   &__grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 1.25rem;
 
     @include tablet {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 2fr) minmax(14rem, 1fr);
     }
   }
 
-  &__navigation {
+  &__sidebar {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-xl);
-    padding: var(--spacing-md) 0;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-inline-size: 0;
   }
 
-  &__back-button,
-  &__submit-button {
-    min-height: var(--touch-target-min);
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-xs);
+  &__appointment {
+    padding: 1rem;
+    border: 0.0625rem solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-background-header);
 
-    &:focus-visible {
-      outline: 0.1875em solid var(--color-focus-ring);
-      outline-offset: 0.125em;
+    dl {
+      margin: 0;
     }
+
+    dt {
+      color: var(--color-text-secondary);
+      font-size: 0.875rem;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+
+    dd {
+      margin: 0.25rem 0 1rem;
+      color: var(--color-text-primary);
+      font-size: 0.9375rem;
+      font-weight: 650;
+
+      &:last-child {
+        margin-block-end: 0;
+      }
+    }
+
+    // Requested date/time in primary colour as in the mockup.
+    dd.booking-overview__appointment-date {
+      color: var(--color-primary);
+    }
+  }
+
+  &__request {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__confirmation {
+    margin: 0;
+  }
+
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl) 0;
+  }
+
+  &__loading-text {
+    margin: 0;
+    color: var(--color-text-secondary);
+  }
+
+  &__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xl) var(--spacing-md);
+    text-align: center;
+  }
+
+  &__error-icon {
+    color: var(--color-error);
+    font-size: 3em;
+    line-height: 1;
+  }
+
+  &__error-title {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+  }
+
+  &__error-message {
+    max-width: 30em;
+    margin: 0 0 var(--spacing-md);
+    color: var(--color-text-secondary);
   }
 }

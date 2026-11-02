@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 
 import { i18nKeys, TranslatePipe, TranslateService } from '@core/i18n';
 
-import type { AppointmentPreference, CallbackOption, MobilityOption } from '../../../../models/notes-extras.model';
+import type { AppointmentPreference, CallbackOption } from '../../../../models/notes-extras.model';
 
 @Component({
   selector: 'app-price-tile',
@@ -15,7 +15,10 @@ import type { AppointmentPreference, CallbackOption, MobilityOption } from '../.
 export class PriceTileComponent {
   private readonly translateService = inject(TranslateService);
 
-  public readonly mobilityOption = input.required<MobilityOption>();
+  /** REQ-039 BR-M11: rental car is included (snap reserved one) — no category promise. */
+  public readonly rentalCarRequested = input<boolean>(false);
+  /** REQ-039 BR-M5: optional, non-binding category wish. */
+  public readonly rentCategoryWishName = input<string | null>(null);
   public readonly appointmentPreference = input.required<AppointmentPreference>();
   public readonly callbackOption = input.required<CallbackOption>();
   public readonly bookingNote = input<string>('');
@@ -23,15 +26,15 @@ export class PriceTileComponent {
   protected readonly bookingOverview = i18nKeys.booking.bookingOverview;
   private readonly notes = i18nKeys.booking.notes;
 
-  protected readonly mobilityOptionLabel = computed(() => {
-    const map = {
-      'none': this.notes.mobilityOptions.none,
-      'compact-car': this.notes.mobilityOptions.compactCar,
-      'mid-range': this.notes.mobilityOptions.midRange,
-      'luxury': this.notes.mobilityOptions.luxury
-    } as const;
-    return this.translateService.instant(map[this.mobilityOption()]);
-  });
+  protected readonly mobilityOptionLabel = computed(() =>
+    this.translateService.instant(this.rentalCarRequested()
+      ? this.bookingOverview.rentalCar.value
+      : this.notes.rentCategory.none)
+  );
+
+  protected readonly rentalWishName = computed(() =>
+    this.rentalCarRequested() ? this.rentCategoryWishName() : null
+  );
 
   protected readonly appointmentPreferenceLabel = computed(() => {
     const map = {
@@ -44,7 +47,7 @@ export class PriceTileComponent {
 
   protected readonly callbackOptionLabel = computed(() => {
     const map = {
-      'none': this.notes.callback.none,
+      'no': this.notes.callback.no,
       'yes': this.notes.callback.yes
     } as const;
     return this.translateService.instant(map[this.callbackOption()]);

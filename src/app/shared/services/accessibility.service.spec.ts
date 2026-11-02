@@ -139,5 +139,30 @@ describe('AccessibilityService', () => {
 
       expect(document.documentElement.classList.contains('reduce-motion')).toBe(false);
     });
+
+    it('should add high-contrast class to body when enabled', () => {
+      const state: AccessibilityState = {
+        fontSize: 'normal',
+        highContrast: true,
+        reducedMotion: false
+      };
+
+      service.applyToDocument(state);
+
+      expect(document.body.classList.contains('high-contrast')).toBe(true);
+    });
+
+    it('should remove high-contrast class from body when disabled', () => {
+      document.body.classList.add('high-contrast');
+      const state: AccessibilityState = {
+        fontSize: 'normal',
+        highContrast: false,
+        reducedMotion: false
+      };
+
+      service.applyToDocument(state);
+
+      expect(document.body.classList.contains('high-contrast')).toBe(false);
+    });
   });
 });

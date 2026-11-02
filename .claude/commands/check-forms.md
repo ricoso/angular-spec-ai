@@ -113,6 +113,17 @@ private checkError(form: FormGroup, field: string, error: string): boolean {
 // Template: @if (errors().email.required) { ... }  ← RICHTIG!
 ```
 
+### 8. Optionale Felder ohne Platzhalter
+```typescript
+// ✅ GOOD - leer = weglassen (Key fehlt im Payload)
+const vin = this.form().controls.vin.value.trim();
+this.store.submit({ ...base, ...(vin ? { vin } : {}) });
+
+// ❌ BAD - Platzhalter / leerer String / erfundener Default
+this.store.submit({ ...base, vin: this.form().value.vin || 'UNKNOWN' });
+```
+Regel aus CLAUDE.md (SoftNet-Mitarbeiter beschweren sich über Platzhalter). Details: `forms.md`, `spring-backend.md`.
+
 ## Output
 
 ```
@@ -131,6 +142,9 @@ private checkError(form: FormGroup, field: string, error: string): boolean {
 
 ✅ Error Messages
    ✅ All errors use translate pipe
+
+✅ Optionale Felder
+   ✅ Leere optionale Felder werden weggelassen (kein 'UNKNOWN', kein '')
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📊 Score: 95/100

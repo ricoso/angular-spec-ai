@@ -13,7 +13,8 @@ import { bookingOverviewGuard } from './booking-overview.guard';
 const MOCK_LOCATION: LocationDisplay = {
   id: 'loc-1',
   name: 'Autohaus München',
-  city: 'München'
+  city: 'München',
+  formattedAddress: 'München'
 };
 
 describe('bookingOverviewGuard', () => {
@@ -30,9 +31,9 @@ describe('bookingOverviewGuard', () => {
           provide: BookingApiService,
           useValue: {
             getBrands: jest.fn().mockResolvedValue([]),
-            getBrandsByLocation: jest.fn().mockResolvedValue([]),
             getBrandsByBranch: jest.fn().mockResolvedValue([]),
-            getAllLocations: jest.fn().mockResolvedValue([]),
+            getBranchById: jest.fn().mockResolvedValue(null),
+            getBrandLogoPath: jest.fn().mockReturnValue('assets/brands/default.svg'),
             getBranches: jest.fn().mockResolvedValue([]),
             getServices: jest.fn().mockResolvedValue([])
           }
@@ -40,7 +41,9 @@ describe('bookingOverviewGuard', () => {
         {
           provide: AppointmentApiService,
           useValue: {
-            getAppointments: jest.fn().mockResolvedValue([])
+            getAppointments: jest.fn().mockResolvedValue([]),
+            createAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' }),
+            getAppointment: jest.fn().mockResolvedValue({ id: 'apt-1', status: 'confirmed' })
           }
         },
         {
@@ -93,7 +96,7 @@ describe('bookingOverviewGuard', () => {
     store.setVehicleInfo({
       licensePlate: 'M-AB 1234',
       mileage: 45000,
-      vin: 'WVWZZZ1KZAW123456'
+
     });
     store.setPrivacyConsent(true);
   }
@@ -136,7 +139,7 @@ describe('bookingOverviewGuard', () => {
     store.setVehicleInfo({
       licensePlate: 'M-AB 1234',
       mileage: 45000,
-      vin: 'WVWZZZ1KZAW123456'
+
     });
 
     const result = runGuard();
@@ -166,7 +169,7 @@ describe('bookingOverviewGuard', () => {
     store.setVehicleInfo({
       licensePlate: 'M-AB 1234',
       mileage: 45000,
-      vin: 'WVWZZZ1KZAW123456'
+
     });
     store.setPrivacyConsent(true);
 
@@ -198,7 +201,7 @@ describe('bookingOverviewGuard', () => {
     store.setVehicleInfo({
       licensePlate: 'M-AB 1234',
       mileage: 45000,
-      vin: 'WVWZZZ1KZAW123456'
+
     });
     store.setPrivacyConsent(true);
 

@@ -1,0 +1,111 @@
+<!-- REQ-039: app header as in mockups/0X-*.html (.host-header) — title, accessibility and cart
+     actions on top instead of floating buttons; the close (x) is intentionally omitted. -->
+<header class="floating-overlay app-header">
+  <p class="app-header__title">{{ app.headerTitle | translate }}</p>
+
+  <div class="floating-overlay__buttons app-header__actions">
+    <button
+      type="button"
+      class="a11y-fab floating-overlay__fab app-header__action"
+      (click)="onToggleAccessibility()"
+      [attr.aria-expanded]="isA11yOpen()"
+      [attr.aria-label]="overlay.accessibilityLabel | translate">
+      <i class="bi bi-universal-access" aria-hidden="true"></i>
+    </button>
+    <button
+      type="button"
+      class="cart-fab floating-overlay__fab app-header__action"
+      (click)="onToggleCart()"
+      [attr.aria-expanded]="isExpanded()"
+      [attr.aria-label]="cartAriaLabel()">
+      <i class="bi bi-bag-fill" aria-hidden="true"></i>
+      @if (hasItems()) {
+        <span class="app-header__badge" aria-hidden="true">{{ badgeText() }}</span>
+      }
+    </button>
+  </div>
+
+  <!-- Cart Panel -->
+  @if (isExpanded()) {
+    <div
+      class="floating-overlay__panel"
+      role="dialog"
+      [attr.aria-label]="overlay.selectionTitle | translate">
+      <div class="floating-overlay__panel-header">
+        <span class="floating-overlay__panel-title">{{ overlay.selectionTitle | translate }}</span>
+        <button
+          type="button"
+          class="btn-close floating-overlay__close-button"
+          (click)="onCloseCart()"
+          [attr.aria-label]="overlay.closeLabel | translate">
+        </button>
+      </div>
+      <div class="floating-overlay__panel-body">
+        @if (selectedLocationName()) {
+          <div class="floating-overlay__item cart-item">
+            <span class="cart-item__icon"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></span>
+            <div class="flex-grow-1">
+              <p class="cart-item__label">{{ overlay.locationLabel | translate }}</p>
+              <p class="cart-item__value">{{ selectedLocationName() }}</p>
+            </div>
+          </div>
+        }
+        @if (selectedBrandName()) {
+          <div class="floating-overlay__item cart-item">
+            <span class="cart-item__icon"><i class="bi bi-tag-fill" aria-hidden="true"></i></span>
+            <div class="flex-grow-1">
+              <p class="cart-item__label">{{ overlay.brandLabel | translate }}</p>
+              <p class="cart-item__value">{{ selectedBrandName() }}</p>
+            </div>
+          </div>
+        }
+        @if (selectedServiceLabels().length > 0) {
+          <div class="floating-overlay__item floating-overlay__item--services cart-item">
+            <span class="cart-item__icon"><i class="bi bi-tools" aria-hidden="true"></i></span>
+            <div class="flex-grow-1">
+              <p class="cart-item__label">{{ overlay.servicesLabel | translate }}</p>
+              <ul class="floating-overlay__service-list">
+                @for (labelKey of selectedServiceLabels(); track labelKey) {
+                  <li class="floating-overlay__service-list-item">{{ labelKey | translate }}</li>
+                }
+              </ul>
+            </div>
+          </div>
+        }
+        @if (!selectedLocationName() && !selectedBrandName() && selectedServiceLabels().length === 0) {
+          <p class="floating-overlay__empty">{{ overlay.emptySelection | translate }}</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Accessibility Panel -->
+  @if (isA11yOpen()) {
+    <div
+      class="floating-overlay__panel floating-overlay__panel--a11y"
+      role="dialog"
+      [attr.aria-label]="overlay.accessibilityLabel | translate">
+      <div class="floating-overlay__panel-header">
+        <span class="floating-overlay__panel-title">{{ overlay.accessibilityLabel | translate }}</span>
+        <button
+          type="button"
+          class="btn-close floating-overlay__close-button"
+          (click)="onCloseAccessibility()"
+          [attr.aria-label]="overlay.closeLabel | translate">
+        </button>
+      </div>
+      <div class="floating-overlay__panel-body">
+        <app-accessibility-menu
+          [fontSize]="fontSize()"
+          [highContrast]="highContrast()"
+          [reducedMotion]="reducedMotion()"
+          [currentLanguage]="currentLanguage()"
+          (fontSizeChanged)="onFontSizeChange($event)"
+          (highContrastChanged)="onHighContrastChange($event)"
+          (reducedMotionChanged)="onReducedMotionChange($event)"
+          (languageChanged)="onLanguageChange($event)"
+        />
+      </div>
+    </div>
+  }
+</header>

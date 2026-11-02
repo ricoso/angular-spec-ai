@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REQ-031 Booking-Bugfixes - Mockup</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* =========================================================================
+       CSS Custom Properties - Design System (from _variables.scss)
+       ========================================================================= */
+    :root {
+      /* Brand Colors */
+      --color-primary: #667eea;
+      --color-primary-hover: #5a67d8;
+      --color-secondary: #764ba2;
+      --color-accent: #ed8936;
+
+      /* Text Colors (WCAG AA) */
+      --color-text-primary: #1a1a1a;
+      --color-text-secondary: #595959;
+      --color-text-muted: #767676;
+      --color-text-on-primary: #ffffff;
+      --color-text-on-dark: #ffffff;
+
+      /* Background Colors */
+      --color-background-page: #f8f9fa;
+      --color-background-surface: #ffffff;
+      --color-background-hover: #f5f5f5;
+
+      /* Border & Divider */
+      --color-border: #e0e0e0;
+      --color-divider: #eeeeee;
+
+      /* Semantic Colors */
+      --color-error: #c62828;
+      --color-success: #2e7d32;
+      --color-warning: #e65100;
+      --color-info: #1565c0;
+      --color-info-bg: #e3f2fd;
+      --color-info-border: #90caf9;
+
+      /* Warning Banner (derived from --color-warning, WCAG AA checked) */
+      --color-warning-bg: #fff3e0;
+      --color-warning-border: #ffcc80;
+      --color-warning-track: #ffe0b2;
+
+      /* Focus */
+      --color-focus-ring: #005fcc;
+
+      /* Shadows */
+      --shadow-small: 0 0.0625em 0.125em rgba(0, 0, 0, 0.1);
+      --shadow-medium: 0 0.25em 0.5em rgba(0, 0, 0, 0.1);
+      --shadow-large: 0 0.5em 1em rgba(0, 0, 0, 0.15);
+
+      /* Typography */
+      --font-size-base: 1em;
+      --font-size-xs: 0.875em;
+      --font-size-sm: 1em;
+      --font-size-md: 1.125em;
+      --font-size-lg: 1.25em;
+      --font-size-xl: 1.5em;
+      --font-size-2xl: 2em;
+
+      --line-height-tight: 1.25;
+      --line-height-normal: 1.5;
+      --line-height-relaxed: 1.75;
+
+      /* Spacing */
+      --spacing-xs: 0.25em;
+      --spacing-sm: 0.5em;
+      --spacing-md: 1em;
+      --spacing-lg: 1.5em;
+      --spacing-xl: 2em;
+
+      /* Border Radius */
+      --radius-sm: 0.25em;
+      --radius-md: 0.5em;
+      --radius-lg: 0.75em;
+      --radius-xl: 1em;
+      --radius-full: 50%;
+
+      /* Touch Targets */
+      --touch-target-min: 2.75em;
+    }
+
+    /* =========================================================================
+       Reset & Base
+       ========================================================================= */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      font-size: 16px;
+      line-height: var(--line-height-normal);
+      color: var(--color-text-primary);
+      background-color: var(--color-background-page);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* =========================================================================
+       App Layout
+       ========================================================================= */
+    .app-layout {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--color-background-page);
+    }
+
+    .app-main {
+      flex: 1;
+      padding: var(--spacing-md);
+      width: 100%;
+      max-width: 80em;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 48em) {
+      .app-main {
+        padding: var(--spacing-xl);
+      }
+    }
+
+    /* =========================================================================
+       Icon Framed (from _utilities.scss)
+       ========================================================================= */
+    .icon-framed {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5em;
+      height: 2.5em;
+      background: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-small);
+    }
+
+    .icon-framed--sm {
+      width: 2em;
+      height: 2em;
+    }
+
+    .icon-framed--primary {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .icon-framed--warning {
+      border-color: var(--color-warning);
+      color: var(--color-warning);
+    }
+
+    /* =========================================================================
+       Header (from header-container.component / REQ-006 mockup)
+       ========================================================================= */
+    .header {
+      background-color: var(--color-background-surface);
+      border-bottom: 0.0625em solid var(--color-border);
+      box-shadow: var(--shadow-small);
+    }
+
+    .header__content {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      max-width: 80em;
+      margin: 0 auto;
+      min-height: 3.5em;
+    }
+
+    .header__logo-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      text-decoration: none;
+      color: inherit;
+      min-height: var(--touch-target-min);
+      padding: var(--spacing-xs);
+      border-radius: var(--radius-sm);
+      transition: background-color 0.2s ease;
+    }
+
+    .header__logo-link:hover {
+      background-color: var(--color-background-hover);
+    }
+
+    .header__logo-link:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .header__logo-circle {
+      width: 2.5em;
+      height: 2.5em;
+      border-radius: var(--radius-full);
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: var(--font-size-sm);
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+    }
+
+    .header__company {
+      display: flex;
+      flex-direction: column;
+      line-height: var(--line-height-tight);
+    }
+
+    .header__company-name {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .header__company-subtitle {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+
+    .header__spacer {
+      flex: 1;
+    }
+
+    .header__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    .header__icon-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      min-width: var(--touch-target-min);
+      min-height: var(--touch-target-min);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      position: relative;
+      padding: 0;
+      color: var(--color-text-primary);
+    }
+
+    .header__icon-button:hover {
+      background-color: var(--color-background-hover);
+    }
+
+    .header__icon-button:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    /* Header responsive */
+    @media (max-width: 47.9375em) {
+      .header__company {
+        display: none;
+      }
+      .header__content {
+        padding: var(--spacing-xs) var(--spacing-sm);
+      }
+    }
+
+    @media (min-width: 48em) and (max-width: 63.9375em) {
+      .header__company-subtitle {
+        display: none;
+      }
+    }
+
+    @media (min-width: 64em) {
+      .header__content {
+        padding: var(--spacing-md) var(--spacing-lg);
+      }
+      .header__logo-circle {
+        width: 3em;
+        height: 3em;
+        font-size: var(--font-size-md);
+      }
+    }
+
+    /* =========================================================================
+       Mockup Section Divider (Annotation - nur fuer dieses Mockup)
+       ========================================================================= */
+    .mockup-divider {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      max-width: 70em;
+      margin: var(--spacing-xl) auto;
+      padding: 0 var(--spacing-md);
+    }
+
+    .mockup-divider__badge {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      background-color: var(--color-text-primary);
+      color: var(--color-text-on-dark);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-md);
+    }
+
+    .mockup-divider__badge .material-icons {
+      font-size: 1.25em;
+    }
+
+    .mockup-divider__line {
+      flex: 1;
+      height: 0.125em;
+      background-color: var(--color-border);
+      border-radius: var(--radius-sm);
+    }
+
+    .mockup-divider__hint {
+      flex-basis: 100%;
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+
+    @media (max-width: 47.9375em) {
+      .mockup-divider {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+      }
+    }
+
+    /* =========================================================================
+       BUGFIX 1: Snap-Conflict-Banner (HTTP 410 Gone → Redirect Terminauswahl)
+       ========================================================================= */
+
+    /* CSS-Only Dismiss: hidden checkbox toggles banner visibility */
+    .snap-banner-dismiss {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .snap-banner-dismiss:checked ~ .snap-conflict-banner {
+      display: none;
+    }
+
+    /* Focus on hidden checkbox → focus ring on the visible close button */
+    .snap-banner-dismiss:focus-visible ~ .snap-conflict-banner .snap-conflict-banner__close {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .snap-conflict-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      background-color: var(--color-warning-bg);
+      border: 0.0625em solid var(--color-warning-border);
+      border-left: 0.375em solid var(--color-warning);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-medium);
+      padding: var(--spacing-md) var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+      text-align: left;
+    }
+
+    .snap-conflict-banner__icon {
+      flex-shrink: 0;
+      background-color: var(--color-background-surface);
+    }
+
+    .snap-conflict-banner__content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .snap-conflict-banner__title {
+      font-size: var(--font-size-md);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      line-height: var(--line-height-tight);
+    }
+
+    .snap-conflict-banner__text {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+      line-height: var(--line-height-normal);
+    }
+
+    /* Countdown-Andeutung: schrumpfender Balken (~30s), rein CSS */
+    .snap-conflict-banner__countdown {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+      margin-top: var(--spacing-xs);
+    }
+
+    .snap-conflict-banner__countdown-track {
+      width: 100%;
+      height: 0.375em;
+      background-color: var(--color-warning-track);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .snap-conflict-banner__countdown-bar {
+      height: 100%;
+      width: 100%;
+      background-color: var(--color-warning);
+      border-radius: var(--radius-sm);
+      animation: snap-banner-countdown 30s linear forwards;
+      transform-origin: left center;
+    }
+
+    @keyframes snap-banner-countdown {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .snap-conflict-banner__countdown-bar {
+        animation: none;
+      }
+    }
+
+    .snap-conflict-banner__countdown-label {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+
+    /* Close button (label for hidden checkbox) */
+    .snap-conflict-banner__close {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: var(--touch-target-min);
+      min-height: var(--touch-target-min);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: background-color 0.2s ease;
+    }
+
+    .snap-conflict-banner__close:hover {
+      background-color: var(--color-warning-track);
+    }
+
+    .snap-conflict-banner__close:focus-visible {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    @media (max-width: 47.9375em) {
+      .snap-conflict-banner {
+        padding: var(--spacing-md);
+        gap: var(--spacing-sm);
+      }
+      .snap-conflict-banner__icon {
+        display: none;
+      }
+    }
+
+    /* =========================================================================
+       Appointment Selection Layout (from REQ-006 mockup)
+       ========================================================================= */
+    .appointment-selection {
+      max-width: 70em;
+      margin: 0 auto;
+      padding: var(--spacing-xl) var(--spacing-md);
+      text-align: center;
+    }
+
+    .appointment-selection__title {
+      font-size: var(--font-size-xl);
+      line-height: var(--line-height-tight);
+      color: var(--color-text-primary);
+      margin: 0 0 var(--spacing-xl);
+      font-weight: 700;
+    }
+
+    @media (min-width: 48em) {
+      .appointment-selection__title {
+        font-size: var(--font-size-2xl);
+      }
+    }
+
+    /* =========================================================================
+       Appointment Cards Grid (from REQ-006 mockup)
+       ========================================================================= */
+    .appointment-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    @media (min-width: 48em) {
+      .appointment-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-lg);
+      }
+    }
+
+    @media (min-width: 64em) {
+      .appointment-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    /* CSS-Only Card Selection via Hidden Radio Inputs */
+    .appt-radio {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .appointment-card {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      background-color: var(--color-background-surface);
+      border: 0.125em solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md) var(--spacing-lg);
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+      text-align: left;
+      min-height: var(--touch-target-min);
+    }
+
+    .appointment-card:hover {
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-medium);
+    }
+
+    .appointment-card:focus-visible {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .appt-radio:checked + .appointment-card {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 0.0625em var(--color-primary), var(--shadow-medium);
+      background-color: #f0f2ff;
+    }
+
+    .appt-radio:checked + .appointment-card .appointment-card__day {
+      background-color: var(--color-primary-hover);
+      transform: scale(1.05);
+    }
+
+    .appt-radio:focus-visible + .appointment-card {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .appointment-card__day {
+      width: 3.5em;
+      height: 3.5em;
+      min-width: 3.5em;
+      border-radius: var(--radius-full);
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: var(--font-size-lg);
+      letter-spacing: 0.02em;
+      transition: background-color 0.2s, transform 0.15s;
+    }
+
+    .appointment-card__info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125em;
+    }
+
+    .appointment-card__date {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      line-height: var(--line-height-tight);
+    }
+
+    .appointment-card__time {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      line-height: var(--line-height-tight);
+    }
+
+    @media (min-width: 64em) {
+      .appointment-card {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--spacing-lg);
+        justify-content: center;
+        gap: var(--spacing-sm);
+      }
+
+      .appointment-card__info {
+        align-items: center;
+      }
+    }
+
+    /* Calendar Link */
+    .appointment-selection__calendar-link {
+      display: inline-block;
+      margin-top: var(--spacing-lg);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+      text-decoration: underline;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: inherit;
+      padding: var(--spacing-xs);
+      border-radius: var(--radius-sm);
+      transition: color 0.2s;
+    }
+
+    .appointment-selection__calendar-link:hover {
+      color: var(--color-primary);
+    }
+
+    .appointment-selection__calendar-link:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    /* =========================================================================
+       BUGFIX 2: Carinformation / Fahrzeugdaten (from REQ-009 mockup)
+       ========================================================================= */
+    .carinformation {
+      max-width: 50em;
+      margin: 0 auto;
+      padding: var(--spacing-xl) var(--spacing-md);
+    }
+
+    .carinformation__title {
+      font-size: var(--font-size-xl);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      text-align: center;
+      margin-bottom: var(--spacing-xl);
+      line-height: var(--line-height-tight);
+    }
+
+    @media (min-width: 48em) {
+      .carinformation__title {
+        font-size: var(--font-size-2xl);
+      }
+    }
+
+    /* Material-style Form Fields (mat-form-field outline appearance) */
+    .mat-field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+      position: relative;
+    }
+
+    .mat-field__outline {
+      position: relative;
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      min-height: 3.5em;
+      transition: border-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      background-color: var(--color-background-surface);
+    }
+
+    .mat-field__outline:hover {
+      border-color: var(--color-text-primary);
+    }
+
+    .mat-field__outline:focus-within {
+      border-color: var(--color-primary);
+      border-width: 0.125em;
+    }
+
+    .mat-field__label {
+      position: absolute;
+      top: -0.5em;
+      left: 0.75em;
+      background: var(--color-background-surface);
+      padding: 0 0.25em;
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .mat-field__outline:focus-within .mat-field__label {
+      color: var(--color-primary);
+    }
+
+    .mat-field__required {
+      color: var(--color-error);
+    }
+
+    .mat-field__input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 0.875em 0.75em;
+      font-size: var(--font-size-sm);
+      font-family: inherit;
+      color: var(--color-text-primary);
+      background: transparent;
+      min-height: var(--touch-target-min);
+      width: 100%;
+    }
+
+    .mat-field__input::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    .mat-field__hint {
+      font-size: 0.75em;
+      color: var(--color-text-muted);
+      line-height: var(--line-height-normal);
+      padding-left: 0.75em;
+    }
+
+    .mat-field__error {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: 0.75em;
+      font-weight: 500;
+      color: var(--color-error);
+      line-height: var(--line-height-normal);
+      padding-left: 0.75em;
+    }
+
+    /* --- ERROR STATE (Mileage-Validierung: leer / 0 / < 10 km) --- */
+    .mat-field--error .mat-field__outline {
+      border-color: var(--color-error);
+      border-width: 0.125em;
+    }
+
+    .mat-field--error .mat-field__outline:hover,
+    .mat-field--error .mat-field__outline:focus-within {
+      border-color: var(--color-error);
+    }
+
+    .mat-field--error .mat-field__label {
+      color: var(--color-error);
+    }
+
+    .mat-field--error .mat-field__input {
+      caret-color: var(--color-error);
+    }
+
+    /* Info link row (FIN) */
+    .mat-field__label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .mat-field__info-link {
+      font-size: var(--font-size-xs);
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    .mat-field__info-link:hover {
+      text-decoration: underline;
+    }
+
+    .mat-field__info-link:focus-visible {
+      outline: 0.125em solid var(--color-focus-ring);
+      border-radius: var(--radius-sm);
+    }
+
+    /* Form Section */
+    .form-section {
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .form-section__title {
+      font-size: var(--font-size-lg);
+      font-weight: 500;
+      color: var(--color-text-primary);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    /* Form Grid Rows */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .form-row:last-child {
+      margin-bottom: 0;
+    }
+
+    @media (min-width: 48em) {
+      .form-row--equal {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* Required Hint */
+    .required-hint {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    /* =========================================================================
+       Buttons (Material flat style - IMMER filled!)
+       ========================================================================= */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      min-height: var(--touch-target-min);
+      padding: 0.625em 1.5em;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      line-height: 1;
+    }
+
+    .btn:focus-visible {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+    }
+
+    .btn--primary {
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+    }
+
+    .btn--primary:hover {
+      background-color: var(--color-primary-hover);
+      box-shadow: var(--shadow-medium);
+    }
+
+    .btn--flat {
+      background-color: var(--color-background-hover);
+      color: var(--color-text-primary);
+    }
+
+    .btn--flat:hover {
+      background-color: var(--color-border);
+    }
+
+    .material-icons {
+      font-size: 1.5em;
+      vertical-align: middle;
+    }
+
+    /* =========================================================================
+       Navigation Bar (Zurueck / Weiter)
+       ========================================================================= */
+    .wizard-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: var(--spacing-xl);
+      padding: var(--spacing-md) 0;
+      border-top: 0.0625em solid var(--color-divider);
+    }
+
+    @media (max-width: 47.9375em) {
+      .wizard-nav {
+        flex-direction: column-reverse;
+        gap: var(--spacing-md);
+      }
+      .wizard-nav .btn {
+        width: 100%;
+      }
+    }
+
+    /* =========================================================================
+       Footer
+       ========================================================================= */
+    .app-footer {
+      background: var(--color-background-surface);
+      padding: var(--spacing-md);
+      text-align: center;
+      border-top: 0.0625em solid var(--color-border);
+    }
+
+    @media (min-width: 48em) {
+      .app-footer {
+        padding: var(--spacing-lg);
+      }
+    }
+
+    .app-footer p {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- =======================================================================
+         HEADER (matches header-container.component.html)
+         ======================================================================= -->
+    <header class="header" role="banner">
+      <div class="header__content">
+        <a href="#main-content" class="header__logo-link" aria-label="Autohaus GmbH - Zur Startseite">
+          <div class="header__logo-circle" aria-hidden="true">AG</div>
+          <div class="header__company">
+            <span class="header__company-name">Autohaus GmbH</span>
+            <span class="header__company-subtitle">Online-Terminvereinbarung</span>
+          </div>
+        </a>
+
+        <div class="header__spacer"></div>
+
+        <div class="header__actions">
+          <button class="header__icon-button" type="button" aria-label="Warenkorb öffnen">
+            <span class="icon-framed icon-framed--sm" aria-hidden="true">
+              <span class="material-icons">shopping_cart</span>
+            </span>
+          </button>
+
+          <button class="header__icon-button" type="button" aria-label="Barrierefreiheit Einstellungen">
+            <span class="icon-framed icon-framed--sm" aria-hidden="true">
+              <span class="material-icons">accessibility_new</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- =======================================================================
+         MAIN CONTENT
+         ======================================================================= -->
+    <main class="app-main" id="main-content" tabindex="-1">
+
+      <!-- ===================================================================
+           MOCKUP-ANNOTATION: Bugfix 1
+           =================================================================== -->
+      <div class="mockup-divider" role="presentation">
+        <span class="mockup-divider__badge">
+          <span class="material-icons" aria-hidden="true">bug_report</span>
+          Bugfix 1 — Snap-Conflict (HTTP 410)
+        </span>
+        <span class="mockup-divider__line" aria-hidden="true"></span>
+        <span class="mockup-divider__hint">
+          Nach fehlgeschlagener Buchung (Zeitslot zwischenzeitlich belegt) wird der User zur
+          Terminauswahl zurückgeleitet und sieht dort dieses Hinweis-Banner (~30 s, manuell schließbar).
+        </span>
+      </div>
+
+      <!-- ===================================================================
+           SEKTION 1: Terminauswahl mit Snap-Conflict-Banner
+           =================================================================== -->
+      <section class="appointment-selection" aria-labelledby="appointment-title">
+
+        <!-- CSS-Only Dismiss: hidden checkbox (X-Button = label) -->
+        <input
+          type="checkbox"
+          class="snap-banner-dismiss"
+          id="snap-banner-dismiss"
+          aria-label="Hinweis zum belegten Wunschtermin schließen"
+        />
+
+        <!-- Snap-Conflict-Banner (Warn-Stil, role=alert) -->
+        <div
+          class="snap-conflict-banner"
+          role="alert"
+          aria-labelledby="snap-banner-title"
+          aria-describedby="snap-banner-text"
+        >
+          <span class="icon-framed icon-framed--warning snap-conflict-banner__icon" aria-hidden="true">
+            <span class="material-icons">event_busy</span>
+          </span>
+
+          <div class="snap-conflict-banner__content">
+            <h2 class="snap-conflict-banner__title" id="snap-banner-title">
+              Wunschtermin nicht mehr verfügbar
+            </h2>
+            <p class="snap-conflict-banner__text" id="snap-banner-text">
+              In der Zwischenzeit wurde Ihr Wunschtermin leider bereits belegt (hohe Nachfrage).
+              Bitte wählen Sie einen neuen Termin aus. Ihre eingegebenen Daten bleiben erhalten.
+            </p>
+
+            <!-- Countdown-Andeutung (~30 s, rein CSS animiert) -->
+            <div class="snap-conflict-banner__countdown">
+              <div class="snap-conflict-banner__countdown-track" aria-hidden="true">
+                <div class="snap-conflict-banner__countdown-bar"></div>
+              </div>
+              <span class="snap-conflict-banner__countdown-label">
+                Dieser Hinweis wird in ca. 30 Sekunden automatisch ausgeblendet.
+              </span>
+            </div>
+          </div>
+
+          <!-- Schließen (X) — Label für hidden Checkbox, CSS-only -->
+          <label
+            class="snap-conflict-banner__close"
+            for="snap-banner-dismiss"
+            tabindex="0"
+            role="button"
+            aria-label="Hinweis schließen"
+          >
+            <span class="icon-framed icon-framed--sm" aria-hidden="true">
+              <span class="material-icons">close</span>
+            </span>
+          </label>
+        </div>
+
+        <!-- Title -->
+        <h1 class="appointment-selection__title" id="appointment-title">
+          Wählen Sie den für Sie passenden Tag und Uhrzeit aus
+        </h1>
+
+        <!-- Appointment Cards (CSS-Only Single-Select via radio inputs) -->
+        <div class="appointment-grid" role="radiogroup" aria-label="Terminvorschläge">
+
+          <!-- Termin 1 -->
+          <input
+            type="radio"
+            class="appt-radio"
+            id="appt-1"
+            name="appointment"
+            aria-label="Dienstag, 24.02.2026, 09:00 Uhr"
+          />
+          <label class="appointment-card" for="appt-1" tabindex="0">
+            <div class="appointment-card__day" aria-hidden="true">Di</div>
+            <div class="appointment-card__info">
+              <span class="appointment-card__date">24.02.2026</span>
+              <span class="appointment-card__time">09:00 Uhr</span>
+            </div>
+          </label>
+
+          <!-- Termin 2 -->
+          <input
+            type="radio"
+            class="appt-radio"
+            id="appt-2"
+            name="appointment"
+            aria-label="Mittwoch, 25.02.2026, 14:00 Uhr"
+          />
+          <label class="appointment-card" for="appt-2" tabindex="0">
+            <div class="appointment-card__day" aria-hidden="true">Mi</div>
+            <div class="appointment-card__info">
+              <span class="appointment-card__date">25.02.2026</span>
+              <span class="appointment-card__time">14:00 Uhr</span>
+            </div>
+          </label>
+
+          <!-- Termin 3 -->
+          <input
+            type="radio"
+            class="appt-radio"
+            id="appt-3"
+            name="appointment"
+            aria-label="Donnerstag, 26.02.2026, 11:00 Uhr"
+          />
+          <label class="appointment-card" for="appt-3" tabindex="0">
+            <div class="appointment-card__day" aria-hidden="true">Do</div>
+            <div class="appointment-card__info">
+              <span class="appointment-card__date">26.02.2026</span>
+              <span class="appointment-card__time">11:00 Uhr</span>
+            </div>
+          </label>
+
+          <!-- Termin 4 -->
+          <input
+            type="radio"
+            class="appt-radio"
+            id="appt-4"
+            name="appointment"
+            aria-label="Freitag, 27.02.2026, 16:00 Uhr"
+          />
+          <label class="appointment-card" for="appt-4" tabindex="0">
+            <div class="appointment-card__day" aria-hidden="true">Fr</div>
+            <div class="appointment-card__info">
+              <span class="appointment-card__date">27.02.2026</span>
+              <span class="appointment-card__time">16:00 Uhr</span>
+            </div>
+          </label>
+
+        </div><!-- /.appointment-grid -->
+
+        <!-- Calendar Link -->
+        <button
+          class="appointment-selection__calendar-link"
+          type="button"
+          aria-label="Weitere freie Termine im Werkstattkalender anzeigen"
+        >
+          Hier sehen Sie weitere freie Termine in unserem Werkstattkalender
+        </button>
+
+        <!-- Navigation -->
+        <nav class="wizard-nav" aria-label="Seitennavigation Terminauswahl">
+          <button class="btn btn--flat" type="button" aria-label="Zurück zur Notizseite">
+            <span class="material-icons" aria-hidden="true">arrow_back</span>
+            Zurück
+          </button>
+
+          <button class="btn btn--primary" type="button" aria-label="Weiter zum nächsten Schritt">
+            Weiter
+            <span class="material-icons" aria-hidden="true">arrow_forward</span>
+          </button>
+        </nav>
+
+      </section>
+
+      <!-- ===================================================================
+           MOCKUP-ANNOTATION: Bugfix 2
+           =================================================================== -->
+      <div class="mockup-divider" role="presentation">
+        <span class="mockup-divider__badge">
+          <span class="material-icons" aria-hidden="true">bug_report</span>
+          Bugfix 2 — Mileage-Validierung
+        </span>
+        <span class="mockup-divider__line" aria-hidden="true"></span>
+        <span class="mockup-divider__hint">
+          Fahrzeugdaten-Formular (REQ-009): Kilometerstand darf nicht leer und nicht 0 sein,
+          Minimum 10 km. Dargestellt: Fehlerzustand mit Wert 0.
+        </span>
+      </div>
+
+      <!-- ===================================================================
+           SEKTION 2: Fahrzeugdaten-Formular mit Mileage-Fehlerzustand
+           =================================================================== -->
+      <section class="carinformation" aria-labelledby="carinformation-title">
+
+        <h1 class="carinformation__title" id="carinformation-title">
+          Bitte geben Sie uns letzte Informationen rund um Ihren Termin
+        </h1>
+
+        <form novalidate aria-label="Fahrzeuginformationen">
+
+          <!-- Vehicle Data Section -->
+          <section class="form-section" aria-labelledby="vehicle-section-title">
+            <div class="mat-field__label-row">
+              <h2 class="form-section__title" id="vehicle-section-title">Fahrzeugdaten</h2>
+              <a href="#" class="mat-field__info-link" aria-label="Erklärung der FIN">Erklärung der FIN</a>
+            </div>
+
+            <!-- Row: Kennzeichen | Kilometerstand (FEHLERZUSTAND) -->
+            <div class="form-row form-row--equal">
+              <div class="mat-field">
+                <div class="mat-field__outline">
+                  <span class="mat-field__label">Kfz. Kennzeichen <span class="mat-field__required">*</span></span>
+                  <input
+                    class="mat-field__input"
+                    id="licensePlate"
+                    type="text"
+                    value="B-XY 1234"
+                    aria-required="true"
+                  />
+                </div>
+              </div>
+
+              <!-- Kilometerstand: Wert 0 → ungültig (Minimum 10 km) -->
+              <div class="mat-field mat-field--error">
+                <div class="mat-field__outline">
+                  <span class="mat-field__label">Kilometerstand <span class="mat-field__required">*</span></span>
+                  <input
+                    class="mat-field__input"
+                    id="mileage"
+                    type="text"
+                    value="0"
+                    placeholder="Bitte Werte ab 10 km eingeben"
+                    inputmode="numeric"
+                    aria-required="true"
+                    aria-invalid="true"
+                    aria-describedby="mileage-error mileage-hint"
+                  />
+                </div>
+                <p class="mat-field__error" id="mileage-error" role="alert">
+                  Bitte Werte ab 10 km eingeben
+                </p>
+                <p class="mat-field__hint" id="mileage-hint">
+                  Bitte Werte ab 10 km eingeben
+                </p>
+              </div>
+            </div>
+
+            <!-- FIN -->
+            <div class="form-row">
+              <div class="mat-field">
+                <div class="mat-field__outline">
+                  <span class="mat-field__label">FIN <span class="mat-field__required">*</span></span>
+                  <input
+                    class="mat-field__input"
+                    id="vin"
+                    type="text"
+                    placeholder="WDB8XXXXXXA123456"
+                    aria-required="true"
+                    maxlength="17"
+                  />
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+          <!-- Required Hint -->
+          <p class="required-hint">Pflichtfelder sind mit * gekennzeichnet</p>
+
+          <!-- Navigation -->
+          <nav class="wizard-nav" aria-label="Seitennavigation Fahrzeugdaten">
+            <button class="btn btn--flat" type="button" aria-label="Zurück zum vorherigen Schritt">
+              <span class="material-icons" aria-hidden="true">arrow_back</span>
+              Zurück
+            </button>
+
+            <button class="btn btn--primary" type="submit" aria-label="Zur Buchungsübersicht weiter">
+              Zur Buchungsübersicht
+              <span class="material-icons" aria-hidden="true">arrow_forward</span>
+            </button>
+          </nav>
+
+        </form>
+
+      </section>
+    </main>
+
+    <!-- =======================================================================
+         FOOTER
+         ======================================================================= -->
+    <footer class="app-footer" role="contentinfo">
+      <p>Autohaus GmbH</p>
+    </footer>
+
+  </div>
+</body>
+</html>

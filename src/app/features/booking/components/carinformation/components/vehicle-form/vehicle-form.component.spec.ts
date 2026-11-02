@@ -2,6 +2,8 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { FormBuilder, Validators } from '@angular/forms';
 
+import { optionalVinValidator } from '../../../../validators/optional-vin.validator';
+
 import { VehicleFormComponent } from './vehicle-form.component';
 
 describe('VehicleFormComponent', () => {
@@ -23,9 +25,11 @@ describe('VehicleFormComponent', () => {
     component = fixture.componentInstance;
 
     const form = fb.group({
-      licensePlate: ['', [Validators.required, Validators.pattern(/^[A-ZÄÖÜ]{1,3}-[A-Z]{1,2}\s?\d{1,4}$/i)]],
-      mileage: [null as number | null, [Validators.required, Validators.min(0)]],
-      vin: ['', [Validators.minLength(17), Validators.maxLength(17)]]
+      licensePlate: ['', [Validators.required, Validators.pattern(/^[A-ZÄÖÜ]{1,3}-[A-Z]{1,2}\s?\d{1,4}$/i), Validators.maxLength(20)]],
+      // REQ-031 BR-6: spiegelt die echten Container-Validators (ganze Zahl >= 10)
+      mileage: [null as number | null, [Validators.required, Validators.pattern(/^[0-9]+$/), Validators.min(10)]],
+      // REQ-039: spiegelt den echten Container-Validator (FIN freiwillig)
+      vin: ['', [optionalVinValidator()]]
     });
 
     fixture.componentRef.setInput('form', form);
@@ -68,6 +72,22 @@ describe('VehicleFormComponent', () => {
       expect(exposed.licensePlateErrors()).toBe('booking.carinformation.form.licensePlate.error.invalidFormat');
     });
 
+    it('should return tooLong error key when licensePlate exceeds 20 chars (REQ-043)', () => {
+      const exposed = component as unknown as {
+        licensePlateErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('licensePlate');
+      ctrl?.setValue('max.mustermann@example.de');
+      ctrl?.markAsTouched();
+      expect(exposed.licensePlateErrors()).toBe('booking.carinformation.form.licensePlate.error.tooLong');
+    });
+
+    it('should expose the SoftNet plate limit for the native maxlength (REQ-043)', () => {
+      const exposed = component as unknown as { licensePlateMaxLength: number };
+      expect(exposed.licensePlateMaxLength).toBe(20);
+    });
+
     it('should return null licensePlateErrors when valid', () => {
       const exposed = component as unknown as {
         licensePlateErrors: () => string | null;
@@ -94,7 +114,7 @@ describe('VehicleFormComponent', () => {
       expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.required');
     });
 
-    it('should return mileage error key when mileage is negative', () => {
+    it('should return digitsOnly error key when mileage is negative (pattern fails)', () => {
       const exposed = component as unknown as {
         mileageErrors: () => string | null;
         form: () => ReturnType<FormBuilder['group']>;
@@ -103,6 +123,61 @@ describe('VehicleFormComponent', () => {
       ctrl?.setValue(-1);
       ctrl?.markAsTouched();
       expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.digitsOnly');
+    });
+
+    it('should return digitsOnly error key for decimal mileage (REQ-031)', () => {
+      const exposed = component as unknown as {
+        mileageErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('mileage');
+      ctrl?.setValue(10.5);
+      ctrl?.markAsTouched();
+      expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.digitsOnly');
+    });
+
+    it('should return digitsOnly error key for non-numeric mileage (REQ-031)', () => {
+      const exposed = component as unknown as {
+        mileageErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('mileage');
+      ctrl?.setValue('abc');
+      ctrl?.markAsTouched();
+      expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.digitsOnly');
+    });
+
+    it('should return min error key when mileage is 0 (REQ-031 BR-6)', () => {
+      const exposed = component as unknown as {
+        mileageErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('mileage');
+      ctrl?.setValue(0);
+      ctrl?.markAsTouched();
+      expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.min');
+    });
+
+    it('should return min error key when mileage is 9 (REQ-031 BR-6)', () => {
+      const exposed = component as unknown as {
+        mileageErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('mileage');
+      ctrl?.setValue(9);
+      ctrl?.markAsTouched();
+      expect(exposed.mileageErrors()).toBe('booking.carinformation.form.mileage.error.min');
+    });
+
+    it('should return null mileageErrors when mileage is 10 (lower boundary)', () => {
+      const exposed = component as unknown as {
+        mileageErrors: () => string | null;
+        form: () => ReturnType<FormBuilder['group']>;
+      };
+      const ctrl = exposed.form().get('mileage');
+      ctrl?.setValue(10);
+      ctrl?.markAsTouched();
+      expect(exposed.mileageErrors()).toBeNull();
     });
 
     it('should return null mileageErrors when valid', () => {
@@ -115,43 +190,89 @@ describe('VehicleFormComponent', () => {
       ctrl?.markAsTouched();
       expect(exposed.mileageErrors()).toBeNull();
     });
+  });
 
-    it('should return null vinErrors when not touched', () => {
-      const exposed = component as unknown as { vinErrors: () => string | null };
+  describe('vinErrors (REQ-039, optional VIN)', () => {
+    interface Exposed { vinErrors: () => string | null; form: () => ReturnType<FormBuilder['group']> }
+
+    it('should stay null for an empty, touched VIN', () => {
+      const exposed = component as unknown as Exposed;
+      exposed.form().get('vin')?.markAsTouched();
       expect(exposed.vinErrors()).toBeNull();
     });
 
-    it('should return vin error key when length is wrong', () => {
-      const exposed = component as unknown as {
-        vinErrors: () => string | null;
-        form: () => ReturnType<FormBuilder['group']>;
-      };
+    it('should report invalidFormat for non-alphanumeric input', () => {
+      const exposed = component as unknown as Exposed;
       const ctrl = exposed.form().get('vin');
-      ctrl?.setValue('TOOSHORT');
+      ctrl?.setValue('WVW-123');
+      ctrl?.markAsTouched();
+      expect(exposed.vinErrors()).toBe('booking.carinformation.form.vin.error.invalidFormat');
+    });
+
+    it('should report invalidLength for a too short VIN', () => {
+      const exposed = component as unknown as Exposed;
+      const ctrl = exposed.form().get('vin');
+      ctrl?.setValue('WVWZZZ1JZ3');
       ctrl?.markAsTouched();
       expect(exposed.vinErrors()).toBe('booking.carinformation.form.vin.error.invalidLength');
     });
 
-    it('should return null vinErrors when exactly 17 chars', () => {
-      const exposed = component as unknown as {
-        vinErrors: () => string | null;
-        form: () => ReturnType<FormBuilder['group']>;
-      };
+    it('should be null for a valid 17-char VIN', () => {
+      const exposed = component as unknown as Exposed;
       const ctrl = exposed.form().get('vin');
-      ctrl?.setValue('WVWZZZ3BZWE689725');
-      ctrl?.markAsTouched();
-      expect(exposed.vinErrors()).toBeNull();
-    });
-
-    it('should return null vinErrors when vin is empty', () => {
-      const exposed = component as unknown as {
-        vinErrors: () => string | null;
-        form: () => ReturnType<FormBuilder['group']>;
-      };
-      const ctrl = exposed.form().get('vin');
-      ctrl?.setValue('');
+      ctrl?.setValue('WVWZZZ1JZ3W386752');
       ctrl?.markAsTouched();
       expect(exposed.vinErrors()).toBeNull();
     });
   });
+
+  describe('vinRequired input (REQ-040/REQ-041)', () => {
+    it('defaults to false', () => {
+      expect(component.vinRequired()).toBe(false);
+    });
+
+    it('reflects a set value', () => {
+      fixture.componentRef.setInput('vinRequired', true);
+      fixture.detectChanges();
+      expect(component.vinRequired()).toBe(true);
+    });
+  });
+
+  // REQ-040: with stored tires the container adds Validators.required to the VIN control;
+  // vinErrors must then surface the required message (and still the format checks).
+  describe('vinErrors required branch (REQ-040)', () => {
+    interface Exposed { vinErrors: () => string | null; form: () => ReturnType<FormBuilder['group']> }
+
+    function makeVinRequired(): ReturnType<ReturnType<FormBuilder['group']>['get']> {
+      const exposed = component as unknown as Exposed;
+      const vin = exposed.form().get('vin');
+      vin?.setValidators([Validators.required, optionalVinValidator()]);
+      vin?.updateValueAndValidity();
+      return vin;
+    }
+
+    it('reports the required error for an empty, touched VIN', () => {
+      const vin = makeVinRequired();
+      vin?.markAsTouched();
+      const exposed = component as unknown as Exposed;
+      expect(exposed.vinErrors()).toBe('booking.carinformation.form.vin.error.required');
+    });
+
+    it('still reports invalidFormat for a malformed required VIN', () => {
+      const vin = makeVinRequired();
+      vin?.setValue('WVW-123');
+      vin?.markAsTouched();
+      const exposed = component as unknown as Exposed;
+      expect(exposed.vinErrors()).toBe('booking.carinformation.form.vin.error.invalidFormat');
+    });
+
+    it('is null for a valid required VIN', () => {
+      const vin = makeVinRequired();
+      vin?.setValue('WVWZZZ1JZ3W386752');
+      vin?.markAsTouched();
+      const exposed = component as unknown as Exposed;
+      expect(exposed.vinErrors()).toBeNull();
+    });
+  });
 });
+

@@ -1,0 +1,757 @@
+// Bootstrap-Theme — Angular-App-Pendant zu docs/design-bootstrap/_shared.css
+//
+// Wird in styles.scss importiert (nach _variables, vor _accessibility).
+// Bootstrap-CSS selbst kommt ueber CDN in src/index.html — dort werden auch die
+// Bootstrap-Custom-Properties (--bs-primary etc.) ueberschrieben.
+
+// ============================================================
+// Bootstrap-Theme-Variablen (override Defaults)
+// ============================================================
+:root {
+  --bs-primary: var(--color-primary);
+  --bs-primary-rgb: var(--color-primary-rgb);
+  --bs-link-color: var(--color-primary);
+  --bs-link-color-rgb: var(--color-primary-rgb);
+  --bs-link-hover-color: var(--color-primary-hover);
+  --bs-link-hover-color-rgb: var(--color-primary-hover-rgb);
+  --bs-body-color: var(--color-text-primary);
+  --bs-body-bg: var(--color-background-surface);
+  --bs-secondary-color: var(--color-text-secondary);
+  --bs-border-color: var(--color-border);
+  --bs-tertiary-bg: var(--color-background-header);
+  --bs-success: var(--color-success);
+  --bs-success-rgb: var(--color-success-rgb);
+  --autohaus-accent: #c41e3a;
+}
+
+// Body-Hintergrund nicht ueberschreiben — bleibt aus _variables.scss
+
+// ============================================================
+// btn-primary mit Autohaus-Brand-Color
+// ============================================================
+// REQ-039: button metrics as in mockups/wizard.css (.button) — one size for all wizard actions.
+.btn,
+.btn-lg {
+  --bs-btn-padding-y: 0.625rem;
+  --bs-btn-padding-x: 1rem;
+  --bs-btn-font-size: 0.9375rem;
+  --bs-btn-line-height: 1.4;
+  --bs-btn-border-radius: var(--radius-sm);
+  min-block-size: var(--touch-target-min);
+}
+
+.btn-primary {
+  --bs-btn-color: var(--color-text-on-primary);
+  --bs-btn-bg: var(--bs-primary);
+  --bs-btn-border-color: var(--bs-primary);
+  --bs-btn-hover-color: var(--color-text-on-primary);
+  --bs-btn-hover-bg: var(--color-primary-hover);
+  --bs-btn-hover-border-color: var(--color-primary-hover);
+  --bs-btn-active-color: var(--color-text-on-primary);
+  --bs-btn-active-bg: var(--color-primary-hover);
+  --bs-btn-active-border-color: var(--color-primary-hover);
+  --bs-btn-disabled-color: var(--color-text-primary);
+  --bs-btn-disabled-bg: var(--color-disabled);
+  --bs-btn-disabled-border-color: var(--color-disabled);
+  --bs-btn-disabled-opacity: 1;
+  font-weight: 600;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.1875em;
+  }
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--color-text-primary);
+  --bs-btn-bg: var(--color-background-surface);
+  --bs-btn-border-color: var(--color-primary);
+  --bs-btn-hover-color: var(--color-text-primary);
+  --bs-btn-hover-bg: var(--color-background-header);
+  --bs-btn-hover-border-color: var(--color-primary);
+  --bs-btn-active-color: var(--color-text-primary);
+  --bs-btn-active-bg: var(--color-background-header);
+  --bs-btn-active-border-color: var(--color-primary);
+  font-weight: 400;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.125rem var(--color-focus-ring);
+}
+
+.form-check-input:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.alert-success {
+  --bs-alert-color: var(--color-success);
+  --bs-alert-bg: var(--color-success-bg);
+  --bs-alert-border-color: var(--color-success);
+}
+
+// ============================================================
+// Wizard-Stepper (Header-Breadcrumb)
+// ============================================================
+.wizard-steps {
+  background: white;
+  border-bottom: 1px solid #e3e6e9;
+  padding: 1rem 0;
+}
+.wizard-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.5em 1em;
+  color: #888;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+.wizard-step__circle {
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 50%;
+  background: #e3e6e9;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85em;
+}
+.wizard-step--done .wizard-step__circle {
+  background: var(--bs-primary);
+}
+.wizard-step--active {
+  color: var(--bs-primary);
+  font-weight: 700;
+}
+.wizard-step--active .wizard-step__circle {
+  background: var(--autohaus-accent);
+}
+
+// ============================================================
+// Card-Pickable (Filiale, Marke, Service-Tile)
+// ============================================================
+.card-pickable {
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  border: 2px solid #e3e6e9;
+  position: relative;
+}
+.card-pickable:hover {
+  transform: translateY(-2px);
+  border-color: var(--bs-primary);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+}
+.card-pickable.selected {
+  border-color: var(--bs-primary);
+  background: var(--color-background-surface);
+  box-shadow: none;
+}
+.card-pickable.selected .badge-selected {
+  display: inline-flex;
+}
+
+.badge-selected {
+  display: none;
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  background: var(--bs-primary);
+  color: white;
+  border-radius: 50%;
+  width: 1.5em;
+  height: 1.5em;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85em;
+}
+
+// Brand-Logos
+.brand-logo {
+  height: 3.5em;
+  width: auto;
+  max-width: 80%;
+  object-fit: contain;
+  filter: grayscale(1);
+  opacity: 0.7;
+  transition: filter 0.15s ease, opacity 0.15s ease;
+}
+.card-pickable:hover .brand-logo,
+.card-pickable.selected .brand-logo {
+  filter: grayscale(0);
+  opacity: 1;
+}
+.brand-logo--sm {
+  height: 1.2em; // Auf Filial-Karten klein
+}
+
+// ============================================================
+// Branch-Banner (Marken-Seite) — REQ-039: mockups/wizard.css .location-banner
+// ============================================================
+.branch-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-header);
+  color: var(--color-primary);
+  text-align: start;
+}
+.branch-banner__icon {
+  font-size: 1.25rem;
+}
+.branch-banner__title {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+.branch-banner__address {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+// ============================================================
+// Pill-Group (Radio/Checkbox als Pills — Notes, A11y-Menue)
+// REQ-039: mockups/wizard.css .pill-options
+// ============================================================
+.pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.pill-group input[type="radio"],
+.pill-group input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.pill-group label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-block-size: var(--touch-target-min);
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 0.0625rem solid var(--color-disabled);
+  border-radius: 2rem;
+  background-color: var(--color-background-header);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.pill-group label:hover {
+  border-color: var(--color-primary);
+}
+.pill-group input:checked + label {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+.pill-group input:focus-visible + label {
+  outline: 0.1875rem solid var(--color-focus-ring);
+  outline-offset: 0.1875rem;
+}
+
+// ============================================================
+// Option-Card (REQ-039: mockups/wizard.css .option-card) — Notes-Optionen und Notizfeld
+// ============================================================
+.option-card {
+  min-inline-size: 0;
+  padding: 0.875rem 1rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+}
+.option-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.option-card__heading .bi {
+  color: var(--color-primary);
+}
+.option-card__title {
+  display: block;
+}
+.option-card__hint {
+  display: block;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+.option-card__heading + .pill-group {
+  margin-block-start: 0.5rem;
+}
+
+// Bootstrap-Switch optisch aufgewertet
+.form-switch .form-check-input {
+  width: 3em;
+  height: 1.6em;
+  cursor: pointer;
+}
+.form-switch .form-check-input:checked {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+
+// Standard-Checkbox / Radio (Service-Auswahl etc.) — kräftiger Rand für bessere Sichtbarkeit
+.form-check-input[type="checkbox"],
+.form-check-input[type="radio"] {
+  border-width: 0.1875em;            // 3px bei 16px Basis-Font
+  border-color: var(--color-text-primary);  // dunkler Rand statt Bootstrap-Default-Grau
+}
+// Switches behalten dünneren Rand
+.form-switch .form-check-input {
+  border-width: 1px;
+}
+
+// NgbDatepicker — Wochentag-Header (M T W T F S S) schwarz statt grau
+.ngb-dp-weekday {
+  color: var(--color-text-primary) !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+}
+
+// ============================================================
+// Notice (REQ-039: mockups/wizard.css .notice / .notice--success) — info (blue on header
+// colour) and success (green) hints used on services, notes and appointment pages.
+// ============================================================
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-header);
+  color: var(--color-primary);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+
+  > .bi {
+    margin-block-start: 0.1875rem;
+    font-size: 1.125rem;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  p + p {
+    margin-block-start: 0.75rem;
+  }
+}
+.notice--success {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+// ============================================================
+// Termin-Auswahl — REQ-039: mockups/wizard.css .calendar / .date-list / .time-slots
+// ============================================================
+.calendar,
+.time-slots {
+  min-inline-size: 0;
+  padding: 1rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+}
+.calendar__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 0 0 1rem;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 650;
+}
+.calendar__heading .bi {
+  color: var(--color-primary);
+}
+.time-slots {
+  margin-block-start: 1.5rem;
+}
+
+.date-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@media (min-width: 48em) {
+  .date-strip {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .date-strip .date-tile {
+    flex: 0 1 5.25rem;
+    min-inline-size: 3.5rem;
+  }
+}
+.date-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 5.5rem;
+  padding: 0.5rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.date-tile:hover {
+  border-color: var(--color-primary);
+}
+.date-tile:focus-visible {
+  outline: 0.1875rem solid var(--color-focus-ring);
+  outline-offset: 0.1875rem;
+}
+.date-tile.selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+.date-tile__weekday,
+.date-tile__month {
+  color: var(--color-text-secondary);
+}
+.date-tile.selected .date-tile__weekday,
+.date-tile.selected .date-tile__month {
+  color: inherit;
+}
+.date-tile__day {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+// "Weitere freie Termine" as last tile of the date row (mockup .date-list__more)
+.date-strip__more {
+  display: flex;
+  flex: 1 1 6rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-block-size: var(--touch-target-min);
+  padding: 0.5rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  line-height: 1.3;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 0.1875em;
+}
+.date-strip__more .bi {
+  font-size: 1.375rem;
+}
+.date-strip__more:focus-visible {
+  outline: 0.1875rem solid var(--color-focus-ring);
+  outline-offset: 0.1875rem;
+}
+
+.slot-section + .slot-section {
+  margin-block-start: 1rem;
+}
+.slot-section__head {
+  margin: 0 0 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.slot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.slot {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--touch-target-min);
+  padding: 0.5rem 1rem;
+  border: 0.125rem solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-background-surface);
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.slot.selected {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+.slot.disabled {
+  border-color: var(--color-disabled);
+  background-color: var(--color-disabled);
+  color: var(--color-text-primary);
+  cursor: not-allowed;
+}
+
+// ============================================================
+// Cart-Item im Offcanvas
+// ============================================================
+.cart-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75em;
+  padding: 0.85em 0;
+  border-bottom: 1px solid #eef0f2;
+}
+.cart-item:last-child { border-bottom: 0; }
+.cart-item__icon {
+  width: 2.25em;
+  height: 2.25em;
+  background: #eaf2f9;
+  color: var(--bs-primary);
+  border-radius: 0.4em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cart-item__icon--empty {
+  background: #f4f6f8;
+  color: #adb5bd;
+}
+.cart-item__label {
+  font-size: 0.7em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #6c757d;
+  letter-spacing: 0.06em;
+}
+.cart-item__value {
+  font-weight: 600;
+  font-size: 0.95em;
+  margin: 0.1em 0 0;
+}
+.cart-item__value--empty {
+  color: #adb5bd;
+  font-weight: 500;
+  font-style: italic;
+}
+.cart-item__sub {
+  font-size: 0.8em;
+  color: #6c757d;
+  margin: 0.15em 0 0;
+}
+
+// ============================================================
+// Kontaktformular — REQ-039: mockups/wizard.css .contact-panel / .field
+// Bootstrap floating labels are shown ABOVE the field (label, input, error, hint) — markup,
+// ids and form bindings stay unchanged.
+// ============================================================
+.contact-panel {
+  min-inline-size: 0;
+  padding: 0.875rem 1rem 1rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+}
+
+.carinformation .form-floating {
+  position: relative;
+  display: grid;
+  grid-template-areas:
+    'label'
+    'input'
+    'feedback'
+    'hint';
+  grid-template-columns: minmax(0, 1fr);
+  // Fields in a row are stretched to the tallest one (e.g. mileage with hint) — keep label and
+  // input at their natural height instead of spreading the extra space over the rows.
+  align-content: start;
+  row-gap: 0.25rem;
+  min-inline-size: 0;
+
+  // Doubled class: beats Bootstrap's floating-label states such as
+  // `.form-floating > .form-control:not(:placeholder-shown) ~ label` (scale + translate).
+  &.form-floating > label,
+  &.form-floating > .form-control ~ label,
+  &.form-floating > .form-select ~ label {
+    position: static;
+    grid-area: label;
+    block-size: auto;
+    padding: 0;
+    border: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: normal;
+    opacity: 1;
+    transform: none;
+
+    &::after {
+      display: none;
+    }
+  }
+
+  // Number fields without spin buttons (mockup: plain field with unit).
+  > input[type='number'] {
+    appearance: textfield;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      margin: 0;
+      appearance: none;
+    }
+  }
+
+  > .form-control,
+  > .form-select {
+    grid-area: input;
+    block-size: auto;
+    min-block-size: var(--touch-target-min);
+    padding: 0.625rem 0.75rem;
+    border: 0.0625rem solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    line-height: 1.4;
+
+    @media (min-width: 48em) {
+      font-size: 0.9375rem;
+    }
+
+    &::placeholder {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  > .form-select {
+    padding-inline-end: 2.25rem;
+  }
+
+  > .form-control.is-invalid,
+  > .form-select.is-invalid {
+    border-color: var(--color-error);
+  }
+
+  > .invalid-feedback {
+    grid-area: feedback;
+    margin: 0;
+  }
+
+  > .form-text {
+    grid-area: hint;
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+
+  // Unit inside the field (e.g. "km"), mockups/wizard.css .field__unit
+  > .field__unit {
+    grid-area: input;
+    align-self: center;
+    justify-self: end;
+    margin-inline-end: 0.75rem;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    pointer-events: none;
+  }
+
+  > .form-control:has(~ .field__unit) {
+    padding-inline-end: 2.5rem;
+  }
+}
+
+// ============================================================
+// Übersicht — REQ-039: mockups/wizard.css .summary-card / .summary-row
+// (shared by the overview tiles: icon column + label + value)
+// ============================================================
+.summary-card {
+  min-inline-size: 0;
+  padding: 0.75rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+}
+.summary-card__heading {
+  margin: 0 0 0.5rem;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 650;
+}
+.summary-row {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: 0.625rem;
+  margin-block-start: 0.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+.summary-row__icon {
+  margin-block-start: 0.1875rem;
+  color: var(--color-primary);
+  font-size: 1.125rem;
+  line-height: 1;
+}
+.summary-row__label {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.summary-row__value {
+  margin: 0;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+.summary-row__value--secondary,
+.summary-row__sub {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+.summary-row__empty {
+  color: var(--color-text-secondary);
+}
+.summary-row__details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.25rem 1rem;
+  margin-block-start: 0.25rem;
+}
+@media (min-width: 48em) {
+  .summary-row__details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.summary-row__detail {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+.summary-row__detail-label {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+.summary-row__detail-value {
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+

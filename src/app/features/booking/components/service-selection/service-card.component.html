@@ -1,59 +1,24 @@
-<mat-card
-  class="service-card"
+<!-- REQ-039: category pill as in mockups/wizard.css (.service-pills__item) — icon, name and a
+     count badge (selected/total). The active pill shows the category in the panel below. -->
+<button
+  type="button"
+  class="service-card service-pills__item"
+  [class.service-pills__item--active]="isActive()"
   [class.service-card--selected]="isSelected()"
-  [class.service-card--clickable]="!hasOptions()"
-  [class.service-card--expandable]="hasOptions()"
-  [attr.role]="hasOptions() ? 'region' : 'button'"
-  [attr.aria-pressed]="hasOptions() ? null : isSelected()"
-  [attr.aria-expanded]="hasOptions() ? isExpanded() : null"
-  [attr.tabindex]="0"
-  (click)="onCardClick()"
-  (keydown.enter)="onCardClick()"
-  (keydown.space)="onCardClick()">
-
-  @if (isSelected()) {
-    <mat-icon class="service-card__check" aria-hidden="true">check_circle</mat-icon>
-  }
-
-  <mat-card-content class="service-card__content">
-    <span class="icon-framed icon-framed--xl service-card__icon">
-      <img [src]="service().svgIcon" [alt]="service().titleKey | translate" class="service-card__svg-icon">
+  [class.selected]="isSelected()"
+  [attr.aria-pressed]="isActive()"
+  (click)="onCardClick()">
+  <i class="bi {{ iconClass() }} service-pills__icon" aria-hidden="true"></i>
+  <span class="service-card-mini__title service-pills__name">{{ category().name }}</span>
+  @if (hasOptions()) {
+    <span
+      class="service-card-mini__count service-pills__count"
+      [class.service-pills__count--selected]="selectedCount() > 0">
+      @if (selectedCount() > 0) {
+        {{ selectedCount() }}/{{ operationCount() }}
+      } @else {
+        {{ operationCount() }}
+      }
     </span>
-    <h2 class="service-card__title">{{ service().titleKey | translate }}</h2>
-    <p class="service-card__description">{{ service().descriptionKey | translate }}</p>
-
-    @if (hasOptions() && isExpanded()) {
-      <div class="service-card__options" tabindex="-1" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()">
-        @for (option of service().options; track option.id) {
-          <mat-checkbox
-            class="service-card__checkbox"
-            [checked]="selectedCheckboxOptions().has(option.id)"
-            (change)="onCheckboxChange(option.id, $event.checked)">
-            {{ option.labelKey | translate }}
-          </mat-checkbox>
-        }
-
-        <div class="service-card__actions">
-          @if (showConfirmButton()) {
-            <button
-              mat-flat-button
-              color="primary"
-              class="service-card__confirm-button"
-              [disabled]="selectedCheckboxOptions().size === 0"
-              (click)="onConfirm()">
-              {{ services.confirmButton | translate }}
-            </button>
-          }
-          @if (showDeselectButton()) {
-            <button
-              mat-flat-button
-              class="service-card__deselect-button"
-              (click)="onDeselect()">
-              {{ services.deselectButton | translate }}
-            </button>
-          }
-        </div>
-      </div>
-    }
-  </mat-card-content>
-</mat-card>
+  }
+</button>

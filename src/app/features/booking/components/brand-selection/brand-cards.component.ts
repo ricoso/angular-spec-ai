@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
 
 import { i18nKeys, TranslatePipe } from '@core/i18n';
 
@@ -13,7 +12,7 @@ export interface EnrichedBrand extends BrandDisplay {
 @Component({
   selector: 'app-brand-cards',
   standalone: true,
-  imports: [MatIconModule, TranslatePipe],
+  imports: [TranslatePipe],
   templateUrl: './brand-cards.component.html',
   styleUrl: './brand-cards.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

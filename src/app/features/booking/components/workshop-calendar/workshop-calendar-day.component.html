@@ -13,11 +13,18 @@
         role="radio"
         [class.time-slot-btn--selected]="selectedSlotId() === slot.id"
         [attr.aria-checked]="selectedSlotId() === slot.id"
-        [attr.aria-label]="slot.displayTime"
+        [attr.aria-label]="slot.displayTime | berlinTime: day().date"
+        [attr.aria-describedby]="slot.rentalCarIncluded ? 'calendar-slot-rental-' + slot.id : null"
         (click)="onSlotClick(slot)"
         (keydown)="onSlotKeydown($event, slot)"
       >
-        {{ slot.displayTime }}
+        {{ slot.displayTime | berlinTime: day().date }}
+        @if (slot.rentalCarIncluded) {
+          <span class="time-slot-btn__rental" [id]="'calendar-slot-rental-' + slot.id">
+            <i class="bi bi-car-front" aria-hidden="true"></i>
+            {{ booking.appointment.rentalCar.included | translate }}
+          </span>
+        }
       </button>
     }
   </div>

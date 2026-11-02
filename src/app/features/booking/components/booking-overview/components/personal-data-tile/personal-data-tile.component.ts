@@ -18,4 +18,6 @@ export class PersonalDataTileComponent {
   public readonly brandName = input.required<string>();
 
   protected readonly bookingOverview = i18nKeys.booking.bookingOverview;
+  /** REQ-039: label of the optional VIN (same key as in the vehicle form). */
+  protected readonly carinformation = i18nKeys.booking.carinformation;
 }

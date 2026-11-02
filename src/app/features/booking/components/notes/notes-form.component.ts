@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   effect,
   inject,
@@ -10,10 +11,8 @@ import {
   signal
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 
-import { i18nKeys, TranslatePipe } from '@core/i18n';
+import { i18nKeys, TranslatePipe, TranslateService } from '@core/i18n';
 import { type Subscription } from 'rxjs';
 
 const MAX_NOTE_LENGTH = 1000;
@@ -21,13 +20,14 @@ const MAX_NOTE_LENGTH = 1000;
 @Component({
   selector: 'app-notes-form',
   standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, TranslatePipe],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './notes-form.component.html',
   styleUrl: './notes-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NotesFormComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly translateService = inject(TranslateService);
   private subscription: Subscription | null = null;
 
   public readonly initialNote = input<string | null>(null);
@@ -40,6 +40,12 @@ export class NotesFormComponent implements OnInit {
     validators: [Validators.maxLength(MAX_NOTE_LENGTH)]
   });
   protected readonly currentLength = signal(0);
+  /** Screen-reader text of the counter, e.g. "12 von 1000 Zeichen verwendet". */
+  protected readonly charCountLabel = computed(() =>
+    this.translateService.instant(this.booking.notes.charCountAriaLabel)
+      .replace('{current}', String(this.currentLength()))
+      .replace('{max}', String(this.maxLength))
+  );
 
   constructor() {
     effect(() => {

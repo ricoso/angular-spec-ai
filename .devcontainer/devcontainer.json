@@ -1,20 +1,35 @@
 {
   "name": "Angular 21 Dev Container",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
 
   "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "25",
+      "installGradle": "false",
+      "installMaven": "false"
+    }
   },
 
-  "forwardPorts": [4200, 3200],
+  "forwardPorts": [4200, 3000, 3200],
   "portsAttributes": {
     "4200": {
       "label": "Angular Dev Server",
-      "onAutoForward": "notify"
+      "onAutoForward": "openPreview",
+      "visibility": "public",
+      "protocol": "http"
+    },
+    "3000": {
+      "label": "Spring Boot Backend",
+      "onAutoForward": "openPreview",
+      "visibility": "public",
+      "protocol": "http"
     },
     "3200": {
       "label": "Requirements Board",
-      "onAutoForward": "notify"
+      "onAutoForward": "openPreview",
+      "visibility": "public",
+      "protocol": "http"
     }
   },
 
@@ -22,8 +37,8 @@
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,consistency=cached"
   ],
 
-  "postCreateCommand": "npm install && npx playwright install --with-deps chromium && cd tools/requirements-board && npm install",
-  "postStartCommand": "npm run board:start:prod &",
+  "postCreateCommand": "npx playwright install --with-deps chromium && curl -fsSL https://claude.ai/install.sh | bash",
+  "postStartCommand": "",
 
   "customizations": {
     "vscode": {

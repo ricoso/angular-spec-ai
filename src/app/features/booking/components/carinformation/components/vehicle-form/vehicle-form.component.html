@@ -2,35 +2,75 @@
   <legend class="vehicle-form__title">{{ carinformation.form.vehicleTitle | translate }}</legend>
 
   <div class="vehicle-form__row">
-    <mat-form-field appearance="outline" class="vehicle-form__input">
-      <mat-label>{{ carinformation.form.licensePlate.label | translate }}</mat-label>
+    <div class="form-floating">
       <input
-        matInput
         type="text"
+        id="vehicle-licensePlate"
+        class="form-control"
+        [class.is-invalid]="form().get('licensePlate')?.invalid && form().get('licensePlate')?.touched"
         formControlName="licensePlate"
+        [attr.maxlength]="licensePlateMaxLength"
         [placeholder]="carinformation.form.licensePlate.placeholder | translate"
         autocomplete="off"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('licensePlate')?.invalid && form().get('licensePlate')?.touched ? 'true' : null"
+        aria-describedby="vehicle-licensePlate-error"
       />
+      <label for="vehicle-licensePlate">{{ carinformation.form.licensePlate.label | translate }} *</label>
       @if (licensePlateErrors(); as error) {
-        <mat-error>{{ error | translate }}</mat-error>
+        <div class="invalid-feedback" id="vehicle-licensePlate-error" role="alert">{{ error | translate }}</div>
       }
-    </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline" class="vehicle-form__input">
-      <mat-label>{{ carinformation.form.mileage.label | translate }}</mat-label>
+    <div class="form-floating">
       <input
-        matInput
         type="number"
+        id="vehicle-mileage"
+        class="form-control"
+        [class.is-invalid]="form().get('mileage')?.invalid && form().get('mileage')?.touched"
         formControlName="mileage"
         [placeholder]="carinformation.form.mileage.placeholder | translate"
         autocomplete="off"
         inputmode="numeric"
-        min="0"
+        min="10"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('mileage')?.invalid && form().get('mileage')?.touched ? 'true' : null"
+        aria-describedby="vehicle-mileage-hint vehicle-mileage-error"
       />
+      <label for="vehicle-mileage">{{ carinformation.form.mileage.label | translate }} *</label>
+      <span class="field__unit" aria-hidden="true">{{ carinformation.form.mileage.unit | translate }}</span>
       @if (mileageErrors(); as error) {
-        <mat-error>{{ error | translate }}</mat-error>
+        <div class="invalid-feedback" id="vehicle-mileage-error" role="alert">{{ error | translate }}</div>
       }
-    </mat-form-field>
+      <div class="form-text" id="vehicle-mileage-hint">{{ carinformation.form.mileage.hint | translate }}</div>
+    </div>
   </div>
+
+  <!-- REQ-040/REQ-041: FIN nur wenn erforderlich (eingelagerte Räder ODER Rückrufaktion) — dann Pflicht. -->
+  @if (vinRequired()) {
+    <div class="vehicle-form__row">
+      <div class="form-floating">
+        <input
+          type="text"
+          id="vehicle-vin"
+          class="form-control"
+          [class.is-invalid]="vinInvalid()"
+          formControlName="vin"
+          [placeholder]="carinformation.form.vin.placeholder | translate"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          aria-required="true"
+          [attr.aria-invalid]="vinInvalid() ? 'true' : null"
+          [attr.aria-describedby]="vinInvalid() ? 'vehicle-vin-hint vehicle-vin-error' : 'vehicle-vin-hint'"
+        />
+        <label for="vehicle-vin">{{ carinformation.form.vin.label | translate }} *</label>
+        @if (vinErrors(); as error) {
+          <div class="invalid-feedback" id="vehicle-vin-error" role="alert">{{ error | translate }}</div>
+        }
+        <div class="form-text" id="vehicle-vin-hint">{{ vinHintKey() | translate }}</div>
+      </div>
+    </div>
+  }
 
 </fieldset>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hinweise | Bootstrap-Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="_shared.css" rel="stylesheet">
+  <style>
+    /* Switch optisch aufgewertet */
+    .form-switch .form-check-input {
+      width: 3em; height: 1.6em;
+      cursor: pointer;
+    }
+    .form-switch .form-check-input:checked {
+      background-color: var(--bs-primary);
+      border-color: var(--bs-primary);
+    }
+    .switch-card {
+      border: 2px solid #e3e6e9;
+      border-radius: 0.6em;
+      padding: 1em 1.25em;
+      transition: border-color 0.12s ease, background 0.12s ease;
+    }
+    .switch-card.is-on {
+      border-color: var(--bs-primary);
+      background: #f5fafd;
+    }
+    .switch-card__title {
+      font-weight: 600;
+      margin: 0;
+    }
+    .switch-card__hint {
+      color: #6c757d;
+      font-size: 0.85em;
+      margin: 0;
+    }
+    .switch-card__detail {
+      margin-top: 0.75em;
+      padding-top: 0.75em;
+      border-top: 1px dashed #d6dce0;
+    }
+
+    /* Radio-Pills für Terminpräferenz */
+    .pill-group {
+      display: flex;
+      gap: 0.5em;
+      flex-wrap: wrap;
+    }
+    .pill-group input[type="radio"] {
+      display: none;
+    }
+    .pill-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      padding: 0.55em 1.1em;
+      border: 2px solid #d6dce0;
+      border-radius: 2em;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.12s ease;
+      font-size: 0.95em;
+    }
+    .pill-group label:hover {
+      border-color: var(--bs-primary);
+      color: var(--bs-primary);
+    }
+    .pill-group input[type="radio"]:checked + label {
+      background: var(--bs-primary);
+      border-color: var(--bs-primary);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-banner">🧪 Demo &mdash; <a href="index.html">Übersicht</a></div>
+
+  <div class="wizard-steps">
+    <div class="container d-flex flex-wrap">
+      <span class="wizard-step wizard-step--done"><span class="wizard-step__circle"><i class="bi bi-check"></i></span> Filiale</span>
+      <span class="wizard-step wizard-step--done"><span class="wizard-step__circle"><i class="bi bi-check"></i></span> Marke</span>
+      <span class="wizard-step wizard-step--done"><span class="wizard-step__circle"><i class="bi bi-check"></i></span> Service</span>
+      <span class="wizard-step wizard-step--active"><span class="wizard-step__circle">4</span> Hinweise</span>
+      <span class="wizard-step"><span class="wizard-step__circle">5</span> Termin</span>
+      <span class="wizard-step"><span class="wizard-step__circle">6</span> Buchung</span>
+    </div>
+  </div>
+
+  <main class="page-wrap">
+    <h1 class="page-title">Hinweise &amp; Extras</h1>
+    <p class="page-subtitle">Optionale Zusatz-Wünsche zu Ihrer Buchung.</p>
+
+    <!-- Mietwagen — Switch (opt-in) + Größen-Auswahl bei Aktivierung -->
+    <div class="switch-card is-on mb-3" id="rentCard">
+      <div class="d-flex align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-car-front-fill text-primary fs-4"></i>
+          <div>
+            <p class="switch-card__title">Mietwagen für die Werkstattzeit</p>
+            <p class="switch-card__hint">Mobil bleiben &mdash; Fahrzeug während der Arbeiten verfügbar.</p>
+          </div>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="rentSwitch" checked>
+        </div>
+      </div>
+
+      <div class="switch-card__detail" id="rentDetail">
+        <label class="form-label small text-uppercase text-muted mb-2">Fahrzeug-Klasse</label>
+        <div class="pill-group">
+          <input type="radio" name="rentClass" id="rcS" checked>
+          <label for="rcS"><i class="bi bi-car-front"></i> Kleinwagen</label>
+
+          <input type="radio" name="rentClass" id="rcM">
+          <label for="rcM"><i class="bi bi-car-front-fill"></i> Mittelklasse</label>
+
+          <input type="radio" name="rentClass" id="rcL">
+          <label for="rcL"><i class="bi bi-truck-front"></i> Oberklasse</label>
+        </div>
+        <div class="alert alert-primary small mt-3 mb-0 d-flex gap-2 align-items-start" style="border-left: 4px solid var(--bs-primary);">
+          <i class="bi bi-info-circle-fill"></i>
+          <div>Kleinwagen ab <strong>45,00 € brutto</strong> inkl. 150 km. Bitte bringen Sie Ihren Führerschein und Personalausweis im Original mit.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminpräferenz — Radio-Pills (sich-ausschließend) -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <p class="switch-card__title mb-1"><i class="bi bi-clock me-2 text-primary"></i>Terminpräferenz</p>
+        <p class="switch-card__hint mb-3">Wann passt es Ihnen am besten?</p>
+        <div class="pill-group">
+          <input type="radio" name="timePref" id="tpAny" checked>
+          <label for="tpAny">Egal</label>
+
+          <input type="radio" name="timePref" id="tpAm">
+          <label for="tpAm"><i class="bi bi-sunrise"></i> Vormittags</label>
+
+          <input type="radio" name="timePref" id="tpPm">
+          <label for="tpPm"><i class="bi bi-sunset"></i> Nachmittags</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rückruf — Switch (Boolean) -->
+    <div class="switch-card mb-3" id="callbackCard">
+      <div class="d-flex align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-telephone-fill text-primary fs-4"></i>
+          <div>
+            <p class="switch-card__title">Rückruf gewünscht?</p>
+            <p class="switch-card__hint">Wir melden uns telefonisch bei Rückfragen.</p>
+          </div>
+        </div>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="callbackSwitch">
+        </div>
+      </div>
+    </div>
+
+    <!-- Bemerkung -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <p class="switch-card__title mb-1"><i class="bi bi-chat-text me-2 text-primary"></i>Möchten Sie uns noch etwas mitteilen?</p>
+        <p class="switch-card__hint mb-2">Optional &mdash; max. 500 Zeichen.</p>
+        <textarea class="form-control" rows="4" placeholder="Bitte tragen Sie hier Ihre Nachricht an uns ein." maxlength="500" id="noteText"></textarea>
+        <div class="form-text d-flex justify-content-end">
+          <span id="noteCount">0 / 500</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service-Hints (Recap) -->
+    <h5 class="mb-3">Wichtige Hinweise zu Ihren ausgewählten Services</h5>
+    <div class="vstack gap-2">
+      <div class="card">
+        <div class="card-body d-flex gap-3">
+          <i class="bi bi-tools text-primary fs-4"></i>
+          <div>
+            <strong>Inspektion</strong>
+            <p class="small text-muted mb-0">Servicearbeiten nach Wartungsplan des Herstellers. Beinhaltet einen umfassenden Check nach Herstellervorgabe über den Zustand Ihres Fahrzeugs. Bitte bringen Sie Ihr Serviceheft mit.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body d-flex gap-3">
+          <i class="bi bi-record-circle text-primary fs-4"></i>
+          <div>
+            <strong>Radwechsel mit Einlagerung</strong>
+            <p class="small text-muted mb-0">Bitte beachten Sie 5 Werktage Vorlauf für die Räderauslagerung.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-nav">
+      <a href="03-services.html" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Zurück</a>
+      <a href="05-appointment.html" class="btn btn-primary btn-lg">Weiter <i class="bi bi-arrow-right ms-1"></i></a>
+    </div>
+  </main>
+
+  <button class="cart-fab" title="Auswahl"><i class="bi bi-bag-fill"></i></button>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Switch-Cards visuell an Status koppeln
+    function bindSwitch(switchId, cardId, detailId) {
+      const sw = document.getElementById(switchId);
+      const card = document.getElementById(cardId);
+      const detail = detailId ? document.getElementById(detailId) : null;
+      function update() {
+        card.classList.toggle('is-on', sw.checked);
+        if (detail) detail.style.display = sw.checked ? '' : 'none';
+      }
+      sw.addEventListener('change', update);
+      update();
+    }
+    bindSwitch('rentSwitch', 'rentCard', 'rentDetail');
+    bindSwitch('callbackSwitch', 'callbackCard', null);
+
+    // Zeichen-Zähler
+    const ta = document.getElementById('noteText');
+    const cnt = document.getElementById('noteCount');
+    ta.addEventListener('input', () => cnt.textContent = `${ta.value.length} / 500`);
+  </script>
+  <script src="_layout.js"></script>
+</body>
+</html>

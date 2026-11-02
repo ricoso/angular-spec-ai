@@ -98,6 +98,21 @@ export class UserFormComponent {
 
 ---
 
+## Optionale Felder: weglassen, nicht auffüllen
+
+Ein leeres optionales Feld (z. B. FIN) geht NICHT als `''` oder Platzhalter (`'UNKNOWN'`, `'N/A'`) in den Submit-Payload. Beim Mapping: `trim()`, leer → `undefined` (der Key fehlt im JSON). Das Backend gibt nur echte Angaben an SoftNet weiter (siehe `spring-backend.md`, „SoftNet-Payloads").
+
+```typescript
+// ✅ GOOD
+const vin = this.form().controls.vin.value.trim().toUpperCase();
+this.store.submit({ ...base, ...(vin ? { vin } : {}) });
+
+// ❌ BAD
+this.store.submit({ ...base, vin: this.form().value.vin || 'UNKNOWN' });
+```
+
+---
+
 ## Custom Validators
 
 ```typescript

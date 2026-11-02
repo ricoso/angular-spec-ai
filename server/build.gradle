@@ -1,0 +1,103 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.1.1'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
+}
+
+group = 'com.autohaus'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+// Security overrides for Boot-managed libraries whose CVE fixes are newer than
+// Spring Boot 4.1.1 (Tomcat CVE-2026-65905/-65182/-68525, Jackson CVE-2026-89425/
+// -89407/-91777/-91776/-83557/-68497/-19032). Stay on the patch lines Boot 4.1 uses;
+// remove once a Spring Boot release manages these versions (or newer).
+ext['tomcat.version'] = '11.0.27'
+ext['jackson-bom.version'] = '3.1.8'
+ext['jackson-2-bom.version'] = '2.21.8'
+
+dependencies {
+	// REQ-030: Spring AI 2.0 (BOM manages versions) — OpenAI-compatible ChatClient
+	// with structured output + StructuredOutputValidationAdvisor. Log Analytics access
+	// uses the existing RestClient + managed-identity token (no Azure SDK) to avoid
+	// Jackson 2/3 conflicts with Spring Boot 4.
+	implementation platform('org.springframework.ai:spring-ai-bom:2.0.1')
+	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'com.nimbusds:nimbus-jose-jwt:10.10'
+	implementation 'com.bucket4j:bucket4j_jdk17-core:8.21.0'
+	// 9.x uses Jackson 3 (tools.jackson), the Jackson line Spring Boot 4 is built on
+	implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	// REQ-037: JavaTimeModule for the usage blob round-trip (Instant/LocalDate).
+	// Declared explicitly instead of relying on transitive resolution — the module is
+	// registered on UsageBlobClient's own local mapper, the global ObjectMapper bean
+	// stays unchanged. Still no Azure SDK: blob access is plain RestClient (see above).
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}
+
+// --- Angular Frontend Build ---
+
+def angularDir = file("${rootProject.projectDir}/..")
+def angularDist = file("${angularDir}/dist/angular-21-project/browser")
+
+tasks.register('npmInstall', Exec) {
+	description = 'Install Angular dependencies (only if node_modules missing)'
+	workingDir = angularDir
+	commandLine 'npm', 'install', '--legacy-peer-deps'
+	inputs.file("${angularDir}/package-lock.json")
+	outputs.dir("${angularDir}/node_modules")
+	onlyIf { !file("${angularDir}/node_modules").exists() }
+}
+
+tasks.register('buildAngular', Exec) {
+	description = 'Build Angular frontend'
+	dependsOn 'npmInstall'
+	workingDir = angularDir
+	commandLine 'npm', 'run', 'build'
+	inputs.dir("${angularDir}/src")
+	inputs.file("${angularDir}/angular.json")
+	inputs.file("${angularDir}/tsconfig.json")
+	inputs.file("${angularDir}/tsconfig.app.json")
+	outputs.dir(angularDist)
+}
+
+tasks.named('bootRun') {
+	dependsOn 'buildAngular'
+}
+
+tasks.named('bootJar') {
+	dependsOn 'buildAngular'
+}

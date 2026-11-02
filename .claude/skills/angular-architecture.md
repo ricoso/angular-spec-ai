@@ -1,9 +1,9 @@
 # Angular Architecture (COMPACT)
 
 ## Projekt-Vorgabe
-- Typ: Click-Dummy (kein Backend, kein SSR)
-- API Services: Mock-Daten / lokale JSON
-- Auth: Keine (oder simuliert)
+- Typ: Production (Spring Boot Backend + SoftNet API)
+- API Services: HTTP calls to Spring Boot Backend (:3000, /api/v1/*)
+- Auth: Session Token (HMAC-SHA256)
 
 **VORHER LESEN:** code-language.md, performance.md
 
@@ -21,7 +21,7 @@
 |-------|--------|---------|
 | **Container** | Store, Business Service | Event Handler, Combine Stores |
 | **Presentational** | - | input/output, Display only |
-| **API Service** | HttpClient | HTTP calls, return Promise<T> |
+| **API Service** | HttpClient | HTTP calls, return Promise<T>, DTO-Mapping ohne Platzhalter (siehe unten) |
 | **Business Service** | API Service | Validation, Logik |
 | **Feature Store** | API Service | Global Business Data |
 | **Component Store** | - | Local UI State |
@@ -197,6 +197,21 @@ feature/
   - Erlaubt: `{{ mySignal() }}`, `{{ myComputed() }}`, `(click)="onSave()"`
   - VERBOTEN: `{{ hasError('x') }}`, `{{ getLabel() }}`, `{{ calculate() }}`
   - Auch bei Forms: `hasError()` → `errors` computed Signal (siehe forms.md)
+
+---
+
+## API-Payloads: Unbekanntes weglassen (PFLICHT)
+
+Leere oder unbekannte optionale Angaben (VIN/FIN, Erstzulassung, …) gehen NICHT mit Platzhalter, leerem String oder erfundenem Default an das Backend, sondern bleiben `undefined` (der Key fehlt im JSON). Das gilt auch für `model`: Das Frontend schickt es nur, wenn es bekannt ist. Den Rückfallwert für das SoftNet-Pflichtfeld `model` (`"Unknown"`) setzt allein das Backend, weil SoftNet Buchungen ohne Modell an manchen Standorten ablehnt (siehe `spring-backend.md`, Abschnitt „SoftNet-Payloads“, und REQ-045 5.3).
+
+```typescript
+// ✅ GOOD — empty = omitted
+const vin = raw.vin?.trim().toUpperCase();
+const vehicle = { licensePlate: raw.licensePlate.trim(), mileage: raw.mileage, ...(vin ? { vin } : {}) };
+
+// ❌ BAD — placeholder / invented default
+const vehicle = { licensePlate: raw.licensePlate, mileage: raw.mileage, vin: raw.vin || 'UNKNOWN', firstRegYear: '2020' };
+```
 
 ---
 

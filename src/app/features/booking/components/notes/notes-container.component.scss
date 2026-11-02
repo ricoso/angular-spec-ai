@@ -1,64 +1,13 @@
-@use 'breakpoints' as *;
-
+// REQ-039: notes step as in mockups/03-hinweise.html — option cards, note field and service
+// hints stacked with the mockup's 0.875rem rhythm; heading and action bar are global.
 .notes {
-  max-width: 70em;
-  margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
-
-  &__title {
-    font-size: var(--font-size-2xl);
-    line-height: var(--line-height-tight);
-    color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-sm);
-    text-align: center;
+  > app-notes-form,
+  > app-service-hints {
+    display: block;
+    margin-block-start: 0.875rem;
   }
 
-  &__subtitle {
-    font-size: var(--font-size-md);
-    line-height: var(--line-height-normal);
-    color: var(--color-text-secondary);
-    margin: 0 0 var(--spacing-xl);
-    text-align: center;
-  }
-
-  &__actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-xl);
-
-    @include tablet {
-      flex-direction: row;
-      justify-content: space-between;
-    }
-  }
-
-  &__back-button,
-  &__continue-button {
-    min-height: var(--touch-target-min);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-
-    &:focus-visible {
-      outline: 0.125em solid var(--color-focus-ring);
-      outline-offset: 0.125em;
-    }
-  }
-
-  &__back-button {
-    order: 2;
-
-    @include tablet {
-      order: 1;
-    }
-  }
-
-  &__continue-button {
-    order: 1;
-
-    @include tablet {
-      order: 2;
-    }
+  > app-service-hints {
+    margin-block-start: 1.5rem;
   }
 }

@@ -2,121 +2,163 @@
   <legend class="customer-form__title">{{ carinformation.form.customerTitle | translate }}</legend>
 
   <div class="customer-form__field customer-form__field--full">
-    <mat-form-field appearance="outline" class="customer-form__input">
-      <mat-label>{{ carinformation.form.email.label | translate }}</mat-label>
+    <div class="form-floating">
       <input
-        matInput
         type="email"
+        id="customer-email"
+        class="form-control"
+        [class.is-invalid]="form().get('email')?.invalid && form().get('email')?.touched"
         formControlName="email"
         [placeholder]="carinformation.form.email.placeholder | translate"
         autocomplete="email"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('email')?.invalid && form().get('email')?.touched ? 'true' : null"
+        aria-describedby="customer-email-error"
       />
+      <label for="customer-email">{{ carinformation.form.email.label | translate }} *</label>
       @if (emailErrors(); as error) {
-        <mat-error>{{ error | translate }}</mat-error>
+        <div class="invalid-feedback" id="customer-email-error" role="alert">{{ error | translate }}</div>
       }
-    </mat-form-field>
+    </div>
   </div>
 
   <div class="customer-form__row customer-form__row--three">
-    <mat-form-field appearance="outline" class="customer-form__input">
-      <mat-label>{{ carinformation.form.salutation.label | translate }}</mat-label>
-      <mat-select formControlName="salutation" autocomplete="honorific-prefix">
-        <mat-option value="mr">{{ carinformation.form.salutation.mr | translate }}</mat-option>
-        <mat-option value="ms">{{ carinformation.form.salutation.ms | translate }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+    <div class="form-floating">
+      <select
+        id="customer-salutation"
+        class="form-select"
+        [class.is-invalid]="form().get('salutation')?.invalid && form().get('salutation')?.touched"
+        formControlName="salutation"
+        autocomplete="honorific-prefix"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('salutation')?.invalid && form().get('salutation')?.touched ? 'true' : null"
+      >
+        <option value="mr">{{ carinformation.form.salutation.mr | translate }}</option>
+        <option value="ms">{{ carinformation.form.salutation.ms | translate }}</option>
+      </select>
+      <label for="customer-salutation">{{ carinformation.form.salutation.label | translate }} *</label>
+    </div>
 
-    <mat-form-field appearance="outline" class="customer-form__input">
-      <mat-label>{{ carinformation.form.firstName.label | translate }}</mat-label>
+    <div class="form-floating">
       <input
-        matInput
         type="text"
+        id="customer-firstName"
+        class="form-control"
+        [class.is-invalid]="form().get('firstName')?.invalid && form().get('firstName')?.touched"
         formControlName="firstName"
         [placeholder]="carinformation.form.firstName.placeholder | translate"
         autocomplete="given-name"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('firstName')?.invalid && form().get('firstName')?.touched ? 'true' : null"
+        aria-describedby="customer-firstName-error"
       />
+      <label for="customer-firstName">{{ carinformation.form.firstName.label | translate }} *</label>
       @if (firstNameErrors(); as error) {
-        <mat-error>{{ error | translate }}</mat-error>
+        <div class="invalid-feedback" id="customer-firstName-error" role="alert">{{ error | translate }}</div>
       }
-    </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline" class="customer-form__input">
-      <mat-label>{{ carinformation.form.lastName.label | translate }}</mat-label>
+    <div class="form-floating">
       <input
-        matInput
         type="text"
+        id="customer-lastName"
+        class="form-control"
+        [class.is-invalid]="form().get('lastName')?.invalid && form().get('lastName')?.touched"
         formControlName="lastName"
         [placeholder]="carinformation.form.lastName.placeholder | translate"
         autocomplete="family-name"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('lastName')?.invalid && form().get('lastName')?.touched ? 'true' : null"
+        aria-describedby="customer-lastName-error"
       />
+      <label for="customer-lastName">{{ carinformation.form.lastName.label | translate }} *</label>
       @if (lastNameErrors(); as error) {
-        <mat-error>{{ error | translate }}</mat-error>
+        <div class="invalid-feedback" id="customer-lastName-error" role="alert">{{ error | translate }}</div>
       }
-    </mat-form-field>
+    </div>
   </div>
 
   <div class="customer-form__field customer-form__field--full">
-    <mat-form-field appearance="outline" class="customer-form__input">
-      <mat-label>{{ carinformation.form.street.label | translate }}</mat-label>
+    <div class="form-floating">
       <input
-        matInput
         type="text"
+        id="customer-street"
+        class="form-control"
+        [class.is-invalid]="form().get('street')?.invalid && form().get('street')?.touched"
         formControlName="street"
         [placeholder]="carinformation.form.street.placeholder | translate"
         autocomplete="street-address"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('street')?.invalid && form().get('street')?.touched ? 'true' : null"
+        aria-describedby="customer-street-error"
       />
+      <label for="customer-street">{{ carinformation.form.street.label | translate }} *</label>
       @if (streetErrors(); as error) {
-        <mat-error>{{ error | translate }}</mat-error>
+        <div class="invalid-feedback" id="customer-street-error" role="alert">{{ error | translate }}</div>
       }
-    </mat-form-field>
+    </div>
   </div>
 
   <div class="customer-form__row customer-form__row--two">
-    <mat-form-field appearance="outline" class="customer-form__input">
-      <mat-label>{{ carinformation.form.postalCode.label | translate }}</mat-label>
+    <div class="form-floating">
       <input
-        matInput
         type="text"
+        id="customer-postalCode"
+        class="form-control"
+        [class.is-invalid]="form().get('postalCode')?.invalid && form().get('postalCode')?.touched"
         formControlName="postalCode"
         [placeholder]="carinformation.form.postalCode.placeholder | translate"
         autocomplete="postal-code"
         inputmode="numeric"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('postalCode')?.invalid && form().get('postalCode')?.touched ? 'true' : null"
+        aria-describedby="customer-postalCode-error"
       />
+      <label for="customer-postalCode">{{ carinformation.form.postalCode.label | translate }} *</label>
       @if (postalCodeErrors(); as error) {
-        <mat-error>{{ error | translate }}</mat-error>
+        <div class="invalid-feedback" id="customer-postalCode-error" role="alert">{{ error | translate }}</div>
       }
-    </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline" class="customer-form__input">
-      <mat-label>{{ carinformation.form.city.label | translate }}</mat-label>
+    <div class="form-floating">
       <input
-        matInput
         type="text"
+        id="customer-city"
+        class="form-control"
+        [class.is-invalid]="form().get('city')?.invalid && form().get('city')?.touched"
         formControlName="city"
         [placeholder]="carinformation.form.city.placeholder | translate"
         autocomplete="address-level2"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('city')?.invalid && form().get('city')?.touched ? 'true' : null"
+        aria-describedby="customer-city-error"
       />
+      <label for="customer-city">{{ carinformation.form.city.label | translate }} *</label>
       @if (cityErrors(); as error) {
-        <mat-error>{{ error | translate }}</mat-error>
+        <div class="invalid-feedback" id="customer-city-error" role="alert">{{ error | translate }}</div>
       }
-    </mat-form-field>
+    </div>
   </div>
 
   <div class="customer-form__field customer-form__field--full">
-    <mat-form-field appearance="outline" class="customer-form__input">
-      <mat-label>{{ carinformation.form.mobilePhone.label | translate }}</mat-label>
+    <div class="form-floating">
       <input
-        matInput
         type="tel"
+        id="customer-mobilePhone"
+        class="form-control"
+        [class.is-invalid]="form().get('mobilePhone')?.invalid && form().get('mobilePhone')?.touched"
         formControlName="mobilePhone"
         [placeholder]="carinformation.form.mobilePhone.placeholder | translate"
         autocomplete="tel"
         inputmode="tel"
+        aria-required="true"
+        [attr.aria-invalid]="form().get('mobilePhone')?.invalid && form().get('mobilePhone')?.touched ? 'true' : null"
+        aria-describedby="customer-mobilePhone-error"
       />
-      <mat-hint>{{ carinformation.form.mobilePhone.hint | translate }}</mat-hint>
+      <label for="customer-mobilePhone">{{ carinformation.form.mobilePhone.label | translate }} *</label>
       @if (mobilePhoneErrors(); as error) {
-        <mat-error>{{ error | translate }}</mat-error>
+        <div class="invalid-feedback" id="customer-mobilePhone-error" role="alert">{{ error | translate }}</div>
       }
-    </mat-form-field>
+    </div>
   </div>
 </fieldset>

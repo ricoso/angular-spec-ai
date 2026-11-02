@@ -1,46 +1,71 @@
-@use 'breakpoints' as *;
-
+// REQ-039: as in mockups/wizard.css (.option-card, .switch__label/__track/__detail).
 .notes-extras {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
 
-  @include tablet {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @include desktop {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  &__section {
+.switch {
+  &__label {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-block-size: var(--touch-target-min);
+    margin: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
   }
 
-  &__heading {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    text-align: center;
-    margin: 0 0 var(--spacing-md);
-    min-height: 3em;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-
-  &__card {
+  &__track {
+    display: block;
+    flex: 0 0 2.25rem;
+    inline-size: 2.25rem;
+    block-size: 1.25rem;
+    padding: 0.125rem;
+    border: 0.0625rem solid var(--color-primary);
+    border-radius: 1rem;
     background-color: var(--color-background-surface);
-    border: 0.0625em solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-small);
-    padding: var(--spacing-lg);
-    flex: 1;
+
+    &::after {
+      display: block;
+      inline-size: 0.875rem;
+      block-size: 0.875rem;
+      border-radius: 50%;
+      background-color: var(--color-primary);
+      content: '';
+    }
   }
 
-  &__field {
-    width: 100%;
+  &__input:checked + .switch__label .switch__track {
+    background-color: var(--color-primary);
+
+    &::after {
+      background-color: var(--color-text-on-primary);
+      transform: translateX(0.875rem);
+    }
   }
+
+  &__input:focus-visible + .switch__label {
+    outline: 0.1875rem solid var(--color-focus-ring);
+    outline-offset: 0.1875rem;
+  }
+
+  &__detail {
+    margin-block-start: 0.875rem;
+    padding-block-start: 0.875rem;
+    border-block-start: 0.0625rem solid var(--color-disabled);
+
+    .pill-group {
+      margin-block: 0.5rem;
+    }
+  }
+}
+
+:host-context([dir='rtl']) .switch__input:checked + .switch__label .switch__track::after {
+  transform: translateX(-0.875rem);
+}
+
+.notes-extras__rental-unavailable {
+  margin: 0;
 }

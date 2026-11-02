@@ -6,11 +6,11 @@
   margin-bottom: var(--spacing-xl);
 
   &__heading {
-    font-size: var(--font-size-lg);
-    font-weight: 700;
-    color: var(--color-text-primary);
-    text-align: center;
-    margin-bottom: var(--spacing-md);
+    margin: 0 0 0.5rem;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
   }
 }
 
@@ -21,39 +21,30 @@
 }
 
 .time-slot-btn {
+  // REQ-039: same slot look as the appointment step (mockups/wizard.css .time-slots__time).
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: var(--touch-target-min);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 0.5rem 1rem;
+  border: 0.125rem solid var(--color-primary);
+  border-radius: var(--radius-sm);
   background-color: var(--color-background-surface);
-  border: 0.125em solid var(--color-border);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
+  color: var(--color-primary);
   font-family: inherit;
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-text-primary);
-  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+  font-size: 0.9375rem;
+  font-weight: 600;
   text-align: center;
-
-  &:hover {
-    border-color: var(--color-primary);
-    background-color: var(--color-background-hover);
-    box-shadow: var(--shadow-small);
-  }
+  cursor: pointer;
 
   &:focus-visible {
-    outline: 0.1875em solid var(--color-focus-ring);
-    outline-offset: 0.125em;
+    outline: 0.1875rem solid var(--color-focus-ring);
+    outline-offset: 0.1875rem;
   }
 
   &--selected {
-    border-color: var(--color-primary);
-    background-color: var(--color-background-hover);
-    box-shadow: 0 0 0 0.0625em var(--color-primary), var(--shadow-small);
-    color: var(--color-primary);
-    font-weight: 700;
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
   }
 }
 
@@ -61,4 +52,20 @@
   .time-slots-grid {
     grid-template-columns: repeat(4, 1fr);
   }
+}
+
+// REQ-039 AC-M10: "incl. rental car" below the time, wrapping instead of widening the button.
+.time-slot-btn:has(.time-slot-btn__rental) {
+  flex-direction: column;
+}
+
+.time-slot-btn__rental {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+  line-height: var(--line-height-tight);
 }

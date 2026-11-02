@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Übersicht &amp; Buchen | Bootstrap-Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="_shared.css" rel="stylesheet">
+  <style>
+    .summary-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1em;
+      padding: 0.85em 0;
+      border-bottom: 1px solid #eef0f2;
+    }
+    .summary-row:last-child { border-bottom: 0; }
+    .summary-row__icon {
+      flex: 0 0 2.5em;
+      width: 2.5em; height: 2.5em;
+      background: #eaf2f9;
+      color: var(--bs-primary);
+      border-radius: 0.5em;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2em;
+    }
+    .summary-row__label {
+      font-size: 0.75em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #6c757d;
+      letter-spacing: 0.05em;
+      margin: 0;
+    }
+    .summary-row__value {
+      font-size: 1em;
+      font-weight: 600;
+      margin: 0.1em 0 0;
+    }
+    .summary-row__sub {
+      font-size: 0.85em;
+      color: #6c757d;
+      margin: 0.1em 0 0;
+    }
+    .summary-row__edit {
+      align-self: center;
+      margin-left: auto;
+    }
+
+    .consent-box {
+      border: 2px solid #d6dce0;
+      border-radius: 0.5em;
+      padding: 1em;
+      transition: border-color 0.12s ease, background 0.12s ease;
+    }
+    .consent-box:has(input:checked) {
+      border-color: var(--bs-primary);
+      background: #f5fafd;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-banner">🧪 Demo &mdash; <a href="index.html">Übersicht</a></div>
+
+  <div class="wizard-steps">
+    <div class="container d-flex flex-wrap">
+      <span class="wizard-step wizard-step--done"><span class="wizard-step__circle"><i class="bi bi-check"></i></span> Filiale</span>
+      <span class="wizard-step wizard-step--done"><span class="wizard-step__circle"><i class="bi bi-check"></i></span> Marke</span>
+      <span class="wizard-step wizard-step--done"><span class="wizard-step__circle"><i class="bi bi-check"></i></span> Service</span>
+      <span class="wizard-step wizard-step--done"><span class="wizard-step__circle"><i class="bi bi-check"></i></span> Hinweise</span>
+      <span class="wizard-step wizard-step--done"><span class="wizard-step__circle"><i class="bi bi-check"></i></span> Termin</span>
+      <span class="wizard-step wizard-step--active"><span class="wizard-step__circle">6</span> Buchung</span>
+    </div>
+  </div>
+
+  <main class="page-wrap">
+    <h1 class="page-title">Übersicht &amp; Buchen</h1>
+    <p class="page-subtitle">Bitte prüfen Sie Ihre Angaben vor dem Absenden.</p>
+
+    <div class="row g-3">
+      <!-- Linke Spalte: Buchungs-Zusammenfassung -->
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="mb-3"><i class="bi bi-clipboard-check text-primary me-2"></i>Ihre Buchung</h5>
+
+            <div class="summary-row">
+              <span class="summary-row__icon"><i class="bi bi-geo-alt-fill"></i></span>
+              <div class="flex-grow-1">
+                <p class="summary-row__label">Filiale</p>
+                <p class="summary-row__value">Audi Mettmann</p>
+                <p class="summary-row__sub">Düsseldorfer Str. 189-191, 40822 Mettmann</p>
+              </div>
+              <a href="01-location.html" class="btn btn-outline-secondary btn-sm summary-row__edit">Ändern</a>
+            </div>
+
+            <div class="summary-row">
+              <span class="summary-row__icon"><i class="bi bi-tag-fill"></i></span>
+              <div class="flex-grow-1">
+                <p class="summary-row__label">Marke</p>
+                <p class="summary-row__value">ŠKODA</p>
+              </div>
+              <a href="02-brand.html" class="btn btn-outline-secondary btn-sm summary-row__edit">Ändern</a>
+            </div>
+
+            <div class="summary-row">
+              <span class="summary-row__icon"><i class="bi bi-tools"></i></span>
+              <div class="flex-grow-1">
+                <p class="summary-row__label">Services (2)</p>
+                <p class="summary-row__value">Dialogannahme · Inspektion</p>
+                <p class="summary-row__sub">Inspektion &mdash; Servicearbeiten nach Wartungsplan</p>
+              </div>
+              <a href="03-services.html" class="btn btn-outline-secondary btn-sm summary-row__edit">Ändern</a>
+            </div>
+
+            <div class="summary-row">
+              <span class="summary-row__icon"><i class="bi bi-calendar-check-fill"></i></span>
+              <div class="flex-grow-1">
+                <p class="summary-row__label">Termin</p>
+                <p class="summary-row__value">Mittwoch, 6. Mai 2026 &mdash; 10:30 Uhr</p>
+              </div>
+              <a href="05-appointment.html" class="btn btn-outline-secondary btn-sm summary-row__edit">Ändern</a>
+            </div>
+
+            <div class="summary-row">
+              <span class="summary-row__icon"><i class="bi bi-car-front-fill"></i></span>
+              <div class="flex-grow-1">
+                <p class="summary-row__label">Mietwagen</p>
+                <p class="summary-row__value">Kleinwagen</p>
+                <p class="summary-row__sub">ab 45,00 € brutto, inkl. 150 km</p>
+              </div>
+              <a href="04-notes.html" class="btn btn-outline-secondary btn-sm summary-row__edit">Ändern</a>
+            </div>
+
+            <div class="summary-row">
+              <span class="summary-row__icon"><i class="bi bi-clock"></i></span>
+              <div class="flex-grow-1">
+                <p class="summary-row__label">Terminpräferenz · Rückruf</p>
+                <p class="summary-row__value">Egal &mdash; <span class="text-muted">Kein Rückruf</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Persönliche Daten -->
+        <div class="card mt-3">
+          <div class="card-body">
+            <h5 class="mb-3"><i class="bi bi-person-circle text-primary me-2"></i>Ihre Kontaktdaten</h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small">Anrede</label>
+                <select class="form-select">
+                  <option>Frau</option>
+                  <option selected>Herr</option>
+                  <option>Divers</option>
+                </select>
+              </div>
+              <div class="col-md-6"></div>
+              <div class="col-md-6">
+                <label class="form-label small">Vorname *</label>
+                <input type="text" class="form-control" value="Max">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Nachname *</label>
+                <input type="text" class="form-control" value="Mustermann">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">E-Mail *</label>
+                <input type="email" class="form-control" value="max.mustermann@example.com">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Telefon</label>
+                <input type="tel" class="form-control" value="0211 12345678">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Kennzeichen</label>
+                <input type="text" class="form-control" value="ME-AB 1234">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Modell</label>
+                <input type="text" class="form-control" value="ŠKODA Octavia">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Datenschutz -->
+        <div class="card mt-3">
+          <div class="card-body">
+            <label class="consent-box d-flex align-items-start gap-3">
+              <input type="checkbox" class="form-check-input flex-shrink-0 mt-1">
+              <span>
+                Ich willige in die Verarbeitung meiner personenbezogenen Daten zum Zwecke der Online-Terminvereinbarung ein. Informationen
+                <a href="https://www.gottfried-schultz.de/rechtliches/datenschutz/" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();">hier</a>.
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rechte Spalte: Sticky-Aktion -->
+      <div class="col-lg-4">
+        <div class="card sticky-top" style="top: 1em;">
+          <div class="card-body">
+            <h6 class="text-uppercase text-muted small mb-2">Zusammenfassung</h6>
+            <div class="d-flex justify-content-between mb-1">
+              <span>Services</span><span>2 ausgewählt</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+              <span>Mietwagen</span><span>Kleinwagen</span>
+            </div>
+            <div class="d-flex justify-content-between mb-3">
+              <span>Termin</span><span>06.05. 10:30</span>
+            </div>
+            <hr>
+            <p class="small text-muted">Ihre Buchung ist unverbindlich und wird nach Absenden vom Service-Team bestätigt.</p>
+            <button class="btn btn-primary btn-lg w-100 mt-2">
+              <i class="bi bi-check-circle me-2"></i>Termin verbindlich buchen
+            </button>
+            <a href="05-appointment.html" class="btn btn-outline-secondary w-100 mt-2">
+              <i class="bi bi-arrow-left me-1"></i> Zurück
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="_layout.js"></script>
+</body>
+</html>

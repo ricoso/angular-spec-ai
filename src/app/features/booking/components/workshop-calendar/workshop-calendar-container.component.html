@@ -1,8 +1,8 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="workshop-calendar" aria-labelledby="wk-title">
+<section class="page-wrap workshop-calendar" aria-labelledby="wk-title">
 
-  <h1 class="workshop-calendar__title" id="wk-title">
+  <h1 class="workshop-calendar__title page-title" id="wk-title">
     {{ booking.workshopCalendar.title | translate }}
   </h1>
 
@@ -24,8 +24,40 @@
         <p class="right-panel__hint">
           {{ booking.workshopCalendar.hintBefore | translate }}
         </p>
+      } @else if (isLoading()) {
+        <div class="workshop-calendar__loading" role="status" aria-live="polite">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">{{ booking.api.loading | translate }}</span>
+          </div>
+          <p class="workshop-calendar__loading-text">{{ booking.api.loading | translate }}</p>
+        </div>
+      } @else if (error()) {
+        <div class="workshop-calendar__error" role="alert" aria-live="assertive">
+          <i class="bi bi-exclamation-circle workshop-calendar__error-icon" aria-hidden="true"></i>
+          <h2 class="workshop-calendar__error-title">{{ booking.api.errorTitle | translate }}</h2>
+          <p class="workshop-calendar__error-message">{{ booking.api.errorUnknown | translate }}</p>
+          <button
+            type="button"
+            class="btn btn-primary workshop-calendar__retry-button"
+            (click)="onRetry()">
+            <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>
+            {{ booking.api.retryButton | translate }}
+          </button>
+        </div>
+      } @else if (hasNoRentalCarCalendarDays()) {
+        <!-- REQ-039 E-1/E-2: kein Termin mit Mietwagen ab dem gewählten Tag (der Kalender ist bereits die spätere Ansicht) -->
+        <app-rental-car-empty-state
+          class="workshop-calendar__rental-empty"
+          (continueWithout)="onContinueWithoutRentalCar()"
+        />
       } @else {
         <div class="right-panel__slots">
+          @if (rentalCarRequested()) {
+            <p class="notice workshop-calendar__rental-filter">
+              <i class="bi bi-car-front" aria-hidden="true"></i>
+              <span>{{ booking.appointment.rentalCar.filterActive | translate }}</span>
+            </p>
+          }
           <p class="slots__intro">
             {{ booking.workshopCalendar.hintAfter | translate }}
           </p>
@@ -46,27 +78,22 @@
   <!-- Navigation Bar -->
   <nav class="wizard-nav" [attr.aria-label]="booking.workshopCalendar.navAriaLabel | translate">
     <button
-      mat-flat-button
-      class="wizard-nav__back-button"
       type="button"
+      class="btn btn-outline-secondary wizard-nav__back-button"
       [attr.aria-label]="booking.workshopCalendar.backButton | translate"
       (click)="onBack()"
     >
-      <mat-icon aria-hidden="true">arrow_back</mat-icon>
       {{ booking.workshopCalendar.backButton | translate }}
     </button>
 
     <button
-      mat-flat-button
-      color="primary"
-      class="wizard-nav__continue-button"
       type="button"
+      class="btn btn-primary wizard-nav__continue-button"
       [disabled]="!hasAppointmentSelected()"
       [attr.aria-label]="booking.workshopCalendar.continueButton | translate"
       (click)="onContinue()"
     >
       {{ booking.workshopCalendar.continueButton | translate }}
-      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
     </button>
   </nav>
 

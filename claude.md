@@ -10,7 +10,19 @@
 - **Code-Sprache**: Englisch (FIXIERT)
 - **UI-Sprachen**: DE, EN
 - **Doc-Sprachen**: DE, EN
-- **Deployment**: Click-Dummy (GitHub Pages, HashLocation)
+- **Deployment**: Production (Spring Boot Backend + SoftNet API)
+- **Hosting**: Azure Container App (`gs-terminbuchungs-app`, RG `DefaultResourceGroup-DEWC`, Region `westeurope`)
+  - **Konfig auslesen / Logs / Monitoring:** [`docs/infrastructure/azure-read.md`](./docs/infrastructure/azure-read.md)
+  - **Deploy / Update (acr build → containerapp update):** [`docs/infrastructure/azure-deploy.md`](./docs/infrastructure/azure-deploy.md)
+- **SoftNet API-Doku**: `test-booking-flow copy.mjs` — Feature Discovery (Zeitfilter, Ersatzwagen, Wiederkehr-Kunde); `soft-netOpenAPI.html` — Offizielle OpenAPI Spec
+- **SoftNet API-Erkenntnisse** (getestet + bewiesen, INT-System, `scope.api.planning.service`):
+  - `checkInTimePreference: "AM"|"PM"` → verschiebt Snap-Verteilung (VM/NM)
+  - `replacementPreference: true` → Ersatzwagen (Branch-abhaengig, Muenchen hat keine)
+  - `wishlist.note` → Freitext max 2000 chars, wird gespeichert
+  - **Wiederkehr-Kunde**: Email reicht — SoftNet erkennt Bestandskunden per Email, liefert: `firstName`, `lastName`, `email`, `brand`, `model`, `license`. Keine eigene DB noetig!
+  - **Appointment-Response liefert NICHT**: `address`, `zipCode`, `city`, `phone`, `mobile`, `country` — dafuer braucht man `GET /users/{id}` (401 mit aktuellem Scope). → Mit Prod-System + erweitertem Scope (`scope.api.planning.user`) erneut testen!
+  - `vaultitems` Endpoint → 401 (Scope reicht nicht) → mit Prod-System testen
+  - **Unbekannte Fahrzeugdaten:** FIN (`VIN`) und Erstzulassung **weglassen**, NIE mit Platzhaltern befüllen (`UNKNOWN`, `N/A`, `""`, erfundene Defaults wie 01/2020). SoftNet ordnet Fahrzeuge über FIN + Kennzeichen zu und übernimmt die Werte in den Fahrzeugstamm; die SoftNet-Mitarbeiter beschweren sich über Platzhalter (Nutzer-Vorgabe 30.10.2026, REQ-045). Eingehende Platzhalter werden ebenfalls entfernt. **Ausnahme `model`: nie weglassen** — an manchen Standorten Pflicht (02.11.2026: Essen-Kray, Wuppertal, Benrath lehnten Buchungen ohne Modell ab → Rollback). Die Strecke fragt nur die Marke ab, Rückfallwert `"Unknown"` (`AppointmentsService.MODEL_UNKNOWN`, Nutzerentscheid 02.11.2026). **Vor jeder Änderung am Car-Payload die Pflichtfelder prüfen** (lesend: `GET /api/planning/fields?scope=car&mandatory=true`; Pflichtfelder sind je Standort verschieden). **Testbuchungen:** höchstens 1–2, immer mit Hinweistext „lhind, Testbuchung, bitte stornieren“ — `api.soft-nrg.com` ist laut OpenAPI das **Produktivsystem** (INT: `int-api.soft-nrg.com`), jede Buchung ist echt. Nach dem Deploy 10 Min. die echten Buchungen auf `SOFTNET_ERROR`/`ValidationError` prüfen. Details: `.claude/skills/spring-backend.md`
 
 ---
 
@@ -32,6 +44,7 @@
 | `protected readonly t = i18nKeys` | Feature-Alias: `protected readonly carinformation = i18nKeys.booking.carinformation` |
 | Coverage-Thresholds ändern | Coverage-Config ist TABU — nie anfassen! |
 | `mat-stroked-button` (outlined) | `mat-flat-button` (filled) — Buttons IMMER filled! |
+| Platzhalter für unbekannte Daten in API-/SoftNet-Payloads (`UNKNOWN`, `N/A`, `""`, erfundene Defaults) | Feld **weglassen** (Key nicht setzen / `undefined`) — Ausnahme: SoftNet-Pflichtfeld `model` nie weglassen (Rückfall `"Unknown"`), siehe `.claude/skills/spring-backend.md` |
 
 ---
 
@@ -99,13 +112,15 @@
 | 4 | Styling | `_variables.scss`, Mobile-First, WCAG 2.1 AA |
 | 5 | Tests | Jest >80% Coverage |
 | **6** | **Tech-Check (3 PARALLEL AGENTS)** | **`lint:fix` + `type-check` + `test:coverage`** |
+| **6.5** | **Smoke + E2E (VERBINDLICH)** | **Smoke-Test + `npm run e2e:backend` GRUEN (3 Viewports) — siehe REQ-023** |
 | **7** | **Quality Gate** | **`/check-all` Score >= 90 + qualitaets.md generiert** |
 | 8 | Fertigmeldung | Änderungen LOKAL — kein Commit/Push (User prüft selbst) |
 
 > **Branch-Regel:** Kein separater `feat/`-Branch — Implementierung auf `req/REQ-XXX`.
 > **Kein Auto-Commit:** Änderungen bleiben lokal bis der User selbst committed.
 > **STOP bei Step 6 FAIL!** Erst fixen, dann weiter.
-> **STOP bei Step 7 Score < 90!** Erst fixen, Step 6+7 wiederholen.
+> **STOP bei Step 6.5 FAIL!** Smoke-Test und E2E sind PFLICHT (REQ-023). Ohne grünen E2E-Run kein Commit.
+> **STOP bei Step 7 Score < 90!** Erst fixen, Step 6+6.5+7 wiederholen.
 > Details: `.claude/commands/implement-requirement.md`
 
 ### /create-requirement — Pflicht-Ablauf:
@@ -134,13 +149,36 @@
 ## Commands
 
 ```bash
-npm start              # Dev Server
+# Frontend
+npm start              # Angular Dev Server (:4200, braucht Backend auf :3000)
 npm test               # Jest Watch
 npm run test:coverage  # Coverage Report
 npm run lint:fix       # ESLint Auto-fix
 npm run type-check     # TypeScript Check
-npm run e2e            # Playwright E2E (3 Viewports)
+
+# Backend (Spring Boot)
+cd server && ./gradlew bootRun          # Spring Boot Server (:3000)
+cd server && ./gradlew test             # Backend JUnit Tests
+cd server && ./gradlew jacocoTestReport # Backend Coverage
+
+# E2E (IMMER mit Backend!)
+npm run e2e:backend    # Build + Backend + Playwright (3 Viewports)
+
+# Lokaler Test-Runner (scripts/test-local.sh) — EMPFOHLEN fuer Smoke/E2E
+# Erzwingt die richtige Reihenfolge: killt altes Backend auf :3000, baut das
+# Frontend NEU, startet dann ein frisches Backend gegen das aktuelle dist/.
+# Verhindert den Stale-Bundle-Fehler (Backend serviert alte index.html ->
+# main-XXXX.js 404 -> App laedt nicht -> E2E scheitert an `.location-card`),
+# der auftritt, wenn man das Frontend neu baut waehrend das Backend laeuft.
+npm run test:local:smoke              # Build + Backend + Health-/Root-Check (~1 min)
+npm run test:local                    # Build + frisches Backend + Playwright (3 Viewports)
+npm run test:local -- REQ-031         # Nur passende Specs (Filter -> Playwright)
+npm run test:local:serve              # Build + Backend hochfahren + laufen lassen (manuelles Testen)
 ```
+
+> **WICHTIG (Step 6.5):** Frontend NIE neu bauen, waehrend ein Backend auf :3000
+> laeuft — sonst serviert es eine veraltete `index.html`. Immer `npm run test:local`
+> nutzen (killt + baut + startet frisch) statt Build und Backend getrennt zu starten.
 
 ---
 
@@ -175,6 +213,24 @@ src/app/
 │       ├── store/         # NgRx Signal Store
 │       └── models/        # Interfaces
 └── app.routes.ts
+
+server/                    # Spring Boot Backend (Java 21)
+├── build.gradle
+├── src/main/java/com/autohaus/backend/
+│   ├── config/            # SecurityConfig, WebConfig, Properties
+│   ├── softnet/           # SoftNet API Client + Auth
+│   ├── session/           # Session Token (HMAC-SHA256)
+│   ├── health/            # Health Check
+│   ├── branches/          # Branches Controller/Service
+│   ├── brands/            # Brands Controller/Service
+│   ├── jobtypes/          # JobTypes Controller/Service
+│   ├── snaps/             # Snaps + Cache + OperationIdMapper
+│   ├── appointments/      # Appointments + SnapPatcher
+│   ├── customers/         # Customers Controller/Service
+│   ├── cars/              # Cars Controller/Service
+│   ├── mobility/          # Mobility Controller/Service
+│   └── common/            # Filters, Exception Handler, DTOs
+└── src/main/resources/application.yml
 
 docs/requirements/
 ├── REQUIREMENTS.md

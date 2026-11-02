@@ -1,44 +1,13 @@
+// REQ-039: layout of the blue notice comes from the global .notice (theme).
 .service-hints {
-  margin-top: var(--spacing-xl);
-  padding-top: var(--spacing-xl);
-  border-top: 0.0625em solid var(--color-divider);
-
-  &__title {
-    font-size: var(--font-size-lg);
-    line-height: var(--line-height-tight);
-    color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-lg);
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-inline-size: 0;
   }
 
   &__item {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-md);
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
-    background-color: var(--color-background-surface);
-    border: 0.0625em solid var(--color-border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-small);
-  }
-
-  &__icon {
-    color: var(--color-info);
-    flex-shrink: 0;
-    margin-top: var(--spacing-xs);
-  }
-
-  &__svg-icon {
-    width: 1.5em;
-    height: 1.5em;
-    object-fit: contain;
-    filter: invert(48%) sepia(79%) saturate(1564%) hue-rotate(212deg) brightness(97%) contrast(88%);
-  }
-
-  &__text {
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-    color: var(--color-text-secondary);
     margin: 0;
   }
 }

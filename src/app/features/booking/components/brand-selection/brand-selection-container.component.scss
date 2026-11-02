@@ -1,91 +1,63 @@
 @use 'breakpoints' as *;
 
+// REQ-039: brand step as in mockups/wizard.css (.step-content--brand) — content centred
+// vertically, centred heading, location banner on top.
 .brand-selection {
-  max-width: 70em;
-  margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
-  text-align: center;
+  justify-content: center;
+  gap: 1.5rem;
 
-  &__title {
-    font-size: var(--font-size-2xl);
-    font-weight: 700;
-    line-height: var(--line-height-tight);
-    color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-sm);
+  @include desktop {
+    gap: 1.75rem;
+    padding-block-start: 4rem;
   }
 
-  &__subtitle {
-    font-size: var(--font-size-md);
-    line-height: var(--line-height-normal);
-    color: var(--color-text-secondary);
-    margin: 0 0 var(--spacing-xl);
-  }
+  &__heading {
+    text-align: center;
 
-  &__info-banner {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md) var(--spacing-lg);
-    background-color: #e3f2fd;
-    border: 0.0625em solid #90caf9;
-    border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-xl);
-    text-align: left;
-  }
-
-  &__info-icon {
-    flex-shrink: 0;
-    color: var(--color-info);
-
-    mat-icon {
-      font-size: 1.5em;
-      width: 1.5em;
-      height: 1.5em;
+    .page-title,
+    .page-subtitle {
+      margin-block-end: 0;
+      text-align: center;
     }
   }
 
   &__info-text {
-    font-size: var(--font-size-sm);
-    color: var(--color-info);
-    font-weight: 500;
+    flex: 1;
+    min-inline-size: 0;
+  }
 
-    strong {
-      font-weight: 700;
-    }
+  &__loading-text {
+    margin: 0;
+    color: var(--color-text-secondary);
+  }
+
+  &__error {
+    text-align: center;
+  }
+
+  &__error-icon {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-error);
+    font-size: 3em;
+  }
+
+  &__error-title {
+    margin: 0 0 var(--spacing-xs);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+  }
+
+  &__error-message {
+    max-width: 30em;
+    margin: 0 auto var(--spacing-md);
+    color: var(--color-text-secondary);
   }
 
   &__empty {
-    font-size: var(--font-size-md);
-    color: var(--color-text-secondary);
     padding: var(--spacing-xl);
-  }
-
-  &__nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--spacing-md);
-    padding: var(--spacing-md) 0;
-  }
-
-  &__back-button {
-    background-color: transparent !important;
-    color: var(--color-text-secondary) !important;
-    border: 0.0625em solid var(--color-border) !important;
-
-    &:hover {
-      background-color: var(--color-background-hover) !important;
-      color: var(--color-text-primary) !important;
-    }
-  }
-}
-
-@media (max-width: 47.9375em) {
-  .brand-selection {
-    padding: var(--spacing-lg) var(--spacing-sm);
-
-    &__title {
-      font-size: var(--font-size-xl);
-    }
+    color: var(--color-text-secondary);
+    text-align: center;
   }
 }

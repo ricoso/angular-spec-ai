@@ -1,0 +1,733 @@
+{
+  "branches": [
+    {
+      "branchId": "68f606798d2bb4389ed1af51",
+      "name": "Audi Mettmann",
+      "address": {
+        "street": "Düsseldorfer Str. 189-191",
+        "zip": "40822",
+        "city": "Mettmann",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "6908807454f4bb2b69b03fde",
+          "fullName": "Audi Mettmann soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "6908807823dcaf880659dc5e",
+          "fullName": "Audi Mettmann Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f60ef18d2bb4389eee4ddc",
+      "name": "Audi Zentrum Duisburg",
+      "address": {
+        "street": "Düsseldorfer Landstr. 37",
+        "zip": "47239",
+        "city": "Duisburg",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690c66fd7ff8b27fb329aeea",
+          "fullName": "Audi Zentrum Duisburg soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690cbc436859488a77bd1eb1",
+          "fullName": "Audi Zentrum Duisburg Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f603148d2bb4389ec92d75",
+      "name": "Audi Zentrum Düsseldorf",
+      "address": {
+        "street": "Höherweg 210",
+        "zip": "40231",
+        "city": "Düsseldorf",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690237ca7bd43a9f1f019cd8",
+          "fullName": "Audi Zentrum Düsseldorf soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690237d67bd43a9f1f01b3a7",
+          "fullName": "Audi Zentrum Düsseldorf Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f60cd58d2bb4389ee98bbd",
+      "name": "Audi Zentrum Essen",
+      "address": {
+        "street": "Altendorfer Str. 50",
+        "zip": "45143",
+        "city": "Essen",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690882187bd43a9f1fed93e5",
+          "fullName": "Audi Zentrum Essen soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "6908821a429ef729117d1eef",
+          "fullName": "Audi Zentrum Essen Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f60f708d2bb4389eef6e6a",
+      "name": "Audi Zentrum Mülheim",
+      "address": {
+        "street": "Düsseldorfer Str. 261",
+        "zip": "45481",
+        "city": "Mülheim an der Ruhr",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690c670099f4bdb65b1866b0",
+          "fullName": "Audi Zentrum Mülheim soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690cbc464bcdb0cd0152593f",
+          "fullName": "Audi Zentrum Mülheim Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68d25d008d2bb4389eb9d11a",
+      "name": "Audi Zentrum Neuss",
+      "address": {
+        "street": "Jülicher Landstrasse 41-43",
+        "zip": "41464",
+        "city": "Neuss",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "68d27df7bc2f5a9f555f8f72",
+          "fullName": "Audi Zentrum Neuss soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "68d27e02794a7b452c5227ad",
+          "fullName": "Audi Zentrum Neuss Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f6053f8d2bb4389ece92b5",
+      "name": "Audi Zentrum Wuppertal",
+      "address": {
+        "street": "Uellendahler Str. 306",
+        "zip": "42109",
+        "city": "Wuppertal",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690880854c8fc5db1703e721",
+          "fullName": "Audi Zentrum Wuppertal soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "6908808c23dcaf880659ea93",
+          "fullName": "Audi Zentrum Wuppertal Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f78b538d2bb4389e3590c5",
+      "name": "Audi Zentrum Leverkusen",
+      "address": {
+        "street": "Willy-Brandt-Ring 10",
+        "zip": "51373",
+        "city": "Leverkusen",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "692efccada14063a833c6d55",
+          "fullName": "Automobil Zentrum Leverkusen GmbH & Co. KG planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "692efcc9d6f69fcab895e50b",
+          "fullName": "Automobil Zentrum Leverkusen BS planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68d25e2c8d2bb4389ebc6b45",
+      "name": "Volkswagen Dormagen",
+      "address": {
+        "street": "Lübecker Straße 17",
+        "zip": "41540",
+        "city": "Dormagen",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "68d27df0794a7b452c522200",
+          "fullName": "Dormagen soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "68d27dfcbc2f5a9f555f918a",
+          "fullName": "Dormagen Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f608e98d2bb4389ed80784",
+      "name": "Volkswagen Erkrath",
+      "address": {
+        "street": "Schimmelbuschstr. 1",
+        "zip": "40699",
+        "city": "Erkrath",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "6908822d680bb9d6c235c9a9",
+          "fullName": "Erkrath soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "6908822f429ef729117d3753",
+          "fullName": "Erkrath Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f60e658d2bb4389eed1f03",
+      "name": "Volkswagen Essen-Kray",
+      "address": {
+        "street": "Kleine Schönscheidtstr. 1",
+        "zip": "45307",
+        "city": "Essen",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690c6704bd7493c1448d559a",
+          "fullName": "Essen Kray soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690cbc487ff8b27fb379f8a5",
+          "fullName": "Essen -Kray Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f60df88d2bb4389eec1d39",
+      "name": "Volkswagen & ŠKODA Service Wickenburg",
+      "address": {
+        "street": "An der Wickenburg 1",
+        "zip": "45128",
+        "city": "Essen",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690c67056859488a776c17c4",
+          "fullName": "Essen Wickenburg soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690cbc4a99f4bdb65b6b6719",
+          "fullName": "Essen Wickenburg Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68d25dbf8d2bb4389ebb6f2b",
+      "name": "Volkswagen Grevenbroich",
+      "address": {
+        "street": "Lilienthalstraße 6",
+        "zip": "41515",
+        "city": "Grevenbroich",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "68d27df4bff173e2d68b1918",
+          "fullName": "Grevenbroich soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "68d27dff534d720c02a9b653",
+          "fullName": "Grevenbroich Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f606f38d2bb4389ed2f0ba",
+      "name": "Volkswagen Mettmann",
+      "address": {
+        "street": "Johannes-Flintrop-Str. 127",
+        "zip": "40822",
+        "city": "Mettmann",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690880ab23dcaf88065a037e",
+          "fullName": "Mettmann VW soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690880b323dcaf88065a0848",
+          "fullName": "Mettmann VW Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "6911dd328d2bb4389e2a01c8",
+      "name": "Volkswagen Mülheim Saarn",
+      "address": {
+        "street": "Kölner Str. 25 / Ecke Sommerfeld",
+        "zip": "45481",
+        "city": "Mülheim an der Ruhr",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690c670399f4bdb65b1867e0",
+          "fullName": "Mülheim Saarn soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690ca0a399f4bdb65b55f683",
+          "fullName": "Mülheim Saarn Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68a41f82acd563b069148661",
+      "name": "Volkswagen Neuss",
+      "address": {
+        "street": "Hammer Landstr. 99",
+        "zip": "41460",
+        "city": "Neuss",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "68ac301f69d6e70958151cc7",
+          "fullName": "Neuss Hammer Landstr. soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "68ac3023d4ba93dcfa2d12b1",
+          "fullName": "Neuss Hammer Landstr. Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f608428d2bb4389ed6543f",
+      "name": "Volkswagen Düsseldorf-Benrath",
+      "address": {
+        "street": "Professor-OehlerStr. 13",
+        "zip": "40597",
+        "city": "Düsseldorf",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690c89e499f4bdb65b4396d5",
+          "fullName": "Schultz, Düsseldorf Benrath soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690c8a51bd7493c144b6ddf8",
+          "fullName": "Schultz, Düsseldorf Benrath Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f60b838d2bb4389ee68bd2",
+      "name": "Volkswagen Hagen",
+      "address": {
+        "street": "Weststr. 1",
+        "zip": "58095",
+        "city": "Hagen",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690c66ff99f4bdb65b186634",
+          "fullName": "Schultz, Hagen soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690cbc447ff8b27fb379f6f1",
+          "fullName": "Schultz, Hagen Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f60fe18d2bb4389ef0741d",
+      "name": "Volkswagen Mülheim",
+      "address": {
+        "street": "Ruhrorter Str. 13",
+        "zip": "45478",
+        "city": "Mülheim an der Ruhr",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690c670299f4bdb65b18673c",
+          "fullName": "Schultz, Mülheim soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690cbc4799f4bdb65b6b65fc",
+          "fullName": "Schultz, Mülheim Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f6047e8d2bb4389ecca880",
+      "name": "ŠKODA Centrum Düsseldorf",
+      "address": {
+        "street": "Höherweg 119",
+        "zip": "40231",
+        "city": "Düsseldorf",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "69023d8c71767bc6a80e193c",
+          "fullName": "Skoda-Centrum, Düsseldorf soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "69023d9a71767bc6a80e1bea",
+          "fullName": "Skoda-Centrum, Düsseldorf Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68b986298d2bb4389e1acd35",
+      "name": "Volkswagen Solingen",
+      "address": {
+        "street": "Kuller Str. 16",
+        "zip": "42651",
+        "city": "Solingen",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "68be965834973bed3d8a5950",
+          "fullName": "Solingen Kullerstr. soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "68be9c14c75620cfda20f8ac",
+          "fullName": "Solingen Kullerstr. Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68b986f88d2bb4389e1c1119",
+      "name": "Audi Solingen",
+      "address": {
+        "street": "Schlagbaumer Str. 118",
+        "zip": "42653",
+        "city": "Solingen",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "68be9bfd14d0e3b90b266ccb",
+          "fullName": "Solingen Schlagbaumerstr (Audi) soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "68be9c29bfd6a79f1c7d3d1a",
+          "fullName": "Solingen Schlagbaumerstr (Audi) Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f604138d2bb4389ecbacaf",
+      "name": "Volkswagen Zentrum Düsseldorf",
+      "address": {
+        "street": "Höherweg 85",
+        "zip": "40231",
+        "city": "Düsseldorf",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "68ff294971767bc6a8e84753",
+          "fullName": "VW-Zentrum Nordrhein, Düsseldorf soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "68ff294d23dcaf88064a117e",
+          "fullName": "VW-Zentrum Nordrhein, Düsseldorf Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f60d5a8d2bb4389eeab6d4",
+      "name": "Volkswagen Zentrum Essen",
+      "address": {
+        "street": "ThyssenKrupp Allee 20",
+        "zip": "45143",
+        "city": "Essen",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "690c67076859488a776c1d56",
+          "fullName": "Volkswagen Zentrum Essen soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690cbc4c9e5d1205e2f21b25",
+          "fullName": "Volkswagen Zentrum Essen Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f78bda8d2bb4389e36b7f0",
+      "name": "Volkswagen Zentrum Leverkusen",
+      "address": {
+        "street": "Robert-Blum-Str. 71",
+        "zip": "51373",
+        "city": "Leverkusen",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "692efccc3dc2d2f9e953b942",
+          "fullName": "Volkswagen Zentrum Leverkusen planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "692efccdfa906b4a962c1c7b",
+          "fullName": "Volkswagen Zentrum Leverkusen planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68272511acd563b0699cd562",
+      "name": "Volkswagen Velbert",
+      "address": {
+        "street": "Nevigeser Straße 163",
+        "zip": "42549",
+        "city": "Velbert",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "682ad3bd6969db66dd27ee56",
+          "fullName": "Velbert soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "682ad3bf7bc0a91b86e3bc47",
+          "fullName": "Volkswagen und Audi Velbert Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    },
+    {
+      "branchId": "68f605c68d2bb4389ecfe3e9",
+      "name": "Volkswagen Zentrum Wuppertal",
+      "address": {
+        "street": "Uellendahler Str. 245-251",
+        "zip": "42109",
+        "city": "Wuppertal",
+        "country": "DE"
+      },
+      "groups": [
+        {
+          "variant": "default",
+          "groupId": "6908809e23dcaf880659fb60",
+          "fullName": "Wuppertal Uellendahler Str. soft-planning+"
+        },
+        {
+          "variant": "tireChange",
+          "groupId": "690880a054f4bb2b69b08c1c",
+          "fullName": "Wuppertal Uellendahler Str. Radwechsel soft-planning+"
+        },
+        {
+          "variant": "recall",
+          "groupId": "6ac7939ba4c0acee699905a8",
+          "fullName": "Rückrufaktion soft-net"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+server:
+  port: ${PORT:3000}
+
+app:
+  session:
+    secret: ${SESSION_SECRET:default-dev-secret-must-be-32-chars!}
+    ttl-minutes: ${SESSION_TTL_MINUTES:20}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:3000}
+  frame-ancestors: ${APP_FRAME_ANCESTORS:'self' https://www.gottfried-schultz.de https://gottfried-schultz.de}
+  # Per-IP request limit for /api/** (health excluded). Production values unchanged;
+  # only configurable so local E2E runs can raise it — the Playwright suite drives several
+  # hundred calls from a single IP within minutes and would otherwise get 429 mid-run.
+  rate-limit:
+    capacity: ${APP_RATE_LIMIT_CAPACITY:500}
+    refill-minutes: ${APP_RATE_LIMIT_REFILL_MINUTES:15}
+
+softnet:
+  base-url: ${SOFTNET_BASE_URL:}
+  auth-url: ${SOFTNET_AUTH_URL:}
+  fingerprint-json: ${SOFTNET_FINGERPRINT_JSON:}
+  fingerprint-path: ${SOFTNET_FINGERPRINT_PATH:}
+  timeout: ${SOFTNET_TIMEOUT:10000}
+  # REQ-041: dedicated recall-campaign credential (separate SoftNet billing). Empty → the recall
+  # group falls back to the default fingerprint (e.g. INT before the recall client is provisioned).
+  recall-fingerprint-json: ${RECALL_FINGERPRINT_JSON:}
+  recall-fingerprint-path: ${RECALL_FINGERPRINT_PATH:}
+  recall-group-id: ${RECALL_GROUP_ID:6ac7939ba4c0acee699905a8}
+
+setup:
+  json: ${SETUP_JSON:}
+  json-path: ${SETUP_JSON_PATH:config/setup.json}
+
+features:
+  radwechsel-enabled: ${RADWECHSEL_ENABLED:true}
+
+# REQ-030: daily AI error report. The scheduler + LLM beans only activate when
+# LLM_API_KEY AND LLM_MODEL are set (see ErrorReportingConfiguration
+# @ConditionalOnExpression). Managed identity for Log Analytics needs no secret.
+reporting:
+  workspace-id: ${LOG_WORKSPACE_ID:f4bd94f3-490e-44e2-b5e3-f98bcc5aea38}
+  cron: ${REPORT_CRON:0 0 3 * * *}
+  zone: ${REPORT_ZONE:Europe/Berlin}
+  admin:
+    user: ${REPORT_ADMIN_USER:admin}
+    password: ${REPORT_ADMIN_PASSWORD:}
+
+# REQ-037: anonymous usage statistics on the status page. USAGE_STATS_ENABLED is a
+# real kill switch (BR-13): it gates the "device" log field, the KQL/blob jobs, the
+# rendering and the usage.json endpoint together. Independent of the LLM toggle.
+# Managed identity for Log Analytics and Blob Storage needs no secret; without
+# USAGE_STORAGE_ACCOUNT the history stays unavailable and the page says so.
+usage:
+  enabled: ${USAGE_STATS_ENABLED:true}
+  refresh-cron: ${USAGE_REFRESH_CRON:0 */15 * * * *}
+  rollup-cron: ${USAGE_ROLLUP_CRON:0 30 3 * * *}
+  zone: ${USAGE_ZONE:Europe/Berlin}
+  # BR-15: first day that is counted at all (ISO, e.g. 2026-09-22). Days BEFORE this date are
+  # not counted at all -- back then the "device" log field did not exist yet, so every visit
+  # would land in the "unbekannt" bucket and the numbers would suggest something they do not
+  # mean. Empty = no lower bound (behaviour as before).
+  # BR-15: erster Tag, der ueberhaupt gezaehlt wird (ISO, z. B. 2026-09-22). Tage DAVOR werden
+  # gar nicht gezaehlt -- damals gab es das Log-Feld "device" noch nicht, alles erschiene als
+  # "unbekannt". Leer = keine Begrenzung (Verhalten wie bisher).
+  collecting-since: ${USAGE_COLLECTING_SINCE:}
+  retention-months: ${USAGE_RETENTION_MONTHS:24}
+  refresh-min-interval-seconds: ${USAGE_REFRESH_MIN_INTERVAL_SECONDS:60}
+  storage:
+    account: ${USAGE_STORAGE_ACCOUNT:}
+    container: ${USAGE_STORAGE_CONTAINER:usage-stats}
+    blob: ${USAGE_STORAGE_BLOB:usage-daily.json}
+  # REQ-038 K2: booking insights (USAGE_BOOKING line, KQL 1+2, S0/S2-S4, insights.json).
+  # Delivered OFF (AC-31) — switching on requires gates S-2 and G-VVT (§14.5).
+  insights:
+    enabled: ${USAGE_INSIGHTS_ENABLED:false}
+    collecting-since: ${USAGE_INSIGHTS_COLLECTING_SINCE:}
+    rollup-cron: ${USAGE_INSIGHTS_ROLLUP_CRON:0 45 3 * * *}
+    blob: ${USAGE_INSIGHTS_BLOB:usage-insights.json}
+  # REQ-038 K3: global booking funnel (F-1..F-3, S6). Delivered OFF — gate G-DSB.
+  funnel:
+    enabled: ${USAGE_FUNNEL_ENABLED:false}
+    collecting-since: ${USAGE_FUNNEL_COLLECTING_SINCE:}
+  # REQ-038 N1: drop-off scenarios (F-4, access-line field "hits"). Only effective together
+  # with usage.enabled AND usage.funnel.enabled. Delivered OFF — gate G-DSB.
+  dropoff:
+    enabled: ${USAGE_DROPOFF_ENABLED:false}
+    collecting-since: ${USAGE_DROPOFF_COLLECTING_SINCE:}
+
+# REQ-038 K1: nightly capacity scan against SoftNet (S1, capacity.json).
+# Delivered OFF (AC-31) — switching on requires gate S-1 (§14.5). CAPACITY_SCAN_CRON=- disables
+# the cron (local/E2E).
+capacity:
+  enabled: ${CAPACITY_SCAN_ENABLED:false}
+  scan-cron: ${CAPACITY_SCAN_CRON:0 30 22 * * *}
+  reference-service: ${CAPACITY_REFERENCE_SERVICE:wiper-blades}
+  show-slot-count: ${CAPACITY_SHOW_SLOT_COUNT:false}
+  blob: ${CAPACITY_BLOB:capacity-daily.json}
+
+logging:
+  level:
+    root: INFO
+    com.autohaus.backend: DEBUG
+    org.springframework.boot.autoconfigure.security: OFF
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} - %X{traceId:-system}: %msg%n"
+
+spring:
+  # REQ-038 §9: two scheduler threads — without a second thread the up-to-20-minute capacity
+  # scan would block the 15-minute usage refresh from REQ-037.
+  task:
+    scheduling:
+      pool:
+        size: 2
+  jackson:
+    default-property-inclusion: non_null
+  devtools:
+    restart:
+      enabled: true
+      additional-exclude: "static/**,dist/**"
+  # Spring AI — OpenAI-compatible endpoint. Defaults keep the app booting even
+  # without secrets; the reporting feature stays inactive until LLM_API_KEY +
+  # LLM_MODEL are provided (ErrorReportingConfiguration toggle).
+  ai:
+    openai:
+      api-key: ${LLM_API_KEY:not-configured}
+      base-url: ${LLM_BASE_URL:https://api.openai.com}
+      chat:
+        options:
+          model: ${LLM_MODEL:gpt-5-mini}

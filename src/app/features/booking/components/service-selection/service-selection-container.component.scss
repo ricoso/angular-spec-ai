@@ -1,37 +1,120 @@
 @use 'breakpoints' as *;
 
-.service-selection {
-  max-width: 70em;
-  margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
-  text-align: center;
+// REQ-039: services step as in mockups/wizard.css (.service-pills, .service-panel, .choice-list,
+// .notice--success). Page heading and action bar come from the global page layout.
+.service-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  margin-block-end: 1.5rem;
+}
 
-  &__title {
-    font-size: var(--font-size-2xl);
-    line-height: var(--line-height-tight);
+.service-panel {
+  min-inline-size: 0;
+  padding: 1rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-header);
+
+  &__heading {
+    display: flex;
+    align-items: baseline;
+    gap: 0.625rem;
+    margin: 0;
+    padding-block-end: 0.75rem;
+    border-block-end: 0.0625rem solid var(--color-disabled);
     color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-sm);
+    font-size: 1rem;
+    font-weight: 650;
+    line-height: 1.4;
+
+    .bi {
+      color: var(--color-primary);
+    }
   }
 
-  &__subtitle {
-    font-size: var(--font-size-md);
-    line-height: var(--line-height-normal);
+  &__empty {
+    margin: 0;
+    padding-block-start: 0.75rem;
     color: var(--color-text-secondary);
-    margin: 0 0 var(--spacing-xl);
+    font-size: 0.875rem;
+  }
+}
+
+.choice-list {
+  padding-block-start: 0.5rem;
+
+  &__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-block-size: var(--touch-target-min);
+    margin: 0;
+    padding-block: 0.625rem;
+    color: var(--color-text-primary);
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    cursor: pointer;
+
+    .form-check-input {
+      flex: 0 0 1.25rem;
+      inline-size: 1.25rem;
+      block-size: 1.25rem;
+      margin: 0.125rem 0 0;
+      // Thin border as in the mockup, but with text-secondary for >= 3:1 non-text contrast.
+      border-width: 0.0625rem;
+      border-color: var(--color-text-secondary);
+    }
   }
 
-  &__grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-lg);
-    padding: var(--spacing-sm);
+  &__text {
+    min-inline-size: 0;
+  }
 
-    @include tablet {
-      grid-template-columns: repeat(2, 1fr);
-    }
+  &__description {
+    display: block;
+    margin-block-start: 0.125rem;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+}
 
-    @include desktop {
-      grid-template-columns: repeat(3, 1fr);
-    }
+.service-selection {
+  &__summary {
+    margin-block-start: 1.5rem;
+  }
+
+  &__summary-line {
+    display: block;
+  }
+
+  &__loading-text {
+    color: var(--color-text-secondary);
+  }
+
+  &__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  &__error-icon {
+    color: var(--color-error);
+    font-size: 3em;
+    line-height: 1;
+  }
+
+  &__error-title {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+  }
+
+  &__error-message {
+    max-width: 30em;
+    margin: 0 0 var(--spacing-md);
+    color: var(--color-text-secondary);
   }
 }

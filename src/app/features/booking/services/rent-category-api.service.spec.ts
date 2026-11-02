@@ -1,0 +1,80 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
+import { environment } from '@environments/environment';
+
+import { RentCategoryApiService } from './rent-category-api.service';
+
+describe('RentCategoryApiService', () => {
+  let service: RentCategoryApiService;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        RentCategoryApiService,
+        provideHttpClient(),
+        provideHttpClientTesting()
+      ]
+    });
+    service = TestBed.inject(RentCategoryApiService);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    http.verify();
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+
+  it('should fetch and map rent categories from API', async () => {
+    const promise = service.getRentCategories('branch-1');
+
+    const req = http.expectOne(r => r.url === `${environment.apiUrl}/branches/branch-1/rentcategories`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('variant')).toBe('default');
+
+    req.flush({
+      data: [
+        {
+          id: 'rc-1',
+          groupId: 'grp-1',
+          name: 'Kleinwagen',
+          description: 'Kompakte Autos',
+          brands: ['VW'],
+          branches: ['br-1']
+        }
+      ]
+    });
+
+    const result = await promise;
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('rc-1');
+    expect(result[0].name).toBe('Kleinwagen');
+    expect(result[0].brands).toEqual(['VW']);
+    expect(result[0].branches).toEqual(['br-1']);
+  });
+
+  it('should return empty list when API returns empty data', async () => {
+    const promise = service.getRentCategories('branch-1');
+
+    const req = http.expectOne(r => r.url === `${environment.apiUrl}/branches/branch-1/rentcategories`);
+    req.flush({ data: [] });
+
+    const result = await promise;
+    expect(result).toEqual([]);
+  });
+
+  it('should pass the tireChange variant so categories come from the snap group (REQ-039 BR-M7)', async () => {
+    const promise = service.getRentCategories('branch-1', 'tireChange');
+
+    const req = http.expectOne(r => r.url === `${environment.apiUrl}/branches/branch-1/rentcategories`);
+    expect(req.request.params.get('variant')).toBe('tireChange');
+    req.flush({ data: [] });
+
+    await expect(promise).resolves.toEqual([]);
+  });
+});

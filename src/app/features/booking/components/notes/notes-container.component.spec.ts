@@ -3,10 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 
 import { AVAILABLE_BRANDS } from '../../models/brand.model';
+import type { LocationDisplay } from '../../models/location.model';
 import { LOCATIONS_BY_BRAND } from '../../models/location.model';
 import type { NotesExtras } from '../../models/notes-extras.model';
 import { AVAILABLE_SERVICES } from '../../models/service.model';
 import { BookingApiService } from '../../services/booking-api.service';
+import { RentCategoryApiService } from '../../services/rent-category-api.service';
 import { BookingStore } from '../../stores/booking.store';
 
 import { NotesContainerComponent } from './notes-container.component';
@@ -30,6 +32,14 @@ describe('NotesContainerComponent', () => {
             getBrands: jest.fn().mockResolvedValue(AVAILABLE_BRANDS),
             getLocations: jest.fn().mockResolvedValue(LOCATIONS_BY_BRAND.audi),
             getServices: jest.fn().mockResolvedValue(AVAILABLE_SERVICES)
+          }
+        },
+        {
+          provide: RentCategoryApiService,
+          useValue: {
+            getRentCategories: jest.fn().mockResolvedValue([
+              { id: 'rc-42', groupId: 'g1', name: 'Mittelklasse', description: '', brands: [], branches: [] }
+            ])
           }
         },
         { provide: Router, useValue: router }
@@ -78,9 +88,9 @@ describe('NotesContainerComponent', () => {
     it('should expose currentExtras with defaults initially', () => {
       const exposed = component as unknown as { currentExtras: () => NotesExtras };
       expect(exposed.currentExtras()).toEqual({
-        mobilityOption: 'none',
         appointmentPreference: 'anytime',
-        callbackOption: 'none'
+        callbackOption: 'no',
+        notificationChannel: 'email'
       });
     });
   });
@@ -108,9 +118,9 @@ describe('NotesContainerComponent', () => {
   describe('onExtrasChanged', () => {
     it('should update currentExtras when extras change', () => {
       const extras: NotesExtras = {
-        mobilityOption: 'luxury',
         appointmentPreference: 'afternoon',
-        callbackOption: 'yes'
+        callbackOption: 'yes',
+        notificationChannel: 'sms'
       };
       const exposed = component as unknown as {
         onExtrasChanged: (extras: NotesExtras) => void;
@@ -124,9 +134,9 @@ describe('NotesContainerComponent', () => {
   describe('onContinue', () => {
     it('should save note and extras to store and navigate', () => {
       const extras: NotesExtras = {
-        mobilityOption: 'mid-range',
         appointmentPreference: 'morning',
-        callbackOption: 'yes'
+        callbackOption: 'yes',
+        notificationChannel: 'sms'
       };
       const exposed = component as unknown as {
         onNoteChanged: (note: string | null) => void;
@@ -175,9 +185,9 @@ describe('NotesContainerComponent', () => {
       const exposed = component as unknown as { onContinue: () => void };
       exposed.onContinue();
       expect(store.notesExtras()).toEqual({
-        mobilityOption: 'none',
         appointmentPreference: 'anytime',
-        callbackOption: 'none'
+        callbackOption: 'no',
+        notificationChannel: 'email'
       });
       expect(router.navigate).toHaveBeenCalledWith(['/home/appointment']);
     });
@@ -192,7 +202,7 @@ describe('NotesContainerComponent', () => {
 
     it('should clear booking note and notesExtras in store before navigating back', () => {
       store.setBookingNote('Test note');
-      store.setNotesExtras({ mobilityOption: 'luxury', appointmentPreference: 'afternoon', callbackOption: 'yes' });
+      store.setNotesExtras({ appointmentPreference: 'afternoon', callbackOption: 'yes', notificationChannel: 'email' });
 
       const exposed = component as unknown as { onBack: () => void };
       exposed.onBack();
@@ -215,6 +225,16 @@ describe('NotesContainerComponent', () => {
       expect(store.notesExtras()).toBeNull();
       expect(router.navigate).toHaveBeenCalledWith(['/home/services']);
     });
+
+    // REQ-041: the service step is skipped in recall mode — back must not re-enter it.
+    it('should navigate to the brand page (not services) in recall mode', () => {
+      store.activateRecallMode('WVWZZZ1KZAW000123');
+
+      const exposed = component as unknown as { onBack: () => void };
+      exposed.onBack();
+
+      expect(router.navigate).toHaveBeenCalledWith(['/home/brand']);
+    });
   });
 
   describe('Store Integration', () => {
@@ -232,13 +252,82 @@ describe('NotesContainerComponent', () => {
 
     it('should reflect notesExtras from store', () => {
       const extras: NotesExtras = {
-        mobilityOption: 'compact-car',
         appointmentPreference: 'morning',
-        callbackOption: 'yes'
+        callbackOption: 'yes',
+        notificationChannel: 'email'
       };
       const exposed = component as unknown as { initialExtras: () => NotesExtras | null };
       store.setNotesExtras(extras);
       expect(exposed.initialExtras()).toEqual(extras);
+    });
+  });
+
+  describe('Rent Category', () => {
+    it('should update currentRentCategoryId on change', () => {
+      const exposed = component as unknown as {
+        onRentCategoryChanged: (id: string | null) => void;
+        currentRentCategoryId: () => string | null;
+      };
+      exposed.onRentCategoryChanged('rc-1');
+      expect(exposed.currentRentCategoryId()).toBe('rc-1');
+    });
+
+    /** REQ-039: the branch offers rent categories → the switch is shown. */
+    async function offerRentalCars(): Promise<void> {
+      store.setLocation({ id: 'loc-1' } as LocationDisplay);
+      store.loadRentCategories();
+      await fixture.whenStable();
+    }
+
+    it('should persist rental car choice and wish to store on continue (REQ-039)', async () => {
+      await offerRentalCars();
+      const exposed = component as unknown as {
+        onRentalCarChanged: (requested: boolean) => void;
+        onRentCategoryChanged: (id: string | null) => void;
+        onContinue: () => void;
+      };
+      exposed.onRentalCarChanged(true);
+      exposed.onRentCategoryChanged('rc-42');
+      exposed.onContinue();
+      expect(store.rentalCarRequested()).toBe(true);
+      expect(store.selectedRentCategoryId()).toBe('rc-42');
+    });
+
+    it('should drop the wish when continuing without rental car (REQ-039 BR-M5)', async () => {
+      await offerRentalCars();
+      const exposed = component as unknown as {
+        onRentCategoryChanged: (id: string | null) => void;
+        onContinue: () => void;
+      };
+      exposed.onRentCategoryChanged('rc-42');
+      exposed.onContinue();
+      expect(store.rentalCarRequested()).toBe(false);
+      expect(store.selectedRentCategoryId()).toBeNull();
+    });
+
+    it('should never request a rental car when the branch offers none (REQ-039 BR-M8)', () => {
+      const exposed = component as unknown as {
+        onRentalCarChanged: (requested: boolean) => void;
+        onContinue: () => void;
+      };
+      exposed.onRentalCarChanged(true);
+      exposed.onContinue();
+      expect(store.rentalCarRequested()).toBe(false);
+    });
+
+    it('should reset the rental car choice on back', async () => {
+      await offerRentalCars();
+      store.setRentalCarRequested(true);
+      const exposed = component as unknown as { onBack: () => void };
+      exposed.onBack();
+      expect(store.rentalCarRequested()).toBe(false);
+    });
+
+    it('should clear rentCategoryId in store on back', () => {
+      store.setSelectedRentCategoryId('rc-1');
+      const exposed = component as unknown as { onBack: () => void };
+      exposed.onBack();
+      expect(store.selectedRentCategoryId()).toBeNull();
     });
   });
 });

@@ -9,45 +9,53 @@
   // ===========================================================================
   // BRAND COLORS
   // ===========================================================================
-  --color-primary: #667eea;           // Hauptfarbe für Buttons, Links, Active States
-  --color-primary-hover: #5a67d8;     // Primary Hover State
-  --color-secondary: #764ba2;         // Sekundäre Aktionen
+  --color-primary: #1e40af;
+  --color-primary-rgb: 30, 64, 175;
+  --color-primary-hover: #003366;
+  --color-primary-hover-rgb: 0, 51, 102;
+  --color-secondary: var(--color-primary);
   --color-accent: #ed8936;            // Highlights, Badges, Notifications
 
   // ===========================================================================
   // TEXT COLORS (WCAG AA Contrast geprüft!)
   // ===========================================================================
-  --color-text-primary: #1a1a1a;      // Haupttext - 15:1 Kontrast auf weiß
-  --color-text-secondary: #595959;    // Sekundärtext - 7:1 Kontrast auf weiß
-  --color-text-muted: #767676;        // Dezenter Text - 4.5:1 Minimum!
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: var(--color-text-secondary);
   --color-text-on-primary: #ffffff;   // Text auf Primary-Farbe
   --color-text-on-dark: #ffffff;      // Text auf dunklem Hintergrund
 
   // ===========================================================================
   // BACKGROUND COLORS (Hell & Freundlich!)
   // ===========================================================================
-  --color-background-page: #f8f9fa;   // Page Background - HELL!
+  --color-background-page: #ffffff;
   --color-background-surface: #ffffff; // Cards, Dialogs, Modals
-  --color-background-hover: #f5f5f5;  // Hover State für Surfaces
+  --color-background-header: #f8fafc;
+  --color-background-hover: var(--color-background-header);
 
   // ===========================================================================
   // BORDER & DIVIDER
   // ===========================================================================
-  --color-border: #e0e0e0;            // Standard Border
-  --color-divider: #eeeeee;           // Trennlinien
+  --color-border: #999999;
+  --color-disabled: #e5e7eb;
+  --color-divider: var(--color-disabled);
 
   // ===========================================================================
   // SEMANTIC COLORS (Status & Feedback)
   // ===========================================================================
   --color-error: #c62828;             // Fehler, Validierung
-  --color-success: #2e7d32;           // Erfolg, Bestätigung
+  --color-success: #14532d;
+  --color-success-rgb: 20, 83, 45;
+  --color-success-bg: #edf6f0;
   --color-warning: #e65100;           // Warnung, Achtung
-  --color-info: #1565c0;              // Info, Hinweis
+  --color-info: var(--color-primary);
+  --color-info-bg: var(--color-background-header);
+  --color-info-border: var(--color-primary);
 
   // ===========================================================================
   // FOCUS (Accessibility!)
   // ===========================================================================
-  --color-focus-ring: #005fcc;        // Focus Outline für Keyboard-Navigation
+  --color-focus-ring: var(--color-primary);
 
   // ===========================================================================
   // SHADOWS
@@ -108,8 +116,13 @@ html[data-font-size="x-large"] { --font-size-base: 1.25em; }   // 20px
 // ACCESSIBILITY: High Contrast Mode
 // =============================================================================
 html[data-high-contrast="true"] {
+  --color-primary: #003366;
+  --color-primary-rgb: 0, 51, 102;
   --color-text-primary: #000000;
-  --color-text-secondary: #000000;
+  --color-text-secondary: #374151;
   --color-background-page: #ffffff;
-  --color-border: #000000;
+  --color-background-header: #e5e7eb;
+  --color-border: #4b5563;
+  --color-disabled: #d1d5db;
+  --color-success-bg: #dcfce7;
 }

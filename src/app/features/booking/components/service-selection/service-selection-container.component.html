@@ -1,26 +1,108 @@
 <app-wizard-breadcrumb [steps]="wizardSteps" [activeIndex]="activeStepIndex" />
 
-<section class="service-selection">
-  <h1 class="service-selection__title">{{ booking.services.title | translate }}</h1>
-  <p class="service-selection__subtitle">{{ booking.services.subtitle | translate }}</p>
+<main class="page-wrap service-selection">
+  <h1 class="page-title">{{ booking.services.title | translate }}</h1>
+  <p class="page-subtitle">{{ booking.services.subtitle | translate }}</p>
 
-  <div class="service-selection__grid" role="group" [attr.aria-label]="booking.services.ariaGroupLabel | translate">
-    @for (service of services(); track service.id) {
-      <app-service-card
-        [service]="service"
-        [isSelected]="selectedServiceIds().includes(service.id)"
-        [selectedOptionIds]="$any(selectedOptionsMap()[service.id]) || []"
-        (serviceClicked)="onServiceClick($event)"
-        (serviceConfirmed)="onServiceConfirm($event)"
-        (serviceDeselected)="onServiceDeselect($event)"
-      />
+  @if (isLoading()) {
+    <div class="service-selection__loading text-center py-5" role="status" aria-live="polite">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">{{ booking.api.loading | translate }}</span>
+      </div>
+      <p class="service-selection__loading-text mt-3 mb-0">{{ booking.api.loading | translate }}</p>
+    </div>
+  } @else if (error()) {
+    <div class="service-selection__error text-center py-5" role="alert" aria-live="assertive">
+      <i class="bi bi-exclamation-circle service-selection__error-icon" aria-hidden="true"></i>
+      <h2 class="service-selection__error-title">{{ booking.api.errorTitle | translate }}</h2>
+      <p class="service-selection__error-message">{{ booking.api.errorUnknown | translate }}</p>
+      <button
+        type="button"
+        class="btn btn-primary service-selection__retry-button"
+        (click)="onRetry()">
+        <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>
+        {{ booking.api.retryButton | translate }}
+      </button>
+    </div>
+  } @else {
+    <!-- REQ-039: Kategorie-Pills (mockups/02-service.html .service-pills) -->
+    <div
+      class="service-pills service-selection__grid"
+      role="group"
+      [attr.aria-label]="booking.services.ariaGroupLabel | translate">
+      @for (cat of categories(); track cat.id) {
+        <app-service-card
+          [category]="cat"
+          [operations]="operationsByCategory()[cat.id] ?? []"
+          [isSelected]="categorySelectedMap()[cat.id] ?? false"
+          [isActive]="activeCategoryId() === cat.id"
+          [selectedOperationIds]="selectedOptionsMap()[cat.id] ?? []"
+          (serviceClicked)="onMiniCardClick($event)"
+        />
+      }
+    </div>
+
+    <!-- Arbeiten der aktiven Kategorie -->
+    @if (activeCategory()) {
+      <section class="service-panel service-detail" aria-labelledby="service-panel-heading">
+        <h2 class="service-panel__heading" id="service-panel-heading">
+          <i class="bi {{ activeIconClass() }}" aria-hidden="true"></i>
+          {{ panelHeading() }}
+        </h2>
+
+        @if (activeOperations().length > 0) {
+          <div class="choice-list">
+            @for (op of activeOperations(); track op.id) {
+              <label class="service-option choice-list__row" [for]="'service-option-' + op.id">
+                <input
+                  #operationCheckbox
+                  type="checkbox"
+                  class="form-check-input"
+                  [id]="'service-option-' + op.id"
+                  [checked]="activeSelectedSet().has(op.id)"
+                  (change)="onOperationToggle(op.id, operationCheckbox.checked)"
+                />
+                <span class="choice-list__text">
+                  <span class="service-option__name">{{ op.name }}</span>
+                  @if (op.description) {
+                    <span class="service-option__desc choice-list__description">{{ op.description }}</span>
+                  }
+                </span>
+              </label>
+            }
+          </div>
+        } @else {
+          <p class="service-panel__empty">{{ booking.services.noOperations | translate }}</p>
+        }
+      </section>
     }
-  </div>
 
-  <app-service-summary-bar
-    [selectedServiceCount]="selectedServiceCount()"
-    [hasServicesSelected]="hasServicesSelected()"
-    (continueClicked)="onContinue()"
-    (backClicked)="onBack()"
-  />
-</section>
+    <!-- Zusammenfassung der Auswahl je Kategorie (grüner Hinweis) -->
+    @if (selectionSummary().length > 0) {
+      <div class="notice notice--success service-selection__summary" role="status" aria-live="polite">
+        <i class="bi bi-check-circle" aria-hidden="true"></i>
+        <p>
+          @for (group of selectionSummary(); track group.id) {
+            <span class="service-selection__summary-line"><strong>{{ group.name }}:</strong> {{ group.operations }}</span>
+          }
+        </p>
+      </div>
+    }
+
+    <nav class="wizard-nav services-bottom-bar" [attr.aria-label]="booking.services.navAriaLabel | translate">
+      <button
+        type="button"
+        class="btn btn-outline-secondary service-selection__back-button"
+        (click)="onBack()">
+        {{ booking.services.backButton | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary service-selection__continue-button"
+        [disabled]="!hasServicesSelected()"
+        (click)="onContinue()">
+        {{ booking.services.continueButton | translate }}
+      </button>
+    </nav>
+  }
+</main>

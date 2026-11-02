@@ -1,0 +1,1378 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Real: <title>Statusseite – Statistik</title> bzw. <title>Statusseite – Bugs</title> je Pfad (WCAG 2.4.2) -->
+<title>Statusseite – Statistik (REQ-038 Mockup)</title>
+<meta name="description" content="Mockup REQ-038 — Statusseite /internal/report mit den Tabs Statistik und Bugs: freie Online-Termine je Standort, Renner und Penner, Servicegruppen, Buchungs- und Terminzeiten, Nutzung und Buchungsstrecke (anonym, nur Aggregate).">
+<!-- Keine externen Ressourcen, kein <script>, kein <img>, kein <form>: die echte Seite läuft unter
+     CSP default-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'none'; form-action 'none'
+     (SecurityConfig.java:44-45). Diagramme sind CSS-Balken, Icons Inline-SVG (aria-hidden). -->
+<style>
+/* =============================================================================
+   DESIGN-TOKENS
+   Basis 1:1 aus ReportHtmlGenerator.css() (:358-361, Stand REQ-037) — der Code
+   gilt vor dem REQ-037-Mockup. Hex-Werte stehen AUSSCHLIESSLICH hier in :root.
+   Längen in em/rem; 1px-Rahmen als Token --bw-hair (.0625rem) wie im REQ-037-Mockup.
+   ============================================================================= */
+:root{
+  /* --- Bestand (ReportHtmlGenerator.css(), unverändert) --- */
+  --ink:#1a2b3c;
+  --soft:#5a6b7b;
+  --line:#dbe3ea;
+  --bg:#eef2f6;
+  --surface:#fff;
+  --accent:#0e6b7c;
+  --ok:#2c7a4e;
+  --bad:#b83a2c;
+  --warn:#a16a12;
+  --mono:ui-monospace,Menlo,Consolas,monospace;
+  --track:#e3eaf0;
+  --bar-tablet:#35808f;
+  --bar-unknown:#6b7a87;
+  --row-alt:#f7fafc;
+  --focus:#005fcc;
+
+  /* --- Bestandswerte, im Generator heute inline (:214, :371, :391) — hier nur
+         tokenisiert wie im REQ-037-Mockup, keine neuen Farben --- */
+  --on-accent:#fff;
+  --sev-high-bg:#fae7e4;
+  --sev-med-bg:#f7efd9;
+  --sev-low-bg:#e7f2ec;
+  --pre-bg:#0e161b;
+  --pre-ink:#c9d6dd;
+
+  /* --- NEU REQ-038 (BR-23). Kontrast nach WCAG 2.1 (relative Luminanz), berechnet.
+         Sequenzielle Skala EINES Farbtons (Akzent-Petrol), hell -> dunkel.
+         Text in Heat-Zellen ist IMMER --ink, nie --soft (--soft auf --heat-2 nur 3,6:1).
+         Die Zahl steht immer als Text in der Zelle — die Farbe ist nur redundant (1.4.1). --- */
+  --heat-1:#d8ecef;  /* --ink darauf 11,8:1 · ggü. --surface 1,22:1 (redundant, Zahl trägt) */
+  --heat-2:#aed8df;  /* --ink darauf  9,4:1 · Stufe 1->2 1,25:1                           */
+  --heat-3:#7fbfca;  /* --ink darauf  7,0:1 · Stufe 2->3 1,34:1                           */
+  --heat-4:#4f9dab;  /* --ink darauf  4,6:1 · ggü. --surface 3,1:1 (Nicht-Text >= 3:1)     */
+  --cap-free:#dcefe4;  /* Pille „morgen frei“ + Verlaufszelle „frei“ (N2): --ink 12,0:1 ·
+                          Rahmen --ok darauf 4,4:1, --ok ggü. --surface 5,25:1 (1.4.11)    */
+  --cap-tight:#f6e7c8; /* Pille „in n Werktagen“ + Verlaufszelle „knapp“ (1–4 Werktage, N2):
+                          --ink 11,8:1 · Rahmen --warn darauf 3,7:1,
+                          --warn ggü. --surface 4,6:1 (1.4.11)                            */
+  --cap-booked:#f4dcd6;/* NEU N2 (§11.3): Pille „belegt: >= 5 Werktage“ + Verlaufszelle
+                          „belegt“: --ink 11,04:1 · ggü. --surface 1,31:1 (redundant, das
+                          Kürzel trägt) · Rahmen --bad darauf 4,36:1, --bad ggü. --surface
+                          5,71:1 (1.4.11) — berechnet mit WCAG 2.1 relative Luminanz      */
+  /* Weitere Paare der neuen Elemente (Bestandstokens): Sparkline/Balken --accent ggü.
+     --surface 6,2:1 und ggü. --track 5,1:1 · aktiver Tab-Unterstrich --accent ggü. --bg
+     5,5:1 · inaktiver Tab --soft auf --bg 4,9:1 · Fokusring --focus ggü. --bg 5,3:1.
+
+     DARK MODE: bewusst NICHT definiert. Weder ReportHtmlGenerator.css() noch das
+     REQ-037-Mockup kennen prefers-color-scheme; nur die sieben neuen Tokens dunkel
+     umzufärben ergäbe dunkle Zellen auf heller Seite. Eine Dark-Variante wäre ein
+     eigenes REQ für das gesamte Token-Set (Konzept J nennt sie — der Code gilt). */
+
+  /* --- Radien als Token (Bestand 6px/5px/3px/999px in rem) --- */
+  --radius:.375rem;
+  --radius-md:.3125rem;
+  --radius-sm:.1875rem;
+  --radius-pill:62rem;
+
+  /* --- Linienstärken als Token (1px/2px/4px in rem) + Tab-Unterstrich 0.2em --- */
+  --bw-hair:.0625rem;
+  --bw-rule:.125rem;
+  --bw-edge:.25rem;
+  --bw-tab:.2em;
+}
+
+/* =============================================================================
+   BESTAND — ReportHtmlGenerator.css() (:362-392), nur Hex/Radius/px -> Token/rem.
+   Abweichungen des REQ-037-Mockups vom Code (globales :focus-visible, mobiles
+   Body-Padding, Hintergrund bei .us-badge-live/.us-warn) sind NICHT übernommen.
+   ============================================================================= */
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+color:var(--ink);background:var(--bg);line-height:1.5;padding:1.5rem;max-width:60rem;margin:0 auto}
+h1{font-size:1.6rem;margin:0}
+h2{font-size:1.1rem;border-bottom:var(--bw-rule) solid var(--line);padding-bottom:.3rem}
+h3{font-size:.95rem;margin:1rem 0 .4rem}
+.meta{color:var(--soft);font-size:.85rem;margin:.3rem 0 0}
+section{background:var(--surface);border:var(--bw-hair) solid var(--line);border-radius:var(--radius);padding:1.1rem 1.3rem;margin:1rem 0}
+.ai{border-left:var(--bw-edge) solid var(--accent)}
+.headline{font-weight:650;font-size:1.05rem}
+.issues{list-style:none;padding:0}
+.issues li{border:var(--bw-hair) solid var(--line);border-radius:var(--radius-md);padding:.6rem .8rem;margin:.4rem 0}
+.hint{color:var(--soft);font-size:.85rem;margin-top:.2rem}
+.sev{display:inline-block;font-size:.72rem;font-weight:700;text-transform:uppercase;padding:.1rem .45rem;border-radius:var(--radius-sm);margin-right:.4rem}
+.sev-high{background:var(--sev-high-bg);color:var(--bad)}
+.sev-med{background:var(--sev-med-bg);color:var(--warn)}
+.sev-low{background:var(--sev-low-bg);color:var(--ok)}
+.cats{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem}
+.cat{border:var(--bw-hair) solid var(--line);border-left-width:var(--bw-edge);border-radius:var(--radius);padding:.7rem .9rem}
+.cat-ok{border-left-color:var(--ok)}
+.cat-warn{border-left-color:var(--warn)}
+.cat-bad{border-left-color:var(--bad)}
+.cat-neutral{border-left-color:var(--soft)}
+.cat-hd{display:flex;align-items:center;gap:.45rem;font-weight:650}
+.dot{width:.7rem;height:.7rem;border-radius:50%;flex:none;background:var(--soft)}
+.cat-ok .dot{background:var(--ok)}
+.cat-warn .dot{background:var(--warn)}
+.cat-bad .dot{background:var(--bad)}
+.cat-ep{color:var(--soft);font-size:.76rem;font-family:var(--mono);margin-left:auto}
+.cat-val{margin-top:.35rem;font-size:.92rem;font-variant-numeric:tabular-nums}
+.toplist{list-style:none;padding:0;margin:.45rem 0 0}
+.toplist li{display:flex;justify-content:space-between;font-size:.82rem;padding:.14rem 0;border-top:var(--bw-hair) solid var(--line)}
+.pii-note{font-weight:400;font-size:.78rem;color:var(--soft)}
+.flt-radio{position:absolute;width:.0625rem;height:.0625rem;opacity:0;pointer-events:none}
+.filters{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0 .9rem}
+.filters label{cursor:pointer;font-size:.8rem;padding:.3rem .75rem;border:var(--bw-hair) solid var(--line);border-radius:var(--radius-pill);background:var(--surface);color:var(--soft);user-select:none}
+.filters label:hover{border-color:var(--accent);color:var(--accent)}
+.card{border:var(--bw-hair) solid var(--line);border-radius:var(--radius);padding:.8rem 1rem;margin:.7rem 0}
+.row{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:.3rem .7rem;font-size:.9rem;margin-bottom:.4rem}
+.k{color:var(--soft);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;align-self:center}
+.etype{font-weight:600;color:var(--bad)}
+.mono{font-family:var(--mono);font-size:.82rem;word-break:break-all}
+details{margin-top:.4rem}
+summary{cursor:pointer;color:var(--accent);font-size:.85rem}
+pre{background:var(--pre-bg);color:var(--pre-ink);font-family:var(--mono);font-size:.78rem;padding:.7rem;border-radius:var(--radius-md);overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+.empty{color:var(--soft)}
+.ft{color:var(--soft);font-size:.78rem;text-align:center;margin-top:1.5rem}
+
+/* CSS-only-Fehlerfilter: im Generator als inline <style> IM Fragment erzeugt
+   (ReportHtmlGenerator.java:207-216) und im Bugs-Tab byte-gleich übernommen (BR-3).
+   Im Mockup hier im <head>, weil <style> im <body> nicht konform ist. */
+#flt-ep-snaps:checked~.err-list .card:not([data-ep=snaps]){display:none}
+#flt-ep-appointments:checked~.err-list .card:not([data-ep=appointments]){display:none}
+#flt-all:checked~.filters label[for=flt-all],
+#flt-ep-snaps:checked~.filters label[for=flt-ep-snaps],
+#flt-ep-appointments:checked~.filters label[for=flt-ep-appointments]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+
+/* =============================================================================
+   BESTAND REQ-037 — Nutzungsstatistik (ReportHtmlGenerator.css() :393-438),
+   Abschnitt S5 im Statistik-Tab rendert unverändert mit diesen Regeln.
+   ============================================================================= */
+.us{border-left:var(--bw-edge) solid var(--accent)}
+.us-intro{color:var(--soft);font-size:.85rem;margin:.4rem 0 0}
+.us-block{margin-top:1.4rem}
+.us-block:first-of-type{margin-top:1rem}
+.us-hd{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem}
+.us-title{font-size:.95rem;font-weight:650;margin:0}
+.us-badge{display:inline-block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+padding:.1rem .5rem;border:var(--bw-hair) solid var(--line);border-radius:var(--radius-pill);color:var(--soft);background:var(--surface)}
+.us-badge-live{color:var(--accent);border-color:var(--accent)}
+.us-range{color:var(--soft);font-size:.8rem;margin:.15rem 0 .65rem}
+.us-subtitle{font-size:.9rem;margin:1.1rem 0 .1rem}
+.us-tiles{grid-template-columns:repeat(3,1fr)}
+.cat-info{border-left-color:var(--accent)}
+.cat-info .dot{background:var(--accent)}
+.cat-ep-plain{color:var(--soft);font-size:.76rem;margin-left:auto}
+.cat-num{margin-top:.3rem;font-size:1.5rem;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.cat-sub{color:var(--soft);font-size:.78rem;margin-top:.15rem;font-variant-numeric:tabular-nums}
+.us-rates{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-top:.8rem}
+.us-rate{border:var(--bw-hair) solid var(--line);border-radius:var(--radius);padding:.6rem .8rem}
+.us-rate-val{font-size:1.15rem;font-weight:700;color:var(--accent);line-height:1.2;font-variant-numeric:tabular-nums}
+.us-rate-lbl{font-weight:650;font-size:.9rem}
+.us-rate-sub{color:var(--soft);font-size:.78rem;margin-top:.15rem;font-variant-numeric:tabular-nums}
+.dev{list-style:none;padding:0;margin:.45rem 0 0}
+.dev-row{display:grid;grid-template-columns:7rem 1fr 11rem;gap:.15rem .7rem;align-items:center;padding:.32rem 0;border-top:var(--bw-hair) solid var(--line)}
+.dev-row:first-child{border-top:0}
+.dev-lbl{font-size:.85rem;font-weight:650}
+.dev-val{font-size:.85rem;color:var(--soft);text-align:right;font-variant-numeric:tabular-nums}
+.dev-val b{color:var(--ink)}
+.dev-bar{display:block;height:.6rem;border-radius:var(--radius-pill);background:var(--track);border:var(--bw-hair) solid var(--line);overflow:hidden}
+.dev-fill{display:block;height:100%;border-radius:var(--radius-pill);background:var(--soft)}
+.dev-fill-mobile{background:var(--accent)}
+.dev-fill-tablet{background:var(--bar-tablet)}
+.dev-fill-desktop{background:var(--soft)}
+.dev-fill-unknown{background:var(--bar-unknown)}
+.us-thin{color:var(--soft);font-size:.85rem;border:var(--bw-hair) dashed var(--line);border-radius:var(--radius);padding:.55rem .8rem;margin:.45rem 0 0}
+.us-scroll{overflow-x:auto;margin:.4rem 0 0;border:var(--bw-hair) solid var(--line);border-radius:var(--radius)}
+.us-scroll:focus-visible{outline:.15rem solid var(--focus);outline-offset:.15rem}
+.us-months{width:100%;border-collapse:collapse;font-size:.83rem;font-variant-numeric:tabular-nums}
+.us-months th,.us-months td{padding:.36rem .7rem;text-align:right;border-bottom:var(--bw-hair) solid var(--line)}
+.us-months thead th{color:var(--soft);font-weight:650;font-size:.74rem;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.us-months th[scope=row]{text-align:left;font-weight:400}
+.us-months thead th:first-child{text-align:left}
+.us-months tbody tr:nth-child(even){background:var(--row-alt)}
+.us-months .us-cur th[scope=row]{font-weight:700}
+.us-months .us-cur td{font-weight:650}
+.us-months .us-nd{color:var(--soft)}
+.us-months tfoot th,.us-months tfoot td{font-weight:700;border-bottom:0;border-top:var(--bw-rule) solid var(--line)}
+.us-empty{color:var(--soft);font-size:.88rem;border:var(--bw-hair) dashed var(--line);border-radius:var(--radius);padding:.7rem .9rem;margin:.3rem 0 0}
+.us-warn{font-size:.85rem;color:var(--ink);border:var(--bw-hair) solid var(--line);border-left:var(--bw-edge) solid var(--warn);
+border-radius:var(--radius-sm);padding:.5rem .75rem;margin:0 0 .7rem}
+.sr{position:absolute;width:.0625rem;height:.0625rem;padding:0;margin:-.0625rem;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+
+/* =============================================================================
+   NEU REQ-038 — Klassenpräfixe nach BR-22: tabs · ib · cap · rk · sg · tm · fn · st-*
+   Kebab-case wie der Generator (kein BEM-Doppelunterstrich), mobile-first.
+   Kommt in ReportHtmlGenerator.css() VOR die bestehenden Media-Queries (Konzept H).
+   Leerzustand ist .st-empty (NICHT .us-empty — die E2E-Suite zählt genau 2 davon).
+   ============================================================================= */
+
+/* --- Rahmen: Tab-Navigation (B.3) — echte Links, kein role=tablist, kein JS --- */
+.tabs{margin:1rem 0 0}
+.tabs ul{display:flex;flex-wrap:wrap;gap:0 .25rem;list-style:none;margin:0;padding:0;
+border-bottom:var(--bw-rule) solid var(--line)}
+.tabs a{display:inline-flex;align-items:center;min-height:2.75em;min-width:2.75em;padding:.35rem 1rem;
+margin-bottom:calc(-1 * var(--bw-rule));color:var(--soft);font-weight:500;text-decoration:none;
+border-bottom:var(--bw-tab) solid transparent}
+.tabs a:hover{color:var(--ink);border-bottom-color:var(--line)}
+/* Aktiver Tab: Unterstrich 0.2em UND Fettschrift — nie nur Farbe (WCAG 1.4.1) */
+.tabs a[aria-current=page]{color:var(--ink);font-weight:700;border-bottom-color:var(--accent)}
+.tabs a:focus-visible{outline:.15rem solid var(--focus);outline-offset:-.15rem}
+
+/* --- Sprungmarken „Inhalt“ (nur Statistik-Tab; reine Anker, kein :target-Styling) --- */
+.st-toc{display:flex;flex-wrap:wrap;align-items:center;gap:0 .3rem;margin:.5rem 0 0;font-size:.85rem}
+.st-toc-hd{margin:0 .2rem 0 0;color:var(--soft);font-weight:650}
+.st-toc ul{display:flex;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.st-toc a{display:inline-flex;align-items:center;min-height:2.75rem;padding:0 .45rem;color:var(--accent);
+text-underline-offset:.15em}
+.st-toc a:focus-visible{outline:.15rem solid var(--focus);outline-offset:0}
+
+/* --- 404-Seite (E7): schlanke Karte, Links als Touch-Ziele >= 2.75rem --- */
+.st-notfound ul{list-style:none;padding:0;margin:.4rem 0 0}
+.st-notfound a{display:inline-flex;align-items:center;min-height:2.75rem;color:var(--accent);text-underline-offset:.15em}
+.st-notfound a:focus-visible{outline:.15rem solid var(--focus);outline-offset:.15rem}
+
+/* --- Gemeinsame Bausteine aller neuen Sektionen (st-*) --- */
+.st-intro{color:var(--soft);font-size:.85rem;margin:.4rem 0 0}
+.st-range{color:var(--soft);font-size:.8rem;margin:.15rem 0 .65rem}
+.st-sub{font-size:.95rem;font-weight:650;margin:1.4rem 0 .1rem}
+.st-note{color:var(--soft);font-size:.8rem;margin:.55rem 0 0}
+.st-note b{color:var(--ink)}
+.st-empty{color:var(--soft);font-size:.88rem;border:var(--bw-hair) dashed var(--line);border-radius:var(--radius);
+padding:.7rem .9rem;margin:.3rem 0 0}
+.st-empty-dash{color:var(--ink);font-weight:700;margin-right:.35rem}
+/* Warnhinweis: Text + Rahmen + gerahmtes Icon — nie nur Farbe (BR-14, 1.4.1) */
+.st-warn{display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem;color:var(--ink);
+border:var(--bw-hair) solid var(--line);border-left:var(--bw-edge) solid var(--warn);border-radius:var(--radius-sm);
+padding:.5rem .75rem;margin:.6rem 0 .7rem}
+.st-warn p{margin:0}
+.st-ico{display:inline-flex;align-items:center;justify-content:center;flex:none;width:1.9rem;height:1.9rem;
+border:var(--bw-hair) solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--accent)}
+.st-warn .st-ico{color:var(--warn)}
+.st-ico svg{width:1.1rem;height:1.1rem}
+/* Scroll-Container: die SEITE scrollt nie horizontal, nur dieser Container.
+   position:relative ist Pflicht — sonst entkommen die absolut positionierten .sr-Texte
+   in rechten Tabellenspalten dem overflow-Clip und verbreitern die Seite (gemessen). */
+.st-scroll{position:relative;overflow-x:auto;margin:.4rem 0 0;border:var(--bw-hair) solid var(--line);border-radius:var(--radius)}
+.st-scroll:focus-visible{outline:.15rem solid var(--focus);outline-offset:.15rem}
+.st-table{width:100%;border-collapse:collapse;font-size:.83rem;font-variant-numeric:tabular-nums}
+.st-table caption{text-align:left}
+.st-table th,.st-table td{padding:.4rem .5rem;text-align:right;border-bottom:var(--bw-hair) solid var(--line);vertical-align:middle}
+.st-table thead th{color:var(--soft);font-weight:650;font-size:.76rem;vertical-align:bottom}
+.st-table th[scope=row]{text-align:left;font-weight:600}
+.st-table .st-l{text-align:left}
+.st-table:not(.st-heat) tbody tr:nth-child(even){background:var(--row-alt)}
+.st-table tfoot th,.st-table tfoot td{font-weight:700;border-bottom:0;border-top:var(--bw-rule) solid var(--line)}
+.st-rank{color:var(--soft);width:2.5rem}
+.cap-table th[scope=row],.rk-table th[scope=row],.sg-matrix th[scope=row]{min-width:7rem}
+/* Zeilenkopf bleibt beim horizontalen Scrollen sichtbar (Mobil) */
+.st-scroll th[scope=row]{position:sticky;left:0;z-index:1;background:var(--surface)}
+.st-scroll .st-table:not(.st-heat) tbody tr:nth-child(even) th[scope=row]{background:var(--row-alt)}
+.fn-table th[scope=row]{min-width:9rem;max-width:16rem}
+.st-nd,.st-sup,.st-ka{color:var(--soft);white-space:nowrap}
+.st-small{display:block;color:var(--soft);font-size:.74rem;font-weight:400;text-transform:none;letter-spacing:0}
+.st-nw{white-space:nowrap}
+/* Heatmap-Zellen: Zahl als Text + Farbstufe redundant; 2px Flächenabstand */
+.st-heat td,.st-heat th{border:var(--bw-rule) solid var(--surface)}
+.st-heat td{color:var(--ink);min-width:3.2rem}
+.st-heat-1{background:var(--heat-1)}
+.st-heat-2{background:var(--heat-2)}
+.st-heat-3{background:var(--heat-3)}
+.st-heat-4{background:var(--heat-4)}
+.st-legend{display:flex;flex-wrap:wrap;gap:.25rem .9rem;list-style:none;padding:0;margin:.5rem 0 0;font-size:.78rem;color:var(--soft)}
+.st-legend li{display:inline-flex;flex-wrap:wrap;align-items:center;gap:.15rem .35rem;min-width:0}
+.st-sw{display:inline-block;width:1.1em;height:1.1em;border:var(--bw-hair) solid var(--line);border-radius:var(--radius-sm)}
+.st-sw-txt{display:inline-flex;align-items:center;justify-content:center;min-width:2.4em;height:1.3em;padding:0 .2em;
+border:var(--bw-hair) solid var(--line);border-radius:var(--radius-sm);background:var(--surface);color:var(--soft);font-size:.72rem}
+.st-fill{background:var(--accent)}
+.st-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:0 1.4rem}
+.st-grid > div{min-width:0}
+
+/* --- S0 Auf einen Blick: Handlungsimpulse (.ib) --- */
+.ib{border-left:var(--bw-edge) solid var(--accent)}
+.ib-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:.8rem;margin-top:.8rem}
+.ib-tile{min-width:0;border:var(--bw-hair) solid var(--line);border-left:var(--bw-edge) solid var(--accent);border-radius:var(--radius);padding:.7rem .9rem}
+.ib-free{border-left-color:var(--ok)}
+.ib-tight{border-left-color:var(--warn)}
+.ib-hd{display:flex;align-items:center;flex-wrap:wrap;gap:.55rem}
+.ib-name{font-weight:650;margin:0;font-size:.95rem}
+.ib-src{color:var(--soft);font-size:.74rem;margin-left:auto}
+.ib-val{margin:.45rem 0 0;font-size:1.05rem;font-weight:700}
+.ib-num{font-size:1.5rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.ib-sub{color:var(--soft);font-size:.8rem;margin:.25rem 0 0}
+.ib-list{list-style:none;padding:0;margin:.45rem 0 0}
+.ib-list li{display:flex;justify-content:space-between;flex-wrap:wrap;gap:0 .5rem;font-size:.86rem;padding:.14rem 0;
+border-top:var(--bw-hair) solid var(--line);font-variant-numeric:tabular-nums}
+.ib-list li:first-child{border-top:0}
+.ib-list span:last-child{color:var(--soft)}
+
+/* --- S1 Freie Online-Termine je Standort (.cap) ---
+   N2: 10-Tage-Raster statt Tagesteil-Mini-Balken und 14-Scan-Sparkline.
+   Jede Verlaufszelle trägt ihr Kürzel als TEXT (frei/knapp/belegt/—, BR-23/BR-26);
+   die Farbstufe ist nur redundant, deshalb genügt ggü. --surface 1,2–1,31:1. */
+.cap-table{min-width:62rem}
+.cap-pill{display:inline-block;font-size:.76rem;font-weight:700;padding:.08rem .5rem;border:var(--bw-hair) solid var(--warn);
+border-radius:var(--radius-pill);background:var(--cap-tight);color:var(--ink);white-space:nowrap}
+.cap-pill-free{background:var(--cap-free);border-color:var(--ok)}
+.cap-pill-tight{background:var(--cap-booked);border-color:var(--bad)}
+.cap-pill-na{background:var(--surface);border-color:var(--soft);border-style:dashed;color:var(--soft);font-weight:650}
+.cap-when{display:block;color:var(--soft);font-size:.76rem;margin-top:.12rem}
+.cap-total{font-weight:700;font-size:.95rem}
+.cap-day{text-align:center;font-size:.72rem;color:var(--ink);min-width:2.9rem;padding:.4rem .3rem}
+.cap-day-free{background:var(--cap-free)}
+.cap-day-tight{background:var(--cap-tight)}
+.cap-day-booked{background:var(--cap-booked)}
+td.cap-day-na{color:var(--soft)}
+.cap-sum{font-variant-numeric:tabular-nums;white-space:nowrap}
+.cap-class{font-weight:650;white-space:nowrap}
+
+/* --- S2 Online-Buchungen je Standort: Renner und Penner (.rk) --- */
+.rk-table{min-width:52rem}
+.rk-cell{display:grid;grid-template-columns:minmax(3rem,1fr) 2.2rem;gap:.45rem;align-items:center;min-width:7.5rem}
+.rk-bar{display:block;height:.6rem;background:var(--track);border:var(--bw-hair) solid var(--line);border-radius:var(--radius-pill);overflow:hidden}
+.rk-fill{display:block;height:100%;background:var(--accent);border-radius:var(--radius-pill)}
+.rk-prev{display:block;color:var(--soft);font-size:.72rem}
+.rk-low th[scope=rowgroup]{text-align:left;color:var(--ink);font-size:.8rem;font-weight:650;background:var(--surface);padding-top:.8rem}
+
+/* --- S3 Servicegruppen je Standort (.sg) --- */
+.sg-matrix{min-width:46rem}
+.sg-matrix th,.sg-matrix td{padding:.35rem .35rem}
+.sg-matrix thead th{font-size:.72rem}
+.sg-matrix.st-heat td{min-width:3rem}
+.sg-other th[scope=row]{font-style:italic}
+
+/* --- S4 Buchungs- und Terminzeiten (.tm) --- */
+.tm-kpis{display:grid;grid-template-columns:minmax(0,1fr);gap:.8rem;margin-top:.6rem}
+.tm-kpi{border:var(--bw-hair) solid var(--line);border-radius:var(--radius);padding:.6rem .8rem;min-width:0}
+.tm-kpi-val{font-size:1.5rem;font-weight:700;line-height:1.15;color:var(--accent);font-variant-numeric:tabular-nums}
+.tm-kpi-lbl{font-weight:650;font-size:.9rem}
+.tm-kpi-sub{color:var(--soft);font-size:.78rem;margin-top:.15rem;font-variant-numeric:tabular-nums}
+.tm-slots{min-width:25rem}
+
+/* --- S6 Buchungsstrecke (.fn) — Trichter als zentrierte CSS-Balken --- */
+.fn-steps{list-style:none;padding:0;margin:.6rem 0 0}
+.fn-step{display:grid;grid-template-columns:minmax(0,1fr);gap:.2rem .8rem;align-items:center;padding:.45rem 0;border-top:var(--bw-hair) solid var(--line)}
+.fn-step:first-child{border-top:0}
+.fn-lbl{font-weight:650;font-size:.88rem}
+.fn-lbl small{display:block;font-weight:400;color:var(--soft);font-size:.76rem}
+.fn-bar{display:flex;justify-content:center;height:1rem;background:var(--track);border:var(--bw-hair) solid var(--line);border-radius:var(--radius-sm);overflow:hidden}
+.fn-fill{display:block;height:100%;background:var(--accent)}
+.fn-val{font-size:.85rem;color:var(--soft);font-variant-numeric:tabular-nums}
+.fn-val b{color:var(--ink)}
+.fn-prev{display:block;font-size:.76rem}
+.fn-table{min-width:34rem}
+.fn-pct{display:block;color:var(--soft);font-size:.74rem;font-weight:400}
+/* S6-Unterabschnitt Absprungszenarien (N1): verschachtelte section OHNE eigene Karte —
+   die globale section-Kartenregel wird zurückgesetzt, optisch nur eine Trennlinie */
+.fn-dropoff{background:transparent;border:0;border-top:var(--bw-hair) solid var(--line);
+border-radius:0;padding:1rem 0 0;margin:1.4rem 0 0}
+.fn-dropoff h3{margin-top:0}
+.fn-dropoff-table{min-width:56rem}
+.fn-dropoff-table td.st-l,.fn-dropoff-table th.st-l{max-width:18rem}
+.fn-dropoff-hint{font-size:.78rem;color:var(--soft);font-weight:400}
+.fn-dropoff-dev{min-width:34rem}
+.st-thin{color:var(--soft);font-size:.8rem;margin:.35rem 0 0}
+
+/* --- S7 Messgrenzen & Datenschutz (.st-limits, immer sichtbar) --- */
+.st-limits{border-left:var(--bw-edge) solid var(--soft)}
+.st-limits dl{display:grid;grid-template-columns:minmax(0,1fr);gap:.1rem .9rem;margin:.4rem 0 0;font-size:.85rem}
+.st-limits dt{font-weight:650}
+.st-limits dd{margin:0 0 .35rem;color:var(--soft);font-variant-numeric:tabular-nums}
+.st-limits ol,.st-limits ul{padding-left:1.25rem;margin:.4rem 0 0;font-size:.85rem}
+.st-limits li{margin:.2rem 0}
+
+/* --- Tablet >= 48em / Desktop >= 64em (mobile-first für alle NEUEN Regeln) --- */
+@media(min-width:48em){
+  .ib-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tm-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fn-step{grid-template-columns:12.5rem minmax(0,1fr) 13.5rem}
+  .fn-val{text-align:right}
+  .dev-wide{grid-template-columns:12rem 1fr 9rem}
+  .cap-table th[scope=row],.rk-table th[scope=row],.sg-matrix th[scope=row]{min-width:9.5rem}
+  .st-limits dl{grid-template-columns:auto minmax(0,1fr)}
+  .st-limits dd{margin:0}
+}
+@media(min-width:64em){
+  .st-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* =============================================================================
+   NUR MOCKUP — Steuerleiste (CSS-only Radiogruppen) und Sichtbarkeitsregeln.
+   Gehört NICHT in ReportHtmlGenerator.css(). Real gibt es zwei Dokumente
+   (/internal/report/statistics, /internal/report/bugs) und je Zustand genau eine
+   Ausprägung jeder Sektion. :has() ist nur hier im Mockup verwendet.
+   ============================================================================= */
+.mk-bar{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem 1.4rem;margin:0 0 1.2rem;padding:.6rem .85rem;
+background:var(--track);border:var(--bw-hair) dashed var(--soft);border-radius:var(--radius);font-size:.85rem}
+.mk-title{flex-basis:100%;margin:0;font-weight:650}
+.mk-badge{display:inline-block;margin-right:.4rem;padding:.08rem .5rem;border-radius:var(--radius-pill);background:var(--ink);
+color:var(--on-accent);font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.mk-group{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem;min-width:0;margin:0;padding:0;border:0}
+.mk-group legend{float:left;margin-right:.35rem;padding:0;font-weight:650}
+.mk-radio{position:absolute;width:.0625rem;height:.0625rem;margin:0;opacity:0}
+.mk-radio + label{display:inline-flex;align-items:center;min-height:2.75em;padding:0 .95rem;border-radius:var(--radius-pill);
+background:var(--surface);color:var(--ink);cursor:pointer}
+.mk-radio + label:hover{background:var(--row-alt)}
+/* Gewählt: gefüllt + fett + Häkchen — nicht nur Farbe */
+.mk-radio:checked + label{background:var(--accent);color:var(--on-accent);font-weight:700}
+.mk-radio:checked + label::before{content:"\2713\00a0" / ""}
+.mk-radio:focus-visible + label{outline:.15rem solid var(--focus);outline-offset:.15rem}
+.mk-note{margin:.6rem 0 0;padding:.35rem .6rem;border:var(--bw-hair) dashed var(--soft);border-radius:var(--radius-sm);
+background:var(--track);color:var(--ink);font-size:.78rem}
+body:has(#mk-tab-stat:checked) .mk-only-bugs,
+body:has(#mk-tab-stat:checked) .mk-only-404,
+body:has(#mk-tab-bugs:checked) .mk-only-stat,
+body:has(#mk-tab-bugs:checked) .mk-only-404,
+body:has(#mk-tab-404:checked) .mk-only-stat,
+body:has(#mk-tab-404:checked) .mk-only-bugs,
+body:has(#mk-state-full:checked) .mk-v:not(.mk-s-full),
+body:has(#mk-state-thin:checked) .mk-v:not(.mk-s-thin),
+body:has(#mk-state-fail:checked) .mk-v:not(.mk-s-fail),
+body:has(#mk-state-hist:checked) .mk-v:not(.mk-s-hist){display:none}
+
+/* =============================================================================
+   BESTAND — Media-Queries bleiben wie im Generator die letzten Regeln (:439-440)
+   ============================================================================= */
+@media(max-width:47.99em){
+  .dev-row{grid-template-columns:1fr auto}
+  .dev-lbl{grid-column:1;grid-row:1}
+  .dev-val{grid-column:2;grid-row:1}
+  .dev-bar{grid-column:1/-1;grid-row:2}
+}
+@media(max-width:40em){
+  .row{grid-template-columns:auto 1fr}
+  .cats{grid-template-columns:1fr}
+  .us-tiles{grid-template-columns:1fr}
+  .us-rates{grid-template-columns:1fr}
+  .us-months .opt{display:none}
+  .st-table .opt{display:none} /* NEU REQ-038 (§11.4): .opt-Spalten entfallen <= 40em */
+}
+</style>
+</head>
+<body>
+
+<!-- ===========================================================================
+     NUR MOCKUP — Steuerleiste. CSS-only Radiogruppen für Tab und Zustand.
+     Real: zwei Pfade /internal/report/statistics und /internal/report/bugs mit
+     <a aria-current=page>; GET /internal/report rendert direkt Statistik, ohne
+     Redirect (BR-1); unbekannte Unterpfade -> 404-Seite (E7). Die Zustände sind
+     Datenlagen, keine Bedienelemente.
+     =========================================================================== -->
+<aside class="mk-bar" aria-label="Mockup-Steuerung">
+  <p class="mk-title"><span class="mk-badge">Nur Mockup</span>Steuerung &ndash; nicht Teil der echten Seite</p>
+  <fieldset class="mk-group">
+    <legend>Tab</legend>
+    <input type="radio" name="mk-tab" id="mk-tab-stat" class="mk-radio" checked><label for="mk-tab-stat">Statistik</label>
+    <input type="radio" name="mk-tab" id="mk-tab-bugs" class="mk-radio"><label for="mk-tab-bugs">Bugs</label>
+    <input type="radio" name="mk-tab" id="mk-tab-404" class="mk-radio"><label for="mk-tab-404">404-Seite</label>
+  </fieldset>
+  <fieldset class="mk-group">
+    <legend>Zustand Statistik</legend>
+    <input type="radio" name="mk-state" id="mk-state-full" class="mk-radio" checked><label for="mk-state-full">befüllt</label>
+    <input type="radio" name="mk-state" id="mk-state-thin" class="mk-radio"><label for="mk-state-thin">zu wenig Daten</label>
+    <input type="radio" name="mk-state" id="mk-state-fail" class="mk-radio"><label for="mk-state-fail">Scan fehlgeschlagen</label>
+    <input type="radio" name="mk-state" id="mk-state-hist" class="mk-radio"><label for="mk-state-hist">Historie fehlt (E4)</label>
+  </fieldset>
+</aside>
+
+<!-- ===========================================================================
+     RAHMEN (renderFrame): H1 neutral „Statusseite“ (heute „Fehler-Report“,
+     ReportHtmlGenerator.java:86-90), Meta-Zeile je Tab (B.3).
+     =========================================================================== -->
+<header class="hd">
+  <h1>Statusseite</h1>
+  <p class="meta mk-only-stat mk-v mk-s-full">Stand: 19.11.2026 22:40 Uhr &middot; Auswertung bis gestern (18.11.2026) &middot; Kapazitäts-Scan vom 19.11.2026, 22:31 Uhr</p>
+  <p class="meta mk-only-stat mk-v mk-s-thin">Stand: 19.11.2026 22:40 Uhr &middot; Auswertung bis gestern (18.11.2026) &middot; Kapazitäts-Scan: erster Lauf aktiv (seit 22:34 Uhr)</p>
+  <p class="meta mk-only-stat mk-v mk-s-fail">Stand: 19.11.2026 22:40 Uhr &middot; Auswertung bis gestern (18.11.2026) &middot; Kapazitäts-Scan vom 19.11.2026 fehlgeschlagen &ndash; angezeigt: Scan vom 18.11.2026</p>
+  <p class="meta mk-only-bugs">Stand: 19.11.2026 22:40 Uhr &middot; Fehler-Auswertung: letzte 24 Stunden</p>
+</header>
+
+<!-- Tab-Navigation (B.3, BR-2): <nav aria-label> mit echten Links, KEIN role=tablist/tab
+     (ohne JS fehlt das APG-Tastaturverhalten). Real: href="/internal/report/statistics"
+     und href="/internal/report/bugs"; im Mockup zeigen beide auf #inhalt, umgeschaltet
+     wird über die Steuerleiste. Entfällt, wenn alle drei Schalter aus sind (B.4). -->
+<nav class="tabs mk-only-stat" aria-label="Bereiche der Statusseite">
+  <ul>
+    <li><a href="#content" aria-current="page">Statistik</a></li>
+    <li><a href="#content">Bugs</a></li>
+  </ul>
+</nav>
+<nav class="tabs mk-only-bugs" aria-label="Bereiche der Statusseite">
+  <ul>
+    <li><a href="#content">Statistik</a></li>
+    <li><a href="#content" aria-current="page">Bugs</a></li>
+  </ul>
+</nav>
+
+
+
+<!-- Panel-Wrapper ist <main>, NICHT <section> — die globale Regel section{…} würde
+     sonst verschachtelte Karten erzeugen (ReportHtmlGenerator.java:366). -->
+<main id="content">
+
+<!-- Sprungmarken „Inhalt“ — nur im Statistik-Tab, reine Anker (kein :target-Styling) -->
+<nav class="st-toc mk-only-stat" aria-labelledby="toc-h">
+  <p class="st-toc-hd" id="toc-h">Inhalt:</p>
+  <ul>
+    <li><a href="#briefing">Auf einen Blick</a></li>
+    <li><a href="#capacity">Freie Termine</a></li>
+    <li><a href="#branches">Standorte</a></li>
+    <li><a href="#service-groups">Servicegruppen</a></li>
+    <li><a href="#timing">Zeiten</a></li>
+    <li><a href="#us-h">Nutzung</a></li>
+    <li><a href="#funnel">Buchungsstrecke</a></li>
+    <li><a href="#limits">Messgrenzen</a></li>
+  </ul>
+</nav>
+
+<!-- ###########################################################################
+     TAB „STATISTIK“ — StatisticsPageRenderer. Enthält kein .ai/.ov/.err (BR-3).
+     Reihenfolge fest: S0 … S7. Jeder Wert läuft durch ReportHtmlGenerator.esc().
+     ########################################################################### -->
+<div class="mk-only-stat">
+
+  <!-- NUR MOCKUP (Zustand „Historie nicht verfügbar“): Musterkatalog der übrigen Warnbänder.
+       Real erscheint jedes Band nur im Zustand, der es auslöst (§11.5, E3, §5.8). -->
+  <aside class="mk-note mk-v mk-s-hist" aria-label="Mockup: weitere Warnbänder">
+    <p><b>Mockup-Hinweis:</b> Zustand E4 &ndash; Blob-Historie nicht lesbar, noch kein Stand im Speicher: S0 entfällt mangels Datenbasis, S1&ndash;S4 und S6 zeigen das Warnband statt Zahlen, S5 (REQ-037) und S7 bleiben. Dieselbe Darstellung haben die übrigen Warnbänder:</p>
+    <div class="st-warn"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg></span><p>Auswertung für 18.11.2026 steht noch aus</p></div>
+    <div class="st-warn"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg></span><p>Letzte Auswertung: 16.11.2026 &ndash; Daten möglicherweise veraltet</p></div>
+  </aside>
+
+  <!-- =========================================================================
+       S0 Auf einen Blick: Handlungsimpulse (BriefingSectionRenderer, .ib)
+       Deterministische Regeln ohne KI (BR-21); fehlt die Datenbasis, entfällt
+       der Impuls. Die Kacheln sind aus denselben Daten wie S1/S2/S4 abgeleitet.
+       ========================================================================= -->
+  <section class="ib" id="briefing" aria-labelledby="ib-h">
+    <h2 id="ib-h">Auf einen Blick: Handlungsimpulse</h2>
+    <p class="st-intro">Regelbasierte Hinweise aus dem letzten Kapazitäts-Scan und dem Vormonat &ndash; ohne KI, ohne Personenbezug. Fehlt die Datenbasis, entfällt der Hinweis.</p>
+
+    <div class="ib-grid mk-v mk-s-full">
+      <div class="ib-tile ib-free">
+        <div class="ib-hd"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 15l2.5 2.5L16 13"/></svg></span><h3 class="ib-name">Luft morgen (Fr 20.11.)</h3><span class="ib-src">Scan 19.11.</span></div>
+        <ul class="ib-list">
+          <li><span>VW Nordtor</span><span>14 freie Online-Termine</span></li>
+          <li><span>Audi Waldkirchen</span><span>11 freie Online-Termine</span></li>
+          <li><span>VW Neuhaus</span><span>9 freie Online-Termine</span></li>
+          <li><span>VW Altstadt</span><span>6 freie Online-Termine</span></li>
+        </ul>
+        <p class="ib-sub">Regel: am Zieltag frei im letzten Scan, höchstens 5, sortiert nach freien Terminen.</p>
+      </div>
+      <div class="ib-tile">
+        <div class="ib-hd"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 10v4h3l8 5V5L6 10H3z"/><path d="M18 9a4 4 0 0 1 0 6"/></svg></span><h3 class="ib-name">Werbe-Kandidat</h3><span class="ib-src">10 Tage + Oktober</span></div>
+        <p class="ib-val">VW Neuhaus</p>
+        <p class="ib-sub">Online viel frei, aber wenig Online-Buchungen im Oktober: an 7 von 10 Tagen frei (&bdquo;meist frei&ldquo;), im Oktober unter 5 Online-Buchungen. Regel: 10-Tage-Einordnung &bdquo;meist frei&ldquo; <b>und</b> Vormonat im unteren Drittel der Online-Buchungen.</p>
+      </div>
+      <div class="ib-tile ib-tight">
+        <div class="ib-hd"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 3h12M6 21h12M7 3v3l5 6-5 6v3M17 3v3l-5 6 5 6v3"/></svg></span><h3 class="ib-name">Engpass</h3><span class="ib-src">10 Tage</span></div>
+        <p class="ib-val">Audi Zentrum Rheinfeld</p>
+        <p class="ib-sub">Seit mehreren Scans erst in &ge;&nbsp;5 Werktagen frei &ndash; Werbung derzeit wenig sinnvoll: an 0 von 10 Tagen frei (&bdquo;meist belegt&ldquo;), heute erst in 8 Werktagen. Regel: 10-Tage-Einordnung &bdquo;meist belegt&ldquo;.</p>
+      </div>
+      <div class="ib-tile">
+        <div class="ib-hd"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></span><h3 class="ib-name">Renner &amp; Abendbuchungen</h3><span class="ib-src">Oktober</span></div>
+        <p class="ib-val"><span class="ib-num">38&nbsp;%</span> außerhalb Mo&ndash;Fr 07&ndash;18&nbsp;Uhr gebucht</p>
+        <p class="ib-sub">116 von 306 Online-Buchungen im Oktober.</p>
+        <ul class="ib-list" aria-label="Renner im Oktober">
+          <li><span>1. VW Zentrum Rheinfeld</span><span>58 Buchungen</span></li>
+          <li><span>2. Audi Zentrum Rheinfeld</span><span>47 Buchungen</span></li>
+          <li><span>3. ŠKODA Centrum Talstadt</span><span>41 Buchungen</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Zustand „Scan fehlgeschlagen“: I-1 bis I-3 entfallen, I-4 bleibt -->
+    <div class="mk-v mk-s-fail">
+      <div class="st-warn"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg></span><p><b>Kapazitäts-Hinweise entfallen:</b> Der Scan vom 19.11.2026, 22:30&nbsp;Uhr ist fehlgeschlagen. &bdquo;Luft morgen&ldquo;, &bdquo;Werbe-Kandidat&ldquo; und &bdquo;Engpass&ldquo; erscheinen wieder nach dem nächsten vollständigen Scan.</p></div>
+      <div class="ib-grid">
+        <div class="ib-tile">
+          <div class="ib-hd"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></span><h3 class="ib-name">Renner &amp; Abendbuchungen</h3><span class="ib-src">Oktober</span></div>
+          <p class="ib-val"><span class="ib-num">38&nbsp;%</span> außerhalb Mo&ndash;Fr 07&ndash;18&nbsp;Uhr gebucht</p>
+          <p class="ib-sub">116 von 306 Online-Buchungen im Oktober.</p>
+          <ul class="ib-list" aria-label="Renner im Oktober (Zustand Scan fehlgeschlagen)">
+            <li><span>1. VW Zentrum Rheinfeld</span><span>58 Buchungen</span></li>
+            <li><span>2. Audi Zentrum Rheinfeld</span><span>47 Buchungen</span></li>
+            <li><span>3. ŠKODA Centrum Talstadt</span><span>41 Buchungen</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zustand „zu wenig Daten“: alle Impulse ohne Datenbasis -->
+    <p class="st-empty mk-v mk-s-thin"><span class="st-empty-dash" aria-hidden="true">&mdash;</span>Noch keine Hinweise &ndash; zu wenig Daten. Buchungsmerkmale werden seit 18.11.2026 erfasst, der erste Kapazitäts-Scan läuft noch.</p>
+  </section>
+
+  <!-- =========================================================================
+       S1 Freie Online-Termine je Standort (CapacitySectionRenderer, .cap) — N2:
+       K-1 Textstufe · K-2 EINE Gesamtzahl je Standort und Zieltag (nur mit
+       CAPACITY_SHOW_SLOT_COUNT; Tagesteil-Aufteilung entfällt ersatzlos) ·
+       10-Tage-Raster Standort × letzte 10 Scans (BR-26): Zelle = Kürzel + Farbstufe
+       (frei/knapp/belegt/—, Farbe nie alleiniger Träger, BR-23), Zusammenfassung
+       „an X von 10 Tagen frei“ + Einordnung (ab 5 messbaren Tagen), Sortierung
+       meist frei oben. Fehler nie als 0 (BR-14). Freie Termine sind Betriebsdaten
+       (Datenklasse K1) — die „< 5“-Regel gilt hier NICHT; sie betrifft nur
+       Buchungsmerkmale und Buchungsstrecke (BR-9), nicht die REQ-037-
+       Nutzungsstatistik in S5. Texte wörtlich nach §17.
+       ========================================================================= -->
+  <section class="cap" id="capacity" aria-labelledby="cap-h">
+    <h2 id="cap-h">Freie Online-Termine je Standort</h2>
+
+    <div class="mk-v mk-s-full">
+      <!-- Scan-Status partial (1 Standort nicht messbar) -> CAPACITY_SCAN_PARTIAL (E2, §11.5) -->
+      <div class="st-warn"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg></span><p>Scan vom 19.11.2026 unvollständig: 1 Standort nicht messbar.</p></div>
+      <p class="st-range">Kapazitäts-Scan vom 19.11.2026, 22:31&ndash;22:36&nbsp;Uhr &middot; Zieltag: Fr 20.11.2026 (nächster Werktag) &middot; Werktage Mo&ndash;Sa &middot; Verlauf: letzte 10 Scans (09.11.&ndash;19.11.)</p>
+      <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle freie Online-Termine je Standort, horizontal scrollbar">
+        <table class="st-table cap-table">
+          <caption class="sr">Freie Online-Termine je Standort, Scan vom 19.11.2026, sortiert nach der Einordnung des 10-Tage-Verlaufs (meist frei zuerst, dann wechselnd, meist belegt, zu wenig Daten), innerhalb der Einordnung nach Zahl der freien Tage: nächster freier Online-Termin, freie Termine am Zieltag, Zustand des Zieltags je Scan der letzten 10 Werktage und Zusammenfassung.</caption>
+          <thead><tr><th scope="col" rowspan="2" class="st-l">Standort</th><th scope="col" rowspan="2" class="st-l">Nächster freier Online-Termin</th><th scope="col" rowspan="2">Frei am Zieltag<span class="st-small">Referenz-Leistung, Näherung</span></th><th scope="colgroup" colspan="10" class="st-l">Verlauf letzte 10 Tage<span class="st-small">Zustand des jeweiligen Zieltags</span></th><th scope="col" rowspan="2">an X von 10 Tagen frei</th><th scope="col" rowspan="2" class="st-l">Einordnung</th></tr><tr><th scope="col">09.11.<span class="st-small">Mo</span></th><th scope="col">10.11.<span class="st-small">Di</span></th><th scope="col">11.11.<span class="st-small">Mi</span></th><th scope="col">12.11.<span class="st-small">Do</span></th><th scope="col">13.11.<span class="st-small">Fr</span></th><th scope="col">14.11.<span class="st-small">Sa</span></th><th scope="col">16.11.<span class="st-small">Mo</span></th><th scope="col">17.11.<span class="st-small">Di</span></th><th scope="col">18.11.<span class="st-small">Mi</span></th><th scope="col">19.11.<span class="st-small">Do</span></th></tr></thead>
+          <tbody>
+          <tr><th scope="row">VW Nordtor</th><td class="st-l"><span class="cap-pill cap-pill-free">morgen frei</span><span class="cap-when">Fr 20.11.</span></td><td><span class="cap-total">14</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-sum">an <b>8</b> von 10 Tagen frei</td><td class="st-l"><span class="cap-class">meist frei</span></td></tr>
+          <tr><th scope="row">Audi Waldkirchen</th><td class="st-l"><span class="cap-pill cap-pill-free">morgen frei</span><span class="cap-when">Fr 20.11.</span></td><td><span class="cap-total">11</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-sum">an <b>7</b> von 10 Tagen frei</td><td class="st-l"><span class="cap-class">meist frei</span></td></tr>
+          <tr><th scope="row">VW Neuhaus</th><td class="st-l"><span class="cap-pill cap-pill-free">morgen frei</span><span class="cap-when">Fr 20.11.</span></td><td><span class="cap-total">9</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-sum">an <b>7</b> von 10 Tagen frei</td><td class="st-l"><span class="cap-class">meist frei</span></td></tr>
+          <tr><th scope="row">VW Altstadt</th><td class="st-l"><span class="cap-pill cap-pill-free">morgen frei</span><span class="cap-when">Fr 20.11.</span></td><td><span class="cap-total">6</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-sum">an <b>5</b> von 10 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">VW Bergheim-Süd</th><td class="st-l"><span class="cap-pill">in 1 Werktag</span><span class="cap-when">Sa 21.11.</span></td><td><span class="cap-total">0</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-sum">an <b>4</b> von 10 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">ŠKODA Centrum Talstadt</th><td class="st-l"><span class="cap-pill">in 2 Werktagen</span><span class="cap-when">Mo 23.11.</span></td><td><span class="cap-total">0</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-sum">an <b>3</b> von 10 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">VW Zentrum Rheinfeld</th><td class="st-l"><span class="cap-pill">in 4 Werktagen</span><span class="cap-when">Mi 25.11.</span></td><td><span class="cap-total">0</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-sum">an <b>3</b> von 10 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">Audi Hafenstadt</th><td class="st-l"><span class="cap-pill cap-pill-na">nicht messbar</span><span class="cap-when">Grund: Zeitüberschreitung</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-na" title="nicht messbar: Zeitüberschreitung"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Zeitüberschreitung</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-na" title="nicht messbar: Zeitüberschreitung"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Zeitüberschreitung</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-na" title="nicht messbar: Zeitüberschreitung"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Zeitüberschreitung</span></td><td class="cap-sum">an <b>2</b> von 7 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">Audi Zentrum Rheinfeld</th><td class="st-l"><span class="cap-pill cap-pill-tight">belegt: &ge;&nbsp;5 Werktage</span><span class="cap-when">Mo 30.11.</span></td><td><span class="cap-total">0</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-sum">an <b>0</b> von 10 Tagen frei</td><td class="st-l"><span class="cap-class">meist belegt</span></td></tr>
+          <tr><th scope="row">VW &amp; ŠKODA Service Lindenau</th><td class="st-l"><span class="cap-pill">in 2 Werktagen</span><span class="cap-when">Mo 23.11.</span></td><td><span class="cap-total">0</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-sum">an <b>0</b> von 3 Tagen frei</td><td class="st-l"><span class="cap-class">zu wenig Daten</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="st-note">&bdquo;&mdash;&ldquo; nicht messbar: Audi Hafenstadt 11.11., 14.11. und 19.11.: Zeitüberschreitung &middot; VW &amp; ŠKODA Service Lindenau 09.11.&ndash;16.11.: kein Zugriff auf die SoftNet-Gruppe (seit 17.11. behoben).</p>
+    </div>
+
+    <div class="mk-v mk-s-fail">
+      <!-- Jüngster Scan failed -> letzter Stand mit state complete/partial + Warnband (BR-14, AC-10);
+           die 19.11.-Spalte des Verlaufs ist „—“ (Scan-Fehler zählt nicht als messbarer Tag, BR-26) -->
+      <div class="st-warn"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg></span><p><b>Letzter Scan (19.11.2026, 22:30&nbsp;Uhr) fehlgeschlagen &ndash; angezeigt: Stand 18.11.2026.</b> Grund: SoftNet nicht erreichbar (alle 10 Standorte, auch nach erneutem Versuch). Für morgen (Fr 20.11.) liegt keine Messung vor; kein Wert wird als 0 dargestellt.</p></div>
+      <p class="st-range">Letzter vollständiger Scan: 18.11.2026, 22:32&ndash;22:37&nbsp;Uhr &middot; Zieltag damals: Do 19.11.2026 &middot; Werktage Mo&ndash;Sa &middot; Verlauf: letzte 10 Scans (09.11.&ndash;19.11.)</p>
+      <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle freie Online-Termine je Standort, Stand 18.11.2026, horizontal scrollbar">
+        <table class="st-table cap-table">
+          <caption class="sr">Freie Online-Termine je Standort, Stand des letzten vollständigen Scans vom 18.11.2026 (der Scan vom 19.11.2026 ist fehlgeschlagen und erscheint im Verlauf als nicht messbar), sortiert nach der Einordnung des 10-Tage-Verlaufs: nächster freier Online-Termin, freie Termine am damaligen Zieltag, Zustand je Scan und Zusammenfassung.</caption>
+          <thead><tr><th scope="col" rowspan="2" class="st-l">Standort</th><th scope="col" rowspan="2" class="st-l">Nächster freier Online-Termin<span class="st-small">Stand 18.11.</span></th><th scope="col" rowspan="2">Frei am Zieltag<span class="st-small">Referenz-Leistung, Näherung</span></th><th scope="colgroup" colspan="10" class="st-l">Verlauf letzte 10 Tage<span class="st-small">Zustand des jeweiligen Zieltags</span></th><th scope="col" rowspan="2">an X von 10 Tagen frei</th><th scope="col" rowspan="2" class="st-l">Einordnung</th></tr><tr><th scope="col">09.11.<span class="st-small">Mo</span></th><th scope="col">10.11.<span class="st-small">Di</span></th><th scope="col">11.11.<span class="st-small">Mi</span></th><th scope="col">12.11.<span class="st-small">Do</span></th><th scope="col">13.11.<span class="st-small">Fr</span></th><th scope="col">14.11.<span class="st-small">Sa</span></th><th scope="col">16.11.<span class="st-small">Mo</span></th><th scope="col">17.11.<span class="st-small">Di</span></th><th scope="col">18.11.<span class="st-small">Mi</span></th><th scope="col">19.11.<span class="st-small">Do</span></th></tr></thead>
+          <tbody>
+          <tr><th scope="row">VW Nordtor</th><td class="st-l"><span class="cap-pill cap-pill-free">heute frei</span><span class="cap-when">Do 19.11.</span></td><td><span class="cap-total">12</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-na" title="nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)</span></td><td class="cap-sum">an <b>7</b> von 9 Tagen frei</td><td class="st-l"><span class="cap-class">meist frei</span></td></tr>
+          <tr><th scope="row">Audi Waldkirchen</th><td class="st-l"><span class="cap-pill cap-pill-free">heute frei</span><span class="cap-when">Do 19.11.</span></td><td><span class="cap-total">9</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-na" title="nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)</span></td><td class="cap-sum">an <b>6</b> von 9 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">VW Neuhaus</th><td class="st-l"><span class="cap-pill">in 1 Werktag</span><span class="cap-when">Fr 20.11.</span></td><td><span class="cap-total">0</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-na" title="nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)</span></td><td class="cap-sum">an <b>6</b> von 9 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">VW Bergheim-Süd</th><td class="st-l"><span class="cap-pill cap-pill-free">heute frei</span><span class="cap-when">Do 19.11.</span></td><td><span class="cap-total">7</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-na" title="nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)</span></td><td class="cap-sum">an <b>4</b> von 9 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">VW Altstadt</th><td class="st-l"><span class="cap-pill">in 1 Werktag</span><span class="cap-when">Fr 20.11.</span></td><td><span class="cap-total">0</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-na" title="nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)</span></td><td class="cap-sum">an <b>4</b> von 9 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">VW Zentrum Rheinfeld</th><td class="st-l"><span class="cap-pill cap-pill-free">heute frei</span><span class="cap-when">Do 19.11.</span></td><td><span class="cap-total">5</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-na" title="nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)</span></td><td class="cap-sum">an <b>3</b> von 9 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">ŠKODA Centrum Talstadt</th><td class="st-l"><span class="cap-pill">in 4 Werktagen</span><span class="cap-when">Di 24.11.</span></td><td><span class="cap-total">0</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-na" title="nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)</span></td><td class="cap-sum">an <b>3</b> von 9 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">Audi Hafenstadt</th><td class="st-l"><span class="cap-pill">in 4 Werktagen</span><span class="cap-when">Di 24.11.</span></td><td><span class="cap-total">0</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-na" title="nicht messbar: Zeitüberschreitung"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Zeitüberschreitung</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-na" title="nicht messbar: Zeitüberschreitung"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Zeitüberschreitung</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-free">frei</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-na" title="nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)</span></td><td class="cap-sum">an <b>2</b> von 7 Tagen frei</td><td class="st-l"><span class="cap-class">wechselnd</span></td></tr>
+          <tr><th scope="row">Audi Zentrum Rheinfeld</th><td class="st-l"><span class="cap-pill cap-pill-tight">belegt: &ge;&nbsp;5 Werktage</span><span class="cap-when">Fr 27.11.</span></td><td><span class="cap-total">0</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-booked">belegt</td><td class="cap-day cap-day-na" title="nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)</span></td><td class="cap-sum">an <b>0</b> von 9 Tagen frei</td><td class="st-l"><span class="cap-class">meist belegt</span></td></tr>
+          <tr><th scope="row">VW &amp; ŠKODA Service Lindenau</th><td class="st-l"><span class="cap-pill">in 3 Werktagen</span><span class="cap-when">Mo 23.11.</span></td><td><span class="cap-total">0</span><span class="sr"> freie Online-Termine am Zieltag</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-na" title="nicht messbar: kein Zugriff auf die SoftNet-Gruppe"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: kein Zugriff auf die SoftNet-Gruppe</span></td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-tight">knapp</td><td class="cap-day cap-day-na" title="nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)"><span aria-hidden="true">&mdash;</span><span class="sr">nicht messbar: Scan fehlgeschlagen (SoftNet nicht erreichbar)</span></td><td class="cap-sum">an <b>0</b> von 2 Tagen frei</td><td class="st-l"><span class="cap-class">zu wenig Daten</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="st-note">&bdquo;&mdash;&ldquo; nicht messbar: alle Standorte 19.11.: Scan fehlgeschlagen (SoftNet nicht erreichbar) &middot; Audi Hafenstadt 11.11. und 14.11.: Zeitüberschreitung &middot; VW &amp; ŠKODA Service Lindenau 09.11.&ndash;16.11.: kein Zugriff auf die SoftNet-Gruppe.</p>
+    </div>
+
+    <p class="st-empty mk-v mk-s-thin"><span class="st-empty-dash" aria-hidden="true">&mdash;</span>Noch keine Messung. Der erste Kapazitäts-Scan läuft seit 22:34&nbsp;Uhr (gestartet 19.11.2026; üblich 3&ndash;5 Minuten). Erfassung seit 19.11.2026.</p>
+    <div class="st-warn mk-v mk-s-hist"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg></span><p>Historie derzeit nicht verfügbar</p></div>
+
+    <p class="st-note mk-v mk-s-full mk-s-fail mk-s-thin">Gemessen mit der Referenz-Leistung &bdquo;Wischerblätter erneuern&ldquo; (kleinste Einheit). Das ist die online buchbare Restkapazität, nicht die Werkstattauslastung. Freie Termine sind Betriebsdaten ohne Personenbezug; die &bdquo;&lt;&nbsp;5&ldquo;-Regel gilt hier nicht.</p>
+    <ul class="st-legend mk-v mk-s-full mk-s-fail" aria-label="Legende Stufen und Verlauf">
+      <li><span class="cap-pill cap-pill-free">morgen frei</span>am Zieltag online frei (relativ zum Abruftag)</li>
+      <li><span class="cap-pill">in 2 Werktagen</span>erster freier Termin in 1&ndash;4 Werktagen</li>
+      <li><span class="cap-pill cap-pill-tight">belegt: &ge;&nbsp;5 Werktage</span>oder keine Online-Termine gefunden</li>
+      <li><span class="cap-pill cap-pill-na">nicht messbar</span>mit Grund, nie 0</li>
+      <li><span class="st-sw cap-day-free" aria-hidden="true"></span>frei = am Zieltag online frei</li>
+      <li><span class="st-sw cap-day-tight" aria-hidden="true"></span>knapp = erster freier Termin in 1&ndash;4 Werktagen</li>
+      <li><span class="st-sw cap-day-booked" aria-hidden="true"></span>belegt = &ge;&nbsp;5 Werktage oder keine Online-Termine gefunden</li>
+      <li><span class="st-sw-txt" aria-hidden="true">&mdash;</span>nicht messbar oder kein Scan (Grund in der Fußnote)</li>
+      <li>Einordnung ab 5 messbaren Tagen: <b>meist frei</b> &ge;&nbsp;7 von 10 Tagen frei &middot; <b>wechselnd</b> 3&ndash;6 &middot; <b>meist belegt</b> &le;&nbsp;2 (bei weniger messbaren Tagen sinngemäß: &ge;&nbsp;70&nbsp;% / &le;&nbsp;20&nbsp;%), sonst &bdquo;zu wenig Daten&ldquo;</li>
+    </ul>
+  </section>
+
+  <!-- =========================================================================
+       S2 Online-Buchungen je Standort: Renner und Penner (BranchRankingSectionRenderer, .rk)
+       Nur abgeschlossene Monate (BR-10): Vormonat plus Spalte „Jahr bis Vormonat“ (.opt).
+       1–4 -> „< 5“ und ohne Rang in die Gruppe „Unter 5 Buchungen“ (BR-9 Nr. 1).
+       R-1 hat bewusst KEINE Sekundärunterdrückung (BR-9 Nr. 6): VW Altstadt steht mit
+       14 Buchungen in der Liste; dass sich der eine „< 5“-Wert (VW Neuhaus) aus der
+       Monatssumme errechnen lässt, ist als Restrisiko hingenommen (NFR-Datenschutz-6).
+       Anteile: T-2/T-4 erst ab 20 Buchungen des Standorts (sonst „n < 20“); ein Anteil,
+       dessen Zähler oder Komplement 1–4 ist, wird „k. A.“ (Audi Hafenstadt: 4 von 24
+       späten Terminen). In den Spalten T-2/T-4 fehlen je mindestens 3 Werte, sodass
+       keine einzelne Zelle aus dem Gesamtwert (S0 I-4: 38 %) rückrechenbar ist.
+       Die .opt-Spalten entfallen bei <= 40em (Muster .us-months .opt).
+       ========================================================================= -->
+  <section class="rk" id="branches" aria-labelledby="rk-h">
+    <h2 id="rk-h">Online-Buchungen je Standort: Renner und Penner</h2>
+    <div class="mk-v mk-s-full mk-s-fail">
+      <p class="st-range">Oktober 2026 (abgeschlossener Monat) &middot; Jahr 2026 bis Ende Oktober</p>
+      <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle Online-Buchungen je Standort, horizontal scrollbar">
+        <table class="st-table rk-table">
+          <caption class="sr">Rangliste der Standorte nach Online-Buchungen im Oktober 2026 mit Anteil am Online-Volumen, Buchungen im Jahr 2026 bis Ende Oktober, Leistungsaufrufen, Buchungen je 100 Aufrufe, Anteil außerhalb Mo&ndash;Fr 07&ndash;18 Uhr, Anteil später Termine ab 16 Uhr und Rangänderung gegenüber September.</caption>
+          <thead><tr><th scope="col">Rang</th><th scope="col" class="st-l">Standort</th><th scope="col" class="st-l">Online-Buchungen</th><th scope="col">Anteil<span class="st-small">am Online-Volumen</span></th><th scope="col" class="opt">Jahr bis Vormonat</th><th scope="col" class="opt">Leistungs&shy;aufrufe<span class="st-small">Seitenaufrufe</span></th><th scope="col" class="opt">Buchungen je 100 Aufrufe<span class="st-small">(Näherung)</span></th><th scope="col" class="opt">Außerhalb<span class="st-small st-nw">Mo&ndash;Fr 07&ndash;18&nbsp;Uhr</span></th><th scope="col" class="opt">Späte Termine<span class="st-small">ab 16 Uhr</span></th><th scope="col">Rang&shy;änderung</th></tr></thead>
+          <tbody>
+          <tr><td class="st-rank">1</td><th scope="row">VW Zentrum Rheinfeld</th><td class="st-l"><span class="rk-cell"><span class="rk-bar" aria-hidden="true"><span class="rk-fill" style="width:100.0%"></span></span><b>58</b></span></td><td>19&nbsp;%</td><td class="opt">104</td><td class="opt">410</td><td class="opt">14,1</td><td class="opt">34&nbsp;%</td><td class="opt">21&nbsp;%</td><td><span aria-hidden="true">&uarr;&nbsp;1</span><span class="sr">aufgestiegen um 1</span><span class="rk-prev">Sep.: 2</span></td></tr>
+          <tr><td class="st-rank">2</td><th scope="row">Audi Zentrum Rheinfeld</th><td class="st-l"><span class="rk-cell"><span class="rk-bar" aria-hidden="true"><span class="rk-fill" style="width:81.0%"></span></span><b>47</b></span></td><td>15&nbsp;%</td><td class="opt">97</td><td class="opt">352</td><td class="opt">13,4</td><td class="opt">36&nbsp;%</td><td class="opt">17&nbsp;%</td><td><span aria-hidden="true">&darr;&nbsp;1</span><span class="sr">abgestiegen um 1</span><span class="rk-prev">Sep.: 1</span></td></tr>
+          <tr><td class="st-rank">3</td><th scope="row">ŠKODA Centrum Talstadt</th><td class="st-l"><span class="rk-cell"><span class="rk-bar" aria-hidden="true"><span class="rk-fill" style="width:70.7%"></span></span><b>41</b></span></td><td>13&nbsp;%</td><td class="opt">69</td><td class="opt">238</td><td class="opt">17,2</td><td class="opt">44&nbsp;%</td><td class="opt">27&nbsp;%</td><td><span aria-hidden="true">&uarr;&nbsp;2</span><span class="sr">aufgestiegen um 2</span><span class="rk-prev">Sep.: 5</span></td></tr>
+          <tr><td class="st-rank">4</td><th scope="row">VW Nordtor</th><td class="st-l"><span class="rk-cell"><span class="rk-bar" aria-hidden="true"><span class="rk-fill" style="width:65.5%"></span></span><b>38</b></span></td><td>12&nbsp;%</td><td class="opt">74</td><td class="opt">301</td><td class="opt">12,6</td><td class="opt">42&nbsp;%</td><td class="opt">16&nbsp;%</td><td><span aria-hidden="true">&darr;&nbsp;1</span><span class="sr">abgestiegen um 1</span><span class="rk-prev">Sep.: 3</span></td></tr>
+          <tr><td class="st-rank">5</td><th scope="row">VW Bergheim-Süd</th><td class="st-l"><span class="rk-cell"><span class="rk-bar" aria-hidden="true"><span class="rk-fill" style="width:56.9%"></span></span><b>33</b></span></td><td>11&nbsp;%</td><td class="opt">64</td><td class="opt">276</td><td class="opt">12,0</td><td class="opt">33&nbsp;%</td><td class="opt">15&nbsp;%</td><td><span aria-hidden="true">&darr;&nbsp;1</span><span class="sr">abgestiegen um 1</span><span class="rk-prev">Sep.: 4</span></td></tr>
+          <tr><td class="st-rank">6</td><th scope="row">Audi Waldkirchen</th><td class="st-l"><span class="rk-cell"><span class="rk-bar" aria-hidden="true"><span class="rk-fill" style="width:50.0%"></span></span><b>29</b></span></td><td>9&nbsp;%</td><td class="opt">53</td><td class="opt">164</td><td class="opt">17,7</td><td class="opt">45&nbsp;%</td><td class="opt">31&nbsp;%</td><td><span aria-hidden="true">=</span><span class="sr">unverändert</span><span class="rk-prev">Sep.: 6</span></td></tr>
+          <tr><td class="st-rank">7</td><th scope="row">Audi Hafenstadt</th><td class="st-l"><span class="rk-cell"><span class="rk-bar" aria-hidden="true"><span class="rk-fill" style="width:41.4%"></span></span><b>24</b></span></td><td>8&nbsp;%</td><td class="opt">37</td><td class="opt">205</td><td class="opt">11,7</td><td class="opt">42&nbsp;%</td><td class="opt st-ka"><span aria-hidden="true">k.&nbsp;A.</span><span class="sr">keine Angabe, unterdrückt gegen Rückrechnung</span></td><td><span aria-hidden="true">&uarr;&nbsp;1</span><span class="sr">aufgestiegen um 1</span><span class="rk-prev">Sep.: 8</span></td></tr>
+          <tr><td class="st-rank">8</td><th scope="row">VW &amp; ŠKODA Service Lindenau</th><td class="st-l"><span class="rk-cell"><span class="rk-bar" aria-hidden="true"><span class="rk-fill" style="width:32.8%"></span></span><b>19</b></span></td><td>6&nbsp;%</td><td class="opt">36</td><td class="opt">188</td><td class="opt">10,1</td><td class="opt st-nd"><span aria-hidden="true">n&nbsp;&lt;&nbsp;20</span><span class="sr">zu wenig Daten, weniger als 20 Fälle</span></td><td class="opt st-nd"><span aria-hidden="true">n&nbsp;&lt;&nbsp;20</span><span class="sr">zu wenig Daten, weniger als 20 Fälle</span></td><td><span aria-hidden="true">&darr;&nbsp;1</span><span class="sr">abgestiegen um 1</span><span class="rk-prev">Sep.: 7</span></td></tr>
+          <tr><td class="st-rank">9</td><th scope="row">VW Altstadt</th><td class="st-l"><span class="rk-cell"><span class="rk-bar" aria-hidden="true"><span class="rk-fill" style="width:24.1%"></span></span><b>14</b></span></td><td>5&nbsp;%</td><td class="opt">25</td><td class="opt">142</td><td class="opt">9,9</td><td class="opt st-nd"><span aria-hidden="true">n&nbsp;&lt;&nbsp;20</span><span class="sr">zu wenig Daten, weniger als 20 Fälle</span></td><td class="opt st-nd"><span aria-hidden="true">n&nbsp;&lt;&nbsp;20</span><span class="sr">zu wenig Daten, weniger als 20 Fälle</span></td><td><span aria-hidden="true">=</span><span class="sr">unverändert</span><span class="rk-prev">Sep.: 9</span></td></tr>
+          </tbody>
+          <tbody class="rk-low">
+            <tr><th scope="rowgroup" colspan="10">Unter 5 Buchungen: VW Neuhaus</th></tr>
+          <tr><td class="st-rank">&mdash;</td><th scope="row">VW Neuhaus</th><td class="st-l"><span class="rk-cell"><span class="rk-bar" aria-hidden="true"><span class="rk-fill" style="width:0%"></span></span><span class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></span></span></td><td class="st-ka"><span aria-hidden="true">k.&nbsp;A.</span><span class="sr">keine Angabe, unterdrückt gegen Rückrechnung</span></td><td class="opt st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td class="opt">95</td><td class="opt st-ka"><span aria-hidden="true">k.&nbsp;A.</span><span class="sr">keine Angabe, unterdrückt gegen Rückrechnung</span></td><td class="opt st-nd"><span aria-hidden="true">n&nbsp;&lt;&nbsp;20</span><span class="sr">zu wenig Daten, weniger als 20 Fälle</span></td><td class="opt st-nd"><span aria-hidden="true">n&nbsp;&lt;&nbsp;20</span><span class="sr">zu wenig Daten, weniger als 20 Fälle</span></td><td class="st-nd">&mdash;<span class="sr"> kein Rang, auch im September unter 5</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="st-note">Nur Online: Telefon- und Filialbuchungen sind unsichtbar &ndash; ein &bdquo;Penner&ldquo; kann offline stark sein. Leistungsaufrufe sind Seitenaufrufe der Leistungsauswahl (jedes erneute Betreten zählt), keine Besucher.</p>
+    </div>
+    <p class="st-empty mk-v mk-s-thin"><span class="st-empty-dash" aria-hidden="true">&mdash;</span>Noch kein abgeschlossener Monat seit Erfassungsbeginn (18.11.2026).</p>
+    <div class="st-warn mk-v mk-s-hist"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg></span><p>Historie derzeit nicht verfügbar</p></div>
+  </section>
+
+  <!-- =========================================================================
+       S3 Servicegruppen je Standort (ServiceGroupSectionRenderer, .sg)
+       G-1 global (aktueller Monat; real darunter das laufende Jahr), G-2/G-3 Matrix nur
+       Vormonat, eigene Zeile ab 20 Buchungen, übrige in „weitere Standorte“ (hier 3
+       Standorte). Spalten: Buchungen · 10 Gruppen (inkl. „nicht zuordenbar“) · Mietwagen.
+       Heat nach festen %-Stufen (HEAT_LEGEND_*), Zahl als Text + Stufe.
+       Sekundärunterdrückung SPALTENWEISE (Randsumme je Gruppe aus G-1 ableitbar):
+       TÜV — Audi Zentrum Rheinfeld „< 5“ -> kleinste Zelle > 0 (VW Nordtor, 5) „k. A.“;
+       Reparatur — Audi Hafenstadt „< 5“ -> ŠKODA (5) „k. A.“; Karosserie hat zwei
+       „< 5“-Zellen, daraus ist nur deren Summe ableitbar. Keine Zeile hat genau eine
+       „< 5“-Zelle, eine zeilenweise Regel greift in diesem Beispiel nicht.
+       ========================================================================= -->
+  <section class="sg" id="service-groups" aria-labelledby="sg-h">
+    <h2 id="sg-h">Servicegruppen: Was wird wo gebucht?</h2>
+
+    <div class="mk-v mk-s-full mk-s-fail">
+      <h3 class="st-sub" id="sg-all-h">Servicegruppen gesamt</h3>
+      <p class="st-range">aktueller Monat bis gestern (01.11.&ndash;18.11.2026) &middot; alle Standorte &middot; 286 Buchungen</p>
+      <ul class="dev" aria-labelledby="sg-all-h">
+      <li class="dev-row dev-wide"><span class="dev-lbl">Räderwechsel</span><span class="dev-bar" role="img" aria-label="Räderwechsel: 131 Nennungen, 45,8 Prozent der Buchungen"><span class="dev-fill st-fill" style="width:45.8%"></span></span><span class="dev-val"><b>131</b> &middot; 45,8&nbsp;%</span></li>
+      <li class="dev-row dev-wide"><span class="dev-lbl">Inspektion</span><span class="dev-bar" role="img" aria-label="Inspektion: 74 Nennungen, 25,9 Prozent der Buchungen"><span class="dev-fill st-fill" style="width:25.9%"></span></span><span class="dev-val"><b>74</b> &middot; 25,9&nbsp;%</span></li>
+      <li class="dev-row dev-wide"><span class="dev-lbl">Zusatzleistungen</span><span class="dev-bar" role="img" aria-label="Zusatzleistungen: 52 Nennungen, 18,2 Prozent der Buchungen"><span class="dev-fill st-fill" style="width:18.2%"></span></span><span class="dev-val"><b>52</b> &middot; 18,2&nbsp;%</span></li>
+      <li class="dev-row dev-wide"><span class="dev-lbl">Aktionen / Checks</span><span class="dev-bar" role="img" aria-label="Aktionen / Checks: 38 Nennungen, 13,3 Prozent der Buchungen"><span class="dev-fill st-fill" style="width:13.3%"></span></span><span class="dev-val"><b>38</b> &middot; 13,3&nbsp;%</span></li>
+      <li class="dev-row dev-wide"><span class="dev-lbl">Reparatur / Beanstandung</span><span class="dev-bar" role="img" aria-label="Reparatur / Beanstandung: 29 Nennungen, 10,1 Prozent der Buchungen"><span class="dev-fill st-fill" style="width:10.1%"></span></span><span class="dev-val"><b>29</b> &middot; 10,1&nbsp;%</span></li>
+      <li class="dev-row dev-wide"><span class="dev-lbl">TÜV</span><span class="dev-bar" role="img" aria-label="TÜV: 24 Nennungen, 8,4 Prozent der Buchungen"><span class="dev-fill st-fill" style="width:8.4%"></span></span><span class="dev-val"><b>24</b> &middot; 8,4&nbsp;%</span></li>
+      <li class="dev-row dev-wide"><span class="dev-lbl">Hol &amp; Bring</span><span class="dev-bar" role="img" aria-label="Hol und Bring: 18 Nennungen, 6,3 Prozent der Buchungen"><span class="dev-fill st-fill" style="width:6.3%"></span></span><span class="dev-val"><b>18</b> &middot; 6,3&nbsp;%</span></li>
+      <li class="dev-row dev-wide"><span class="dev-lbl">Bremsflüssigkeit</span><span class="dev-bar" role="img" aria-label="Bremsflüssigkeit: 11 Nennungen, 3,8 Prozent der Buchungen"><span class="dev-fill st-fill" style="width:3.8%"></span></span><span class="dev-val"><b>11</b> &middot; 3,8&nbsp;%</span></li>
+      <li class="dev-row dev-wide"><span class="dev-lbl">nicht zuordenbar</span><span class="dev-bar" role="img" aria-label="nicht zuordenbar: 9 Nennungen, 3,1 Prozent der Buchungen"><span class="dev-fill st-fill" style="width:3.1%"></span></span><span class="dev-val"><b>9</b> &middot; 3,1&nbsp;%</span></li>
+      <li class="dev-row dev-wide"><span class="dev-lbl">Karosserie / Frontscheibe</span><span class="dev-bar" role="img" aria-label="Karosserie / Frontscheibe: 7 Nennungen, 2,4 Prozent der Buchungen"><span class="dev-fill st-fill" style="width:2.4%"></span></span><span class="dev-val"><b>7</b> &middot; 2,4&nbsp;%</span></li>
+      </ul>
+      <p class="st-note">Mehrfachnennung: eine Buchung zählt in jeder ihrer Gruppen einmal. &bdquo;Zusatzleistungen&ldquo; = Leistungen mit mehreren SoftNet-Tags; &bdquo;nicht zuordenbar&ldquo; = Standorte ohne Tags. Zusätzlich mit Mietwagen gebucht: 34 von 286 Buchungen (11,9&nbsp;%).</p>
+      <p class="mk-note"><b>Mockup-Hinweis:</b> Real folgt darunter dieselbe Balkenliste für &bdquo;laufendes Jahr bis gestern (01.01.&ndash;18.11.2026)&ldquo; (AC-16) &ndash; hier ausgelassen.</p>
+
+      <h3 class="st-sub">Standort &times; Servicegruppe (Oktober 2026)</h3>
+      <p class="st-range">Oktober 2026 (abgeschlossener Monat) &middot; Anteil der Buchungen des Standorts, die diese Gruppe enthalten &middot; eigene Zeile ab 20 Buchungen</p>
+      <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle Standort mal Servicegruppe, Oktober 2026, horizontal scrollbar">
+        <table class="st-table st-heat sg-matrix">
+          <caption class="sr">Standort mal Servicegruppe, Oktober 2026: Anteil der Buchungen des Standorts, die diese Gruppe enthalten, in Prozent; eigene Zeile nur für Standorte mit mindestens 20 Buchungen, die übrigen zusammen als weitere Standorte.</caption>
+          <thead><tr><th scope="col" class="st-l">Standort</th><th scope="col">Buchungen</th><th scope="col">Inspek&shy;tion</th><th scope="col">TÜV</th><th scope="col">Brems&shy;flüssig&shy;keit</th><th scope="col">Räder&shy;wechsel</th><th scope="col">Aktionen<span class="sr"> / Checks</span></th><th scope="col">Repara&shy;tur<span class="sr"> / Beanstandung</span></th><th scope="col">Karos&shy;serie<span class="sr"> / Frontscheibe</span></th><th scope="col">Zusatz&shy;leistun&shy;gen</th><th scope="col">Hol &amp; Bring</th><th scope="col">nicht zu&shy;ordenbar</th><th scope="col">Miet&shy;wagen</th></tr></thead>
+          <tbody>
+          <tr><th scope="row">VW Zentrum Rheinfeld</th><td>58</td><td class="st-heat-3">31&nbsp;%</td><td class="st-heat-1">12&nbsp;%</td><td class="st-heat-1">9&nbsp;%</td><td class="st-heat-3">38&nbsp;%</td><td class="st-heat-2">16&nbsp;%</td><td class="st-heat-1">14&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">21&nbsp;%</td><td class="st-heat-1">10&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">16&nbsp;%</td></tr>
+          <tr><th scope="row">Audi Zentrum Rheinfeld</th><td>47</td><td class="st-heat-3">36&nbsp;%</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td>0&nbsp;%</td><td class="st-heat-3">34&nbsp;%</td><td class="st-heat-1">13&nbsp;%</td><td class="st-heat-2">15&nbsp;%</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td class="st-heat-2">23&nbsp;%</td><td class="st-heat-2">19&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">26&nbsp;%</td></tr>
+          <tr><th scope="row">ŠKODA Centrum Talstadt</th><td>41</td><td class="st-heat-2">24&nbsp;%</td><td class="st-heat-2">15&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-4">49&nbsp;%</td><td class="st-heat-2">17&nbsp;%</td><td class="st-ka"><span aria-hidden="true">k.&nbsp;A.</span><span class="sr">keine Angabe, unterdrückt gegen Rückrechnung</span></td><td>0&nbsp;%</td><td class="st-heat-2">22&nbsp;%</td><td>0&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-1">12&nbsp;%</td></tr>
+          <tr><th scope="row">VW Nordtor</th><td>38</td><td class="st-heat-2">29&nbsp;%</td><td class="st-ka"><span aria-hidden="true">k.&nbsp;A.</span><span class="sr">keine Angabe, unterdrückt gegen Rückrechnung</span></td><td>0&nbsp;%</td><td class="st-heat-3">39&nbsp;%</td><td class="st-heat-2">16&nbsp;%</td><td>0&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">21&nbsp;%</td><td class="st-heat-1">13&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">16&nbsp;%</td></tr>
+          <tr><th scope="row">VW Bergheim-Süd</th><td>33</td><td class="st-heat-2">27&nbsp;%</td><td>0&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-4">52&nbsp;%</td><td class="st-heat-2">15&nbsp;%</td><td>0&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">18&nbsp;%</td><td>0&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">15&nbsp;%</td></tr>
+          <tr><th scope="row">Audi Waldkirchen</th><td>29</td><td class="st-heat-2">28&nbsp;%</td><td>0&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-4">45&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">21&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">24&nbsp;%</td><td>0&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">21&nbsp;%</td></tr>
+          <tr><th scope="row">Audi Hafenstadt</th><td>24</td><td class="st-heat-2">29&nbsp;%</td><td>0&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-4">46&nbsp;%</td><td>0&nbsp;%</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td class="st-heat-2">21&nbsp;%</td><td>0&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">21&nbsp;%</td></tr>
+          <tr class="sg-other"><th scope="row">weitere Standorte<span class="st-small">(unter 20 Buchungen)</span></th><td>36</td><td class="st-heat-2">25&nbsp;%</td><td class="st-heat-2">17&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-3">39&nbsp;%</td><td class="st-heat-1">14&nbsp;%</td><td>0&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">17&nbsp;%</td><td>0&nbsp;%</td><td class="st-heat-2">22&nbsp;%</td><td class="st-heat-1">14&nbsp;%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="st-legend" aria-label="Legende Farbstufen Matrix">
+        <li><span class="st-sw st-heat-1" aria-hidden="true"></span>1&ndash;14&nbsp;%</li>
+        <li><span class="st-sw st-heat-2" aria-hidden="true"></span>15&ndash;29&nbsp;%</li>
+        <li><span class="st-sw st-heat-3" aria-hidden="true"></span>30&ndash;44&nbsp;%</li>
+        <li><span class="st-sw st-heat-4" aria-hidden="true"></span>ab 45&nbsp;%</li>
+        <li><span class="st-sw-txt" aria-hidden="true">0&nbsp;%</span>keine Buchung</li>
+        <li><span class="st-sw-txt" aria-hidden="true">&lt;&nbsp;5</span>weniger als 5, unterdrückt</li>
+        <li><span class="st-sw-txt" aria-hidden="true">k.&nbsp;A.</span>keine Angabe, unterdrückt gegen Rückrechnung</li>
+      </ul>
+    </div>
+
+    <div class="mk-v mk-s-thin">
+      <h3 class="st-sub">Servicegruppen gesamt</h3>
+      <p class="st-range">aktueller Monat bis gestern (18.11.2026, Erfassung seit 18.11.2026) &middot; 12 Buchungen</p>
+      <p class="st-thin">Anteile: zu wenig Daten (n &lt; 20). Gezeigt werden nur Nennungen.</p>
+      <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle Servicegruppen gesamt, horizontal scrollbar">
+        <table class="st-table">
+          <caption class="sr">Servicegruppen gesamt, 18.11.2026: Nennungen je Gruppe; Anteile wegen weniger als 20 Buchungen nicht ausgewiesen.</caption>
+          <thead><tr><th scope="col" class="st-l">Servicegruppe</th><th scope="col">Nennungen</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Räderwechsel</th><td>6</td></tr>
+            <tr><th scope="row">Inspektion</th><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td></tr>
+            <tr><th scope="row">Zusatzleistungen</th><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td></tr>
+            <tr><th scope="row">Aktionen / Checks</th><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td></tr>
+            <tr><th scope="row">Reparatur / Beanstandung</th><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td></tr>
+            <tr><th scope="row">Mietwagen</th><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td></tr>
+            <tr><th scope="row">TÜV</th><td>0</td></tr>
+            <tr><th scope="row">Bremsflüssigkeit</th><td>0</td></tr>
+            <tr><th scope="row">Karosserie / Frontscheibe</th><td>0</td></tr>
+            <tr><th scope="row">Hol &amp; Bring</th><td>0</td></tr>
+            <tr><th scope="row">nicht zuordenbar</th><td>0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3 class="st-sub">Standort &times; Servicegruppe</h3>
+      <p class="st-empty"><span class="st-empty-dash" aria-hidden="true">&mdash;</span>Noch kein abgeschlossener Monat seit Erfassungsbeginn (18.11.2026).</p>
+    </div>
+    <div class="st-warn mk-v mk-s-hist"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg></span><p>Historie derzeit nicht verfügbar</p></div>
+  </section>
+
+  <!-- =========================================================================
+       S4 Buchungs- und Terminzeiten (TimingSectionRenderer, .tm) — global.
+       T-2 Kachel (Monat, Jahr) · T-1 Wann gebucht (7×3) · T-3 Terminzeiten (Mo–Sa × 5)
+       · T-5 Vorlauf. Heat-Stufen RELATIV zur größten sichtbaren Zelle (§10.5: Grenzen
+       ⌊max/4⌋, ⌊max/2⌋, ⌊3·max/4⌋); die Legende unter JEDER T-1/T-3-Tabelle nennt die
+       daraus zur Laufzeit berechneten Spannen (eine einzige sichtbare Zelle -> Stufe 4).
+       Unterdrückung (BR-9 Nr. 4): Sekundärunterdrückung gilt für T-1, T-3 und T-5
+       (Tabellen mit sichtbarer Gesamtsumme) und für G-2 — nicht für R-1 (BR-9 Nr. 6).
+       Hier hat T-1 vier „< 5“-Zellen, daraus ist nur deren Summe (10) ableitbar;
+       T-3 und T-5 haben keine, also greift keine Sekundärunterdrückung.
+       ========================================================================= -->
+  <section class="tm" id="timing" aria-labelledby="tm-h">
+    <h2 id="tm-h">Buchungs- und Terminzeiten</h2>
+
+    <div class="mk-v mk-s-full mk-s-fail">
+      <p class="st-range">aktueller Monat bis gestern (01.11.&ndash;18.11.2026) &middot; alle Standorte &middot; 286 Buchungen &middot; Europe/Berlin</p>
+      <div class="tm-kpis">
+        <div class="tm-kpi">
+          <div class="tm-kpi-val">37&nbsp;%</div>
+          <div class="tm-kpi-lbl">außerhalb Mo&ndash;Fr 07&ndash;18&nbsp;Uhr gebucht</div>
+          <div class="tm-kpi-sub">aktueller Monat bis gestern (01.11.&ndash;18.11.2026) &middot; 105 von 286</div>
+        </div>
+        <div class="tm-kpi">
+          <div class="tm-kpi-val">37&nbsp;%</div>
+          <div class="tm-kpi-lbl">außerhalb Mo&ndash;Fr 07&ndash;18&nbsp;Uhr gebucht</div>
+          <div class="tm-kpi-sub">laufendes Jahr bis gestern (01.01.&ndash;18.11.2026) &middot; 316 von 849</div>
+        </div>
+      </div>
+
+      <div class="st-grid">
+        <div>
+          <h3 class="st-sub">Wann wird gebucht?</h3>
+          <p class="st-range">Wochentag und Tageszeit der Buchung</p>
+          <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle Wann wird gebucht, horizontal scrollbar">
+            <table class="st-table st-heat">
+              <caption class="sr">Wann wird gebucht? Buchungen nach Wochentag und Tageszeit der Buchung, aktueller Monat bis gestern (01.11. bis 18.11.2026); Farbstufe relativ zum Höchstwert 44.</caption>
+              <thead><tr><th scope="col" class="st-l">Wochentag</th><th scope="col">Tag<span class="st-small">07&ndash;18 Uhr</span></th><th scope="col">Abend<span class="st-small">18&ndash;22 Uhr</span></th><th scope="col">Nacht<span class="st-small">22&ndash;07 Uhr</span></th></tr></thead>
+              <tbody>
+              <tr><th scope="row"><span aria-hidden="true">Mo</span><span class="sr">Montag</span></th><td class="st-heat-4">44</td><td class="st-heat-1">9</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Di</span><span class="sr">Dienstag</span></th><td class="st-heat-4">42</td><td class="st-heat-1">8</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Mi</span><span class="sr">Mittwoch</span></th><td class="st-heat-4">40</td><td class="st-heat-1">10</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Do</span><span class="sr">Donnerstag</span></th><td class="st-heat-3">29</td><td class="st-heat-1">6</td><td>0</td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Fr</span><span class="sr">Freitag</span></th><td class="st-heat-3">26</td><td class="st-heat-1">5</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Sa</span><span class="sr">Samstag</span></th><td class="st-heat-2">22</td><td class="st-heat-1">7</td><td>0</td></tr>
+              <tr><th scope="row"><span aria-hidden="true">So</span><span class="sr">Sonntag</span></th><td class="st-heat-2">14</td><td class="st-heat-1">9</td><td class="st-heat-1">5</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul class="st-legend" aria-label="Legende Farbstufen Wann wird gebucht">
+            <li><span class="st-sw st-heat-1" aria-hidden="true"></span>bis 11</li>
+            <li><span class="st-sw st-heat-2" aria-hidden="true"></span>12&ndash;22</li>
+            <li><span class="st-sw st-heat-3" aria-hidden="true"></span>23&ndash;33</li>
+            <li><span class="st-sw st-heat-4" aria-hidden="true"></span>ab 34 (größter Wert 44)</li>
+            <li><span class="st-sw-txt" aria-hidden="true">0</span>keine Buchung</li>
+            <li><span class="st-sw-txt" aria-hidden="true">&lt;&nbsp;5</span>weniger als 5, unterdrückt</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="st-sub">Welche Terminzeiten sind gefragt?</h3>
+          <p class="st-range">Wochentag und Uhrzeit des gebuchten Termins</p>
+          <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle Welche Terminzeiten sind gefragt, horizontal scrollbar">
+            <table class="st-table st-heat tm-slots">
+              <caption class="sr">Welche Terminzeiten sind gefragt? Gebuchte Termine nach Wochentag und Uhrzeit des Termins, aktueller Monat bis gestern (01.11. bis 18.11.2026); Farbstufe relativ zum Höchstwert 24.</caption>
+              <thead><tr><th scope="col" class="st-l">Wochentag</th><th scope="col">früh<span class="st-small">vor 9</span></th><th scope="col">vorm.<span class="st-small">9&ndash;12</span></th><th scope="col">mittags<span class="st-small">12&ndash;14</span></th><th scope="col">nachm.<span class="st-small">14&ndash;16</span></th><th scope="col">spät<span class="st-small">ab 16</span></th></tr></thead>
+              <tbody>
+              <tr><th scope="row"><span aria-hidden="true">Mo</span><span class="sr">Montag</span></th><td class="st-heat-2">9</td><td class="st-heat-3">17</td><td class="st-heat-1">6</td><td class="st-heat-2">11</td><td class="st-heat-2">8</td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Di</span><span class="sr">Dienstag</span></th><td class="st-heat-2">7</td><td class="st-heat-3">15</td><td class="st-heat-1">5</td><td class="st-heat-2">10</td><td class="st-heat-2">9</td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Mi</span><span class="sr">Mittwoch</span></th><td class="st-heat-2">8</td><td class="st-heat-3">16</td><td class="st-heat-1">6</td><td class="st-heat-2">9</td><td class="st-heat-2">7</td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Do</span><span class="sr">Donnerstag</span></th><td class="st-heat-1">6</td><td class="st-heat-3">13</td><td class="st-heat-1">5</td><td class="st-heat-2">9</td><td class="st-heat-2">10</td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Fr</span><span class="sr">Freitag</span></th><td class="st-heat-2">7</td><td class="st-heat-3">15</td><td class="st-heat-1">6</td><td class="st-heat-2">8</td><td class="st-heat-1">5</td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Sa</span><span class="sr">Samstag</span></th><td class="st-heat-2">12</td><td class="st-heat-4">24</td><td class="st-heat-2">9</td><td class="st-heat-2">8</td><td class="st-heat-1">6</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul class="st-legend" aria-label="Legende Farbstufen Terminzeiten">
+            <li><span class="st-sw st-heat-1" aria-hidden="true"></span>bis 6</li>
+            <li><span class="st-sw st-heat-2" aria-hidden="true"></span>7&ndash;12</li>
+            <li><span class="st-sw st-heat-3" aria-hidden="true"></span>13&ndash;18</li>
+            <li><span class="st-sw st-heat-4" aria-hidden="true"></span>ab 19 (größter Wert 24)</li>
+            <li><span class="st-sw-txt" aria-hidden="true">0</span>keine Buchung</li>
+            <li><span class="st-sw-txt" aria-hidden="true">&lt;&nbsp;5</span>weniger als 5, unterdrückt</li>
+          </ul>
+          <p class="st-note">Kunden wählen aus dem, was SoftNet anbietet. Die Verteilung zeigt also Angebot und Nachfrage.</p>
+        </div>
+      </div>
+
+      <h3 class="st-sub" id="tm-lead-h">Vorlauf: Tage zwischen Buchung und Termin</h3>
+      <ul class="dev" aria-labelledby="tm-lead-h">
+        <li class="dev-row"><span class="dev-lbl">0&ndash;1 Tag</span><span class="dev-bar" role="img" aria-label="0 bis 1 Tag: 38 Buchungen, 13,3 Prozent"><span class="dev-fill st-fill" style="width:13.3%"></span></span><span class="dev-val"><b>38</b> &middot; 13,3&nbsp;%</span></li>
+        <li class="dev-row"><span class="dev-lbl">2&ndash;3 Tage</span><span class="dev-bar" role="img" aria-label="2 bis 3 Tage: 71 Buchungen, 24,8 Prozent"><span class="dev-fill st-fill" style="width:24.8%"></span></span><span class="dev-val"><b>71</b> &middot; 24,8&nbsp;%</span></li>
+        <li class="dev-row"><span class="dev-lbl">4&ndash;7 Tage</span><span class="dev-bar" role="img" aria-label="4 bis 7 Tage: 89 Buchungen, 31,1 Prozent"><span class="dev-fill st-fill" style="width:31.1%"></span></span><span class="dev-val"><b>89</b> &middot; 31,1&nbsp;%</span></li>
+        <li class="dev-row"><span class="dev-lbl">8&ndash;14 Tage</span><span class="dev-bar" role="img" aria-label="8 bis 14 Tage: 54 Buchungen, 18,9 Prozent"><span class="dev-fill st-fill" style="width:18.9%"></span></span><span class="dev-val"><b>54</b> &middot; 18,9&nbsp;%</span></li>
+        <li class="dev-row"><span class="dev-lbl">15&ndash;30 Tage</span><span class="dev-bar" role="img" aria-label="15 bis 30 Tage: 24 Buchungen, 8,4 Prozent"><span class="dev-fill st-fill" style="width:8.4%"></span></span><span class="dev-val"><b>24</b> &middot; 8,4&nbsp;%</span></li>
+        <li class="dev-row"><span class="dev-lbl">über 30 Tage</span><span class="dev-bar" role="img" aria-label="über 30 Tage: 10 Buchungen, 3,5 Prozent"><span class="dev-fill st-fill" style="width:3.5%"></span></span><span class="dev-val"><b>10</b> &middot; 3,5&nbsp;%</span></li>
+      </ul>
+      <p class="mk-note"><b>Mockup-Hinweis:</b> Real folgen unter T-1, T-3 und T-5 dieselben Blöcke für &bdquo;laufendes Jahr bis gestern (01.01.&ndash;18.11.2026)&ldquo; (AC-17), untereinander ohne Umschalter &ndash; hier ausgelassen.</p>
+    </div>
+
+    <div class="mk-v mk-s-thin">
+      <p class="st-range">aktueller Monat bis gestern (18.11.2026, Erfassung seit 18.11.2026) &middot; 12 Buchungen</p>
+      <div class="tm-kpis">
+        <div class="tm-kpi"><div class="tm-kpi-val st-nd"><span aria-hidden="true">n&nbsp;&lt;&nbsp;20</span><span class="sr">zu wenig Daten, weniger als 20 Fälle</span></div><div class="tm-kpi-lbl">außerhalb Mo&ndash;Fr 07&ndash;18&nbsp;Uhr gebucht</div><div class="tm-kpi-sub">aktueller Monat bis gestern &middot; zu wenig Daten (n &lt; 20)</div></div>
+        <div class="tm-kpi"><div class="tm-kpi-val st-nd"><span aria-hidden="true">n&nbsp;&lt;&nbsp;20</span><span class="sr">zu wenig Daten, weniger als 20 Fälle</span></div><div class="tm-kpi-lbl">außerhalb Mo&ndash;Fr 07&ndash;18&nbsp;Uhr gebucht</div><div class="tm-kpi-sub">laufendes Jahr bis gestern &middot; zu wenig Daten (n &lt; 20)</div></div>
+      </div>
+      <div class="st-grid">
+        <div>
+          <h3 class="st-sub">Wann wird gebucht?</h3>
+          <p class="st-range">&bdquo;&mdash;&ldquo; = an diesem Wochentag noch kein Tag erfasst</p>
+          <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle Wann wird gebucht, erster Erfassungstag, horizontal scrollbar">
+            <table class="st-table st-heat">
+              <caption class="sr">Wann wird gebucht? Buchungen vom 18.11.2026 nach Wochentag und Tageszeit; Wochentage ohne erfassten Tag ohne Daten.</caption>
+              <thead><tr><th scope="col" class="st-l">Wochentag</th><th scope="col">Tag<span class="st-small">07&ndash;18 Uhr</span></th><th scope="col">Abend<span class="st-small">18&ndash;22 Uhr</span></th><th scope="col">Nacht<span class="st-small">22&ndash;07 Uhr</span></th></tr></thead>
+              <tbody>
+              <tr><th scope="row"><span aria-hidden="true">Mo</span><span class="sr">Montag</span></th><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Di</span><span class="sr">Dienstag</span></th><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Mi</span><span class="sr">Mittwoch</span></th><td class="st-heat-4">8</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Do</span><span class="sr">Donnerstag</span></th><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Fr</span><span class="sr">Freitag</span></th><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Sa</span><span class="sr">Samstag</span></th><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td></tr>
+              <tr><th scope="row"><span aria-hidden="true">So</span><span class="sr">Sonntag</span></th><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td><td class="st-nd"><span aria-hidden="true">&mdash;</span><span class="sr">keine Daten</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul class="st-legend" aria-label="Legende Farbstufen Wann wird gebucht, erster Erfassungstag">
+            <li><span class="st-sw st-heat-1" aria-hidden="true"></span>bis 2</li>
+            <li><span class="st-sw st-heat-2" aria-hidden="true"></span>3&ndash;4</li>
+            <li><span class="st-sw st-heat-3" aria-hidden="true"></span>5&ndash;6</li>
+            <li><span class="st-sw st-heat-4" aria-hidden="true"></span>ab 7 (größter Wert 8)</li>
+            <li><span class="st-sw-txt" aria-hidden="true">0</span>keine Buchung</li>
+            <li><span class="st-sw-txt" aria-hidden="true">&lt;&nbsp;5</span>weniger als 5, unterdrückt</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="st-sub">Welche Terminzeiten sind gefragt?</h3>
+          <p class="st-range">Termine der 12 Buchungen vom 18.11.</p>
+          <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle Welche Terminzeiten sind gefragt, erster Erfassungstag, horizontal scrollbar">
+            <table class="st-table st-heat tm-slots">
+              <caption class="sr">Welche Terminzeiten sind gefragt? Termine der 12 Buchungen vom 18.11.2026 nach Wochentag und Uhrzeit des Termins.</caption>
+              <thead><tr><th scope="col" class="st-l">Wochentag</th><th scope="col">früh<span class="st-small">vor 9</span></th><th scope="col">vorm.<span class="st-small">9&ndash;12</span></th><th scope="col">mittags<span class="st-small">12&ndash;14</span></th><th scope="col">nachm.<span class="st-small">14&ndash;16</span></th><th scope="col">spät<span class="st-small">ab 16</span></th></tr></thead>
+              <tbody>
+              <tr><th scope="row"><span aria-hidden="true">Mo</span><span class="sr">Montag</span></th><td>0</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td>0</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td>0</td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Di</span><span class="sr">Dienstag</span></th><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Mi</span><span class="sr">Mittwoch</span></th><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Do</span><span class="sr">Donnerstag</span></th><td>0</td><td class="st-heat-4">5</td><td>0</td><td>0</td><td>0</td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Fr</span><span class="sr">Freitag</span></th><td>0</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td>0</td><td>0</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td></tr>
+              <tr><th scope="row"><span aria-hidden="true">Sa</span><span class="sr">Samstag</span></th><td>0</td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td>0</td><td>0</td><td>0</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <ul class="st-legend" aria-label="Legende Farbstufen Terminzeiten, erster Erfassungstag">
+            <li><span class="st-sw st-heat-1" aria-hidden="true"></span>bis 1</li>
+            <li><span class="st-sw st-heat-2" aria-hidden="true"></span>2</li>
+            <li><span class="st-sw st-heat-3" aria-hidden="true"></span>3</li>
+            <li><span class="st-sw st-heat-4" aria-hidden="true"></span>ab 4 (größter Wert 5)</li>
+            <li><span class="st-sw-txt" aria-hidden="true">0</span>keine Buchung</li>
+            <li><span class="st-sw-txt" aria-hidden="true">&lt;&nbsp;5</span>weniger als 5, unterdrückt</li>
+          </ul>
+        </div>
+      </div>
+      <h3 class="st-sub">Vorlauf: Tage zwischen Buchung und Termin</h3>
+      <p class="st-thin">Anteile: zu wenig Daten (n &lt; 20). 0&ndash;1 Tag: 5 &middot; 2&ndash;3 Tage: &lt;&nbsp;5 &middot; 4&ndash;7 Tage: &lt;&nbsp;5 &middot; 8&ndash;14 Tage: &lt;&nbsp;5 &middot; 15&ndash;30 Tage: 0 &middot; über 30 Tage: 0</p>
+    </div>
+    <div class="st-warn mk-v mk-s-hist"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg></span><p>Historie derzeit nicht verfügbar</p></div>
+  </section>
+
+  <!-- =========================================================================
+       S5 Nutzung — REQ-037 UNVERÄNDERT (UsageSectionRenderer): section.us direkt,
+       Monat + Jahr untereinander ohne Umschalter; genau 2 × .us-block.
+       Markup exakt wie der Renderer (Kachel-Untertitel, IDs us-m-dev/us-y-dev).
+       ========================================================================= -->
+  <section class="us" aria-labelledby="us-h">
+    <h2 id="us-h">Nutzungsstatistik</h2>
+    <p class="us-intro">Anonyme Reichweitenmessung aus den Server-Logs: die Geräteklasse wird aus dem User-Agent abgeleitet (<code class="mono">mobile</code> | <code class="mono">tablet</code> | <code class="mono">desktop</code> | <code class="mono">unknown</code>) &mdash; der rohe User-Agent wird weder geloggt noch gespeichert; keine Cookies, keine IP-Adressen, kein Fingerprinting, kein Drill-down. &bdquo;Besuche&ldquo; sind App-Starts (Sitzungen), keine eindeutigen Personen: ein Reload zählt erneut, ein Besuch über Mitternacht zählt an beiden Tagen. Der laufende Tag ist wegen der Ingestion-Latenz von 5&ndash;15 Minuten unvollständig; Tablets werden durch den iPadOS-Desktop-Modus leicht unterzählt. Zeiträume ohne Erfassung zeigen &bdquo;&mdash;&ldquo;, niemals &bdquo;0&ldquo;.</p>
+    <div class="us-block">
+      <div class="us-hd"><h3 class="us-title">Aktueller Monat (November 2026)</h3><span class="us-badge us-badge-live">laufend</span></div>
+      <p class="us-range">01.11.2026 &ndash; 19.11.2026 &middot; Europe/Berlin &middot; live aus Log Analytics, Ingestion-Latenz 5&ndash;15&nbsp;Min.</p>
+      <div class="cats us-tiles">
+        <div class="cat cat-info"><div class="cat-hd"><span class="dot"></span><span class="cat-name">Besuche</span><span class="cat-ep-plain">App-Starts</span></div><div class="cat-num">2.237</div><div class="cat-sub">Sitzungen &middot; ein Reload zählt erneut &middot; keine eindeutigen Personen</div></div>
+        <div class="cat cat-info"><div class="cat-hd"><span class="dot"></span><span class="cat-name">Terminsuchen</span><span class="cat-ep">/snaps</span></div><div class="cat-num">1.046</div><div class="cat-sub">2.874 Anfragen &middot; 2.795 ok &middot; 79 Fehler</div></div>
+        <div class="cat cat-info"><div class="cat-hd"><span class="dot"></span><span class="cat-name">Buchungen</span><span class="cat-ep">/appointments</span></div><div class="cat-num">295</div><div class="cat-sub">307 Anfragen &middot; 295 ok &middot; 12 Fehler</div></div>
+      </div>
+      <div class="us-rates">
+        <div class="us-rate"><div class="us-rate-val">46,8&nbsp;%</div><div class="us-rate-lbl">Suchquote</div><div class="us-rate-sub">1.046 von 2.237 Besuchen mit Terminsuche</div></div>
+        <div class="us-rate"><div class="us-rate-val">13,2&nbsp;%</div><div class="us-rate-lbl">Buchungsquote</div><div class="us-rate-sub">Gesamt-Conversion &middot; 295 von 2.237 Besuchen mit Buchung</div></div>
+        <div class="us-rate"><div class="us-rate-val">28,2&nbsp;%</div><div class="us-rate-lbl">Abschlussquote</div><div class="us-rate-sub">295 von 1.046 Terminsuch-Sitzungen mit Buchung</div></div>
+      </div>
+      <h4 class="us-subtitle" id="us-m-dev">Geräteverteilung</h4>
+      <p class="us-range">Eine Geräteklasse je Sitzung &middot; Basis: 2.237 Besuche</p>
+      <ul class="dev" aria-labelledby="us-m-dev">
+        <li class="dev-row"><span class="dev-lbl">Mobil</span><span class="dev-bar" role="img" aria-label="Mobil: 1.451 Besuche, 64,9 Prozent"><span class="dev-fill dev-fill-mobile" style="width:64.9%"></span></span><span class="dev-val"><b>1.451</b> &middot; 64,9&nbsp;%</span></li>
+        <li class="dev-row"><span class="dev-lbl">Tablet</span><span class="dev-bar" role="img" aria-label="Tablet: 20 Besuche, 0,9 Prozent"><span class="dev-fill dev-fill-tablet" style="width:0.9%"></span></span><span class="dev-val"><b>20</b> &middot; 0,9&nbsp;%</span></li>
+        <li class="dev-row"><span class="dev-lbl">Desktop</span><span class="dev-bar" role="img" aria-label="Desktop: 748 Besuche, 33,4 Prozent"><span class="dev-fill dev-fill-desktop" style="width:33.4%"></span></span><span class="dev-val"><b>748</b> &middot; 33,4&nbsp;%</span></li>
+        <li class="dev-row"><span class="dev-lbl">Unbekannt</span><span class="dev-bar" role="img" aria-label="Unbekannt: 18 Besuche, 0,8 Prozent"><span class="dev-fill dev-fill-unknown" style="width:0.8%"></span></span><span class="dev-val"><b>18</b> &middot; 0,8&nbsp;%</span></li>
+      </ul>
+    </div>
+    <div class="us-block">
+      <div class="us-hd"><h3 class="us-title">Jahresübersicht 2026</h3><span class="us-badge">Rollup</span></div>
+      <p class="us-range">01.01.2026 &ndash; 19.11.2026 &middot; Europe/Berlin &middot; Erfassung seit 27.08.2026 &middot; letzter Rollup: 18.11.2026</p>
+      <div class="cats us-tiles">
+        <div class="cat cat-info"><div class="cat-hd"><span class="dot"></span><span class="cat-name">Besuche</span><span class="cat-ep-plain">App-Starts</span></div><div class="cat-num">7.405</div><div class="cat-sub">Sitzungen &middot; ein Reload zählt erneut &middot; keine eindeutigen Personen</div></div>
+        <div class="cat cat-info"><div class="cat-hd"><span class="dot"></span><span class="cat-name">Terminsuchen</span><span class="cat-ep">/snaps</span></div><div class="cat-num">3.373</div><div class="cat-sub">9.312 Anfragen &middot; 9.047 ok &middot; 265 Fehler</div></div>
+        <div class="cat cat-info"><div class="cat-hd"><span class="dot"></span><span class="cat-name">Buchungen</span><span class="cat-ep">/appointments</span></div><div class="cat-num">881</div><div class="cat-sub">922 Anfragen &middot; 881 ok &middot; 41 Fehler</div></div>
+      </div>
+      <div class="us-rates">
+        <div class="us-rate"><div class="us-rate-val">45,6&nbsp;%</div><div class="us-rate-lbl">Suchquote</div><div class="us-rate-sub">3.373 von 7.405 Besuchen mit Terminsuche</div></div>
+        <div class="us-rate"><div class="us-rate-val">11,9&nbsp;%</div><div class="us-rate-lbl">Buchungsquote</div><div class="us-rate-sub">Gesamt-Conversion &middot; 881 von 7.405 Besuchen mit Buchung</div></div>
+        <div class="us-rate"><div class="us-rate-val">26,1&nbsp;%</div><div class="us-rate-lbl">Abschlussquote</div><div class="us-rate-sub">881 von 3.373 Terminsuch-Sitzungen mit Buchung</div></div>
+      </div>
+      <h4 class="us-subtitle" id="us-y-dev">Geräteverteilung</h4>
+      <p class="us-range">Eine Geräteklasse je Sitzung &middot; Basis: 7.405 Besuche</p>
+      <ul class="dev" aria-labelledby="us-y-dev">
+        <li class="dev-row"><span class="dev-lbl">Mobil</span><span class="dev-bar" role="img" aria-label="Mobil: 4.788 Besuche, 64,7 Prozent"><span class="dev-fill dev-fill-mobile" style="width:64.7%"></span></span><span class="dev-val"><b>4.788</b> &middot; 64,7&nbsp;%</span></li>
+        <li class="dev-row"><span class="dev-lbl">Tablet</span><span class="dev-bar" role="img" aria-label="Tablet: 67 Besuche, 0,9 Prozent"><span class="dev-fill dev-fill-tablet" style="width:0.9%"></span></span><span class="dev-val"><b>67</b> &middot; 0,9&nbsp;%</span></li>
+        <li class="dev-row"><span class="dev-lbl">Desktop</span><span class="dev-bar" role="img" aria-label="Desktop: 2.490 Besuche, 33,6 Prozent"><span class="dev-fill dev-fill-desktop" style="width:33.6%"></span></span><span class="dev-val"><b>2.490</b> &middot; 33,6&nbsp;%</span></li>
+        <li class="dev-row"><span class="dev-lbl">Unbekannt</span><span class="dev-bar" role="img" aria-label="Unbekannt: 60 Besuche, 0,8 Prozent"><span class="dev-fill dev-fill-unknown" style="width:0.8%"></span></span><span class="dev-val"><b>60</b> &middot; 0,8&nbsp;%</span></li>
+      </ul>
+      <h4 class="us-subtitle" id="us-months-h">Monatsverlauf 2026</h4>
+      <div class="us-scroll" role="region" aria-labelledby="us-months-h" tabindex="0">
+        <table class="us-months">
+          <caption class="sr">Monatsverlauf 2026 &mdash; Besuche, Terminsuchen, Buchungen und Buchungsquote je Kalendermonat; Monate ohne Erfassung zeigen einen Gedankenstrich.</caption>
+          <thead><tr><th scope="col">Monat</th><th scope="col">Besuche</th><th scope="col" class="opt">Terminsuchen (ok)</th><th scope="col">Buchungen (ok)</th><th scope="col">Buchungsquote</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Januar</th><td class="us-nd">&mdash;<span class="sr"> keine Daten, vor Erfassungsbeginn</span></td><td class="us-nd opt">&mdash;</td><td class="us-nd">&mdash;</td><td class="us-nd">&mdash;</td></tr>
+            <tr><th scope="row">Februar</th><td class="us-nd">&mdash;<span class="sr"> keine Daten, vor Erfassungsbeginn</span></td><td class="us-nd opt">&mdash;</td><td class="us-nd">&mdash;</td><td class="us-nd">&mdash;</td></tr>
+            <tr><th scope="row">März</th><td class="us-nd">&mdash;<span class="sr"> keine Daten, vor Erfassungsbeginn</span></td><td class="us-nd opt">&mdash;</td><td class="us-nd">&mdash;</td><td class="us-nd">&mdash;</td></tr>
+            <tr><th scope="row">April</th><td class="us-nd">&mdash;<span class="sr"> keine Daten, vor Erfassungsbeginn</span></td><td class="us-nd opt">&mdash;</td><td class="us-nd">&mdash;</td><td class="us-nd">&mdash;</td></tr>
+            <tr><th scope="row">Mai</th><td class="us-nd">&mdash;<span class="sr"> keine Daten, vor Erfassungsbeginn</span></td><td class="us-nd opt">&mdash;</td><td class="us-nd">&mdash;</td><td class="us-nd">&mdash;</td></tr>
+            <tr><th scope="row">Juni</th><td class="us-nd">&mdash;<span class="sr"> keine Daten, vor Erfassungsbeginn</span></td><td class="us-nd opt">&mdash;</td><td class="us-nd">&mdash;</td><td class="us-nd">&mdash;</td></tr>
+            <tr><th scope="row">Juli</th><td class="us-nd">&mdash;<span class="sr"> keine Daten, vor Erfassungsbeginn</span></td><td class="us-nd opt">&mdash;</td><td class="us-nd">&mdash;</td><td class="us-nd">&mdash;</td></tr>
+            <tr><th scope="row">August</th><td>168</td><td class="opt">74</td><td>23</td><td>13,7&nbsp;%</td></tr>
+            <tr><th scope="row">September</th><td>2.310</td><td class="opt">1.041</td><td>257</td><td>11,1&nbsp;%</td></tr>
+            <tr><th scope="row">Oktober</th><td>2.690</td><td class="opt">1.212</td><td>306</td><td>11,4&nbsp;%</td></tr>
+            <tr class="us-cur"><th scope="row">November <span class="us-badge us-badge-live">laufend</span></th><td>2.237</td><td class="opt">1.046</td><td>295</td><td>13,2&nbsp;%</td></tr>
+            <tr><th scope="row">Dezember</th><td class="us-nd">&mdash;<span class="sr"> keine Daten, künftiger Monat</span></td><td class="us-nd opt">&mdash;</td><td class="us-nd">&mdash;</td><td class="us-nd">&mdash;</td></tr>
+          </tbody>
+          <tfoot><tr><th scope="row">Jahressumme</th><td>7.405</td><td class="opt">3.373</td><td>881</td><td>11,9&nbsp;%</td></tr></tfoot>
+        </table>
+      </div>
+      <p class="us-intro">Die Jahreszahlen sind die Summe der nächtlich persistierten Tageswerte (Azure Blob Storage, ausschließlich ganzzahlige Zähler) plus der laufende Tag aus Log Analytics. Die Historie wächst erst ab Inbetriebnahme: Monate vor dem Erfassungsbeginn und künftige Monate stehen auf &bdquo;&mdash;&ldquo;, nicht auf &bdquo;0&ldquo;.</p>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       S6 Buchungsstrecke: Wo steigen Besucher aus? (FunnelSectionRenderer, .fn)
+       Nur mit USAGE_FUNNEL_ENABLED (Gate G-DSB), sonst entfällt die Sektion
+       ersatzlos (BR-8). Nur global — nie je Standort (BR-7). Stufe 4 heißt
+       „Terminsuche ausgeführt“ (BR-8, N1): zählt auch Suchen mit leerer Liste.
+       F-3 gegen Rückrechnung aus „Alle“ (BR-9 Nr. 7): Klassen unter 20 Sitzungen
+       werden zu „Sonstige (…)“ zusammengefasst; hat „Sonstige“ selbst < 20, wird
+       die kleinste sichtbare Klasse hinzugenommen (Zustand „zu wenig Daten“:
+       Tablet + Unbekannt = 2, daher auch Desktop). Je Zeile gilt Alle = Σ Spalten.
+       NEU N1: Unterabschnitt .fn-dropoff „Absprungszenarien“ (F-4) — nur mit
+       USAGE_DROPOFF_ENABLED (AC-35, eigener Kill-Switch hinter dem Funnel-Gate).
+       Jede abgebrochene Sitzung (MaxStep < 5) zählt in GENAU einem Szenario
+       (BR-27); Summenzeile = Trichter-Differenz (AC-33). Unterdrückung BR-31:
+       „< 5“ + Sekundärunterdrückung „k. A.“ je Zeile und Spalte, hier berechnet.
+       ========================================================================= -->
+  <section class="fn" id="funnel" aria-labelledby="fn-h">
+    <h2 id="fn-h">Buchungsstrecke: Wo steigen Besucher aus?</h2>
+    <p class="st-intro">Je Sitzung und Kalendertag zählt die höchste erreichte Stufe. Alle Standorte zusammen &ndash; es gibt keine Auswertung der Strecke je Standort. Stand gestern; die Nutzungsstatistik oben enthält zusätzlich den laufenden Tag.</p>
+
+    <div class="mk-v mk-s-full mk-s-fail">
+      <p class="st-range">aktueller Monat bis gestern (01.11.&ndash;18.11.2026) &middot; Erfassung seit 01.11.2026 &middot; 2.140 Sitzungen</p>
+      <ol class="fn-steps" aria-label="Trichter der Buchungsstrecke">
+        <li class="fn-step"><span class="fn-lbl">1 &middot; Besuch (App-Aufruf)</span><span class="fn-bar" aria-hidden="true"><span class="fn-fill" style="width:100.0%"></span></span><span class="fn-val"><b>2.140</b> &middot; 100,0&nbsp;% vom Start</span></li>
+        <li class="fn-step"><span class="fn-lbl">2 &middot; Leistungsauswahl</span><span class="fn-bar" aria-hidden="true"><span class="fn-fill" style="width:71.0%"></span></span><span class="fn-val"><b>1.520</b> &middot; 71,0&nbsp;% vom Start<span class="fn-prev">71,0&nbsp;% der Vorstufe</span></span></li>
+        <li class="fn-step"><span class="fn-lbl">3 &middot; Hinweise</span><span class="fn-bar" aria-hidden="true"><span class="fn-fill" style="width:55.1%"></span></span><span class="fn-val"><b>1.180</b> &middot; 55,1&nbsp;% vom Start<span class="fn-prev">77,6&nbsp;% der Vorstufe</span></span></li>
+        <li class="fn-step"><span class="fn-lbl">4 &middot; Terminsuche ausgeführt</span><span class="fn-bar" aria-hidden="true"><span class="fn-fill" style="width:47.2%"></span></span><span class="fn-val"><b>1.010</b> &middot; 47,2&nbsp;% vom Start<span class="fn-prev">85,6&nbsp;% der Vorstufe</span></span></li>
+        <li class="fn-step"><span class="fn-lbl">5 &middot; Gebucht</span><span class="fn-bar" aria-hidden="true"><span class="fn-fill" style="width:13.4%"></span></span><span class="fn-val"><b>286</b> &middot; 13,4&nbsp;% vom Start<span class="fn-prev">28,3&nbsp;% der Vorstufe</span></span></li>
+      </ol>
+      <h3 class="st-sub">Ausstieg nach Stufe und Geräteklasse</h3>
+      <p class="st-range">Sitzungen, deren höchste Stufe diese war &middot; Anteil an den Sitzungen der Spalte &middot; Geräteklassen unter 20 Sitzungen als &bdquo;Sonstige&ldquo;</p>
+      <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle Ausstieg nach Stufe und Geräteklasse, horizontal scrollbar">
+          <table class="st-table fn-table">
+            <caption class="sr">Ausstieg nach Stufe und Geräteklasse, aktueller Monat bis gestern (01.11. bis 18.11.2026): Sitzungen je höchster erreichter Stufe und Anteil an den Sitzungen der Spalte; Tablet und Unbekannt haben je weniger als 20 Sitzungen und sind als Sonstige zusammengefasst.</caption>
+            <thead><tr><th scope="col" class="st-l">Ausstieg<span class="st-small">zuletzt gesehene Seiten</span></th><th scope="col">Alle</th><th scope="col">Mobil</th><th scope="col">Desktop</th><th scope="col">Sonstige (Tablet, Unbekannt)</th></tr></thead>
+            <tbody>
+            <tr><th scope="row">nach Stufe 1<span class="st-small">Standort/Marke</span></th><td><b>620</b><span class="fn-pct">29,0&nbsp;%</span></td><td><b>419</b><span class="fn-pct">30,3&nbsp;%</span></td><td><b>189</b><span class="fn-pct">26,1&nbsp;%</span></td><td><b>12</b><span class="fn-pct">33,3&nbsp;%</span></td></tr>
+            <tr><th scope="row">nach Stufe 2<span class="st-small">Leistungen</span></th><td><b>340</b><span class="fn-pct">15,9&nbsp;%</span></td><td><b>226</b><span class="fn-pct">16,4&nbsp;%</span></td><td><b>107</b><span class="fn-pct">14,8&nbsp;%</span></td><td><b>7</b><span class="fn-pct">19,4&nbsp;%</span></td></tr>
+            <tr><th scope="row">nach Stufe 3<span class="st-small">Hinweise</span></th><td><b>170</b><span class="fn-pct">7,9&nbsp;%</span></td><td><b>113</b><span class="fn-pct">8,2&nbsp;%</span></td><td><b>52</b><span class="fn-pct">7,2&nbsp;%</span></td><td><b>5</b><span class="fn-pct">13,9&nbsp;%</span></td></tr>
+            <tr><th scope="row">nach Stufe 4<span class="st-small">Terminwahl, Werkstattkalender, Fahrzeugdaten oder Übersicht</span></th><td><b>724</b><span class="fn-pct">33,8&nbsp;%</span></td><td><b>465</b><span class="fn-pct">33,7&nbsp;%</span></td><td><b>252</b><span class="fn-pct">34,9&nbsp;%</span></td><td><b>7</b><span class="fn-pct">19,4&nbsp;%</span></td></tr>
+            <tr><th scope="row">Gebucht</th><td><b>286</b><span class="fn-pct">13,4&nbsp;%</span></td><td><b>158</b><span class="fn-pct">11,4&nbsp;%</span></td><td><b>123</b><span class="fn-pct">17,0&nbsp;%</span></td><td><b>5</b><span class="fn-pct">13,9&nbsp;%</span></td></tr>
+            </tbody>
+            <tfoot><tr><th scope="row">Summe<span class="st-small">Sitzungen</span></th><td><b>2.140</b><span class="fn-pct">100,0&nbsp;%</span></td><td><b>1.381</b><span class="fn-pct">100,0&nbsp;%</span></td><td><b>723</b><span class="fn-pct">100,0&nbsp;%</span></td><td><b>36</b><span class="fn-pct">100,0&nbsp;%</span></td></tr></tfoot>
+          </table>
+      </div>
+      <p class="mk-note"><b>Mockup-Hinweis:</b> Real folgen Trichter und Tabelle für &bdquo;laufendes Jahr bis gestern&ldquo; darunter; seit Erfassungsbeginn 01.11.2026 sind die Werte hier identisch &ndash; ausgelassen.</p>
+
+      <section class="fn-dropoff" aria-labelledby="fn-dropoff-h">
+        <h3 id="fn-dropoff-h">Absprungszenarien: In welcher Situation steigen Besucher aus?</h3>
+        <p class="st-range">aktueller Monat bis gestern (01.11.&ndash;18.11.2026) &middot; Erfassung seit 01.11.2026 (gesonderte DSB-Freigabe) &middot; 1.854 Abbrüche</p>
+        <ul class="dev" aria-label="Absprungszenarien ohne die Sammelgruppe ohne erkennbaren Anlass, sortiert nach Häufigkeit">
+        <li class="dev-row dev-wide"><span class="dev-lbl">Keine Termine gefunden</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:100.0%"></span></span><span class="dev-val"><b>146</b> &middot; 7,9&nbsp;%</span></li>
+        <li class="dev-row dev-wide"><span class="dev-lbl">Technischer Fehler (Fehlerseite)</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:61.0%"></span></span><span class="dev-val"><b>89</b> &middot; 4,8&nbsp;%</span></li>
+        <li class="dev-row dev-wide"><span class="dev-lbl">Viele Terminsuchen ohne Buchung</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:56.8%"></span></span><span class="dev-val"><b>83</b> &middot; 4,5&nbsp;%</span></li>
+        <li class="dev-row dev-wide"><span class="dev-lbl">Lange Wartezeit auf Antwort</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:40.4%"></span></span><span class="dev-val"><b>59</b> &middot; 3,2&nbsp;%</span></li>
+        <li class="dev-row dev-wide"><span class="dev-lbl">Nur wenige Termine angeboten</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:39.7%"></span></span><span class="dev-val"><b>58</b> &middot; 3,1&nbsp;%</span></li>
+        <li class="dev-row dev-wide"><span class="dev-lbl">Nach Fehler weitergemacht, dann aufgehört</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:20.5%"></span></span><span class="dev-val"><b>30</b> &middot; 1,6&nbsp;%</span></li>
+        <li class="dev-row dev-wide"><span class="dev-lbl">Termin nach längerer Pause abgelaufen</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:18.5%"></span></span><span class="dev-val"><b>27</b> &middot; 1,5&nbsp;%</span></li>
+        <li class="dev-row dev-wide"><span class="dev-lbl">Verbindung unterbrochen</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:12.3%"></span></span><span class="dev-val"><b>18</b> &middot; 1,0&nbsp;%</span></li>
+        <li class="dev-row dev-wide"><span class="dev-lbl">Terminsuche fehlgeschlagen</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:11.0%"></span></span><span class="dev-val"><b>16</b> &middot; 0,9&nbsp;%</span></li>
+        <li class="dev-row dev-wide"><span class="dev-lbl">Zugriff abgelehnt oder Anfragelimit</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:8.2%"></span></span><span class="dev-val"><b>12</b> &middot; 0,6&nbsp;%</span></li>
+        <li class="dev-row dev-wide"><span class="dev-lbl">Termin war inzwischen vergeben</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:7.5%"></span></span><span class="dev-val"><b>11</b> &middot; 0,6&nbsp;%</span></li>
+        <li class="dev-row dev-wide"><span class="dev-lbl">Buchung abgelehnt</span><span class="dev-bar" aria-hidden="true"><span class="dev-fill st-fill" style="width:6.2%"></span></span><span class="dev-val"><b>9</b> &middot; 0,5&nbsp;%</span></li>
+        </ul>
+        <p class="st-note">Ohne die Sammelgruppe &bdquo;ohne erkennbaren Anlass&ldquo; (1.296 Abbrüche, 69,9&nbsp;%) &ndash; siehe Tabelle.</p>
+        <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle Absprungszenarien je Stufe, horizontal scrollbar">
+        <table class="st-table fn-dropoff-table">
+            <caption class="sr">Absprungszenarien je Stufe, aktueller Monat bis gestern (01.11. bis 18.11.2026): abgebrochene Sitzungen je Szenario und höchster erreichter Stufe, Anteil an allen Abbrüchen und fester Handlungsimpuls; jede abgebrochene Sitzung zählt in genau einem Szenario.</caption>
+            <thead><tr><th scope="col" class="st-l">Szenario</th><th scope="col">Stufe 1<span class="st-small">Besuch (App-Aufruf)</span></th><th scope="col">Stufe 2<span class="st-small">Leistungsauswahl</span></th><th scope="col">Stufe 3<span class="st-small">Hinweise</span></th><th scope="col">Stufe 4<span class="st-small">Terminsuche ausgeführt</span></th><th scope="col">Gesamt</th><th scope="col">Anteil an allen Abbrüchen</th><th scope="col" class="st-l">Handlungsimpuls</th></tr></thead>
+            <tbody>
+            <tr><th scope="row">Keine Termine gefunden</th><td>0</td><td>0</td><td>0</td><td>146</td><td><b>146</b></td><td>7,9&nbsp;%</td><td class="st-l fn-dropoff-hint">Kapazität bzw. Terminangebot, zusammen mit S1 lesen</td></tr>
+            <tr><th scope="row">Technischer Fehler (Fehlerseite)</th><td>38</td><td>21</td><td>12</td><td>18</td><td><b>89</b></td><td>4,8&nbsp;%</td><td class="st-l fn-dropoff-hint">Bugs-Tab prüfen</td></tr>
+            <tr><th scope="row">Viele Terminsuchen ohne Buchung</th><td>0</td><td>0</td><td>0</td><td>83</td><td><b>83</b></td><td>4,5&nbsp;%</td><td class="st-l fn-dropoff-hint">Termine passen nicht</td></tr>
+            <tr><th scope="row">Lange Wartezeit auf Antwort</th><td>14</td><td>22</td><td>6</td><td>17</td><td><b>59</b></td><td>3,2&nbsp;%</td><td class="st-l fn-dropoff-hint">Performance bzw. SoftNet</td></tr>
+            <tr><th scope="row">Nur wenige Termine angeboten</th><td>0</td><td>0</td><td>0</td><td>58</td><td><b>58</b></td><td>3,1&nbsp;%</td><td class="st-l fn-dropoff-hint">Terminangebot zu schmal</td></tr>
+            <tr><th scope="row">Nach Fehler weitergemacht, dann aufgehört</th><td>11</td><td class="st-ka"><span aria-hidden="true">k.&nbsp;A.</span><span class="sr">keine Angabe, unterdrückt gegen Rückrechnung</span></td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td>8</td><td><b>30</b></td><td>1,6&nbsp;%</td><td class="st-l fn-dropoff-hint">wie „Technischer Fehler&ldquo;; der Fehler hat die Sitzung nachhaltig gestört</td></tr>
+            <tr><th scope="row">Termin nach längerer Pause abgelaufen</th><td>0</td><td>0</td><td>0</td><td>27</td><td><b>27</b></td><td>1,5&nbsp;%</td><td class="st-l fn-dropoff-hint">&bdquo;Erneut versuchen&ldquo; sendet denselben Snap &ndash; Sackgasse, eigenes Bugfix-REQ</td></tr>
+            <tr><th scope="row">Verbindung unterbrochen</th><td class="st-ka"><span aria-hidden="true">k.&nbsp;A.</span><span class="sr">keine Angabe, unterdrückt gegen Rückrechnung</span></td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td>5</td><td><b>18</b></td><td>1,0&nbsp;%</td><td class="st-l fn-dropoff-hint">Netz bzw. Circuit Breaker <span class="st-nw">&ndash; Messartefakt möglich</span></td></tr>
+            <tr><th scope="row">Terminsuche fehlgeschlagen</th><td>0</td><td>0</td><td>16</td><td>0</td><td><b>16</b></td><td>0,9&nbsp;%</td><td class="st-l fn-dropoff-hint">Leistungszuordnung prüfen</td></tr>
+            <tr><th scope="row">Zugriff abgelehnt oder Anfragelimit</th><td class="st-ka"><span aria-hidden="true">k.&nbsp;A.</span><span class="sr">keine Angabe, unterdrückt gegen Rückrechnung</span></td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td>0</td><td>0</td><td><b>12</b></td><td>0,6&nbsp;%</td><td class="st-l fn-dropoff-hint">Session-TTL und Rate-Limit prüfen</td></tr>
+            <tr><th scope="row">Termin war inzwischen vergeben</th><td>0</td><td>0</td><td>0</td><td>11</td><td><b>11</b></td><td>0,6&nbsp;%</td><td class="st-l fn-dropoff-hint">hohe Nachfrage bzw. langes Formular</td></tr>
+            <tr><th scope="row">Buchung abgelehnt</th><td>0</td><td>0</td><td>0</td><td>9</td><td><b>9</b></td><td>0,5&nbsp;%</td><td class="st-l fn-dropoff-hint">Eingaben bzw. SoftNet-Validierung prüfen</td></tr>
+            <tr><th scope="row">ohne erkennbaren Anlass</th><td>542</td><td>283</td><td>129</td><td>342</td><td><b>1.296</b></td><td>69,9&nbsp;%</td><td class="st-l fn-dropoff-hint">Stufe 4: Formular bzw. Übersicht; genauer nur mit dem Step-Beacon (Folge-REQ) <span class="st-nw">&ndash; Messartefakt möglich</span></td></tr>
+            </tbody>
+            <tfoot><tr class="fn-dropoff-sum"><th scope="row">Alle Abbrüche<span class="st-small">1.854 = 2.140 Besuche &minus; 286 Buchungen</span></th><td>620</td><td>340</td><td>170</td><td>724</td><td><b>1.854</b></td><td>100&nbsp;%</td><td></td></tr></tfoot>
+          </table>
+        </div>
+        <h4 class="st-sub">Nach Geräteklasse</h4>
+        <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle Absprungszenarien nach Geräteklasse, horizontal scrollbar">
+        <table class="st-table fn-dropoff-dev">
+            <caption class="sr">Absprungszenarien nach Geräteklasse, aktueller Monat bis gestern (01.11. bis 18.11.2026): abgebrochene Sitzungen je Szenario und Geräteklasse; Tablet und Unbekannt haben je weniger als 20 Abbrüche und sind als Sonstige zusammengefasst.</caption>
+            <thead><tr><th scope="col" class="st-l">Szenario</th><th scope="col">Mobil</th><th scope="col">Desktop</th><th scope="col">Sonstige (Tablet, Unbekannt)</th><th scope="col">Gesamt</th></tr></thead>
+            <tbody>
+            <tr><th scope="row">Keine Termine gefunden</th><td>94</td><td>47</td><td>5</td><td><b>146</b></td></tr>
+            <tr><th scope="row">Technischer Fehler (Fehlerseite)</th><td>58</td><td>31</td><td>0</td><td><b>89</b></td></tr>
+            <tr><th scope="row">Viele Terminsuchen ohne Buchung</th><td>55</td><td>28</td><td>0</td><td><b>83</b></td></tr>
+            <tr><th scope="row">Lange Wartezeit auf Antwort</th><td>38</td><td>21</td><td>0</td><td><b>59</b></td></tr>
+            <tr><th scope="row">Nur wenige Termine angeboten</th><td>38</td><td>20</td><td>0</td><td><b>58</b></td></tr>
+            <tr><th scope="row">Nach Fehler weitergemacht, dann aufgehört</th><td>19</td><td>11</td><td>0</td><td><b>30</b></td></tr>
+            <tr><th scope="row">Termin nach längerer Pause abgelaufen</th><td>17</td><td>10</td><td>0</td><td><b>27</b></td></tr>
+            <tr><th scope="row">Verbindung unterbrochen</th><td>12</td><td>6</td><td>0</td><td><b>18</b></td></tr>
+            <tr><th scope="row">Terminsuche fehlgeschlagen</th><td>10</td><td>6</td><td>0</td><td><b>16</b></td></tr>
+            <tr><th scope="row">Zugriff abgelehnt oder Anfragelimit</th><td class="st-ka"><span aria-hidden="true">k.&nbsp;A.</span><span class="sr">keine Angabe, unterdrückt gegen Rückrechnung</span></td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td>0</td><td><b>12</b></td></tr>
+            <tr><th scope="row">Termin war inzwischen vergeben</th><td>6</td><td>5</td><td>0</td><td><b>11</b></td></tr>
+            <tr><th scope="row">Buchung abgelehnt</th><td class="st-ka"><span aria-hidden="true">k.&nbsp;A.</span><span class="sr">keine Angabe, unterdrückt gegen Rückrechnung</span></td><td class="st-sup"><span aria-hidden="true">&lt;&nbsp;5</span><span class="sr">weniger als 5, unterdrückt</span></td><td>0</td><td><b>9</b></td></tr>
+            <tr><th scope="row">ohne erkennbaren Anlass</th><td>862</td><td>408</td><td>26</td><td><b>1.296</b></td></tr>
+            </tbody>
+            <tfoot><tr><th scope="row">Alle Abbrüche</th><td>1.223</td><td>600</td><td>31</td><td><b>1.854</b></td></tr></tfoot>
+          </table>
+        </div>
+        <p class="st-note">Jede abgebrochene Sitzung zählt in genau einem Szenario (erste zutreffende Regel gewinnt). &bdquo;&lt;&nbsp;5&ldquo; = 1&ndash;4 Sitzungen; &bdquo;k.&nbsp;A.&ldquo; = zusätzlich ausgeblendet, damit sich ein &bdquo;&lt;&nbsp;5&ldquo;-Wert nicht aus Zeilen- oder Spaltensumme zurückrechnen lässt. Tablet und Unbekannt haben je unter 20 Abbrüche und stehen zusammen als &bdquo;Sonstige&ldquo;.</p>
+      </section>
+    </div>
+
+    <div class="mk-v mk-s-thin">
+      <p class="st-range">aktueller Monat bis gestern (18.11.2026, Erfassung seit 18.11.2026) &middot; 102 Sitzungen</p>
+      <ol class="fn-steps" aria-label="Trichter der Buchungsstrecke, erster Erfassungstag">
+        <li class="fn-step"><span class="fn-lbl">1 &middot; Besuch (App-Aufruf)</span><span class="fn-bar" aria-hidden="true"><span class="fn-fill" style="width:100.0%"></span></span><span class="fn-val"><b>102</b> &middot; 100,0&nbsp;% vom Start</span></li>
+        <li class="fn-step"><span class="fn-lbl">2 &middot; Leistungsauswahl</span><span class="fn-bar" aria-hidden="true"><span class="fn-fill" style="width:69.6%"></span></span><span class="fn-val"><b>71</b> &middot; 69,6&nbsp;% vom Start<span class="fn-prev">69,6&nbsp;% der Vorstufe</span></span></li>
+        <li class="fn-step"><span class="fn-lbl">3 &middot; Hinweise</span><span class="fn-bar" aria-hidden="true"><span class="fn-fill" style="width:52.0%"></span></span><span class="fn-val"><b>53</b> &middot; 52,0&nbsp;% vom Start<span class="fn-prev">74,6&nbsp;% der Vorstufe</span></span></li>
+        <li class="fn-step"><span class="fn-lbl">4 &middot; Terminsuche ausgeführt</span><span class="fn-bar" aria-hidden="true"><span class="fn-fill" style="width:41.2%"></span></span><span class="fn-val"><b>42</b> &middot; 41,2&nbsp;% vom Start<span class="fn-prev">79,2&nbsp;% der Vorstufe</span></span></li>
+        <li class="fn-step"><span class="fn-lbl">5 &middot; Gebucht</span><span class="fn-bar" aria-hidden="true"><span class="fn-fill" style="width:11.8%"></span></span><span class="fn-val"><b>12</b> &middot; 11,8&nbsp;% vom Start<span class="fn-prev">28,6&nbsp;% der Vorstufe</span></span></li>
+      </ol>
+      <h3 class="st-sub">Ausstieg nach Stufe und Geräteklasse</h3>
+      <p class="st-range">Sitzungen, deren höchste Stufe diese war &middot; Anteil an den Sitzungen der Spalte &middot; Geräteklassen unter 20 Sitzungen als &bdquo;Sonstige&ldquo;</p>
+      <div class="st-scroll" role="region" tabindex="0" aria-label="Tabelle Ausstieg nach Stufe, erster Erfassungstag, horizontal scrollbar">
+          <table class="st-table fn-table">
+            <caption class="sr">Ausstieg nach Stufe und Geräteklasse, 18.11.2026: Sitzungen je höchster erreichter Stufe und Anteil an den Sitzungen der Spalte; Tablet und Unbekannt haben zusammen weniger als 20 Sitzungen, deshalb ist auch Desktop als kleinste Klasse in Sonstige zusammengefasst.</caption>
+            <thead><tr><th scope="col" class="st-l">Ausstieg<span class="st-small">zuletzt gesehene Seiten</span></th><th scope="col">Alle</th><th scope="col">Mobil</th><th scope="col">Sonstige (Desktop, Tablet, Unbekannt)</th></tr></thead>
+            <tbody>
+            <tr><th scope="row">nach Stufe 1<span class="st-small">Standort/Marke</span></th><td><b>31</b><span class="fn-pct">30,4&nbsp;%</span></td><td><b>18</b><span class="fn-pct">30,0&nbsp;%</span></td><td><b>13</b><span class="fn-pct">31,0&nbsp;%</span></td></tr>
+            <tr><th scope="row">nach Stufe 2<span class="st-small">Leistungen</span></th><td><b>18</b><span class="fn-pct">17,6&nbsp;%</span></td><td><b>12</b><span class="fn-pct">20,0&nbsp;%</span></td><td><b>6</b><span class="fn-pct">14,3&nbsp;%</span></td></tr>
+            <tr><th scope="row">nach Stufe 3<span class="st-small">Hinweise</span></th><td><b>11</b><span class="fn-pct">10,8&nbsp;%</span></td><td><b>6</b><span class="fn-pct">10,0&nbsp;%</span></td><td><b>5</b><span class="fn-pct">11,9&nbsp;%</span></td></tr>
+            <tr><th scope="row">nach Stufe 4<span class="st-small">Terminwahl, Werkstattkalender, Fahrzeugdaten oder Übersicht</span></th><td><b>30</b><span class="fn-pct">29,4&nbsp;%</span></td><td><b>18</b><span class="fn-pct">30,0&nbsp;%</span></td><td><b>12</b><span class="fn-pct">28,6&nbsp;%</span></td></tr>
+            <tr><th scope="row">Gebucht</th><td><b>12</b><span class="fn-pct">11,8&nbsp;%</span></td><td><b>6</b><span class="fn-pct">10,0&nbsp;%</span></td><td><b>6</b><span class="fn-pct">14,3&nbsp;%</span></td></tr>
+            </tbody>
+            <tfoot><tr><th scope="row">Summe<span class="st-small">Sitzungen</span></th><td><b>102</b><span class="fn-pct">100,0&nbsp;%</span></td><td><b>60</b><span class="fn-pct">100,0&nbsp;%</span></td><td><b>42</b><span class="fn-pct">100,0&nbsp;%</span></td></tr></tfoot>
+          </table>
+      </div>
+
+      <section class="fn-dropoff" aria-labelledby="fn-dropoff-h-t">
+        <h3 id="fn-dropoff-h-t">Absprungszenarien: In welcher Situation steigen Besucher aus?</h3>
+        <!-- Dropoff-Erfassung beginnt erst am 19.11. (BR-19 sinngemäß, AC-35): „—“, nie 0 -->
+        <p class="st-empty"><span class="st-empty-dash" aria-hidden="true">&mdash;</span>Erfassung seit 19.11.2026 &ndash; noch keine ausgewerteten Tage.</p>
+      </section>
+    </div>
+    <div class="st-warn mk-v mk-s-hist"><span class="st-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/></svg></span><p>Historie derzeit nicht verfügbar</p></div>
+    <p class="st-note mk-v mk-s-full mk-s-thin mk-s-fail">Grenzen: Marke, Fahrzeugdaten und Übersicht lösen keinen Server-Aufruf aus und sind nicht einzeln sichtbar. Terminwahl und Werkstattkalender sind nicht unterscheidbar. Ein Reload zählt als Abbruch plus neuer Besuch; eine Sitzung über Mitternacht zählt an beiden Tagen.</p>
+  </section>
+
+  <!-- =========================================================================
+       S7 Messgrenzen und Datenschutz (LimitsSectionRenderer, .st-limits) — immer
+       sichtbar. Texte wörtlich nach §17 (RULE_*, PRIVACY_NOTE, LIMIT_*),
+       „Erfassung seit …“ je aktiver Datenquelle (SOURCE_*, inkl. N1 Absprungszenarien).
+       ========================================================================= -->
+  <section class="st-limits" id="limits" aria-labelledby="lim-h">
+    <h2 id="lim-h">Messgrenzen und Datenschutz</h2>
+    <h3 id="lim-since-h">Erfassung seit</h3>
+    <dl class="mk-v mk-s-full mk-s-fail mk-s-hist" aria-labelledby="lim-since-h">
+      <dt>Nutzung (Besuche, Geräteklassen)</dt><dd>27.08.2026</dd>
+      <dt>Buchungsmerkmale und Leistungsaufrufe</dt><dd>01.09.2026</dd>
+      <dt>Buchungsstrecke</dt><dd>01.11.2026 (nach Freigabe durch den Datenschutzbeauftragten)</dd>
+      <dt>Absprungszenarien</dt><dd>01.11.2026 (gesonderte Freigabe durch den Datenschutzbeauftragten, eigener Schalter)</dd>
+      <dt>Kapazitäts-Scan</dt><dd>01.11.2026 &middot; nächtlich 22:30&nbsp;Uhr &middot; Referenz-Leistung &bdquo;Wischerblätter erneuern&ldquo;</dd>
+    </dl>
+    <dl class="mk-v mk-s-thin" aria-labelledby="lim-since-h">
+      <dt>Nutzung (Besuche, Geräteklassen)</dt><dd>27.08.2026</dd>
+      <dt>Buchungsmerkmale und Leistungsaufrufe</dt><dd>18.11.2026</dd>
+      <dt>Buchungsstrecke</dt><dd>18.11.2026</dd>
+      <dt>Absprungszenarien</dt><dd>19.11.2026 &middot; noch keine ausgewerteten Tage</dd>
+      <dt>Kapazitäts-Scan</dt><dd>19.11.2026 &middot; erster Lauf aktiv</dd>
+    </dl>
+
+    <h3>Darstellungsregeln</h3>
+    <ul>
+      <li>Buchungsmerkmale und Buchungsstrecke: Werte unter 5 erscheinen als &bdquo;&lt;&nbsp;5&ldquo;; 0 bleibt 0. Kapazitätswerte (Betriebsdaten) und die Nutzungsstatistik aus REQ-037 sind davon ausgenommen.</li>
+      <li>Anteile in % erst ab 20 Fällen, sonst &bdquo;zu wenig Daten (n &lt; 20)&ldquo;.</li>
+      <li>&bdquo;k.&nbsp;A.&ldquo;: zusätzlich ausgeblendet, damit sich ein ausgeblendeter Wert nicht aus einer Summe oder einem Anteil zurückrechnen lässt.</li>
+      <li>&bdquo;&mdash;&ldquo;: keine Daten (z.&nbsp;B. vor dem Erfassungsbeginn) &ndash; nie &bdquo;0&ldquo;.</li>
+      <li>Werte je Standort nur für abgeschlossene Kalendermonate; keine Werte je Standort und Tag, Stunde oder Gerät.</li>
+      <li>Nur Aggregate. Keine Cookies, kein Browserspeicher, keine IP-Adressen, kein roher User-Agent; keine Auswertung nach Marke, Modell, Kunde, Serviceberater oder Wiederkehr; Sitzung und Gerät werden nie mit einem Standort verknüpft.</li>
+    </ul>
+
+    <h3>Messgrenzen</h3>
+    <ul>
+      <li><b>Kapazität:</b> SoftNet liefert gerankte Vorschläge, keine Gesamtkapazität; im Datumsmodus waren es nur ca. 5&ndash;7 Vorschläge pro Tag. Ist ein Vorlauf konfiguriert, heißt &bdquo;morgen nicht frei&ldquo; unter Umständen &bdquo;online nicht buchbar&ldquo;, nicht &bdquo;voll&ldquo;. Gemessen wird nur die Referenz-Leistung; Feiertage zählen als Werktage.</li>
+      <li><b>Nur Online:</b> Telefon- und Filialbuchungen sind unsichtbar. Ein &bdquo;Penner&ldquo; kann offline stark sein.</li>
+      <li><b>Kleine Fallzahlen:</b> Bei rund 10 Online-Buchungen pro Tag sind das rund 11 je Standort und Monat. Viele Zellen zeigen daher &bdquo;&lt;&nbsp;5&ldquo; oder &bdquo;zu wenig Daten&ldquo;.</li>
+      <li><b>Leistungsaufrufe</b> sind Seitenaufrufe, keine Besucher.</li>
+      <li><b>Servicegruppen:</b> Standorte ohne SoftNet-Tags (heute die beiden Leverkusener Standorte) erscheinen als &bdquo;nicht zuordenbar&ldquo;.</li>
+      <li><b>Terminzeiten</b> spiegeln Angebot und Nachfrage zugleich.</li>
+      <li><b>Buchungsstrecke:</b> Marke, Fahrzeugdaten und Übersicht sind nicht sichtbar; Terminwahl und Werkstattkalender sind nicht unterscheidbar; ein Reload zählt als Abbruch plus neuer Besuch; eine Sitzung über Mitternacht zählt an beiden Tagen.</li>
+      <li><b>Absprungszenarien:</b> Ein Reload beginnt eine neue Sitzung &ndash; die alte zählt als Abbruch, meist &bdquo;ohne erkennbaren Anlass&ldquo;. Ein Netzabbruch am Sitzungsende bleibt unsichtbar; erkannt werden nur Lücken mitten in der Sitzung. Ein Neustart oder Deploy leert den Termin-Zwischenspeicher und erzeugt &bdquo;Termin abgelaufen&ldquo;. Die Trefferzahl nennt, was der Server geliefert hat &ndash; die Anzeige wählt höchstens 4 aus. Eine Sitzung über Mitternacht zählt am ersten Tag als Abbruch.</li>
+      <li><b>Historie:</b> Daten gibt es erst ab dem Erfassungsbeginn der jeweiligen Quelle; davor wird nie rückwirkend gerechnet. Danach ausgefallene Nächte werden bis zu 25 Tage nachgeholt.</li>
+      <li><b>Radwechsel</b> ist nur in der Saison buchbar.</li>
+    </ul>
+  </section>
+</div>
+
+<!-- ###########################################################################
+     TAB „BUGS“ — das gespeicherte Fragment unverändert (BR-3): .ai + .ov + .err
+     inkl. CSS-only-Fehlerfilter (Radio-Hack, name=errflt). Inhalt wie REQ-037-Mockup.
+     ########################################################################### -->
+<div class="mk-only-bugs">
+<section class="ai">
+  <h2>KI-Zusammenfassung</h2>
+  <p class="headline">Zwei wiederkehrende SoftNet-Timeouts in M&uuml;nchen, sonst stabiler Betrieb.</p>
+  <p>In den letzten 24 Stunden wurden 2 Fehler erfasst. Die Buchungsstrecke ist durchg&auml;ngig
+    verf&uuml;gbar; betroffen sind ausschließlich Terminsuchen mit Ersatzwagen-Wunsch.</p>
+  <h3>Priorisierte Probleme</h3>
+  <ul class="issues">
+    <li><span class="sev sev-med">medium</span> <b>Read timed out bei /snaps</b>
+      <div class="hint">Marken: Audi &middot; Standorte: M&uuml;nchen-S&uuml;d</div>
+      <div class="hint">Ursache: SoftNet-Antwortzeit &uuml;ber 30 s bei Ersatzwagen-Abfrage.</div></li>
+    <li><span class="sev sev-low">low</span> <b>Validierungsfehler bei /appointments</b>
+      <div class="hint">Marken: VW &middot; Standorte: Mettmann</div>
+      <div class="hint">Ursache: Kennzeichenformat vom Client nicht normalisiert.</div></li>
+  </ul>
+  <h3>Empfehlungen</h3>
+  <ul>
+    <li>Timeout-Verhalten f&uuml;r Ersatzwagen-Abfragen mit SoftNet kl&auml;ren.</li>
+    <li>Kennzeichen-Normalisierung im Frontend vor dem Absenden pr&uuml;fen.</li>
+  </ul>
+</section>
+
+<section class="ov">
+  <h2>Status-&Uuml;bersicht</h2>
+  <div class="cats">
+    <div class="cat cat-warn">
+      <div class="cat-hd"><span class="dot"></span><span class="cat-name">Terminsuchen</span>
+        <span class="cat-ep">/snaps</span></div>
+      <div class="cat-val">63 gestartet &middot; 62 ok &middot; <b>1</b> Fehler</div>
+    </div>
+    <div class="cat cat-warn">
+      <div class="cat-hd"><span class="dot"></span><span class="cat-name">Buchungen</span>
+        <span class="cat-ep">/appointments</span></div>
+      <div class="cat-val">14 gestartet &middot; 13 ok &middot; <b>1</b> Fehler</div>
+    </div>
+    <div class="cat cat-bad">
+      <div class="cat-hd"><span class="dot"></span><span class="cat-name">Marken</span></div>
+      <div class="cat-val"><b>2</b> mit Fehlern</div>
+      <ul class="toplist">
+        <li><span>Audi</span><b>1</b></li>
+        <li><span>VW</span><b>1</b></li>
+      </ul>
+    </div>
+    <div class="cat cat-bad">
+      <div class="cat-hd"><span class="dot"></span><span class="cat-name">Standorte</span></div>
+      <div class="cat-val"><b>2</b> mit Fehlern</div>
+      <ul class="toplist">
+        <li><span>M&uuml;nchen-S&uuml;d</span><b>1</b></li>
+        <li><span>Audi Mettmann</span><b>1</b></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="err">
+  <h2>Fehler (2) <span class="pii-note">&mdash; Payloads PII-maskiert</span></h2>
+  <input type="radio" name="errflt" class="flt-radio" id="flt-all" checked>
+  <input type="radio" name="errflt" class="flt-radio" id="flt-ep-snaps">
+  <input type="radio" name="errflt" class="flt-radio" id="flt-ep-appointments">
+  <div class="filters">
+    <label for="flt-all">Alle (2)</label>
+    <label for="flt-ep-snaps">Terminsuchen (1)</label>
+    <label for="flt-ep-appointments">Buchungen (1)</label>
+  </div>
+  <div class="err-list">
+    <article class="card" data-ep="snaps">
+      <div class="row"><span class="k">Marke</span><span>Audi</span>
+        <span class="k">Standort</span><span>M&uuml;nchen-S&uuml;d</span></div>
+      <div class="row"><span class="k">Services</span><span>Inspektion, Ersatzwagen</span>
+        <span class="k">Fehlertyp</span><span class="etype">Read timed out</span></div>
+      <div class="row"><span class="k">Trace-ID</span><span class="mono">7f3e21ac-9b44-4d10-a2f5-0c81e4d77b19</span>
+        <span class="k">Endpoint</span><span class="mono">/snaps</span></div>
+      <details><summary>Gesendet (Request)</summary><pre>{"branchId":"68f60...","firstName":"***","lastName":"***","license":"***","replacementPreference":true}</pre></details>
+      <details><summary>Empfangen (Response)</summary><pre>504 Gateway Timeout &mdash; Read timed out after 30000ms</pre></details>
+    </article>
+    <article class="card" data-ep="appointments">
+      <div class="row"><span class="k">Marke</span><span>VW</span>
+        <span class="k">Standort</span><span>Audi Mettmann</span></div>
+      <div class="row"><span class="k">Services</span><span>Radwechsel</span>
+        <span class="k">Fehlertyp</span><span class="etype">validation errors</span></div>
+      <div class="row"><span class="k">Trace-ID</span><span class="mono">1c90b7d2-4e61-42aa-8f03-5b2ac9e1f884</span>
+        <span class="k">Endpoint</span><span class="mono">/appointments</span></div>
+      <details><summary>Gesendet (Request)</summary><pre>{"email":"***","mobile":"***","license":"***","rentCategoryid":"KLEINWAGEN"}</pre></details>
+      <details><summary>Empfangen (Response)</summary><pre>400 Bad Request &mdash; {"errors":[{"field":"license","message":"must not be blank"}]}</pre></details>
+    </article>
+  </div>
+</section>
+</div>
+
+<!-- ###########################################################################
+     404-SEITE (E7, BR-1) — Catch-all GET /internal/report/**: HTTP 404 text/html,
+     <title>Statusseite – Seite nicht gefunden</title>, keine Tab-Leiste, der
+     angefragte Pfad wird NICHT ausgegeben. Links real auf /internal/report/statistics
+     (nur wenn der Statistik-Tab existiert) und /internal/report/bugs.
+     ########################################################################### -->
+<div class="mk-only-404">
+  <section class="st-notfound" aria-labelledby="nf-h">
+    <h2 id="nf-h">Seite nicht gefunden</h2>
+    <p>Diese Adresse gibt es auf der Statusseite nicht.</p>
+    <ul>
+      <li><a href="#content">Zur Statistik</a></li>
+      <li><a href="#content">Zu den Bugs</a></li>
+    </ul>
+  </section>
+</div>
+
+</main>
+
+<footer class="ft">Automatisch generiert &middot; REQ-030 &middot; REQ-037 &middot; REQ-038 &middot; gs-terminbuchungs-app</footer>
+
+</body>
+</html>

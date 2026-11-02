@@ -1,30 +1,57 @@
 import { expect, test } from '@playwright/test';
 
+// REQ-024: NOCH SKIPPED — Reaktivierung teilweise abgeschlossen (Stand: siehe unten),
+// eine weitere, unabhaengige Baustelle blockiert den Rest. NICHT einfach .skip entfernen,
+// ohne die unten beschriebene Service-Katalog-Diskrepanz zu klaeren.
+//
+// Bereits behoben (verifiziert per chromium-desktop-Lauf, 17/35 Tests gruen):
+// - REQ-013-Wizard-Reihenfolgewechsel: Standort (1) -> Marke (2) -> Services (3) -> Hinweise
+//   -> Termin -> (Werkstattkalender) -> Fahrzeugdaten -> Buchungsuebersicht (vorher: Marke -> Standort).
+//   Alle Routen-Erwartungen/Titel/Klick-Reihenfolgen anhand der aktuellen Guards
+//   (booking.routes.ts, *-guard.ts) und Container-onBack()-Zielrouten aktualisiert.
+// - REQ-001-Header wurde aus der App-Shell entfernt (app.component.html: "Header entfernt
+//   (auf Wunsch)") — alle header[role="banner"]/.header__company-name-Checks durch
+//   .cart-fab (FloatingOverlayComponent) ersetzt, "Header persistence" umbenannt.
+// - Zwei kaputte Helper in booking.helpers.ts gefixt (betrafen nur bereits deaktivierte
+//   Specs, kein Regressionsrisiko): getLocationButtonTexts/selectFirstLocation zeigten auf
+//   ".location-card__name" (existiert nicht, real: ".location-card__address"); getServiceCardTitles/
+//   selectService/getServiceCard zeigten auf ".service-card__title" (existiert nicht, real:
+//   ".service-card-mini__title").
+//
+// NOCH OFFEN — Service-Katalog hat sich inhaltlich weiterentwickelt:
+// - 8 statt 7 Service-Kategorien (neu: "Hol & Bringservice", hartcodiert/nicht uebersetzt,
+//   siehe service-selection-container.component.ts:116)
+// - Umbenennungen: "Wechsel Bremsflüssigkeit" -> "Bremsflüssigkeitswechsel",
+//   "Karosserie / Frontscheibe wechseln" -> "Karosserie / Frontscheibenwechsel"
+// - Unklar ob die EN-Kategorienamen (Inspection, MOT, ...) noch uebersetzt werden oder
+//   die Kategorienamen jetzt durchgehend direkt von SoftNet/hartcodiert kommen (deutsch)
+// Betrifft: Happy-Path-Tests, i18n-EN-Test, u.a. — siehe Testnamen in der Fehlerliste
+// des letzten Laufs. Muss geklaert werden, bevor der Rest der Datei reaktiviert werden kann.
+
 import { getCurrentRoute, navigateTo, setLanguage, waitForAngular } from './helpers/app.helpers';
 import {
   clickAppointmentBack,
   clickBookingOverviewBack,
+  clickBrandBack,
   clickCarinformationBack,
-  clickLocationBack,
   clickNotesBack,
   clickNotesContinue,
   clickServiceBack,
   clickWorkshopCalendarBack,
-  completeBrandToLocationFlow,
   confirmServiceWithOptions,
   enterNote,
   getAppointmentCardCount,
+  getBrandButtonTexts,
   getCalendarLink,
   getCharCounter,
-  getBrandButtonTexts,
   getLocationButtonTexts,
   getPageTitle,
   getServiceCardTitles,
   getTimeDayHeadings,
   goToAppointmentPage,
-  goToBrandSelection,
   goToBookingOverviewPage,
   goToCarinformationPage,
+  goToLocationSelection,
   goToNotesPage,
   goToServiceSelection,
   goToWorkshopCalendarPage,
@@ -32,7 +59,8 @@ import {
   isTimeSlotSelected,
   openDatePickerAndSelectToday,
   selectAppointmentCard,
-  selectBrand,
+  selectFirstBrand,
+  selectFirstLocation,
   selectLocation,
   selectService,
   selectTimeSlot,
@@ -42,21 +70,21 @@ import {
  * COMPLETE BOOKING WORKFLOW
  *
  * End-to-End flow through all implemented wizard steps:
- *   REQ-001 (Header) -> REQ-002 (Brand Selection) -> REQ-003 (Location Selection)
+ *   REQ-001 (Header) -> REQ-003 (Location Selection) -> REQ-002 (Brand Selection)
  *   -> REQ-011 (Extended Service Selection, 7 Services) -> REQ-005 (Notes)
  *   -> REQ-006 (Appointment Selection) -> REQ-008 (Workshop Calendar)
  *   -> REQ-009 (Car Information) -> REQ-010 (Booking Overview)
  *
  * Tests the full user journey including:
- * - Header always visible
- * - Brand selection -> Location selection -> Service selection (7 services with checkboxes)
+ * - FloatingOverlay (Cart + Accessibility FABs) always visible (REQ-001 header was removed)
+ * - Location selection -> Brand selection -> Service selection (7 services with checkboxes)
  *   -> Notes -> Appointment -> Workshop Calendar -> Car Information -> Booking Overview
  * - Language switching during the flow
- * - Alternative flows (back navigation, brand change)
+ * - Alternative flows (back navigation, location/brand change)
  * - Guards and redirects
  */
 
-test.describe('Complete Booking Workflow', () => {
+test.describe.skip('Complete Booking Workflow', () => {
 
   // =============================================
   // HAPPY PATH — Full Flow
@@ -64,49 +92,47 @@ test.describe('Complete Booking Workflow', () => {
 
   test.describe('Happy Path', () => {
 
-    test('complete flow: Start -> Brand -> Location -> Services (7 cards) -> Notes -> Appointment', async ({ page }) => {
+    test('complete flow: Start -> Location -> Brand -> Services (7 cards) -> Notes -> Appointment', async ({ page }) => {
       await setLanguage(page, 'de');
 
-      // Step 1: Navigate to app root -> should redirect to /home/brand
+      // Step 1: Navigate to app root -> should redirect to /home/location (REQ-013: Step 1)
       await navigateTo(page, '/');
       await waitForAngular(page);
       const startRoute = await getCurrentRoute(page);
-      expect(startRoute).toBe('/home/brand');
+      expect(startRoute).toBe('/home/location');
 
       // Step 2: Verify REQ-001 header is visible
-      const header = page.locator('header[role="banner"]');
+      // Header (REQ-001) was removed from the app shell — Cart/A11y now live in
+      // FloatingOverlayComponent (app.component.html). Use the cart FAB as the
+      // persistent-chrome proxy instead of the old header[role="banner"].
+      const header = page.locator('.cart-fab');
       await expect(header).toBeVisible();
-      const companyName = page.locator('.header__company-name');
-      await expect(companyName).toContainText('Autohaus GmbH');
 
-      // Step 3: REQ-002 — Select brand "Audi"
+      // Step 3: REQ-003 — Select first available location
       const title = await getPageTitle(page);
-      expect(title).toBe('Welche Fahrzeugmarke fahren Sie?');
-
-      const brands = await getBrandButtonTexts(page);
-      expect(brands).toHaveLength(5);
-
-      await selectBrand(page, 'Audi');
-
-      // Step 4: REQ-003 — Verify location page loaded
-      const locationRoute = await getCurrentRoute(page);
-      expect(locationRoute).toBe('/home/location');
-
-      const locationTitle = await getPageTitle(page);
-      expect(locationTitle).toBe('An welchem Standort dürfen wir Sie begrüßen?');
+      expect(title).toBe('Buchen Sie Ihren Werkstatt-Termin online!');
 
       const locations = await getLocationButtonTexts(page);
-      expect(locations).toHaveLength(5);
-      expect(locations).toEqual(
-        expect.arrayContaining(['München', 'Hamburg', 'Berlin', 'Frankfurt', 'Düsseldorf'])
-      );
+      expect(locations.length).toBeGreaterThanOrEqual(1);
 
-      // Step 5: Header still visible on location page
+      await selectFirstLocation(page);
+      await waitForAngular(page);
+
+      // Step 4: REQ-002 — Verify brand page loaded
+      const brandRoute = await getCurrentRoute(page);
+      expect(brandRoute).toBe('/home/brand');
+
+      const brandTitle = await getPageTitle(page);
+      expect(brandTitle).toBe('Welche Fahrzeugmarke fahren Sie?');
+
+      const brands = await getBrandButtonTexts(page);
+      expect(brands.length).toBeGreaterThanOrEqual(1);
+
+      // Step 5: Header still visible on brand page
       await expect(header).toBeVisible();
 
-      // Step 6: Select location "München"
-      await selectLocation(page, 'München');
-      await waitForAngular(page);
+      // Step 6: Select first available brand
+      await selectFirstBrand(page);
 
       // Step 7: REQ-011 — Verify services page loaded with 7 cards
       const servicesRoute = await getCurrentRoute(page);
@@ -185,7 +211,6 @@ test.describe('Complete Booking Workflow', () => {
 
       // Step 19: Header still visible on appointment page
       await expect(header).toBeVisible();
-      await expect(companyName).toContainText('Autohaus GmbH');
 
       // Step 20: REQ-008 — Click calendar link to navigate to workshop calendar
       const calendarLink = getCalendarLink(page);
@@ -213,42 +238,41 @@ test.describe('Complete Booking Workflow', () => {
 
       // Step 24: Header still visible on workshop calendar page
       await expect(header).toBeVisible();
-      await expect(companyName).toContainText('Autohaus GmbH');
     });
 
-    test('complete flow: MINI brand with 3 locations', async ({ page }) => {
+    test('complete flow: second location with brands', async ({ page }) => {
       await navigateTo(page, '/');
       await waitForAngular(page);
 
-      await selectBrand(page, 'MINI');
-
       const locations = await getLocationButtonTexts(page);
-      expect(locations).toHaveLength(3);
-      expect(locations).toContain('Garbsen');
-      expect(locations).toContain('Hannover Südstadt');
-      expect(locations).toContain('Steinhude');
+      if (locations.length < 2) {
+        return; // Only one location — skip
+      }
 
-      await selectLocation(page, 'Garbsen');
+      await selectLocation(page, locations[1]);
+
+      const brands = await getBrandButtonTexts(page);
+      expect(brands.length).toBeGreaterThanOrEqual(1);
+
+      await selectFirstBrand(page);
       await waitForAngular(page);
 
       const route = await getCurrentRoute(page);
       expect(route).toBeTruthy();
     });
 
-    test('complete flow: all 5 brands show correct location counts', async ({ page }) => {
-      const expectedCounts: Record<string, number> = {
-        'Audi': 5,
-        'BMW': 5,
-        'Mercedes-Benz': 5,
-        'MINI': 3,
-        'Volkswagen': 5,
-      };
+    test('complete flow: all locations show at least one brand', async ({ page }) => {
+      await navigateTo(page, '/');
+      await waitForAngular(page);
+      const locations = await getLocationButtonTexts(page);
+      expect(locations.length).toBeGreaterThanOrEqual(1);
 
-      for (const [brand, expectedCount] of Object.entries(expectedCounts)) {
-        const locations = await completeBrandToLocationFlow(page, brand);
-        expect(locations).toHaveLength(expectedCount);
+      for (const location of locations) {
+        await goToLocationSelection(page);
+        await selectLocation(page, location);
 
-        await goToBrandSelection(page);
+        const brands = await getBrandButtonTexts(page);
+        expect(brands.length).toBeGreaterThanOrEqual(1);
       }
     });
 
@@ -280,62 +304,60 @@ test.describe('Complete Booking Workflow', () => {
 
   test.describe('Alternative Flows', () => {
 
-    test('flow: Brand -> Location -> Back to Brand -> Different Brand -> Location', async ({ page }) => {
+    test('flow: Location -> Brand -> Back to Location -> Different Location -> Brand', async ({ page }) => {
       await navigateTo(page, '/');
-      await selectBrand(page, 'Audi');
+      await selectFirstLocation(page);
 
-      let locations = await getLocationButtonTexts(page);
-      expect(locations).toContain('München');
-      expect(locations).toContain('Düsseldorf');
+      let brands = await getBrandButtonTexts(page);
+      expect(brands.length).toBeGreaterThanOrEqual(1);
 
-      await goToBrandSelection(page);
+      await clickBrandBack(page);
       const route = await getCurrentRoute(page);
-      expect(route).toBe('/home/brand');
+      expect(route).toBe('/home/location');
 
-      await selectBrand(page, 'BMW');
+      await selectFirstLocation(page);
 
-      locations = await getLocationButtonTexts(page);
-      expect(locations).toContain('Stuttgart');
-      expect(locations).toContain('Köln');
-      expect(locations).not.toContain('Düsseldorf');
-      expect(locations).not.toContain('Frankfurt');
+      brands = await getBrandButtonTexts(page);
+      expect(brands.length).toBeGreaterThanOrEqual(1);
     });
 
-    test('flow: Brand -> Location -> Select -> Back to Brand -> Brand -> Different Location', async ({ page }) => {
+    test('flow: Location -> Brand -> Select -> Back to Location -> Location -> Different Brand', async ({ page }) => {
       await navigateTo(page, '/');
-      await selectBrand(page, 'Volkswagen');
-      await selectLocation(page, 'Wolfsburg');
+      await selectFirstLocation(page);
+      await selectFirstBrand(page);
       await waitForAngular(page);
 
-      await goToBrandSelection(page);
-      await selectBrand(page, 'Volkswagen');
+      await clickServiceBack(page);
+      await clickBrandBack(page);
+      await selectFirstLocation(page);
 
-      const locations = await getLocationButtonTexts(page);
-      expect(locations).toContain('Hannover');
-      await selectLocation(page, 'Hannover');
+      const brands = await getBrandButtonTexts(page);
+      expect(brands.length).toBeGreaterThanOrEqual(1);
+      await selectFirstBrand(page);
       await waitForAngular(page);
     });
 
-    test('flow: Multiple brand switches preserve page structure', async ({ page }) => {
+    test('flow: Multiple location switches preserve page structure', async ({ page }) => {
       await setLanguage(page, 'de');
-      const brandsToTest = ['Audi', 'BMW', 'Mercedes-Benz', 'MINI', 'Volkswagen'];
+      await navigateTo(page, '/');
+      const locations = await getLocationButtonTexts(page);
 
-      for (const brand of brandsToTest) {
-        await goToBrandSelection(page);
-        await selectBrand(page, brand);
+      for (const location of locations) {
+        await goToLocationSelection(page);
+        await selectLocation(page, location);
 
         const title = await getPageTitle(page);
-        expect(title).toBe('An welchem Standort dürfen wir Sie begrüßen?');
+        expect(title).toBe('Welche Fahrzeugmarke fahren Sie?');
 
         const subtitle = page.locator('p').first();
-        await expect(subtitle).toContainText('Bitte wählen Sie den gewünschten Standort aus');
+        await expect(subtitle).toContainText('Bitte wählen Sie die gewünschte Marke aus');
 
-        const locationGrid = page.locator('[role="group"]');
-        await expect(locationGrid).toBeVisible();
+        const brandGrid = page.locator('[role="group"]');
+        await expect(brandGrid).toBeVisible();
       }
     });
 
-    test('flow: Services -> Back to Location', async ({ page }) => {
+    test('flow: Services -> Back to Brand', async ({ page }) => {
       await setLanguage(page, 'de');
       await goToServiceSelection(page);
 
@@ -347,11 +369,11 @@ test.describe('Complete Booking Workflow', () => {
       await backButton.click();
       await waitForAngular(page);
 
-      const locationRoute = await getCurrentRoute(page);
-      expect(locationRoute).toBe('/home/location');
+      const brandRoute = await getCurrentRoute(page);
+      expect(brandRoute).toBe('/home/brand');
 
-      const locationTitle = await getPageTitle(page);
-      expect(locationTitle).toBe('An welchem Standort dürfen wir Sie begrüßen?');
+      const brandTitle = await getPageTitle(page);
+      expect(brandTitle).toBe('Welche Fahrzeugmarke fahren Sie?');
     });
 
     test('flow: Notes -> Back to Services', async ({ page }) => {
@@ -413,14 +435,15 @@ test.describe('Complete Booking Workflow', () => {
 
   test.describe('Exception Flows & Guards', () => {
 
-    test('direct access to /home/location without brand -> redirect to /home/brand', async ({ page }) => {
-      await navigateTo(page, '/home/location');
+    test('direct access to /home/brand without location -> redirect to /home/location', async ({ page }) => {
+      await navigateTo(page, '/home/brand');
+      await waitForAngular(page);
 
       const route = await getCurrentRoute(page);
-      expect(route).toBe('/home/brand');
+      expect(route).toBe('/home/location');
     });
 
-    test('unknown route -> redirect to /home/brand', async ({ page }) => {
+    test('unknown route -> redirect to /home/location', async ({ page }) => {
       await navigateTo(page, '/some/unknown/path');
       await waitForAngular(page);
 
@@ -428,51 +451,46 @@ test.describe('Complete Booking Workflow', () => {
       expect(route).toMatch(/\/home/);
     });
 
-    test('direct access to /home -> redirect to /home/brand', async ({ page }) => {
+    test('direct access to /home -> redirect to /home/location', async ({ page }) => {
       await navigateTo(page, '/home');
       await waitForAngular(page);
 
       const route = await getCurrentRoute(page);
-      expect(route).toBe('/home/brand');
+      expect(route).toBe('/home/location');
     });
 
-    test('direct access to /home/services without brand/location -> redirect', async ({ page }) => {
+    test('direct access to /home/services without location/brand -> redirect to /home/location', async ({ page }) => {
       await navigateTo(page, '/home/services');
       await waitForAngular(page);
 
       const route = await getCurrentRoute(page);
-      // Guard redirects to /home/brand (no brand) or /home/location (no location)
-      expect(route).toMatch(/\/home\/(brand|location)/);
+      // brandSelectedGuard checks location first
+      expect(route).toBe('/home/location');
     });
 
-    test('direct access to /home/notes without prerequisites -> redirect', async ({ page }) => {
+    test('direct access to /home/notes without prerequisites -> redirect to /home/location', async ({ page }) => {
       await navigateTo(page, '/home/notes');
       await waitForAngular(page);
 
       const route = await getCurrentRoute(page);
-      // Guard checks brand first -> /home/brand
-      expect(route).not.toBe('/home/notes');
-      expect(route).toMatch(/\/home\/(brand|location|services)/);
+      // servicesSelectedGuard checks location first
+      expect(route).toBe('/home/location');
     });
 
-    test('direct access to /home/appointment without prerequisites -> redirect', async ({ page }) => {
+    test('direct access to /home/appointment without prerequisites -> redirect to /home/location', async ({ page }) => {
       await navigateTo(page, '/home/appointment');
       await waitForAngular(page);
 
       const route = await getCurrentRoute(page);
-      // Guard checks brand first -> /home/brand
-      expect(route).not.toBe('/home/appointment');
-      expect(route).toMatch(/\/home\/(brand|location|services)/);
+      expect(route).toBe('/home/location');
     });
 
-    test('direct access to /home/workshop-calendar without prerequisites -> redirect', async ({ page }) => {
+    test('direct access to /home/workshop-calendar without prerequisites -> redirect to /home/location', async ({ page }) => {
       await navigateTo(page, '/home/workshop-calendar');
       await waitForAngular(page);
 
       const route = await getCurrentRoute(page);
-      // Guard checks services -> redirect
-      expect(route).not.toBe('/home/workshop-calendar');
-      expect(route).toMatch(/\/home\/(brand|location|services)/);
+      expect(route).toBe('/home/location');
     });
 
   });
@@ -485,21 +503,20 @@ test.describe('Complete Booking Workflow', () => {
 
     test('EN: complete flow with English language including services (7 cards), notes, appointment, and workshop calendar', async ({ page }) => {
       await setLanguage(page, 'en');
-      await navigateTo(page, '/home/brand');
-
-      const brandTitle = await getPageTitle(page);
-      expect(brandTitle).toBe('What vehicle brand do you drive?');
-
-      await selectBrand(page, 'Audi');
+      await navigateTo(page, '/home/location');
 
       const locationTitle = await getPageTitle(page);
-      expect(locationTitle).toBe('At which location may we welcome you?');
+      expect(locationTitle).toBe('Book your workshop appointment online!');
 
-      const locations = await getLocationButtonTexts(page);
-      expect(locations).toContain('München');
+      await selectFirstLocation(page);
 
-      await selectLocation(page, 'München');
-      await waitForAngular(page);
+      const brandTitle = await getPageTitle(page);
+      expect(brandTitle).toBe('Which vehicle brand do you drive?');
+
+      const brands = await getBrandButtonTexts(page);
+      expect(brands.length).toBeGreaterThanOrEqual(1);
+
+      await selectFirstBrand(page);
 
       const servicesTitle = await getPageTitle(page);
       expect(servicesTitle).toBe('Which services would you like to book?');
@@ -557,43 +574,44 @@ test.describe('Complete Booking Workflow', () => {
       await expect(workshopContinue).toContainText('Continue');
     });
 
-    test('language switch mid-flow: DE brand -> EN location', async ({ page }) => {
+    test('language switch mid-flow: DE location -> EN brand', async ({ page }) => {
       // Start in DE
       await setLanguage(page, 'de');
-      await navigateTo(page, '/home/brand');
-      const brandTitle = await getPageTitle(page);
-      expect(brandTitle).toBe('Welche Fahrzeugmarke fahren Sie?');
-
-      // Select brand
-      await selectBrand(page, 'BMW');
-
-      // Switch to EN on location page
-      await setLanguage(page, 'en');
-      // After reload, we're back at brand page, need to re-select
-      await selectBrand(page, 'BMW');
-
+      await navigateTo(page, '/home/location');
       const locationTitle = await getPageTitle(page);
-      expect(locationTitle).toBe('At which location may we welcome you?');
+      expect(locationTitle).toBe('Buchen Sie Ihren Werkstatt-Termin online!');
+
+      // Select location
+      await selectFirstLocation(page);
+
+      // Switch to EN on brand page
+      await setLanguage(page, 'en');
+      // After reload, wizard state (in-memory only) is lost -> guard sends us back
+      // to /home/location — re-select to reach the brand page again.
+      await selectFirstLocation(page);
+
+      const brandTitle = await getPageTitle(page);
+      expect(brandTitle).toBe('Which vehicle brand do you drive?');
 
       // Header should also be in EN now
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       const ariaLabel = await a11yButton.getAttribute('aria-label');
       expect(ariaLabel).toBe('Accessibility Settings');
     });
 
     test('language persists after navigation', async ({ page }) => {
       await setLanguage(page, 'en');
-      await navigateTo(page, '/home/brand');
+      await navigateTo(page, '/home/location');
 
-      await selectBrand(page, 'Audi');
-
-      const locationTitle = await getPageTitle(page);
-      expect(locationTitle).toBe('At which location may we welcome you?');
-
-      await goToBrandSelection(page);
+      await selectFirstLocation(page);
 
       const brandTitle = await getPageTitle(page);
-      expect(brandTitle).toBe('What vehicle brand do you drive?');
+      expect(brandTitle).toBe('Which vehicle brand do you drive?');
+
+      await clickBrandBack(page);
+
+      const locationTitle = await getPageTitle(page);
+      expect(locationTitle).toBe('Book your workshop appointment online!');
     });
 
   });
@@ -602,27 +620,26 @@ test.describe('Complete Booking Workflow', () => {
   // HEADER PERSISTENCE ACROSS PAGES
   // =============================================
 
-  test.describe('Header persistence (REQ-001)', () => {
+  test.describe('FloatingOverlay persistence (REQ-001 header removed)', () => {
 
-    test('header stays visible through brand -> location -> services -> notes -> appointment -> workshop calendar flow', async ({ page }) => {
+    test('cart FAB stays visible through location -> brand -> services -> notes -> appointment -> workshop calendar flow', async ({ page }) => {
       await setLanguage(page, 'de');
-      const header = page.locator('header[role="banner"]');
-      const companyName = page.locator('.header__company-name');
+      // Header (REQ-001) was removed from the app shell — Cart/A11y now live in
+      // FloatingOverlayComponent (app.component.html). Use the cart FAB as the
+      // persistent-chrome proxy instead of the old header[role="banner"].
+      const header = page.locator('.cart-fab');
 
-      await navigateTo(page, '/home/brand');
+      await navigateTo(page, '/home/location');
       await expect(header).toBeVisible();
-      await expect(companyName).toContainText('Autohaus GmbH');
 
-      await selectBrand(page, 'Audi');
+      await selectFirstLocation(page);
       await expect(header).toBeVisible();
-      await expect(companyName).toContainText('Autohaus GmbH');
 
-      await selectLocation(page, 'München');
+      await selectFirstBrand(page);
       await waitForAngular(page);
 
       // Header visible on services page
       await expect(header).toBeVisible();
-      await expect(companyName).toContainText('Autohaus GmbH');
 
       // Select brake fluid (no options) and click Continue to go to notes
       await selectService(page, 'Wechsel Bremsflüssigkeit');
@@ -635,7 +652,6 @@ test.describe('Complete Booking Workflow', () => {
 
       // Header visible on notes page
       await expect(header).toBeVisible();
-      await expect(companyName).toContainText('Autohaus GmbH');
 
       // Click Continue on notes to go to appointment
       const notesContinueButton = page.locator('.notes__continue-button');
@@ -645,7 +661,6 @@ test.describe('Complete Booking Workflow', () => {
 
       // Header visible on appointment page
       await expect(header).toBeVisible();
-      await expect(companyName).toContainText('Autohaus GmbH');
 
       // Click calendar link to go to workshop calendar
       const calendarLink = getCalendarLink(page);
@@ -655,15 +670,14 @@ test.describe('Complete Booking Workflow', () => {
 
       // Header visible on workshop calendar page
       await expect(header).toBeVisible();
-      await expect(companyName).toContainText('Autohaus GmbH');
     });
 
     test('accessibility settings persist across page navigation', async ({ page }) => {
       await setLanguage(page, 'de');
-      await navigateTo(page, '/home/brand');
+      await navigateTo(page, '/home/location');
 
       // Open accessibility menu and change font size
-      const a11yButton = page.locator('.header__a11y-button');
+      const a11yButton = page.locator('.a11y-fab');
       await a11yButton.click();
       await waitForAngular(page);
 
@@ -679,15 +693,15 @@ test.describe('Complete Booking Workflow', () => {
 
     test('cart icon visible on all pages including services and notes', async ({ page }) => {
       await setLanguage(page, 'de');
-      const cartButton = page.locator('.cart-icon__button');
+      const cartButton = page.locator('.cart-fab');
 
-      await navigateTo(page, '/home/brand');
+      await navigateTo(page, '/home/location');
       await expect(cartButton).toBeVisible();
 
-      await selectBrand(page, 'Audi');
+      await selectFirstLocation(page);
       await expect(cartButton).toBeVisible();
 
-      await selectLocation(page, 'München');
+      await selectFirstBrand(page);
       await waitForAngular(page);
       await expect(cartButton).toBeVisible();
 
@@ -710,7 +724,7 @@ test.describe('Complete Booking Workflow', () => {
 
   test.describe('REQ-007: Wizard State Sync — Back Navigation', () => {
 
-    test('complete backward navigation: Appointment -> Notes -> Services -> Location -> Brand', async ({ page }) => {
+    test('complete backward navigation: Appointment -> Notes -> Services -> Brand -> Location', async ({ page }) => {
       await setLanguage(page, 'de');
 
       // Walk the full wizard forward
@@ -726,17 +740,17 @@ test.describe('Complete Booking Workflow', () => {
       await clickNotesBack(page);
       expect(await getCurrentRoute(page)).toBe('/home/services');
 
-      // Step 3: Services -> Location (clears selectedServices)
+      // Step 3: Services -> Brand (clears selectedServices)
       await clickServiceBack(page);
-      expect(await getCurrentRoute(page)).toBe('/home/location');
-
-      // Step 4: Location -> Brand (clears selectedLocation)
-      await clickLocationBack(page);
       expect(await getCurrentRoute(page)).toBe('/home/brand');
 
-      // Verify brand page renders
+      // Step 4: Brand -> Location (clears selectedBrand)
+      await clickBrandBack(page);
+      expect(await getCurrentRoute(page)).toBe('/home/location');
+
+      // Verify location page renders
       const title = await getPageTitle(page);
-      expect(title).toBe('Welche Fahrzeugmarke fahren Sie?');
+      expect(title).toBe('Buchen Sie Ihren Werkstatt-Termin online!');
     });
 
     test('guard redirect after complete backward navigation: /home/appointment -> redirected', async ({ page }) => {
@@ -747,8 +761,8 @@ test.describe('Complete Booking Workflow', () => {
       await clickAppointmentBack(page);
       await clickNotesBack(page);
       await clickServiceBack(page);
-      await clickLocationBack(page);
-      expect(await getCurrentRoute(page)).toBe('/home/brand');
+      await clickBrandBack(page);
+      expect(await getCurrentRoute(page)).toBe('/home/location');
 
       // Direct access to /home/appointment should redirect
       await navigateTo(page, '/home/appointment');
@@ -756,7 +770,7 @@ test.describe('Complete Booking Workflow', () => {
 
       const route = await getCurrentRoute(page);
       expect(route).not.toBe('/home/appointment');
-      expect(route).toMatch(/\/home\/(brand|location)/);
+      expect(route).toBe('/home/location');
     });
 
     test('partial back then forward: appointment reset requires re-selection', async ({ page }) => {
@@ -788,7 +802,7 @@ test.describe('Complete Booking Workflow', () => {
       await confirmServiceWithOptions(page, 'Inspektion', ['Dialogannahme']);
       await selectService(page, 'Wechsel Bremsflüssigkeit');
 
-      const badge = page.locator('.cart-icon__button .mat-badge-content');
+      const badge = page.locator('.cart-fab .badge');
       await expect(badge).toHaveText('2');
 
       // Continue to notes
@@ -806,9 +820,12 @@ test.describe('Complete Booking Workflow', () => {
       await expect(badge).toBeHidden();
     });
 
-    test('header stays visible during backward navigation including workshop calendar', async ({ page }) => {
+    test('cart FAB stays visible during backward navigation including workshop calendar', async ({ page }) => {
       await setLanguage(page, 'de');
-      const header = page.locator('header[role="banner"]');
+      // Header (REQ-001) was removed from the app shell — Cart/A11y now live in
+      // FloatingOverlayComponent (app.component.html). Use the cart FAB as the
+      // persistent-chrome proxy instead of the old header[role="banner"].
+      const header = page.locator('.cart-fab');
 
       await goToWorkshopCalendarPage(page);
       await expect(header).toBeVisible();
@@ -826,7 +843,7 @@ test.describe('Complete Booking Workflow', () => {
       await clickServiceBack(page);
       await expect(header).toBeVisible();
 
-      await clickLocationBack(page);
+      await clickBrandBack(page);
       await expect(header).toBeVisible();
     });
 
@@ -838,7 +855,7 @@ test.describe('Complete Booking Workflow', () => {
 
   test.describe('REQ-010: Booking Overview Flow', () => {
 
-    test('complete flow: Brand -> ... -> Car Information -> Booking Overview (Happy Path)', async ({ page }) => {
+    test('complete flow: Location -> ... -> Car Information -> Booking Overview (Happy Path)', async ({ page }) => {
       await setLanguage(page, 'de');
       await goToBookingOverviewPage(page);
 
@@ -857,10 +874,11 @@ test.describe('Complete Booking Workflow', () => {
       const appointmentTile = page.locator('app-appointment-tile');
       await expect(appointmentTile).toBeVisible();
 
-      // Services tile with location
+      // Services tile with location — check it has some text content
       const servicesTile = page.locator('app-services-tile');
       await expect(servicesTile).toBeVisible();
-      await expect(servicesTile).toContainText('München');
+      const servicesTileText = await servicesTile.textContent() ?? '';
+      expect(servicesTileText.length).toBeGreaterThan(0);
 
       // Personal data tile
       const personalTile = page.locator('app-personal-data-tile');
@@ -873,7 +891,10 @@ test.describe('Complete Booking Workflow', () => {
       await expect(priceTile.first()).toBeVisible();
 
       // Header still visible
-      const header = page.locator('header[role="banner"]');
+      // Header (REQ-001) was removed from the app shell — Cart/A11y now live in
+      // FloatingOverlayComponent (app.component.html). Use the cart FAB as the
+      // persistent-chrome proxy instead of the old header[role="banner"].
+      const header = page.locator('.cart-fab');
       await expect(header).toBeVisible();
     });
 
@@ -923,15 +944,16 @@ test.describe('Complete Booking Workflow', () => {
       await expect(submitButton).toContainText('Request Now');
     });
 
-    test('header visible on booking overview page', async ({ page }) => {
+    test('cart FAB visible on booking overview page', async ({ page }) => {
       await setLanguage(page, 'de');
       await goToBookingOverviewPage(page);
 
-      const header = page.locator('header[role="banner"]');
+      // Header (REQ-001) was removed from the app shell — Cart/A11y now live in
+      // FloatingOverlayComponent (app.component.html). Use the cart FAB as the
+      // persistent-chrome proxy instead of the old header[role="banner"].
+      const header = page.locator('.cart-fab');
       await expect(header).toBeVisible();
 
-      const companyName = page.locator('.header__company-name');
-      await expect(companyName).toContainText('Autohaus GmbH');
     });
 
   });

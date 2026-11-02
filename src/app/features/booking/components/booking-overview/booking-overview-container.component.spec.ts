@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -24,7 +25,8 @@ const MOCK_APPOINTMENT: AppointmentSlot = {
 const MOCK_LOCATION: LocationDisplay = {
   id: 'loc-1',
   name: 'Autohaus München',
-  city: 'München'
+  city: 'München',
+  formattedAddress: 'München'
 };
 
 const MOCK_CUSTOMER_INFO: CustomerInfo = {
@@ -40,8 +42,7 @@ const MOCK_CUSTOMER_INFO: CustomerInfo = {
 
 const MOCK_VEHICLE_INFO: VehicleInfo = {
   licensePlate: 'M-AB 1234',
-  mileage: 45000,
-  vin: 'WVWZZZ1KZAW123456'
+  mileage: 45000
 };
 
 describe('BookingOverviewContainerComponent', () => {
@@ -66,7 +67,9 @@ describe('BookingOverviewContainerComponent', () => {
         {
           provide: AppointmentApiService,
           useValue: {
-            getAppointments: jest.fn().mockResolvedValue([])
+            getAppointments: jest.fn().mockResolvedValue([]),
+            createAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' }),
+            getAppointment: jest.fn().mockResolvedValue({ id: 'test-apt-1', status: 'confirmed' })
           }
         },
         {
@@ -131,7 +134,7 @@ describe('BookingOverviewContainerComponent', () => {
     expect(exposed.resolvedLocationName()).toBe('');
 
     store.setLocation(MOCK_LOCATION);
-    expect(exposed.resolvedLocationName()).toBe('Autohaus München');
+    expect(exposed.resolvedLocationName()).toBe('München');
   });
 
   it('should compute resolved service labels', () => {
@@ -142,11 +145,6 @@ describe('BookingOverviewContainerComponent', () => {
     const labels = exposed.resolvedServiceLabels();
     expect(labels.tuv).toBeDefined();
     expect(typeof labels.tuv).toBe('string');
-  });
-
-  it('should compute static total price', () => {
-    const exposed = component as unknown as { staticTotalPrice: () => string };
-    expect(typeof exposed.staticTotalPrice()).toBe('string');
   });
 
   it('should navigate back to carinformation on onBack()', () => {
@@ -160,22 +158,11 @@ describe('BookingOverviewContainerComponent', () => {
 
   it('should call submitBooking on onSubmit()', () => {
     const submitSpy = jest.spyOn(store, 'submitBooking');
-    jest.spyOn(router, 'navigate').mockResolvedValue(true);
 
     const exposed = component as unknown as { onSubmit: () => void };
     exposed.onSubmit();
 
     expect(submitSpy).toHaveBeenCalled();
-    expect(store.hasBookingSubmitted()).toBe(true);
-  });
-
-  it('should navigate after onSubmit()', () => {
-    const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
-
-    const exposed = component as unknown as { onSubmit: () => void };
-    exposed.onSubmit();
-
-    expect(navigateSpy).toHaveBeenCalledWith(['/home/booking-overview']);
   });
 
   it('should handle unknown brand gracefully', () => {
@@ -192,5 +179,217 @@ describe('BookingOverviewContainerComponent', () => {
     const labels = exposed.resolvedServiceLabels();
     expect(labels['tire-change']).toBeDefined();
     expect(labels['tire-change']).toContain('—');
+  });
+
+  it('should expose isSubmitting and hasSubmitted signals', () => {
+    const exposed = component as unknown as {
+      isSubmitting: () => boolean;
+      hasSubmitted: () => boolean;
+      submitError: () => boolean;
+    };
+    expect(exposed.isSubmitting()).toBe(false);
+    expect(exposed.hasSubmitted()).toBe(false);
+    expect(exposed.submitError()).toBe(false);
+  });
+
+  it('should call resetBookingSubmission and submitBooking on retry', () => {
+    const resetSpy = jest.spyOn(store, 'resetBookingSubmission');
+    const submitSpy = jest.spyOn(store, 'submitBooking');
+    const exposed = component as unknown as { onRetry: () => void };
+    exposed.onRetry();
+    expect(resetSpy).toHaveBeenCalled();
+    expect(submitSpy).toHaveBeenCalled();
+  });
+
+  // REQ-028: Bestätigungsnachricht unter dem Submit-Button. Die Sichtbarkeit wird
+  // ausschließlich durch das bestehende hasSubmitted()-Signal gesteuert; das DOM-
+  // Rendering (role/aria-live, Position) wird via Playwright E2E abgedeckt.
+  describe('REQ-028 confirmation message', () => {
+    it('exposes the confirmation i18n key via the bookingOverview alias', () => {
+      const exposed = component as unknown as {
+        bookingOverview: { confirmation: { message: string } };
+      };
+      expect(exposed.bookingOverview.confirmation.message).toBe(
+        'booking.bookingOverview.confirmation.message'
+      );
+    });
+
+    it('does not flag hasSubmitted() before submission', () => {
+      const exposed = component as unknown as { hasSubmitted: () => boolean };
+      expect(exposed.hasSubmitted()).toBe(false);
+    });
+
+    it('flags hasSubmitted() === true after a successful submission (drives the confirmation)', async () => {
+      const exposed = component as unknown as {
+        hasSubmitted: () => boolean;
+        submitError: () => boolean;
+        isSubmitting: () => boolean;
+      };
+      expect(exposed.hasSubmitted()).toBe(false);
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      expect(exposed.hasSubmitted()).toBe(true);
+      // Bestätigung erscheint nur im reinen Erfolgs-Zustand (nicht Loading/Error).
+      expect(exposed.isSubmitting()).toBe(false);
+      expect(exposed.submitError()).toBe(false);
+    });
+
+    it('hides the confirmation again after resetBookingSubmission()', async () => {
+      const exposed = component as unknown as { hasSubmitted: () => boolean };
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      expect(exposed.hasSubmitted()).toBe(true);
+
+      store.resetBookingSubmission();
+      expect(exposed.hasSubmitted()).toBe(false);
+    });
+  });
+
+  describe('resolvedServiceLabels — additional pathways', () => {
+    it('uses Operation name when service is an Operation', () => {
+      // simulate operations are loaded into store
+      jest.spyOn(store, 'operations').mockReturnValue([
+        { id: 'op-A', name: 'Inspektion (Operation)', description: 'desc', tagIds: ['c1'], order: 1, imageId: null }
+      ]);
+      // toggle a fake "operation" service-id
+      store.toggleService('op-A' as never);
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      expect(exposed.resolvedServiceLabels()['op-A']).toBe('Inspektion (Operation)');
+    });
+
+    it('uses jobType name when no Operation matches but jobType does', () => {
+      jest.spyOn(store, 'operations').mockReturnValue([]);
+      jest.spyOn(store, 'jobTypes').mockReturnValue([
+        { id: 'jt-1', name: 'Reparatur', operations: [{ id: 'op-r1', name: 'Lichtwechsel' }], iconUrl: null }
+      ] as never);
+      store.toggleService('jt-1' as never);
+      store.confirmServiceOptions('jt-1' as never, ['op-r1']);
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      const lbl = exposed.resolvedServiceLabels()['jt-1'];
+      expect(lbl).toContain('Reparatur');
+      expect(lbl).toContain('Lichtwechsel');
+    });
+
+    it('renders a jobType without any selected options as just its name', () => {
+      jest.spyOn(store, 'operations').mockReturnValue([]);
+      jest.spyOn(store, 'jobTypes').mockReturnValue([
+        { id: 'jt-plain', name: 'Inspektion', operations: [], iconUrl: null }
+      ] as never);
+      store.toggleService('jt-plain' as never);
+      // Keine confirmServiceOptions → selectedOptionIds bleibt leer.
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      expect(exposed.resolvedServiceLabels()['jt-plain']).toBe('Inspektion');
+    });
+
+    it('handles a jobType whose selected option ids do not resolve to operations', () => {
+      jest.spyOn(store, 'operations').mockReturnValue([]);
+      jest.spyOn(store, 'jobTypes').mockReturnValue([
+        { id: 'jt-x', name: 'Karosserie', operations: [], iconUrl: null }
+      ] as never);
+      store.toggleService('jt-x' as never);
+      store.confirmServiceOptions('jt-x' as never, ['ghost-option']);
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      // Unbekannte Option-Ids werden herausgefiltert → kein " — "-Suffix, nur der Name.
+      expect(exposed.resolvedServiceLabels()['jt-x']).toBe('Karosserie');
+    });
+
+    it('ignores unknown option ids in the AVAILABLE_SERVICES fallback path', () => {
+      jest.spyOn(store, 'operations').mockReturnValue([]);
+      jest.spyOn(store, 'jobTypes').mockReturnValue([]);
+      store.toggleService('tire-change');
+      store.confirmServiceOptions('tire-change', ['nonexistent-option']);
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      const label = exposed.resolvedServiceLabels()['tire-change'];
+      expect(label).toBeDefined();
+      // Option nicht auflösbar → kein angehängter Options-Teil.
+      expect(label).not.toContain('—');
+    });
+
+    it('falls back to the raw serviceId when no source matches', () => {
+      // Defensive fallback (Bug-Fix): wenn weder operations, jobTypes noch
+      // AVAILABLE_SERVICES die ID auflösen koennen, muss wenigstens die ID
+      // selbst als Label gerendert werden — sonst wirkt die Auswahl optisch
+      // verschwunden (Bug: leere Services-Kachel auf der Übersicht).
+      jest.spyOn(store, 'operations').mockReturnValue([]);
+      jest.spyOn(store, 'jobTypes').mockReturnValue([]);
+      store.toggleService('totally-unknown-id' as never);
+      const exposed = component as unknown as { resolvedServiceLabels: () => Record<string, string> };
+      expect(exposed.resolvedServiceLabels()['totally-unknown-id']).toBe('totally-unknown-id');
+    });
+  });
+
+  describe('resolvedLocationName edge cases', () => {
+    it('returns empty string when no location selected', () => {
+      const exposed = component as unknown as { resolvedLocationName: () => string };
+      expect(exposed.resolvedLocationName()).toBe('');
+    });
+  });
+
+  // REQ-031: 410-Fehler (Snap zwischenzeitlich belegt) → effect() im Constructor
+  // navigiert zurück zur Terminauswahl statt den generischen Inline-Fehler zu zeigen.
+  describe('REQ-031 snap conflict redirect', () => {
+    let createAppointmentMock: jest.Mock;
+
+    beforeEach(() => {
+      createAppointmentMock = (
+        TestBed.inject(AppointmentApiService) as unknown as { createAppointment: jest.Mock }
+      ).createAppointment;
+    });
+
+    it('navigates to /home/appointment when the booking fails with HTTP 410', async () => {
+      const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+      createAppointmentMock.mockRejectedValueOnce(
+        new HttpErrorResponse({ status: 410, statusText: 'Gone' })
+      );
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges(); // flush the effect()
+
+      expect(store.hasSnapConflict()).toBe(true);
+      expect(navigateSpy).toHaveBeenCalledWith(['/home/appointment']);
+    });
+
+    it('does not show the generic inline error on HTTP 410', async () => {
+      jest.spyOn(router, 'navigate').mockResolvedValue(true);
+      createAppointmentMock.mockRejectedValueOnce(
+        new HttpErrorResponse({ status: 410, statusText: 'Gone' })
+      );
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+
+      const exposed = component as unknown as { submitError: () => boolean };
+      expect(exposed.submitError()).toBe(false);
+    });
+
+    it('does not navigate when the booking fails with a non-410 error', async () => {
+      const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+      createAppointmentMock.mockRejectedValueOnce(
+        new HttpErrorResponse({ status: 502, statusText: 'Bad Gateway' })
+      );
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+
+      expect(store.hasSnapConflict()).toBe(false);
+      expect(navigateSpy).not.toHaveBeenCalledWith(['/home/appointment']);
+    });
+
+    it('does not navigate on a successful submission', async () => {
+      const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+
+      store.submitBooking();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      fixture.detectChanges();
+
+      expect(store.hasSnapConflict()).toBe(false);
+      expect(navigateSpy).not.toHaveBeenCalledWith(['/home/appointment']);
+    });
   });
 });

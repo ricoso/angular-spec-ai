@@ -1,18 +1,19 @@
 <div
-  class="appointment-card"
-  [class.appointment-card--selected]="isSelected()"
+  class="slot"
+  [class.selected]="isSelected()"
   role="radio"
   [attr.aria-checked]="isSelected()"
-  [attr.aria-label]="appointment().dayAbbreviation + ', ' + appointment().displayDate + ', ' + appointment().displayTime"
+  [attr.aria-label]="appointment().dayAbbreviation + ', ' + appointment().displayDate + ', ' + (appointment().displayTime | berlinTime: appointment().date)"
+  [attr.aria-describedby]="appointment().rentalCarIncluded ? 'slot-rental-' + appointment().id : null"
   tabindex="0"
   (click)="onSelect()"
   (keydown)="onKeydown($event)"
 >
-  <div class="appointment-card__day" aria-hidden="true">
-    {{ appointment().dayAbbreviation }}
-  </div>
-  <div class="appointment-card__info">
-    <span class="appointment-card__date">{{ appointment().displayDate }}</span>
-    <span class="appointment-card__time">{{ appointment().displayTime }}</span>
-  </div>
+  {{ appointment().displayTime | berlinTime: appointment().date }}
+  @if (appointment().rentalCarIncluded) {
+    <span class="slot__rental" [id]="'slot-rental-' + appointment().id">
+      <i class="bi bi-car-front" aria-hidden="true"></i>
+      {{ rentalCar.included | translate }}
+    </span>
+  }
 </div>

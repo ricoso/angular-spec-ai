@@ -1,6 +1,6 @@
 .accessibility-menu {
   padding: var(--spacing-md);
-  min-width: 15em;
+  min-width: 17em;
   background: var(--color-background-surface);
   color: var(--color-text-primary);
 
@@ -22,41 +22,29 @@
     letter-spacing: 0.05em;
   }
 
+  // Pill-Group Style — Touch-friendly Tap-Targets
   &__radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
+    // Inherit gap & wrap from .pill-group in _bootstrap-theme.scss
   }
 
   &__radio {
-    // Touch-friendly target
-    ::ng-deep .mdc-form-field {
-      min-height: var(--touch-target-min);
-      display: flex;
-      align-items: center;
-    }
+    min-height: var(--touch-target-min);
   }
 
   &__toggle {
     width: 100%;
+    min-height: var(--touch-target-min);
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding-left: 3em;
 
-    // Touch-friendly target
-    ::ng-deep .mdc-form-field {
-      min-height: var(--touch-target-min);
-      display: flex;
-      align-items: center;
+    .form-check-input {
+      cursor: pointer;
     }
-  }
-}
 
-// Focus styles (Accessibility!)
-.accessibility-menu {
-  &__radio,
-  &__toggle {
-    &:focus-within {
-      outline: 0.125em solid var(--color-focus-ring);
-      outline-offset: 0.125em;
-      border-radius: var(--radius-sm);
+    .form-check-label {
+      cursor: pointer;
     }
   }
 }

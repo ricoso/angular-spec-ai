@@ -26,10 +26,11 @@ Ersetze `<!-- SETUP:VORGABE -->` in jedem Skill mit dem passenden Block.
 
 **Production →**
 ```
-- Deployment: Production (SSR)
+- Deployment: Production (Spring Boot Backend)
 - HashLocation: DEAKTIVIERT
-- SSR: `@angular/ssr` aktiv
-- Server: Node.js / Docker / Cloud Run
+- Backend: Spring Boot 3.x (Java 21), `./gradlew bootRun`
+- Config: `application.yml` (server port, SoftNet API, CORS, TLS)
+- Server: Java 21 / Docker / Cloud Run
 ```
 
 ### 2b. `angular-architecture.md`
@@ -43,10 +44,9 @@ Ersetze `<!-- SETUP:VORGABE -->` in jedem Skill mit dem passenden Block.
 
 **Production →**
 ```
-- Typ: Production (SSR)
-- API Services: Backend-APIs (HTTPS only)
-- Auth: JWT in HttpOnly Cookies
-- SSR: `isPlatformBrowser()` bei DOM-Zugriff
+- Typ: Production (Spring Boot Backend + SoftNet API)
+- API Services: HTTP calls to Spring Boot Backend (:3000, /api/v1/*)
+- Auth: Session Token (HMAC-SHA256)
 ```
 
 ### 2c. `security.md`
@@ -60,12 +60,13 @@ Ersetze `<!-- SETUP:VORGABE -->` in jedem Skill mit dem passenden Block.
 
 **Production →**
 ```
-- Typ: Production (Server Deployment)
-- HTTPS: PFLICHT
-- CSRF: HttpClient XSRF aktiv
-- JWT: HttpOnly Cookies (NICHT localStorage!)
-- Headers: CSP, X-Frame-Options, HSTS
-- Secrets: NUR `.env` (in `.gitignore`)
+- Typ: Production (Spring Boot Backend)
+- HTTPS: PFLICHT (TLS_ENABLED, TLS_CERT_PATH, TLS_KEY_PATH)
+- CSRF: Disabled (stateless API)
+- Auth: Session Token (HMAC-SHA256, X-Session-Token header)
+- Headers: CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff
+- Rate Limiting: 100 req/15min per IP (Bucket4j)
+- Secrets: NUR `.env` / environment variables (in `.gitignore`)
 ```
 
 ### 2d. `code-language.md`
@@ -95,7 +96,7 @@ Dynamisch je nach Q3-Auswahl:
 
 Zeilen setzen:
 ```
-- **Deployment**: {Click-Dummy (GitHub Pages, HashLocation) | Production (SSR, Node.js)}
+- **Deployment**: {Click-Dummy (GitHub Pages, HashLocation) | Production (Spring Boot Backend + SoftNet API)}
 - **Code-Sprache**: {Deutsch | Englisch}
 - **UI-Sprachen**: {z.B. DE, EN, FR}
 ```
@@ -113,12 +114,14 @@ providers: [provideRouter(routes, withHashLocation())]
 providers: [provideRouter(routes)]
 ```
 
-**Production → SSR:** `ng add @angular/ssr`
+**Production → Spring Boot Backend:** `./gradlew bootRun`
+- Config: `server/src/main/resources/application.yml`
+- Java 21 Toolchain (Gradle `java.toolchain.languageVersion = JavaLanguageVersion.of(21)`)
 
 ## Schritt 5: CI/CD
 
 **Click-Dummy:** `.github/workflows/deploy-gh-pages.yml`
-**Production:** Docker / Cloud Run
+**Production:** Docker / Cloud Run (Spring Boot JAR, Java 21)
 
 ## Schritt 6: Auto Memory aufbauen
 

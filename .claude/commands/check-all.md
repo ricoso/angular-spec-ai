@@ -42,6 +42,7 @@ Prompt: "Analysiere das Feature '$ARGUMENTS' und führe folgende Architektur-Che
    - Template: NUR computed()/signal() Reads — KEINE Methoden-Aufrufe (außer Event Handler)
    - Form-Fehler: errors computed Signal statt hasError() Methode
    - Dead Code: KEINE ungenutzten Methoden/Properties — nicht im Template + nicht intern aufgerufen = LÖSCHEN!
+   - API-Payloads: unbekannte optionale Angaben WEGLASSEN (undefined / Key nicht setzen) — KEINE Platzhalter ('UNKNOWN', 'N/A', '', erfundene Defaults). Ausnahme: SoftNet-Pflichtfeld `model` nie weglassen (Rückfall `AppointmentsService.MODEL_UNKNOWN`). Zusätzlich Backend prüfen: server/src/main/java/com/autohaus/backend/{appointments,cars,customers,snaps} (Details: check-architecture.md, Punkt 9)
 
 2. **check-stores**: NgRx Signal Store Pattern
    - Prüfe: withState, withComputed, withMethods, withHooks
@@ -184,6 +185,7 @@ Prompt: "Analysiere das Feature '$ARGUMENTS' und führe folgende Feature-Checks 
    - KEIN ngModel
    - Form-Fehler als computed Signal (KEINE hasError()/getErrorMessage() Methoden im Template!)
    - Pattern: toSignal(form.events) → errors computed → errors().field.error im Template
+   - Optionale Felder: leer → weglassen (undefined), KEIN Platzhalter ('UNKNOWN', 'N/A', '') im Submit-Payload
 
 3. **check-code-language**: Code Language
    - Code-Sprache ist FIXIERT auf Englisch (unabhängig von REQ-Sprache!)

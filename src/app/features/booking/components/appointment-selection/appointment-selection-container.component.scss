@@ -1,75 +1,49 @@
+// REQ-039: appointment step as in mockups/04-termin.html — calendar card, time slots card and
+// green confirmation; heading and action bar come from the global page layout.
 .appointment-selection {
-  max-width: 70em;
-  margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
-  text-align: center;
+  &__loading-text {
+    margin: 0;
+    color: var(--color-text-secondary);
+  }
 
-  &__title {
-    font-size: var(--font-size-xl);
-    line-height: var(--line-height-tight);
+  &__error {
+    text-align: center;
+  }
+
+  &__error-icon {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-error);
+    font-size: 3em;
+  }
+
+  &__error-title {
+    margin: 0 0 var(--spacing-sm);
     color: var(--color-text-primary);
-    margin: 0 0 var(--spacing-xl);
+    font-size: var(--font-size-lg);
     font-weight: 700;
   }
 
-  &__grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-xl);
+  &__error-message {
+    max-width: 30em;
+    margin: 0 auto var(--spacing-md);
+    color: var(--color-text-secondary);
   }
 
-  &__calendar-link {
-    display: inline-block;
-    margin-top: var(--spacing-lg);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-primary);
-    text-decoration: underline;
-    cursor: pointer;
-    border: none;
-    background: none;
-    font-family: inherit;
-    padding: var(--spacing-xs);
-    border-radius: var(--radius-sm);
-    transition: color 0.2s;
-
-    &:hover {
-      color: var(--color-primary);
-    }
-
-    &:focus-visible {
-      outline: 0.125em solid var(--color-focus-ring);
-      outline-offset: 0.125em;
-    }
+  // Empty date row spans the whole grid.
+  &__empty {
+    grid-column: 1 / -1;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
   }
 
-  &__nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-xl);
-    padding: var(--spacing-md) 0;
-    border-top: 0.0625em solid var(--color-divider);
+  // Only the top margin — the distance to the action bar comes from the global page layout.
+  &__summary {
+    margin-block-start: 1.5rem;
+  }
+
+  &__rental-filter {
+    margin-block: 0 1rem;
   }
 }
 
-@media (min-width: 48em) {
-  .appointment-selection {
-    &__title {
-      font-size: var(--font-size-2xl);
-    }
-
-    &__grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--spacing-lg);
-    }
-  }
-}
-
-@media (min-width: 64em) {
-  .appointment-selection {
-    &__grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-}

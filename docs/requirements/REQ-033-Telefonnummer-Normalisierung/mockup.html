@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REQ-033 Telefonnummer-Normalisierung — Mockup</title>
+  <meta name="description" content="Mockup: Hint- und Fehler-States am Mobilfunknummer-Feld (carinformation, Wizard-Schritt 6) — interne 0→+49 Normalisierung für den SMS-Versand über SoftNet.">
+
+  <!-- Bootstrap 5 CSS + Bootstrap Icons (CDN) — App nutzt seit REQ-026 Bootstrap-5-Patterns -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================================
+       CSS Custom Properties — Design System (1:1 aus src/styles/_variables.scss)
+       Diese Werte überschreiben auch die relevanten Bootstrap-Tokens (--bs-*).
+       ========================================================================= */
+    :root {
+      /* Brand Colors */
+      --color-primary: #667eea;
+      --color-primary-hover: #5a67d8;
+      --color-secondary: #764ba2;
+      --color-accent: #ed8936;
+
+      /* Text Colors (WCAG AA) */
+      --color-text-primary: #1a1a1a;
+      --color-text-secondary: #595959;
+      --color-text-muted: #767676;
+      --color-text-on-primary: #ffffff;
+      --color-text-on-dark: #ffffff;
+
+      /* Background Colors */
+      --color-background-page: #f8f9fa;
+      --color-background-surface: #ffffff;
+      --color-background-hover: #f5f5f5;
+
+      /* Border & Divider */
+      --color-border: #e0e0e0;
+      --color-divider: #eeeeee;
+
+      /* Semantic Colors */
+      --color-error: #c62828;
+      --color-success: #2e7d32;
+      --color-warning: #e65100;
+      --color-info: #1565c0;
+      --color-info-bg: #e3f2fd;
+      --color-info-border: #90caf9;
+
+      /* Focus */
+      --color-focus-ring: #005fcc;
+
+      /* Shadows */
+      --shadow-small: 0 0.0625em 0.125em rgba(0, 0, 0, 0.1);
+      --shadow-medium: 0 0.25em 0.5em rgba(0, 0, 0, 0.1);
+      --shadow-large: 0 0.5em 1em rgba(0, 0, 0, 0.15);
+
+      /* Typography */
+      --font-size-base: 1em;
+      --font-size-xs: 0.875em;
+      --font-size-sm: 1em;
+      --font-size-md: 1.125em;
+      --font-size-lg: 1.25em;
+      --font-size-xl: 1.5em;
+      --font-size-2xl: 2em;
+      --font-size-3xl: 2.5em;
+
+      --line-height-tight: 1.25;
+      --line-height-normal: 1.5;
+      --line-height-relaxed: 1.75;
+
+      /* Spacing */
+      --spacing-xs: 0.25em;
+      --spacing-sm: 0.5em;
+      --spacing-md: 1em;
+      --spacing-lg: 1.5em;
+      --spacing-xl: 2em;
+
+      /* Border Radius */
+      --radius-sm: 0.25em;
+      --radius-md: 0.5em;
+      --radius-lg: 0.75em;
+      --radius-xl: 1em;
+      --radius-full: 50%;
+
+      /* Touch Targets */
+      --touch-target-min: 2.75em;
+
+      /* ---- Bootstrap-Tokens an Design-System angleichen ---- */
+      --bs-primary: var(--color-primary);
+      --bs-primary-rgb: 102, 126, 234;
+      --bs-danger: var(--color-error);
+      --bs-danger-rgb: 198, 40, 40;
+      --bs-form-invalid-color: var(--color-error);
+      --bs-form-invalid-border-color: var(--color-error);
+      --bs-link-color: var(--color-primary);
+      --bs-link-hover-color: var(--color-primary-hover);
+      --bs-body-color: var(--color-text-primary);
+      --bs-body-bg: var(--color-background-page);
+      --bs-body-font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+      --bs-secondary-color: var(--color-text-muted);
+    }
+
+    /* =========================================================================
+       Base
+       ========================================================================= */
+    body {
+      font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+      background-color: var(--color-background-page);
+      color: var(--color-text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Konsistente Focus-Styles (WCAG 2.1 AA) */
+    a:focus-visible,
+    button:focus-visible,
+    .btn:focus-visible,
+    .form-control:focus,
+    .header__icon-button:focus-visible {
+      outline: 0.1875em solid var(--color-focus-ring);
+      outline-offset: 0.125em;
+      box-shadow: none;
+    }
+
+    /* =========================================================================
+       Skip Link (Accessibility)
+       ========================================================================= */
+    .skip-link {
+      position: absolute;
+      top: -3em;
+      left: var(--spacing-md);
+      background: var(--color-primary);
+      color: var(--color-text-on-primary);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      text-decoration: none;
+      z-index: 1080;
+      transition: top 0.2s ease;
+    }
+    .skip-link:focus { top: var(--spacing-sm); }
+
+    /* =========================================================================
+       App Layout
+       ========================================================================= */
+    .app-layout {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--color-background-page);
+    }
+
+    .app-main {
+      flex: 1;
+      min-height: 0;
+      padding: var(--spacing-md);
+      width: 100%;
+      max-width: 80em;
+      margin: 0 auto;
+    }
+    @media (min-width: 48em) { .app-main { padding: var(--spacing-xl); } }
+
+    /* =========================================================================
+       Icon Framed (from src/styles/_utilities.scss) — Icons IMMER mit Rahmen!
+       ========================================================================= */
+    .icon-framed {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5em;
+      height: 2.5em;
+      background: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-small);
+    }
+    .icon-framed--sm { width: 2em; height: 2em; }
+    .icon-framed--primary { border-color: var(--color-primary); color: var(--color-primary); }
+    .icon-framed--info { border-color: var(--color-info); color: var(--color-info); }
+
+    /* =========================================================================
+       Header (from header-container.component.html/.scss)
+       ========================================================================= */
+    .header {
+      background-color: var(--color-background-surface);
+      border-bottom: 0.0625em solid var(--color-border);
+      box-shadow: var(--shadow-small);
+    }
+    .header__content {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      max-width: 80em;
+      margin: 0 auto;
+      min-height: 3.5em;
+    }
+    .header__logo-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      text-decoration: none;
+      color: inherit;
+      min-height: var(--touch-target-min);
+      padding: var(--spacing-xs);
+      border-radius: var(--radius-sm);
+      transition: background-color 0.2s ease;
+    }
+    .header__logo-link:hover { background-color: var(--color-background-hover); }
+    .header__logo-container {
+      width: 2.5em;
+      height: 2.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .header__logo-circle {
+      width: 2.5em;
+      height: 2.5em;
+      border-radius: var(--radius-full);
+      background-color: var(--color-primary);
+      color: var(--color-text-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: var(--font-size-sm);
+      letter-spacing: 0.05em;
+    }
+    .header__company {
+      display: flex;
+      flex-direction: column;
+      line-height: var(--line-height-tight);
+    }
+    .header__company-name {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+    .header__company-subtitle {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+    .header__spacer { flex: 1; }
+    .header__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+    .header__icon-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      min-width: var(--touch-target-min);
+      min-height: var(--touch-target-min);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      position: relative;
+      padding: 0;
+      color: var(--color-text-primary);
+    }
+    .header__icon-button:hover { background-color: var(--color-background-hover); }
+    .header__icon-button .bi { font-size: 1.25em; }
+    .cart-badge {
+      position: absolute;
+      top: 0.125em;
+      right: -0.125em;
+      background-color: var(--color-accent);
+      color: var(--color-text-on-primary);
+      font-size: 0.6875em;
+      font-weight: 700;
+      min-width: 1.25em;
+      height: 1.25em;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      padding: 0 0.25em;
+    }
+
+    @media (max-width: 47.9375em) {
+      .header__company { display: none; }
+      .header__content { padding: var(--spacing-xs) var(--spacing-sm); }
+    }
+    @media (min-width: 48em) and (max-width: 63.9375em) {
+      .header__company-subtitle { display: none; }
+    }
+    @media (min-width: 64em) {
+      .header__content { padding: var(--spacing-md) var(--spacing-lg); }
+      .header__logo-container,
+      .header__logo-circle { width: 3em; height: 3em; }
+      .header__logo-circle { font-size: var(--font-size-md); }
+    }
+
+    /* =========================================================================
+       Kontext-Hinweis (nur fuer dieses Mockup — kein Bestandteil der App-UI)
+       ========================================================================= */
+    .mockup-context {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      background-color: var(--color-info-bg);
+      border: 0.0625em solid var(--color-info-border);
+      border-left: 0.375em solid var(--color-info);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md) var(--spacing-lg);
+      margin: 0 auto var(--spacing-xl);
+      max-width: 70em;
+    }
+    .mockup-context__icon { flex-shrink: 0; background-color: var(--color-background-surface); }
+    .mockup-context__text {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+      line-height: var(--line-height-normal);
+    }
+    .mockup-context__text b { font-weight: 600; }
+    .mockup-context__text code {
+      background-color: var(--color-background-surface);
+      border: 0.0625em solid var(--color-info-border);
+      border-radius: var(--radius-sm);
+      padding: 0.05em 0.4em;
+      font-size: 0.9em;
+    }
+
+    /* =========================================================================
+       carinformation — Ausschnitt (Wizard-Schritt 6 / customer-form.component)
+       ========================================================================= */
+    .carinformation {
+      max-width: 70em;
+      margin: 0 auto;
+      padding: 0 var(--spacing-md) var(--spacing-xl);
+    }
+    .carinformation__eyebrow {
+      display: block;
+      text-align: center;
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--color-secondary);
+      margin-bottom: var(--spacing-sm);
+    }
+    .carinformation__title {
+      font-size: var(--font-size-xl);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      text-align: center;
+      margin-bottom: var(--spacing-sm);
+      line-height: var(--line-height-tight);
+    }
+    .carinformation__lead {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      text-align: center;
+      max-width: 42em;
+      margin: 0 auto var(--spacing-xl);
+    }
+    @media (min-width: 48em) {
+      .carinformation__title { font-size: var(--font-size-2xl); }
+    }
+
+    /* Nachbildung von customer-form.component.scss */
+    .customer-form {
+      border: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+    .customer-form__title {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin: 0;
+      padding: 0;
+    }
+    .customer-form__field--full { width: 100%; }
+
+    /* =========================================================================
+       Drei Zustands-Karten (nebeneinander ab Desktop, sonst gestapelt)
+       ========================================================================= */
+    .phone-states {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--spacing-lg);
+    }
+    @media (min-width: 64em) {
+      .phone-states {
+        grid-template-columns: repeat(3, 1fr);
+        align-items: start;
+      }
+    }
+
+    .phone-state-card {
+      background-color: var(--color-background-surface);
+      border: 0.0625em solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-small);
+      padding: var(--spacing-lg);
+    }
+    .phone-state-card--error { border-color: var(--color-error); }
+    .phone-state-card__head {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+    }
+    .phone-state-card__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: var(--font-size-xs);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      padding: 0.3em 0.65em;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+    }
+    .phone-state-card__badge--neutral { background-color: var(--color-background-hover); color: var(--color-text-secondary); }
+    .phone-state-card__badge--info { background-color: var(--color-info-bg); color: var(--color-info); border: 0.0625em solid var(--color-info-border); }
+    .phone-state-card__badge--error { background-color: #fdecea; color: var(--color-error); border: 0.0625em solid var(--color-error); }
+    .phone-state-card__title {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin: 0;
+    }
+
+    /* Info-Hinweis "wird normalisiert" — bewusst NICHT als Fehler gestaltet */
+    .phone-normalize-note {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-xs);
+      background-color: var(--color-info-bg);
+      border: 0.0625em solid var(--color-info-border);
+      border-radius: var(--radius-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      margin-top: var(--spacing-sm);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-primary);
+      line-height: var(--line-height-normal);
+    }
+    .phone-normalize-note i { color: var(--color-info); margin-top: 0.15em; flex-shrink: 0; }
+    .phone-normalize-note b { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 600; }
+
+    /* form-text / invalid-feedback Feinschliff (Design-System-Kontrast) */
+    .form-text { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+    .invalid-feedback { font-size: var(--font-size-xs); font-weight: 500; }
+
+    /* =========================================================================
+       Footer
+       ========================================================================= */
+    .app-footer {
+      background: var(--color-background-surface);
+      padding: var(--spacing-md);
+      text-align: center;
+      border-top: 0.0625em solid var(--color-border);
+    }
+    @media (min-width: 48em) { .app-footer { padding: var(--spacing-lg); } }
+    .app-footer p {
+      margin: 0;
+      color: var(--color-text-muted);
+      font-size: var(--font-size-xs);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Skip Link (Accessibility) -->
+  <a href="#main-content" class="skip-link">Zum Hauptinhalt springen</a>
+
+  <div class="app-layout">
+
+    <!-- =================================================================
+         HEADER (Logo "GS" + Firmenname links, Cart/A11y rechts mit .icon-framed)
+         ================================================================= -->
+    <header class="header" role="banner">
+      <div class="header__content">
+        <a href="#main-content" class="header__logo-link" aria-label="Zur Startseite">
+          <div class="header__logo-container">
+            <div class="header__logo-circle" aria-hidden="true">GS</div>
+          </div>
+          <div class="header__company">
+            <span class="header__company-name">Autohaus GmbH</span>
+            <span class="header__company-subtitle">Online-Terminvereinbarung</span>
+          </div>
+        </a>
+
+        <div class="header__spacer"></div>
+
+        <div class="header__actions">
+          <button class="header__icon-button" type="button" aria-label="Warenkorb: 1 Service ausgewählt">
+            <span class="icon-framed icon-framed--sm" style="overflow: visible; position: relative;">
+              <i class="bi bi-cart3" aria-hidden="true"></i>
+              <span class="cart-badge" aria-hidden="true">1</span>
+            </span>
+          </button>
+          <button class="header__icon-button" type="button" aria-label="Barrierefreiheit-Einstellungen">
+            <span class="icon-framed icon-framed--sm">
+              <i class="bi bi-universal-access" aria-hidden="true"></i>
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- =================================================================
+         MAIN CONTENT
+         ================================================================= -->
+    <main id="main-content" class="app-main" role="main">
+
+      <!-- Kontext-Hinweis: nur fuer dieses Mockup, kein Bestandteil der echten App-UI -->
+      <div class="mockup-context" role="note">
+        <span class="icon-framed icon-framed--info mockup-context__icon" aria-hidden="true">
+          <i class="bi bi-info-circle"></i>
+        </span>
+        <p class="mockup-context__text">
+          <b>REQ-033 — Telefonnummer-Normalisierung.</b> Ausschnitt aus Wizard-Schritt 6
+          (<code>carinformation</code> → <code>customer-form.component</code>), Feld
+          <code>mobilePhone</code>. Die Normalisierung (führende <code>0</code> → <code>+49</code>) passiert
+          rein intern vor dem Versand an SoftNet — der Benutzer sieht im Feld weiterhin genau das, was er
+          eingegeben hat. Unten die drei relevanten Darstellungs-Zustände des Felds.
+        </p>
+      </div>
+
+      <!-- ===================================================================
+           SEKTION: Ihre Daten — Mobilfunknummer (3 Zustände)
+           =================================================================== -->
+      <section class="carinformation" aria-labelledby="carinformation-title">
+        <span class="carinformation__eyebrow">Wizard-Schritt 6 · Ihre Daten (Ausschnitt)</span>
+        <h1 class="carinformation__title" id="carinformation-title">Mobilfunknummer</h1>
+        <p class="carinformation__lead">
+          Für den SMS-Versand der Terminbestätigung. Beide Formate werden akzeptiert — intern wird die
+          Nummer automatisch für SoftNet normalisiert.
+        </p>
+
+        <div class="phone-states">
+
+          <!-- =============================================================
+               ZUSTAND 1: Default — leeres Feld mit Hint
+               ============================================================= -->
+          <article class="phone-state-card" aria-labelledby="state-1-title">
+            <div class="phone-state-card__head">
+              <span class="phone-state-card__badge phone-state-card__badge--neutral">
+                <i class="bi bi-1-circle-fill" aria-hidden="true"></i> Standard
+              </span>
+              <h2 class="phone-state-card__title" id="state-1-title">Leeres Feld</h2>
+            </div>
+
+            <fieldset class="customer-form">
+              <legend class="customer-form__title">Ihre Daten</legend>
+              <div class="customer-form__field customer-form__field--full">
+                <div class="form-floating">
+                  <input
+                    type="tel"
+                    id="phone-default"
+                    class="form-control"
+                    placeholder="017012345678"
+                    autocomplete="tel"
+                    inputmode="tel"
+                    aria-required="true"
+                    aria-describedby="phone-default-hint"
+                    value=""
+                  />
+                  <label for="phone-default">Mobilfunknummer *</label>
+                </div>
+                <div class="form-text" id="phone-default-hint">
+                  Format: 017012345678 oder +491701234567 — wird intern automatisch für den SMS-Versand
+                  normalisiert.
+                </div>
+              </div>
+            </fieldset>
+          </article>
+
+          <!-- =============================================================
+               ZUSTAND 2: Valide Eingabe mit führender 0 (informativer Hinweis)
+               ============================================================= -->
+          <article class="phone-state-card" aria-labelledby="state-2-title">
+            <div class="phone-state-card__head">
+              <span class="phone-state-card__badge phone-state-card__badge--info">
+                <i class="bi bi-2-circle-fill" aria-hidden="true"></i> Gültig
+              </span>
+              <h2 class="phone-state-card__title" id="state-2-title">Führende 0</h2>
+            </div>
+
+            <fieldset class="customer-form">
+              <legend class="customer-form__title">Ihre Daten</legend>
+              <div class="customer-form__field customer-form__field--full">
+                <div class="form-floating">
+                  <input
+                    type="tel"
+                    id="phone-valid"
+                    class="form-control"
+                    placeholder="017012345678"
+                    autocomplete="tel"
+                    inputmode="tel"
+                    aria-required="true"
+                    aria-describedby="phone-valid-hint phone-valid-note"
+                    value="017012345678"
+                  />
+                  <label for="phone-valid">Mobilfunknummer *</label>
+                </div>
+                <div class="form-text" id="phone-valid-hint">
+                  Format: 017012345678 oder +491701234567 — wird intern automatisch für den SMS-Versand
+                  normalisiert.
+                </div>
+                <div class="phone-normalize-note" id="phone-valid-note">
+                  <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
+                  <span>Wird für den SMS-Versand intern zu <b>+4917012345678</b> normalisiert. Kein Fehler —
+                    reine Backend-Transformation, die Eingabe bleibt im Feld unverändert.</span>
+                </div>
+              </div>
+            </fieldset>
+          </article>
+
+          <!-- =============================================================
+               ZUSTAND 3: Fehler — ungültiges Präfix
+               ============================================================= -->
+          <article class="phone-state-card phone-state-card--error" aria-labelledby="state-3-title">
+            <div class="phone-state-card__head">
+              <span class="phone-state-card__badge phone-state-card__badge--error">
+                <i class="bi bi-3-circle-fill" aria-hidden="true"></i> Fehler
+              </span>
+              <h2 class="phone-state-card__title" id="state-3-title">Ungültiges Präfix</h2>
+            </div>
+
+            <fieldset class="customer-form">
+              <legend class="customer-form__title">Ihre Daten</legend>
+              <div class="customer-form__field customer-form__field--full">
+                <div class="form-floating">
+                  <input
+                    type="tel"
+                    id="phone-error"
+                    class="form-control is-invalid"
+                    placeholder="017012345678"
+                    autocomplete="tel"
+                    inputmode="tel"
+                    aria-required="true"
+                    aria-invalid="true"
+                    aria-describedby="phone-error-error phone-error-hint"
+                    value="17012345678"
+                  />
+                  <label for="phone-error">Mobilfunknummer *</label>
+                  <div class="invalid-feedback" id="phone-error-error" role="alert">
+                    Mobilfunknummer muss mit 0 oder +49 beginnen.
+                  </div>
+                </div>
+                <div class="form-text" id="phone-error-hint">
+                  Format: 017012345678 oder +491701234567 — wird intern automatisch für den SMS-Versand
+                  normalisiert.
+                </div>
+              </div>
+            </fieldset>
+          </article>
+
+        </div><!-- /.phone-states -->
+
+        <p class="carinformation__lead" style="margin-top: var(--spacing-xl); font-size: var(--font-size-xs);">
+          Hinweis: Dies ist ein fokussierter Ausschnitt aus dem Formular <code>customer-form.component</code> —
+          weitere Felder (E-Mail, Name, Adresse) sind hier bewusst ausgeblendet.
+        </p>
+      </section>
+    </main>
+
+    <!-- =================================================================
+         FOOTER
+         ================================================================= -->
+    <footer class="app-footer" role="contentinfo">
+      <p>Autohaus GmbH</p>
+    </footer>
+
+  </div>
+</body>
+</html>

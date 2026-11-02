@@ -11,6 +11,10 @@
       "angular-material": {
         "command": "node",
         "args": ["mcp/angular-material/index.js"]
+      },
+      "spring-docs": {
+        "command": "npx",
+        "args": ["@enokdev/springdocs-mcp@latest"]
       }
     }
   }

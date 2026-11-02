@@ -1,0 +1,166 @@
+@use 'breakpoints' as *;
+
+// REQ-039: header bar as in mockups/wizard.css (.host-header) — title left, accessibility and
+// cart actions next to it (desktop) or right-aligned (mobile), panels open below the bar.
+:host {
+  display: block;
+  position: relative;
+  z-index: 5;
+}
+
+// Auf Wunsch ausgeblendet (2026-10-12): Das Warenkorb-/Auswahl-Symbol in der Kopfzeile ist
+// ausgeblendet; der Barrierefreiheit-Button bleibt. Reversibel — diese Regel entfernen zeigt es
+// wieder. Panel und Handler bleiben im Code erhalten.
+// Zwei Klassen (0,2,0), damit die Regel das spätere `.app-header__action { display: inline-flex }`
+// unabhängig von der Quellreihenfolge überstimmt.
+.app-header .cart-fab {
+  display: none;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-block-size: 3.75rem;
+  padding-inline: 1rem;
+  border-block-end: 0.0625rem solid var(--color-disabled);
+  background-color: var(--color-background-surface);
+
+  @include tablet {
+    gap: 1rem;
+    padding-inline: 1.5rem;
+  }
+
+  &__title {
+    margin: 0 auto 0 0;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-weight: 650;
+    letter-spacing: 0.0125em;
+
+    @include tablet {
+      margin-inline-end: 2.5rem;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    @include tablet {
+      gap: 1rem;
+    }
+  }
+
+  &__action {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: var(--touch-target-min);
+    min-block-size: var(--touch-target-min);
+    padding: 0.5rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-primary);
+    font-size: 1.3125rem;
+    line-height: 1;
+
+    &:hover,
+    &[aria-expanded='true'] {
+      background-color: var(--color-background-header);
+    }
+
+    &:focus-visible {
+      outline: 0.1875rem solid var(--color-focus-ring);
+      outline-offset: 0.1875rem;
+    }
+  }
+
+  &__badge {
+    position: absolute;
+    inset-block-start: 0.125rem;
+    inset-inline-end: 0.125rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 1.125rem;
+    block-size: 1.125rem;
+    padding-inline: 0.25rem;
+    border-radius: 1rem;
+    background-color: var(--color-primary);
+    color: var(--color-text-on-primary);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+}
+
+.floating-overlay {
+  &__panel {
+    position: absolute;
+    inset-block-start: calc(100% - 0.25rem);
+    inset-inline-end: 1rem;
+    inline-size: min(22rem, calc(100% - 2rem));
+    max-block-size: calc(100dvh - 6rem);
+    overflow: auto;
+    border: 0.0625rem solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-background-surface);
+    box-shadow: var(--shadow-medium);
+    z-index: 10;
+  }
+
+  &__panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 0.0625rem solid var(--color-disabled);
+  }
+
+  &__panel-title {
+    color: var(--color-text-primary);
+    font-size: 0.9375rem;
+    font-weight: 650;
+  }
+
+  &__close-button {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+  }
+
+  &__panel-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    font-size: 0.875rem;
+  }
+
+  &__item {
+    // Uses .cart-item / .cart-item__icon / __label / __value from _bootstrap-theme.scss
+    align-items: flex-start;
+  }
+
+  &__service-list {
+    margin: 0.25rem 0 0;
+    padding: 0;
+    color: var(--color-text-secondary);
+    list-style: none;
+  }
+
+  &__service-list-item {
+    padding: 0.1rem 0;
+    line-height: var(--line-height-tight);
+  }
+
+  &__empty {
+    margin: 0;
+    padding: var(--spacing-sm) 0;
+    color: var(--color-text-secondary);
+    text-align: center;
+  }
+}
