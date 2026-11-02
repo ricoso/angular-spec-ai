@@ -98,6 +98,8 @@ fi
 | 4 | **Routing** | `.claude/skills/routing-patterns.md` | Resolver, Guards, Lazy Loading, HashLocation |
 | 5 | **Forms** | `.claude/skills/forms.md` | Reactive Forms (auch wenn Feature keine Forms hat → bestätigen!) |
 
+> **Zusätzlich, wenn das REQ das Spring-Backend oder Payloads an SoftNet berührt:** `.claude/skills/spring-backend.md` lesen. Regel dort: unbekannte Angaben (VIN, Modell, Erstzulassung, …) **weglassen**, nie mit Platzhaltern (`UNKNOWN`, `Unknown`, `N/A`) befüllen; Payload-Änderungen vor dem Deploy gegen INT testen.
+
 **Nach dem Lesen — Bestätige explizit:**
 
 ```

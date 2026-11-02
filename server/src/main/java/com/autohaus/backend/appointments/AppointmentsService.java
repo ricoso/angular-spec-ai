@@ -8,6 +8,7 @@ import com.autohaus.backend.config.UsageInsightsProperties;
 import com.autohaus.backend.config.setup.SetupService;
 import com.autohaus.backend.snaps.SnapCache;
 import com.autohaus.backend.softnet.SoftnetApiClient;
+import com.autohaus.backend.softnet.SoftnetPayload;
 import com.autohaus.backend.usage.insights.UsageEventLogger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,8 +53,11 @@ public class AppointmentsService {
     /** Variant key of the Boxenstopp group (same literal as {@code SetupService}). */
     private static final String TIRE_CHANGE_VARIANT = "tireChange";
 
-    /** SoftNet placeholder when the customer leaves the optional VIN empty (unchanged since REQ-009). */
-    static final String VIN_UNKNOWN = "UNKNOWN";
+    /**
+     * REQ-045: model sent when none is known (unchanged since REQ-015) — SoftNet requires a model at
+     * some branches, the booking flow only asks for the brand. / Modell, wenn keines bekannt ist.
+     */
+    static final String MODEL_UNKNOWN = "Unknown";
 
     private final SoftnetApiClient softnetApi;
     private final SnapCache snapCache;
@@ -197,14 +201,29 @@ public class AppointmentsService {
 
     /**
      * REQ-039: the optional VIN is forwarded trimmed and upper-cased — the same canonical spelling
-     * the frontend sends — so SoftNet and the log masking (LogSanitizer) see one form. Missing or
-     * blank stays {@link #VIN_UNKNOWN} as before.
+     * the frontend sends — so SoftNet and the log masking (LogSanitizer) see one form. REQ-045:
+     * missing, blank or a placeholder yields {@code null}; the caller then omits the field instead
+     * of sending {@code "UNKNOWN"} as before. / Fehlt die FIN oder ist sie leer bzw. ein Platzhalter,
+     * liefert die Methode {@code null}: das Feld wird weggelassen.
      */
     static String normalizeVin(String vin) {
-        if (vin == null || vin.isBlank()) {
-            return VIN_UNKNOWN;
+        if (SoftnetPayload.isPlaceholder(vin)) {
+            return null;
         }
         return vin.trim().toUpperCase(Locale.ROOT);
+    }
+
+    /**
+     * REQ-045: the model is never omitted — leaving it out made SoftNet reject bookings at several
+     * branches ("Mandatory field model not set", rollback on 2026-11-02). The customer's value, else
+     * a real model SoftNet already put into the snap, else {@link #MODEL_UNKNOWN}. / Das Modell wird
+     * nie weggelassen: Kundenwert, sonst echtes Modell aus dem Snap, sonst „Unknown“.
+     */
+    static String bookingModel(String dtoModel, String snapModel) {
+        if (!SoftnetPayload.isPlaceholder(dtoModel)) {
+            return dtoModel.trim();
+        }
+        return SoftnetPayload.isPlaceholder(snapModel) ? MODEL_UNKNOWN : snapModel.trim();
     }
 
     /**
@@ -352,12 +371,16 @@ public class AppointmentsService {
             car.put("brand", "");
         }
         car.put("license", dto.vehicle().licensePlate().trim());
-        car.put("VIN", normalizeVin(dto.vehicle().vin()));
+        // REQ-045: an unknown VIN or first registration is omitted, never filled with a placeholder
+        // ("UNKNOWN", an invented 01/2020) — SoftNet matches the car by VIN and licence plate and
+        // takes the values over into its vehicle master data. putIfKnown also drops a placeholder
+        // inherited from the snap's car. The model is the exception: it is always sent.
+        // Unbekannte FIN und Erstzulassung werden weggelassen, das Modell nie.
+        SoftnetPayload.putIfKnown(car, "VIN", normalizeVin(dto.vehicle().vin()));
         car.put("currentMileage", dto.vehicle().mileage());
-        car.put("firstRegMonth", dto.vehicle().firstRegMonth() != null ? dto.vehicle().firstRegMonth() : "01");
-        car.put("firstRegYear", dto.vehicle().firstRegYear() != null ? dto.vehicle().firstRegYear() : "2020");
-        car.put("model", dto.vehicle().model() != null ? dto.vehicle().model()
-            : (existingCar.has("model") ? existingCar.get("model").asText("Unknown") : "Unknown"));
+        SoftnetPayload.putIfKnown(car, "firstRegMonth", dto.vehicle().firstRegMonth());
+        SoftnetPayload.putIfKnown(car, "firstRegYear", dto.vehicle().firstRegYear());
+        car.put("model", bookingModel(dto.vehicle().model(), existingCar.path("model").asText(null)));
         wishlist.set("car", car);
 
         String note = composeNote(rentalWishName, dto.note(), isTireChangeBooking(dto));

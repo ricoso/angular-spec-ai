@@ -22,6 +22,7 @@
   - **Wiederkehr-Kunde**: Email reicht — SoftNet erkennt Bestandskunden per Email, liefert: `firstName`, `lastName`, `email`, `brand`, `model`, `license`. Keine eigene DB noetig!
   - **Appointment-Response liefert NICHT**: `address`, `zipCode`, `city`, `phone`, `mobile`, `country` — dafuer braucht man `GET /users/{id}` (401 mit aktuellem Scope). → Mit Prod-System + erweitertem Scope (`scope.api.planning.user`) erneut testen!
   - `vaultitems` Endpoint → 401 (Scope reicht nicht) → mit Prod-System testen
+  - **Unbekannte Fahrzeugdaten:** FIN (`VIN`) und Erstzulassung **weglassen**, NIE mit Platzhaltern befüllen (`UNKNOWN`, `N/A`, `""`, erfundene Defaults wie 01/2020). SoftNet ordnet Fahrzeuge über FIN + Kennzeichen zu und übernimmt die Werte in den Fahrzeugstamm; die SoftNet-Mitarbeiter beschweren sich über Platzhalter (Nutzer-Vorgabe 30.10.2026, REQ-045). Eingehende Platzhalter werden ebenfalls entfernt. **Ausnahme `model`: nie weglassen** — an manchen Standorten Pflicht (02.11.2026: Essen-Kray, Wuppertal, Benrath lehnten Buchungen ohne Modell ab → Rollback). Die Strecke fragt nur die Marke ab, Rückfallwert `"Unknown"` (`AppointmentsService.MODEL_UNKNOWN`, Nutzerentscheid 02.11.2026). **Vor jeder Änderung am Car-Payload die Pflichtfelder prüfen** (lesend: `GET /api/planning/fields?scope=car&mandatory=true`; Pflichtfelder sind je Standort verschieden). **Testbuchungen:** höchstens 1–2, immer mit Hinweistext „lhind, Testbuchung, bitte stornieren“ — `api.soft-nrg.com` ist laut OpenAPI das **Produktivsystem** (INT: `int-api.soft-nrg.com`), jede Buchung ist echt. Nach dem Deploy 10 Min. die echten Buchungen auf `SOFTNET_ERROR`/`ValidationError` prüfen. Details: `.claude/skills/spring-backend.md`
 
 ---
 
@@ -43,6 +44,7 @@
 | `protected readonly t = i18nKeys` | Feature-Alias: `protected readonly carinformation = i18nKeys.booking.carinformation` |
 | Coverage-Thresholds ändern | Coverage-Config ist TABU — nie anfassen! |
 | `mat-stroked-button` (outlined) | `mat-flat-button` (filled) — Buttons IMMER filled! |
+| Platzhalter für unbekannte Daten in API-/SoftNet-Payloads (`UNKNOWN`, `N/A`, `""`, erfundene Defaults) | Feld **weglassen** (Key nicht setzen / `undefined`) — Ausnahme: SoftNet-Pflichtfeld `model` nie weglassen (Rückfall `"Unknown"`), siehe `.claude/skills/spring-backend.md` |
 
 ---
 

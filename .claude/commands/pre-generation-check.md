@@ -113,6 +113,17 @@ ls src/app/features/*/resolvers/*.resolver.ts
 
 **Fix:** Resolver erstellen für Data Loading.
 
+### 8. ❌ Keine Platzhalterwerte für unbekannte Daten (API-/SoftNet-Payloads)
+
+```bash
+# Frontend
+grep -rnE "['\"](UNKNOWN|Unknown|N/A|n/a|TBD)['\"]" src/app/features --include="*.ts" | grep -v "\.spec\.ts"
+# Backend (SoftNet-Payloads)
+grep -rnE '"(UNKNOWN|Unknown|N/A|n/a|TBD)"' server/src/main/java/com/autohaus/backend/appointments server/src/main/java/com/autohaus/backend/cars server/src/main/java/com/autohaus/backend/customers server/src/main/java/com/autohaus/backend/snaps --include="*.java"
+```
+
+**Fix:** Feld weglassen (Frontend: `undefined`, Backend: Key nicht setzen bzw. `SoftnetPayload.putIfKnown`). Regel aus CLAUDE.md: SoftNet-Mitarbeiter beschweren sich über Platzhalter wie `UNKNOWN`. **Ausnahme:** Das SoftNet-Pflichtfeld `model` nie weglassen, `AppointmentsService.MODEL_UNKNOWN` ist der erlaubte Treffer (Nutzerentscheid 02.11.2026, REQ-045 5.3). Details: `.claude/skills/spring-backend.md`.
+
 ---
 
 ## Output Format
@@ -134,9 +145,10 @@ ls src/app/features/*/resolvers/*.resolver.ts
    - src/app/features/user/components/user-list.component.html:12
    - Fix: computed() Signal erstellen
 ✅ Resolver vorhanden für alle Features
+✅ Keine Platzhalterwerte in API-/SoftNet-Payloads
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Ergebnis: 4/7 Checks bestanden
+📊 Ergebnis: 5/8 Checks bestanden
 
 ❌ Blockierende Fehler:
    1. onInit in Feature Store → MUSS gefixt werden!

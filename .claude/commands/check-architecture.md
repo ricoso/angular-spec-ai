@@ -140,6 +140,22 @@ export class UserFormComponent {
 }
 ```
 
+### 9. API-Payloads ohne Platzhalter
+
+✅ **Unbekannte optionale Angaben werden weggelassen** (Regel aus CLAUDE.md, Details in `angular-architecture.md` und `spring-backend.md`):
+- Frontend (API Service, Store-Mapping): leer/unbekannt → `undefined`, KEIN `'UNKNOWN'`, `'N/A'`, `''`, `0` oder erfundener Default
+- Backend (Payload-Bau für SoftNet, z. B. `AppointmentsService`, `CarsService`): Key wird nicht gesetzt statt Platzhalter; eingehende Platzhalter werden entfernt (`SoftnetPayload.putIfKnown`)
+- Test vorhanden: unbekannte Angabe → Key fehlt im Payload
+
+```bash
+# Frontend
+grep -rnE "['\"](UNKNOWN|Unknown|N/A|n/a|TBD)['\"]" src/app/features --include='*.ts' | grep -v '\.spec\.ts'
+# Backend (SoftNet-Payloads)
+grep -rnE '"(UNKNOWN|Unknown|N/A|n/a|TBD)"' server/src/main/java/com/autohaus/backend/appointments server/src/main/java/com/autohaus/backend/cars server/src/main/java/com/autohaus/backend/customers server/src/main/java/com/autohaus/backend/snaps --include='*.java'
+```
+
+❌ Jeder Treffer ist ein Issue. Ausnahmen: Werte ohne Bezug zu Payload-Daten (z. B. Fehlercodes wie `CriticalErrorCode`, Statistik-Enums) und `AppointmentsService.MODEL_UNKNOWN` (`"Unknown"`): `model` ist bei SoftNet standortabhängig Pflicht und darf nie fehlen (Nutzerentscheid 02.11.2026, REQ-045 5.3). Umgekehrt ist ein weggelassenes `model` ein Issue.
+
 ## Output Format
 
 ```
@@ -179,6 +195,9 @@ export class UserFormComponent {
    ❌ product.model.ts:15
       - Using `any` type
       - Fix: Define proper interface
+
+✅ API-Payloads
+   ✅ Keine Platzhalter (UNKNOWN/N/A/''), unbekannte Angaben werden weggelassen
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📊 Score: 85/100

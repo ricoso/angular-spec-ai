@@ -447,11 +447,120 @@ class AppointmentsServiceTest {
     }
 
     @Test
-    void normalizeVin_trimsAndUpperCases_blankOrMissingStaysUnknown() {
+    void normalizeVin_trimsAndUpperCases_blankMissingOrPlaceholderIsNull() {
         assertEquals("WAUZZZ8V0JA000001", AppointmentsService.normalizeVin(" wauzzz8v0ja000001 "));
         assertEquals("WVWZZZ1JZXW000001", AppointmentsService.normalizeVin("WVWZZZ1JZXW000001"));
-        assertEquals(AppointmentsService.VIN_UNKNOWN, AppointmentsService.normalizeVin(null));
-        assertEquals(AppointmentsService.VIN_UNKNOWN, AppointmentsService.normalizeVin("   "));
+        // REQ-045: no "UNKNOWN" any more — an unknown VIN is null, the caller omits the field.
+        assertNull(AppointmentsService.normalizeVin(null));
+        assertNull(AppointmentsService.normalizeVin("   "));
+        assertNull(AppointmentsService.normalizeVin("UNKNOWN"));
+        assertNull(AppointmentsService.normalizeVin(" unknown "));
+    }
+
+    // === REQ-045: an unknown VIN / first registration is omitted; the model is always sent ===
+
+    @Test
+    void createAppointment_unknownVehicleData_omitsVinAndFirstRegistration_sendsModelFallback() {
+        when(snapCache.getRawSnap("snap-unknown")).thenReturn(baseSnap());
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        service.createAppointment(vehicleDto("snap-unknown",
+            new CreateAppointmentRequest.VehicleDto("W-TEST-99", 45000, null, null, null, null)));
+
+        Map<String, Object> car = sentCar();
+        assertEquals("W-TEST-99", car.get("license"));
+        assertEquals(45000, car.get("currentMileage"));
+        for (String field : List.of("VIN", "firstRegMonth", "firstRegYear")) {
+            assertFalse(car.containsKey(field), field + " must be omitted, but was " + car.get(field));
+        }
+        // REQ-045 5.3: SoftNet requires a model at some branches — it is never omitted.
+        assertEquals(AppointmentsService.MODEL_UNKNOWN, car.get("model"));
+        // REQ-045 leaves the brand untouched: still an empty string when the snap carries none.
+        assertEquals("", car.get("brand"));
+    }
+
+    @Test
+    void createAppointment_blankOrPlaceholderVehicleData_omitsVinAndFirstRegistration_sendsModelFallback() {
+        when(snapCache.getRawSnap("snap-blank")).thenReturn(baseSnap());
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        service.createAppointment(vehicleDto("snap-blank",
+            new CreateAppointmentRequest.VehicleDto("W-TEST-99", 45000, "   ", "n/a", " ", "N/A")));
+
+        Map<String, Object> car = sentCar();
+        for (String field : List.of("VIN", "firstRegMonth", "firstRegYear")) {
+            assertFalse(car.containsKey(field), field + " must be omitted, but was " + car.get(field));
+        }
+        assertEquals(AppointmentsService.MODEL_UNKNOWN, car.get("model"));
+    }
+
+    @Test
+    void createAppointment_knownVehicleData_isForwardedTrimmed() {
+        when(snapCache.getRawSnap("snap-known")).thenReturn(baseSnap());
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        service.createAppointment(vehicleDto("snap-known",
+            new CreateAppointmentRequest.VehicleDto("W-TEST-99", 45000, " wvwzzz3czwe123456 ", " Golf ", "03", "2023")));
+
+        Map<String, Object> car = sentCar();
+        assertEquals("WVWZZZ3CZWE123456", car.get("VIN"));
+        assertEquals("Golf", car.get("model"));
+        assertEquals("03", car.get("firstRegMonth"));
+        assertEquals("2023", car.get("firstRegYear"));
+    }
+
+    @Test
+    void createAppointment_placeholdersInheritedFromTheSnap_vinRemoved_modelFallsBack() {
+        ObjectNode snap = baseSnap();
+        snap.withObject("wishlist").withObject("car")
+            .put("brand", "Audi").put("model", "").put("VIN", "UNKNOWN");
+        when(snapCache.getRawSnap("snap-inherited")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        service.createAppointment(vehicleDto("snap-inherited",
+            new CreateAppointmentRequest.VehicleDto("W-TEST-99", 45000, null, null, null, null)));
+
+        Map<String, Object> car = sentCar();
+        assertEquals("Audi", car.get("brand"));
+        // REQ-015: SoftNet rejects an empty model ("Mandatory field model not set") — falls back instead.
+        assertEquals(AppointmentsService.MODEL_UNKNOWN, car.get("model"));
+        assertFalse(car.containsKey("VIN"), "inherited placeholder VIN must be removed");
+    }
+
+    @Test
+    void bookingModel_isNeverEmpty_customerThenSnapThenFallback() {
+        assertEquals("Golf", AppointmentsService.bookingModel(" Golf ", "A4 Avant"));
+        assertEquals("A4 Avant", AppointmentsService.bookingModel(null, " A4 Avant "));
+        assertEquals("A4 Avant", AppointmentsService.bookingModel("Unknown", "A4 Avant"));
+        assertEquals(AppointmentsService.MODEL_UNKNOWN, AppointmentsService.bookingModel(null, ""));
+        assertEquals(AppointmentsService.MODEL_UNKNOWN, AppointmentsService.bookingModel("  ", null));
+        assertEquals(AppointmentsService.MODEL_UNKNOWN, AppointmentsService.bookingModel("n/a", "-"));
+    }
+
+    @Test
+    void createAppointment_emptyDtoModel_keepsTheRealModelOfTheSnap() {
+        ObjectNode snap = baseSnap();
+        snap.withObject("wishlist").withObject("car").put("model", "A4 Avant");
+        when(snapCache.getRawSnap("snap-model")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        service.createAppointment(vehicleDto("snap-model",
+            new CreateAppointmentRequest.VehicleDto("W-TEST-99", 45000, null, null, null, null)));
+
+        assertEquals("A4 Avant", sentCar().get("model"));
+    }
+
+    @Test
+    void createAppointment_dtoModel_winsOverTheSnapModel() {
+        ObjectNode snap = baseSnap();
+        snap.withObject("wishlist").withObject("car").put("model", "A4 Avant");
+        when(snapCache.getRawSnap("snap-model-dto")).thenReturn(snap);
+        when(softnetApi.createAppointment(any(), eq("mock-group-id"))).thenReturn(baseResult());
+
+        service.createAppointment(vehicleDto("snap-model-dto",
+            new CreateAppointmentRequest.VehicleDto("W-TEST-99", 45000, null, "Golf", null, null)));
+
+        assertEquals("Golf", sentCar().get("model"));
     }
 
     @Test
@@ -857,6 +966,22 @@ class AppointmentsServiceTest {
                 "Wuppertaler Str. 12", "42103", "Wuppertal", "DE", "de", null),
             new CreateAppointmentRequest.VehicleDto("W-TEST-99", 45000, null, "A4", "03", "2023"),
             note, null, null, null, tireChangeBooking);
+    }
+
+    /** REQ-045: booking request with the given vehicle data, otherwise like {@link #buildDto}. */
+    private CreateAppointmentRequest vehicleDto(String snapId, CreateAppointmentRequest.VehicleDto vehicle) {
+        return new CreateAppointmentRequest(
+            snapId, "branch-1", null,
+            new CreateAppointmentRequest.CustomerDto(
+                "test@test.de", "Petra", "Voß", "0170", null,
+                "Wuppertaler Str. 12", "42103", "Wuppertal", "DE", "de", null),
+            vehicle, null, null, null, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> sentCar() {
+        Map<String, Object> wishlist = (Map<String, Object>) captureSentSnap().get("wishlist");
+        return (Map<String, Object>) wishlist.get("car");
     }
 
     @SuppressWarnings("unchecked")
